@@ -112,7 +112,6 @@ func remove(slice []string, a string) []string {
 			break // i is now where it is
 		}
 	}
-	fmt.Println(i)
 	slice[i] = slice[len(slice)-1]
 	return slice[:len(slice)-1]
 }
