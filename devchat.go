@@ -55,7 +55,7 @@ func main() {
 			}
 		}
 
-		term.SetPrompt("[" + username + "] ")
+		term.SetPrompt(username + ": ")
 		users = append(users, username)
 		defer func() { users = remove(users, username) }()
 
@@ -98,7 +98,7 @@ func main() {
 			//	log.Println(err)
 			//	continue
 			//}
-			sendMsg(username + " " + line)
+			sendMsg(username + ": " + line)
 		}
 	})
 	fmt.Println("Starting chat server on port 2222")
