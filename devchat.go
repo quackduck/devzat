@@ -14,15 +14,25 @@ import (
 )
 
 func main() {
-	msgs := make(chan string, 5)
+	writers := make([]func(a ...interface{}), 0, 5)
 	users := make([]string, 0, 5)
 
 	ssh.Handle(func(s ssh.Session) {
 		username := s.User()
 		term := terminal.NewTerminal(s, "> ")
 		writeln := func(a ...interface{}) {
-			term.Write([]byte(fmt.Sprintln(a...)))
+			msg := fmt.Sprintln(a...)
+			if !strings.HasPrefix(msg, username) {
+				term.Write([]byte(msg))
+			}
 		}
+		sendMsg := func(a ...interface{}) {
+			for i := range writers {
+				writers[i](a...)
+			}
+		}
+
+		writers = append(writers, writeln)
 		//write := func(a ...interface{}) {
 		//	term.Write([]byte(fmt.Sprint(a...)))
 		//}
@@ -45,33 +55,33 @@ func main() {
 			}
 		}
 
-		term = terminal.NewTerminal(s, username+" ")
+		term.SetPrompt("[" + username + "] ")
 		users = append(users, username)
 		defer func() { users = remove(users, username) }()
-		fmt.Println(users)
 
 		//reader := bufio.NewReader(s)
 		writeln("Welcome to the chat", "There are", len(users)-1, "more users")
-		msgs <- username + " has joined the chat"
+		sendMsg(username, "has joined the chat")
 		//b := make([]byte, 12)
 		//_, err := s.Read(b)
 		//if err != nil {
 		//	log.Println(err)
 		//}
 		//fmt.Println(string(b))
-		go func() {
-			for msg := range msgs {
-				if !strings.HasPrefix(msg, username) {
-					writeln(msg)
-				}
-			}
-		}()
+		//go func() {
+		//	for msg := range msgs {
+		//		if !strings.HasPrefix(msg, username) {
+		//			fmt.Println(msg)
+		//			writeln(msg)
+		//		}
+		//	}
+		//}()
 		for {
 			line, err := term.ReadLine()
 			line = strings.TrimSpace(line)
 
 			if err == io.EOF {
-				msgs <- username + " has left the chat."
+				sendMsg(username + " has left the chat.")
 				return
 			}
 			if err != nil {
@@ -88,7 +98,7 @@ func main() {
 			//	log.Println(err)
 			//	continue
 			//}
-			msgs <- username + line
+			sendMsg(username + " " + line)
 		}
 	})
 	fmt.Println("Starting chat server on port 2222")
