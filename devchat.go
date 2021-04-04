@@ -1,64 +1,66 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
-	"math/rand"
-	"strings"
-	"time"
-
-	//"golang.org/x/term"
 	"io"
 	"log"
+	"math/rand"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/gliderlabs/ssh"
 	terminal "golang.org/x/term"
 )
 
+var (
+	//go:embed ishan.pub
+	ishanKeyRawBytes []byte
+	red              = color.New(color.FgHiRed)
+	green            = color.New(color.FgHiGreen)
+	cyan             = color.New(color.FgHiCyan)
+	magenta          = color.New(color.FgHiMagenta)
+	yellow           = color.New(color.FgHiYellow)
+	colorArr         = []*color.Color{red, green, cyan, magenta, yellow}
+	writers          = make([]func(string), 0, 5)
+	usernames        = make([]string, 0, 5)
+	backlog          = make([]string, 0, 10)
+)
+
 func main() {
-	writers := make([]func(a ...interface{}), 0, 5)
-	usernames := make([]string, 0, 5)
-	red := color.New(color.FgHiRed)
-	green := color.New(color.FgHiGreen)
-	cyan := color.New(color.FgHiCyan)
-	magenta := color.New(color.FgHiMagenta)
-	yellow := color.New(color.FgHiYellow)
-
-	colorArr := []*color.Color{red, green, cyan, magenta, yellow}
-
-	messagesBuffer := make([]string, 0, 10)
+	ishanPubKey, _, _, _, err := ssh.ParseAuthorizedKey(ishanKeyRawBytes)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	ssh.Handle(func(s ssh.Session) {
 		myColor := *colorArr[rand.Intn(len(colorArr))]
+		//fmt.Println(s.PublicKey().Marshal(), ishanPubKey.Marshal())
+		if ssh.KeysEqual(s.PublicKey(), ishanPubKey) {
+			fmt.Println("is ishan!")
+			myColor = *green
+		}
 		username := myColor.Sprint(s.User())
 		term := terminal.NewTerminal(s, "> ")
-		//_, w, ptyReq := s.Pty()
-		//if !ptyReq {
-		term.SetSize(10000, 10000) // disable any formatting done by term
-		//} else { // resize term on win resize
-		//go func() {
-		//	for win := range w {
-		//		term.SetSize(win.Width, win.Height)
-		//	}
-		//}()
-		//}
+		_ = term.SetSize(10000, 10000) // disable any formatting done by term
 		rand.Seed(time.Now().Unix())
-		writeln := func(a ...interface{}) {
-			msg := fmt.Sprintln(a...)
-			if !strings.HasPrefix(msg, username+":") {
-				term.Write([]byte("\a"+msg)) // "\a" is beep
+
+		writeln := func(msg string) {
+			if !strings.HasPrefix(msg, username+":") { // ignore messages sent by same person
+				_, _ = term.Write([]byte("\a" + msg + "\n")) // "\a" is beep
 			}
 		}
-		broadcast := func(a ...interface{}) {
-			messagesBuffer = append(messagesBuffer, fmt.Sprintln(a...))
-			for len(messagesBuffer) > 16 { // for instead of if just in case
-				fmt.Println(messagesBuffer)
-				//time.Sleep(time.Second)
-				messagesBuffer = messagesBuffer[1:]
+
+		broadcast := func(msg string) {
+			backlog = append(backlog, msg+"\n")
+			for len(backlog) > 16 { // for instead of if just in case
+				backlog = backlog[1:]
 			}
 			for i := range writers {
-				writers[i](a...)
+				writers[i](msg)
 			}
 		}
 		writers = append(writers, writeln)
@@ -72,11 +74,10 @@ func main() {
 		}
 
 		for userDuplicate(username) {
-			var err error
 			writeln("Pick a different username")
 			username, err = term.ReadLine()
 			if err != nil {
-				writeln(err)
+				writeln(fmt.Sprint(err))
 				fmt.Println(username, err)
 			}
 		}
@@ -93,18 +94,19 @@ func main() {
 		default:
 			writeln(cyan.Sprint("Welcome to the chat. There are ", len(usernames)-1, " more users"))
 		}
-		term.Write([]byte(strings.Join(messagesBuffer, "")))
+		_, _ = term.Write([]byte(strings.Join(backlog, ""))) // print out backlog
 
 		broadcast(username + green.Sprint(" has joined the chat"))
+		var line string
 		for {
-			line, err := term.ReadLine()
+			line, err = term.ReadLine()
 			line = strings.TrimSpace(line)
 
 			if err == io.EOF {
 				return
 			}
 			if err != nil {
-				writeln(err)
+				writeln(fmt.Sprint(err))
 				fmt.Println(username, err)
 				continue
 			}
@@ -112,7 +114,7 @@ func main() {
 				broadcast(username + ": " + line)
 			}
 			if line == "/users" {
-				broadcast(usernames)
+				broadcast(fmt.Sprint(usernames))
 			}
 			if line == "/exit" {
 				return
@@ -126,6 +128,7 @@ Made by Ishan G (@quackduck)`)
 			}
 		}
 	})
+
 	fmt.Println("Starting chat server on port 2222")
 	log.Fatal(ssh.ListenAndServe(":2222", nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa")))
 }
@@ -139,8 +142,3 @@ func remove(s []string, a string) []string {
 	}
 	return append(s[:i], s[i+1:]...)
 }
-//
-//func removeI(s []string, i int) []string {
-//	fmt.Println("appending" , s[:i], s[i+1:])
-//	return append(s[:i], s[i+1:]...)
-//}
