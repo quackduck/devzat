@@ -18,7 +18,7 @@ import (
 
 func main() {
 	writers := make([]func(a ...interface{}), 0, 5)
-	users := make([]string, 0, 5)
+	usernames := make([]string, 0, 5)
 	red := color.New(color.FgHiRed)
 	green := color.New(color.FgHiGreen)
 	cyan := color.New(color.FgHiCyan)
@@ -27,31 +27,43 @@ func main() {
 
 	colorArr := []*color.Color{red, green, cyan, magenta, yellow}
 
+	messagesBuffer := make([]string, 0, 10)
+
 	ssh.Handle(func(s ssh.Session) {
 		myColor := *colorArr[rand.Intn(len(colorArr))]
 		username := myColor.Sprint(s.User())
 		term := terminal.NewTerminal(s, "> ")
-		term.SetSize(2000, 2000) // disable any formatting done by term
+		//_, w, ptyReq := s.Pty()
+		//if !ptyReq {
+		term.SetSize(10000, 10000) // disable any formatting done by term
+		//} else { // resize term on win resize
+		//go func() {
+		//	for win := range w {
+		//		term.SetSize(win.Width, win.Height)
+		//	}
+		//}()
+		//}
 		rand.Seed(time.Now().Unix())
-
 		writeln := func(a ...interface{}) {
 			msg := fmt.Sprintln(a...)
-			if !strings.HasPrefix(msg, username) {
-				term.Write([]byte(time.Now().Format(time.Kitchen) + " " + msg))
+			if !strings.HasPrefix(msg, username+":") {
+				term.Write([]byte("\a"+msg)) // "\a" is beep
 			}
 		}
-		sendMsg := func(a ...interface{}) {
+		broadcast := func(a ...interface{}) {
+			messagesBuffer = append(messagesBuffer, fmt.Sprintln(a...))
+			for len(messagesBuffer) > 16 { // for instead of if just in case
+				fmt.Println(messagesBuffer)
+				//time.Sleep(time.Second)
+				messagesBuffer = messagesBuffer[1:]
+			}
 			for i := range writers {
 				writers[i](a...)
 			}
 		}
-
 		writers = append(writers, writeln)
-		//write := func(a ...interface{}) {
-		//	term.Write([]byte(fmt.Sprint(a...)))
-		//}
 		userDuplicate := func(a string) bool {
-			for _, u := range users {
+			for _, u := range usernames {
 				if u == a {
 					return true
 				}
@@ -70,40 +82,25 @@ func main() {
 		}
 
 		term.SetPrompt(username + ": ")
-		users = append(users, username)
-		defer func() { users = remove(users, username) }()
-
-		//reader := bufio.NewReader(s)
-		switch len(users) - 1 {
+		usernames = append(usernames, username)
+		defer func() { usernames = remove(usernames, username) }()
+		defer broadcast(username + red.Sprint(" has left the chat."))
+		switch len(usernames) - 1 {
 		case 0:
 			writeln(cyan.Sprint("Welcome to the chat. There are no more users"))
 		case 1:
 			writeln(cyan.Sprint("Welcome to the chat. There is one more user"))
 		default:
-			writeln(cyan.Sprint("Welcome to the chat. There are ", len(users)-1, " more users"))
+			writeln(cyan.Sprint("Welcome to the chat. There are ", len(usernames)-1, " more users"))
 		}
+		term.Write([]byte(strings.Join(messagesBuffer, "")))
 
-		sendMsg(username + green.Sprint(" has joined the chat"))
-		//b := make([]byte, 12)
-		//_, err := s.Read(b)
-		//if err != nil {
-		//	log.Println(err)
-		//}
-		//fmt.Println(string(b))
-		//go func() {
-		//	for msg := range msgs {
-		//		if !strings.HasPrefix(msg, username) {
-		//			fmt.Println(msg)
-		//			writeln(msg)
-		//		}
-		//	}
-		//}()
+		broadcast(username + green.Sprint(" has joined the chat"))
 		for {
 			line, err := term.ReadLine()
 			line = strings.TrimSpace(line)
 
 			if err == io.EOF {
-				sendMsg(username + red.Sprint(" has left the chat."))
 				return
 			}
 			if err != nil {
@@ -111,20 +108,21 @@ func main() {
 				fmt.Println(username, err)
 				continue
 			}
-			//msg, err := reader.ReadString('\n')
-			//if err == io.EOF {
-			//	fmt.Println("EOF")
-			//	break
-			//}
-			//if err != nil {
-			//	log.Println(err)
-			//	continue
-			//}
 			if !(line == "") {
-				sendMsg(username + ": " + line)
+				broadcast(username + ": " + line)
 			}
 			if line == "/users" {
-				sendMsg(users)
+				broadcast(usernames)
+			}
+			if line == "/exit" {
+				return
+			}
+			if line == "/help" {
+				broadcast(`Available commands:
+   /users   list users
+   /exit    leave the chat
+   /help    show this help message
+Made by Ishan G (@quackduck)`)
 			}
 		}
 	})
@@ -141,3 +139,8 @@ func remove(s []string, a string) []string {
 	}
 	return append(s[:i], s[i+1:]...)
 }
+//
+//func removeI(s []string, i int) []string {
+//	fmt.Println("appending" , s[:i], s[i+1:])
+//	return append(s[:i], s[i+1:]...)
+//}
