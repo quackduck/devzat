@@ -16,33 +16,21 @@ import (
 )
 
 var (
-	//go:embed ishan.pub
-	ishanKeyRawBytes []byte
-	red              = color.New(color.FgHiRed)
-	green            = color.New(color.FgHiGreen)
-	cyan             = color.New(color.FgHiCyan)
-	magenta          = color.New(color.FgHiMagenta)
-	yellow           = color.New(color.FgHiYellow)
-	colorArr         = []*color.Color{red, green, cyan, magenta, yellow}
-	writers          = make([]func(string), 0, 5)
-	usernames        = make([]string, 0, 5)
-	backlog          = make([]string, 0, 10)
+	red       = color.New(color.FgHiRed)
+	green     = color.New(color.FgHiGreen)
+	cyan      = color.New(color.FgHiCyan)
+	magenta   = color.New(color.FgHiMagenta)
+	yellow    = color.New(color.FgHiYellow)
+	colorArr  = []*color.Color{red, green, cyan, magenta, yellow}
+	writers   = make([]func(string), 0, 5)
+	usernames = make([]string, 0, 5)
+	backlog   = make([]string, 0, 10)
 )
 
 func main() {
-	ishanPubKey, _, _, _, err := ssh.ParseAuthorizedKey(ishanKeyRawBytes)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
+	var err error
 	ssh.Handle(func(s ssh.Session) {
 		myColor := *colorArr[rand.Intn(len(colorArr))]
-		//fmt.Println(s.PublicKey().Marshal(), ishanPubKey.Marshal())
-		if ssh.KeysEqual(s.PublicKey(), ishanPubKey) {
-			fmt.Println("is ishan!")
-			myColor = *green
-		}
 		username := myColor.Sprint(s.User())
 		term := terminal.NewTerminal(s, "> ")
 		_ = term.SetSize(10000, 10000) // disable any formatting done by term
