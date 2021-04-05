@@ -6,25 +6,29 @@ import (
 	"io"
 	"log"
 	"math/rand"
+	"net/http"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/acarl005/stripansi"
 	"github.com/fatih/color"
 	"github.com/gliderlabs/ssh"
 	terminal "golang.org/x/term"
 )
 
 var (
-	red       = color.New(color.FgHiRed)
-	green     = color.New(color.FgHiGreen)
-	cyan      = color.New(color.FgHiCyan)
-	magenta   = color.New(color.FgHiMagenta)
-	yellow    = color.New(color.FgHiYellow)
-	colorArr  = []*color.Color{red, green, cyan, magenta, yellow}
-	writers   = make([]func(string), 0, 5)
-	usernames = make([]string, 0, 5)
-	backlog   = make([]string, 0, 10)
+	//go:embed slackAPIURL.txt
+	slackAPIURL []byte
+	red         = color.New(color.FgHiRed)
+	green       = color.New(color.FgHiGreen)
+	cyan        = color.New(color.FgHiCyan)
+	magenta     = color.New(color.FgHiMagenta)
+	yellow      = color.New(color.FgHiYellow)
+	colorArr    = []*color.Color{red, green, cyan, magenta, yellow}
+	writers     = make([]func(string), 0, 5)
+	usernames   = make([]string, 0, 5)
+	backlog     = make([]string, 0, 10)
 )
 
 func main() {
@@ -52,16 +56,16 @@ func main() {
 			}
 		}
 		writers = append(writers, writeln)
-		userDuplicate := func(a string) bool {
+		userDuplicate := func(user string, usernames []string) bool {
 			for _, u := range usernames {
-				if u == a {
+				if u == user {
 					return true
 				}
 			}
 			return false
 		}
 
-		for userDuplicate(username) {
+		for userDuplicate(username, usernames) {
 			writeln("Pick a different username")
 			username, err = term.ReadLine()
 			if err != nil {
@@ -72,8 +76,11 @@ func main() {
 
 		term.SetPrompt(username + ": ")
 		usernames = append(usernames, username)
-		defer func() { usernames = remove(usernames, username) }()
-		defer broadcast(username + red.Sprint(" has left the chat."))
+		defer func() {
+			usernames = remove(usernames, username)
+			broadcast(username + red.Sprint(" has left the chat."))
+			sendToSlack(username + red.Sprint(" has left the chat."))
+		}()
 		switch len(usernames) - 1 {
 		case 0:
 			writeln(cyan.Sprint("Welcome to the chat. There are no more users"))
@@ -85,6 +92,7 @@ func main() {
 		_, _ = term.Write([]byte(strings.Join(backlog, ""))) // print out backlog
 
 		broadcast(username + green.Sprint(" has joined the chat"))
+		sendToSlack(username + green.Sprint(" has joined the chat"))
 		var line string
 		for {
 			line, err = term.ReadLine()
@@ -119,6 +127,17 @@ Made by Ishan G (@quackduck)`)
 
 	fmt.Println("Starting chat server on port 2222")
 	log.Fatal(ssh.ListenAndServe(":2222", nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa")))
+}
+
+func sendToSlack(msg string) {
+	go func() {
+		msg = stripansi.Strip(msg)
+		r, err := http.Post(string(slackAPIURL), "application/json", strings.NewReader(fmt.Sprintf(`{"text":"%s"}`, msg)))
+		if err != nil {
+			fmt.Println(err)
+		}
+		_ = r.Body.Close()
+	}()
 }
 
 func remove(s []string, a string) []string {

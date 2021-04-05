@@ -3,6 +3,7 @@ module devchat
 go 1.16
 
 require (
+	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
 	github.com/fatih/color v1.10.0
 	github.com/gliderlabs/ssh v0.3.2
