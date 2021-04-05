@@ -139,6 +139,7 @@ func sendToSlack(msg string) {
 		r, err := http.Post(string(slackAPIURL), "application/json", strings.NewReader(fmt.Sprintf(`{"text":"%s"}`, msg)))
 		if err != nil {
 			fmt.Println(err)
+			return
 		}
 		_ = r.Body.Close()
 	}()
