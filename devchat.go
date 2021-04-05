@@ -3,16 +3,15 @@ package main
 import (
 	_ "embed"
 	"fmt"
+	"github.com/fatih/color"
+	"github.com/gliderlabs/ssh"
+	terminal "golang.org/x/term"
 	"io"
 	"log"
 	"math/rand"
 	"os"
 	"strings"
 	"time"
-
-	"github.com/fatih/color"
-	"github.com/gliderlabs/ssh"
-	terminal "golang.org/x/term"
 )
 
 var (
@@ -27,7 +26,50 @@ var (
 	backlog   = make([]string, 0, 10)
 )
 
+// Closure which returns a user-specific writeln func
+func getWriteLnFunc(username string, term *terminal.Terminal) func(msg string) {
+	return func(msg string) {
+		if !strings.HasPrefix(msg, username+":") { // ignore messages sent by same person
+			_, _ = term.Write([]byte("\a" + msg + "\n")) // "\a" is beep
+		}
+	}
+}
+
+func broadcast(msg string) {
+	backlog = append(backlog, msg+"\n")
+	for len(backlog) > 16 { // for instead of if just in case
+		backlog = backlog[1:]
+	}
+	for i := range writers {
+		writers[i](msg)
+	}
+}
+
+// Returns true if the username is taken, false otherwise
+func isUsernameDuplicate(a string) bool {
+	for _, u := range usernames {
+		if u == a {
+			return true
+		}
+	}
+	return false
+}
+
+// Handles a duplicate username
+func checkForDuplicateName(username string, writeln func(string), term *terminal.Terminal) {
+	var err error
+	for isUsernameDuplicate(username) {
+		writeln("Pick a different username")
+		username, err = term.ReadLine()
+		if err != nil {
+			writeln(fmt.Sprint(err))
+			fmt.Println(username, err)
+		}
+	}
+}
+
 func main() {
+	const PORT = 2222
 	var err error
 	ssh.Handle(func(s ssh.Session) {
 		myColor := *colorArr[rand.Intn(len(colorArr))]
@@ -36,44 +78,17 @@ func main() {
 		_ = term.SetSize(10000, 10000) // disable any formatting done by term
 		rand.Seed(time.Now().Unix())
 
-		writeln := func(msg string) {
-			if !strings.HasPrefix(msg, username+":") { // ignore messages sent by same person
-				_, _ = term.Write([]byte("\a" + msg + "\n")) // "\a" is beep
-			}
-		}
-
-		broadcast := func(msg string) {
-			backlog = append(backlog, msg+"\n")
-			for len(backlog) > 16 { // for instead of if just in case
-				backlog = backlog[1:]
-			}
-			for i := range writers {
-				writers[i](msg)
-			}
-		}
+		// Uses getWriteLnFunc closure to get a user-specific writeln func
+		writeln := getWriteLnFunc(username, term)
 		writers = append(writers, writeln)
-		userDuplicate := func(a string) bool {
-			for _, u := range usernames {
-				if u == a {
-					return true
-				}
-			}
-			return false
-		}
 
-		for userDuplicate(username) {
-			writeln("Pick a different username")
-			username, err = term.ReadLine()
-			if err != nil {
-				writeln(fmt.Sprint(err))
-				fmt.Println(username, err)
-			}
-		}
+		checkForDuplicateName(username, writeln, term)
 
 		term.SetPrompt(username + ": ")
 		usernames = append(usernames, username)
 		defer func() { usernames = remove(usernames, username) }()
 		defer broadcast(username + red.Sprint(" has left the chat."))
+
 		switch len(usernames) - 1 {
 		case 0:
 			writeln(cyan.Sprint("Welcome to the chat. There are no more users"))
@@ -117,8 +132,8 @@ Made by Ishan G (@quackduck)`)
 		}
 	})
 
-	fmt.Println("Starting chat server on port 2222")
-	log.Fatal(ssh.ListenAndServe(":2222", nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa")))
+	fmt.Println(fmt.Sprintf("Starting chat server on port %d", PORT))
+	log.Fatal(ssh.ListenAndServe(fmt.Sprintf(":%d", PORT), nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa")))
 }
 
 func remove(s []string, a string) []string {
