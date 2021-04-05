@@ -1,8 +1,8 @@
 # Devchat
 Chat over SSH
 
-```sh
-ssh 34.75.6.116 -p 2222
-```
+Try it out:
 
-Domain name coming soon!
+```sh
+ssh test@sshchat.hackclub.com -p 2222
+```
