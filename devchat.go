@@ -56,16 +56,16 @@ func main() {
 	var err error
 	ssh.Handle(func(s ssh.Session) {
 		myColor := *colorArr[rand.Intn(len(colorArr))]
-		username := myColor.Sprint(s.User())
+		username := s.User()
 		term := terminal.NewTerminal(s, "> ")
 		_ = term.SetSize(10000, 10000) // disable any formatting done by term
 		rand.Seed(time.Now().Unix())
 
 		writeln := func(msg string) {
-		if !strings.HasPrefix(msg, username+":") { // ignore messages sent by same person
-			_, _ = term.Write([]byte("\a" + msg + "\n")) // "\a" is beep
+			if !strings.HasPrefix(msg, username+":") { // ignore messages sent by same person
+				_, _ = term.Write([]byte("\a" + msg + "\n")) // "\a" is beep
+			}
 		}
-	}
 		writers = append(writers, writeln)
 
 		for userDuplicate(username) {
@@ -76,6 +76,7 @@ func main() {
 				fmt.Println(username, err)
 			}
 		}
+		username = myColor.Sprint(username)
 
 		term.SetPrompt(username + ": ")
 		usernames = append(usernames, username)
