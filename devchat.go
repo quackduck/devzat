@@ -42,7 +42,7 @@ func broadcast(msg string) {
 }
 
 // Returns true if the username is taken, false otherwise
-func isUsernameDuplicate(a string) bool {
+func userDuplicate(a string) bool {
 	for _, u := range usernames {
 		if u == a {
 			return true
@@ -67,16 +67,8 @@ func main() {
 		}
 	}
 		writers = append(writers, writeln)
-		userDuplicate := func(user string, usernames []string) bool {
-			for _, u := range usernames {
-				if u == user {
-					return true
-				}
-			}
-			return false
-		}
 
-		for userDuplicate(username, usernames) {
+		for userDuplicate(username) {
 			writeln("Pick a different username")
 			username, err = term.ReadLine()
 			if err != nil {
