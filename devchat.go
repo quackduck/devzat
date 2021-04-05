@@ -31,7 +31,28 @@ var (
 	backlog     = make([]string, 0, 10)
 )
 
+func broadcast(msg string) {
+	backlog = append(backlog, msg+"\n")
+	for len(backlog) > 16 { // for instead of if just in case
+		backlog = backlog[1:]
+	}
+	for i := range writers {
+		writers[i](msg)
+	}
+}
+
+// Returns true if the username is taken, false otherwise
+func userDuplicate(a string) bool {
+	for _, u := range usernames {
+		if u == a {
+			return true
+		}
+	}
+	return false
+}
+
 func main() {
+	const PORT = 2222
 	var err error
 	ssh.Handle(func(s ssh.Session) {
 		myColor := *colorArr[rand.Intn(len(colorArr))]
@@ -41,31 +62,13 @@ func main() {
 		rand.Seed(time.Now().Unix())
 
 		writeln := func(msg string) {
-			if !strings.HasPrefix(msg, username+":") { // ignore messages sent by same person
-				_, _ = term.Write([]byte("\a" + msg + "\n")) // "\a" is beep
-			}
+		if !strings.HasPrefix(msg, username+":") { // ignore messages sent by same person
+			_, _ = term.Write([]byte("\a" + msg + "\n")) // "\a" is beep
 		}
-
-		broadcast := func(msg string) {
-			backlog = append(backlog, msg+"\n")
-			for len(backlog) > 16 { // for instead of if just in case
-				backlog = backlog[1:]
-			}
-			for i := range writers {
-				writers[i](msg)
-			}
-		}
+	}
 		writers = append(writers, writeln)
-		userDuplicate := func(user string, usernames []string) bool {
-			for _, u := range usernames {
-				if u == user {
-					return true
-				}
-			}
-			return false
-		}
 
-		for userDuplicate(username, usernames) {
+		for userDuplicate(username) {
 			writeln("Pick a different username")
 			username, err = term.ReadLine()
 			if err != nil {
@@ -125,8 +128,8 @@ Made by Ishan G (@quackduck)`)
 		}
 	})
 
-	fmt.Println("Starting chat server on port 2222")
-	log.Fatal(ssh.ListenAndServe(":2222", nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa")))
+	fmt.Println(fmt.Sprintf("Starting chat server on port %d", PORT))
+	log.Fatal(ssh.ListenAndServe(fmt.Sprintf(":%d", PORT), nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa")))
 }
 
 func sendToSlack(msg string) {
