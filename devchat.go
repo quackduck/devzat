@@ -20,6 +20,7 @@ import (
 var (
 	//go:embed slackAPIURL.txt
 	slackAPIURL []byte
+	slackChan   = getSendToSlackChan()
 	red         = color.New(color.FgHiRed)
 	green       = color.New(color.FgHiGreen)
 	cyan        = color.New(color.FgHiCyan)
@@ -30,12 +31,13 @@ var (
 	usernames   = make([]string, 0, 5)
 	backlog     = make([]string, 0, 10)
 	port        = 2222
+	scrollback  = 16
 )
 
 func broadcast(msg string) {
 	backlog = append(backlog, msg+"\n")
-	sendToSlack(msg)
-	for len(backlog) > 16 { // for instead of if just in case
+	slackChan <- msg
+	for len(backlog) > scrollback { // for instead of if just in case
 		backlog = backlog[1:]
 	}
 	for i := range writers {
@@ -138,16 +140,20 @@ Made by Ishan Goel (@quackduck)`)
 	log.Fatal(ssh.ListenAndServe(fmt.Sprintf(":%d", port), nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa")))
 }
 
-func sendToSlack(msg string) {
+func getSendToSlackChan() chan string {
+	msgs := make(chan string, 10)
 	go func() {
-		msg = stripansi.Strip(msg)
-		r, err := http.Post(string(slackAPIURL), "application/json", strings.NewReader(fmt.Sprintf(`{"text":"%s"}`, msg)))
-		if err != nil {
-			fmt.Println(err)
-			return
+		for msg := range msgs {
+			msg = stripansi.Strip(msg)
+			r, err := http.Post(string(slackAPIURL), "application/json", strings.NewReader(fmt.Sprintf(`{"text":"%s"}`, msg)))
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			_ = r.Body.Close()
 		}
-		_ = r.Body.Close()
 	}()
+	return msgs
 }
 
 func remove(s []string, a string) []string {
