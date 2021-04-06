@@ -45,7 +45,7 @@ func broadcast(msg string) {
 // Returns true if the username is taken, false otherwise
 func userDuplicate(a string) bool {
 	for _, u := range usernames {
-		if u == a {
+		if stripansi.Strip(u) == stripansi.Strip(a) {
 			return true
 		}
 	}
@@ -57,7 +57,8 @@ func main() {
 	var err error
 	ssh.Handle(func(s ssh.Session) {
 		myColor := *colorArr[rand.Intn(len(colorArr))]
-		username := s.User()
+		username := myColor.Sprint(s.User())
+
 		term := terminal.NewTerminal(s, "> ")
 		_ = term.SetSize(10000, 10000) // disable any formatting done by term
 		rand.Seed(time.Now().Unix())
@@ -67,8 +68,6 @@ func main() {
 				_, _ = term.Write([]byte("\a" + msg + "\n")) // "\a" is beep
 			}
 		}
-		writers = append(writers, writeln)
-
 		for userDuplicate(username) {
 			writeln("Pick a different username")
 			username, err = term.ReadLine()
@@ -77,10 +76,11 @@ func main() {
 				fmt.Println(username, err)
 			}
 		}
-		username = myColor.Sprint(username)
-
 		term.SetPrompt(username + ": ")
+
+		writers = append(writers, writeln)
 		usernames = append(usernames, username)
+
 		defer func() {
 			usernames = remove(usernames, username)
 			broadcast(username + red.Sprint(" has left the chat."))
