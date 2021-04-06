@@ -4,9 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
-	"log"
 	"math/rand"
-	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -14,29 +12,34 @@ import (
 	"github.com/acarl005/stripansi"
 	"github.com/fatih/color"
 	"github.com/gliderlabs/ssh"
+	"github.com/slack-go/slack"
 	terminal "golang.org/x/term"
 )
 
 var (
-	//go:embed slackAPIURL.txt
-	slackAPIURL []byte
-	slackChan   = getSendToSlackChan()
-	red         = color.New(color.FgHiRed)
-	green       = color.New(color.FgHiGreen)
-	cyan        = color.New(color.FgHiCyan)
-	magenta     = color.New(color.FgHiMagenta)
-	yellow      = color.New(color.FgHiYellow)
-	colorArr    = []*color.Color{red, green, cyan, magenta, yellow}
-	writers     = make([]func(string), 0, 5)
-	usernames   = make([]string, 0, 5)
-	backlog     = make([]string, 0, 10)
-	port        = 2222
-	scrollback  = 16
+	//go:embed slackAPI.txt
+	slackAPI   []byte
+	slackChan  = getSendToSlackChan()
+	api        = slack.New(string(slackAPI))
+	rtm        = api.NewRTM()
+	red        = color.New(color.FgHiRed)
+	green      = color.New(color.FgHiGreen)
+	cyan       = color.New(color.FgHiCyan)
+	magenta    = color.New(color.FgHiMagenta)
+	yellow     = color.New(color.FgHiYellow)
+	colorArr   = []*color.Color{red, green, cyan, magenta, yellow}
+	writers    = make([]func(string), 0, 5)
+	usernames  = make([]string, 0, 5)
+	backlog    = make([]string, 0, 10)
+	port       = 2222
+	scrollback = 16
 )
 
-func broadcast(msg string) {
+func broadcast(msg string, toSlack bool) {
 	backlog = append(backlog, msg+"\n")
-	slackChan <- msg
+	if toSlack {
+		slackChan <- msg
+	}
 	for len(backlog) > scrollback { // for instead of if just in case
 		backlog = backlog[1:]
 	}
@@ -66,7 +69,7 @@ func main() {
 		_ = term.SetSize(10000, 10000) // disable any formatting done by term
 
 		writeln := func(msg string) {
-			if !strings.HasPrefix(msg, username+":") { // ignore messages sent by same person
+			if !strings.HasPrefix(msg, username+": ") { // ignore messages sent by same person
 				_, _ = term.Write([]byte("\a" + msg + "\n")) // "\a" is beep
 			}
 		}
@@ -86,7 +89,7 @@ func main() {
 
 		defer func() {
 			usernames = remove(usernames, username)
-			broadcast(username + red.Sprint(" has left the chat."))
+			broadcast(username+red.Sprint(" has left the chat."), true)
 			//sendToSlack(username + red.Sprint(" has left the chat."))
 		}()
 		switch len(usernames) - 1 {
@@ -99,7 +102,7 @@ func main() {
 		}
 		_, _ = term.Write([]byte(strings.Join(backlog, ""))) // print out backlog
 
-		broadcast(username + green.Sprint(" has joined the chat"))
+		broadcast(username+green.Sprint(" has joined the chat"), true)
 		//sendToSlack(username + green.Sprint(" has joined the chat"))
 		var line string
 		for {
@@ -114,14 +117,19 @@ func main() {
 				fmt.Println(username, err)
 				continue
 			}
+			toSlack := true
+
+			if strings.HasPrefix(line, "/hide") {
+				toSlack = false
+			}
 			if !(line == "") {
-				broadcast(username + ": " + line)
+				broadcast(username+": "+line, toSlack)
 			}
 			if line == "/users" {
-				broadcast(fmt.Sprint(usernames))
+				broadcast(fmt.Sprint(usernames), toSlack)
 			}
 			if line == "easter" {
-				broadcast("eggs?")
+				broadcast("eggs?", toSlack)
 			}
 			if line == "/exit" {
 				return
@@ -131,26 +139,50 @@ func main() {
    /users   list users
    /exit    leave the chat
    /help    show this help message
-Made by Ishan Goel (@quackduck)`)
+Made by Ishan Goel (@quackduck)`, toSlack)
 			}
 		}
 	})
 
 	fmt.Println(fmt.Sprintf("Starting chat server on port %d", port))
-	log.Fatal(ssh.ListenAndServe(fmt.Sprintf(":%d", port), nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa")))
+	go getMsgsFromSlack()
+	err = ssh.ListenAndServe(fmt.Sprintf(":%d", port), nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"))
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func getMsgsFromSlack() {
+	go rtm.ManageConnection()
+	for msg := range rtm.IncomingEvents {
+		switch ev := msg.Data.(type) {
+		case *slack.MessageEvent:
+			msg := ev.Msg
+			if msg.SubType != "" {
+				break // We're only handling normal messages.
+			}
+			u, _ := api.GetUserInfo(msg.User)
+			if !strings.HasPrefix(msg.Text, "hide") {
+				broadcast("slack: "+u.RealName+": "+msg.Text, false)
+			}
+		case *slack.ConnectedEvent:
+			fmt.Println("Connected to Slack")
+		case *slack.InvalidAuthEvent:
+			fmt.Println("Invalid token")
+			return
+		}
+	}
 }
 
 func getSendToSlackChan() chan string {
-	msgs := make(chan string, 10)
+	msgs := make(chan string, 100)
 	go func() {
 		for msg := range msgs {
-			msg = stripansi.Strip(msg)
-			r, err := http.Post(string(slackAPIURL), "application/json", strings.NewReader(fmt.Sprintf(`{"text":"%s"}`, msg)))
-			if err != nil {
-				fmt.Println(err)
-				return
+			if strings.HasPrefix(msg, "slack: ") { // just in case
+				continue
 			}
-			_ = r.Body.Close()
+			msg = stripansi.Strip(msg)
+			rtm.SendMessage(rtm.NewOutgoingMessage(msg, "C01T5J557AA"))
 		}
 	}()
 	return msgs
