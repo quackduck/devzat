@@ -18,18 +18,19 @@ import (
 
 var (
 	//go:embed slackAPI.txt
-	slackAPI   []byte
-	slackChan  = getSendToSlackChan()
-	api        = slack.New(string(slackAPI))
-	rtm        = api.NewRTM()
-	red        = color.New(color.FgHiRed)
-	green      = color.New(color.FgHiGreen)
-	cyan       = color.New(color.FgHiCyan)
-	magenta    = color.New(color.FgHiMagenta)
-	yellow     = color.New(color.FgHiYellow)
-	colorArr   = []*color.Color{red, green, cyan, magenta, yellow}
-	writers    = make([]func(string), 0, 5)
-	usernames  = make([]string, 0, 5)
+	slackAPI  []byte
+	slackChan = getSendToSlackChan()
+	api       = slack.New(string(slackAPI))
+	rtm       = api.NewRTM()
+	red       = color.New(color.FgHiRed)
+	green     = color.New(color.FgHiGreen)
+	cyan      = color.New(color.FgHiCyan)
+	magenta   = color.New(color.FgHiMagenta)
+	yellow    = color.New(color.FgHiYellow)
+	colorArr  = []*color.Color{red, green, cyan, magenta, yellow}
+	//writers    = make([]func(string), 0, 5) // TODO: make a new type called user that has the writer, session and username
+	//usernames  = make([]string, 0, 5)
+	users      = make([]*user, 0, 10)
 	backlog    = make([]string, 0, 10)
 	port       = 2222
 	scrollback = 16
@@ -43,15 +44,40 @@ func broadcast(msg string, toSlack bool) {
 	for len(backlog) > scrollback { // for instead of if just in case
 		backlog = backlog[1:]
 	}
-	for i := range writers {
-		writers[i](msg)
+	for i := range users {
+		users[i].writeln(msg)
 	}
+}
+
+type user struct {
+	name    string
+	session ssh.Session
+	term    *terminal.Terminal
+}
+
+func (u *user) writeln(msg string) {
+	if !strings.HasPrefix(msg, u.name+": ") { // ignore messages sent by same person
+		_, _ = u.term.Write([]byte("\a" + msg + "\n")) // "\a" is beep
+	}
+}
+func (u *user) pickNewUsername(possibleName string, color color.Color) {
+	var err error
+	for userDuplicate(possibleName) {
+		u.writeln("Pick a different username")
+		possibleName, err = u.term.ReadLine()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+	possibleName = color.Sprint(possibleName)
+	u.term.SetPrompt(possibleName + ": ")
+	u.name = possibleName
 }
 
 // Returns true if the username is taken, false otherwise
 func userDuplicate(a string) bool {
-	for _, u := range usernames {
-		if stripansi.Strip(u) == stripansi.Strip(a) {
+	for i := range users {
+		if stripansi.Strip(users[i].name) == stripansi.Strip(a) {
 			return true
 		}
 	}
@@ -68,42 +94,36 @@ func main() {
 		term := terminal.NewTerminal(s, "> ")
 		_ = term.SetSize(10000, 10000) // disable any formatting done by term
 
-		writeln := func(msg string) {
-			if !strings.HasPrefix(msg, username+": ") { // ignore messages sent by same person
-				_, _ = term.Write([]byte("\a" + msg + "\n")) // "\a" is beep
-			}
-		}
 		for userDuplicate(username) {
-			writeln("Pick a different username")
+			term.Write([]byte("Pick a different username\n"))
 			username, err = term.ReadLine()
 			if err != nil {
-				writeln(fmt.Sprint(err))
-				fmt.Println(username, err)
+				fmt.Println(err)
 			}
 		}
 		username = myColor.Sprint(username)
 		term.SetPrompt(username + ": ")
 
-		writers = append(writers, writeln)
-		usernames = append(usernames, username)
+		u := &user{username, s, term}
+		fmt.Println(*u, u)
+		users = append(users, u)
+		fmt.Println(users)
 
 		defer func() {
-			usernames = remove(usernames, username)
-			broadcast(username+red.Sprint(" has left the chat."), true)
-			//sendToSlack(username + red.Sprint(" has left the chat."))
+			users = remove(users, u)
+			broadcast(u.name+red.Sprint(" has left the chat."), true)
 		}()
-		switch len(usernames) - 1 {
+		switch len(users) - 1 {
 		case 0:
-			writeln(cyan.Sprint("Welcome to the chat. There are no more users"))
+			u.writeln(cyan.Sprint("Welcome to the chat. There are no more users"))
 		case 1:
-			writeln(cyan.Sprint("Welcome to the chat. There is one more user"))
+			u.writeln(cyan.Sprint("Welcome to the chat. There is one more user"))
 		default:
-			writeln(cyan.Sprint("Welcome to the chat. There are ", len(usernames)-1, " more users"))
+			u.writeln(cyan.Sprint("Welcome to the chat. There are ", len(users)-1, " more users"))
 		}
 		_, _ = term.Write([]byte(strings.Join(backlog, ""))) // print out backlog
 
-		broadcast(username+green.Sprint(" has joined the chat"), true)
-		//sendToSlack(username + green.Sprint(" has joined the chat"))
+		broadcast(u.name+green.Sprint(" has joined the chat"), true)
 		var line string
 		for {
 			line, err = term.ReadLine()
@@ -113,8 +133,8 @@ func main() {
 				return
 			}
 			if err != nil {
-				writeln(fmt.Sprint(err))
-				fmt.Println(username, err)
+				u.writeln(fmt.Sprint(err))
+				fmt.Println(u.name, err)
 				continue
 			}
 			toSlack := true
@@ -123,16 +143,23 @@ func main() {
 				toSlack = false
 			}
 			if !(line == "") {
-				broadcast(username+": "+line, toSlack)
+				broadcast(u.name+": "+line, toSlack)
 			}
 			if line == "/users" {
-				broadcast(fmt.Sprint(usernames), toSlack)
+				names := make([]string, 0, len(users))
+				for _, us := range users {
+					names = append(names, us.name)
+				}
+				broadcast(fmt.Sprint(names), toSlack)
 			}
 			if line == "easter" {
 				broadcast("eggs?", toSlack)
 			}
 			if line == "/exit" {
 				return
+			}
+			if strings.HasPrefix(line, "/nick") {
+				u.pickNewUsername(strings.TrimSpace(strings.TrimPrefix(line, "/nick")), myColor)
 			}
 			if line == "/help" {
 				broadcast(`Available commands:
@@ -189,7 +216,7 @@ func getSendToSlackChan() chan string {
 	return msgs
 }
 
-func remove(s []string, a string) []string {
+func remove(s []*user, a *user) []*user {
 	var i int
 	for i = range s {
 		if s[i] == a {
