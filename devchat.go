@@ -139,6 +139,7 @@ func main() {
    /users   list users
    /exit    leave the chat
    /help    show this help message
+   /hide    hide messages from HC Slack
 Made by Ishan Goel (@quackduck)`, toSlack)
 			}
 		}
