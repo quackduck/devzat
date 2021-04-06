@@ -60,7 +60,7 @@ func (u *user) writeln(msg string) {
 		_, _ = u.term.Write([]byte("\a" + msg + "\n")) // "\a" is beep
 	}
 }
-func (u *user) pickNewUsername(possibleName string, color color.Color) {
+func (u *user) pickNewUsername(possibleName string) {
 	var err error
 	for userDuplicate(possibleName) {
 		u.writeln("Pick a different username")
@@ -69,9 +69,14 @@ func (u *user) pickNewUsername(possibleName string, color color.Color) {
 			fmt.Println(err)
 		}
 	}
-	possibleName = color.Sprint(possibleName)
+	possibleName = (*colorArr[rand.Intn(len(colorArr))]).Sprint(possibleName)
 	u.term.SetPrompt(possibleName + ": ")
 	u.name = possibleName
+}
+
+func (u *user) changeColor(color color.Color) {
+	u.name = color.Sprint(u.name)
+	u.term.SetPrompt(u.name + ": ")
 }
 
 // Returns true if the username is taken, false otherwise
@@ -144,6 +149,8 @@ func main() {
 			}
 			if !(line == "") {
 				broadcast(u.name+": "+line, toSlack)
+			} else {
+				continue
 			}
 			if line == "/users" {
 				names := make([]string, 0, len(users))
@@ -159,11 +166,29 @@ func main() {
 				return
 			}
 			if strings.HasPrefix(line, "/nick") {
-				u.pickNewUsername(strings.TrimSpace(strings.TrimPrefix(line, "/nick")), myColor)
+				u.pickNewUsername(strings.TrimSpace(strings.TrimPrefix(line, "/nick")))
+			}
+			if strings.HasPrefix(line, "/color") {
+				switch strings.Fields(line)[1] {
+				case "green":
+					u.changeColor(*green)
+				case "cyan", "blue":
+					u.changeColor(*cyan)
+				case "red", "orange":
+					u.changeColor(*red)
+				case "magenta", "purple", "pink":
+					u.changeColor(*magenta)
+				case "yellow", "beige":
+					u.changeColor(*yellow)
+				default:
+					u.writeln("Which color? Choose from green, cyan (blue), red (orange), magenta (purple, pink) and yellow (beige).")
+				}
 			}
 			if line == "/help" {
 				broadcast(`Available commands:
    /users   list users
+   /nick    change your name
+   /color   change your name color
    /exit    leave the chat
    /help    show this help message
    /hide    hide messages from HC Slack
