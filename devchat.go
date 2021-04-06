@@ -29,6 +29,7 @@ var (
 	writers     = make([]func(string), 0, 5)
 	usernames   = make([]string, 0, 5)
 	backlog     = make([]string, 0, 10)
+	port        = 2222
 )
 
 func broadcast(msg string) {
@@ -53,15 +54,14 @@ func userDuplicate(a string) bool {
 }
 
 func main() {
-	const PORT = 2222
+	rand.Seed(time.Now().Unix())
 	var err error
 	ssh.Handle(func(s ssh.Session) {
 		myColor := *colorArr[rand.Intn(len(colorArr))]
-		username := myColor.Sprint(s.User())
+		username := s.User()
 
 		term := terminal.NewTerminal(s, "> ")
 		_ = term.SetSize(10000, 10000) // disable any formatting done by term
-		rand.Seed(time.Now().Unix())
 
 		writeln := func(msg string) {
 			if !strings.HasPrefix(msg, username+":") { // ignore messages sent by same person
@@ -76,6 +76,7 @@ func main() {
 				fmt.Println(username, err)
 			}
 		}
+		username = myColor.Sprint(username)
 		term.SetPrompt(username + ": ")
 
 		writers = append(writers, writeln)
@@ -117,6 +118,9 @@ func main() {
 			if line == "/users" {
 				broadcast(fmt.Sprint(usernames))
 			}
+			if line == "easter" {
+				broadcast("eggs?")
+			}
 			if line == "/exit" {
 				return
 			}
@@ -125,13 +129,13 @@ func main() {
    /users   list users
    /exit    leave the chat
    /help    show this help message
-Made by Ishan G (@quackduck)`)
+Made by Ishan Goel (@quackduck)`)
 			}
 		}
 	})
 
-	fmt.Println(fmt.Sprintf("Starting chat server on port %d", PORT))
-	log.Fatal(ssh.ListenAndServe(fmt.Sprintf(":%d", PORT), nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa")))
+	fmt.Println(fmt.Sprintf("Starting chat server on port %d", port))
+	log.Fatal(ssh.ListenAndServe(fmt.Sprintf(":%d", port), nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa")))
 }
 
 func sendToSlack(msg string) {
