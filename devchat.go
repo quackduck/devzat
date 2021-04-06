@@ -18,25 +18,23 @@ import (
 
 var (
 	//go:embed slackAPI.txt
-	slackAPI  []byte
-	slackChan = getSendToSlackChan()
-	api       = slack.New(string(slackAPI))
-	rtm       = api.NewRTM()
-	red       = color.New(color.FgHiRed)
-	green     = color.New(color.FgHiGreen)
-	cyan      = color.New(color.FgHiCyan)
-	magenta   = color.New(color.FgHiMagenta)
-	yellow    = color.New(color.FgHiYellow)
-	blue      = color.New(color.FgHiBlue)
-	black     = color.New(color.FgHiBlack)
-	white     = color.New(color.FgHiWhite)
-	colorArr  = []*color.Color{green, cyan, magenta, yellow}
-	//writers    = make([]func(string), 0, 5) // TODO: make a new type called user that has the writer, session and username
-	//usernames  = make([]string, 0, 5)
+	slackAPI   []byte
+	slackChan  = getSendToSlackChan()
+	api        = slack.New(string(slackAPI))
+	rtm        = api.NewRTM()
+	red        = color.New(color.FgHiRed)
+	green      = color.New(color.FgHiGreen)
+	cyan       = color.New(color.FgHiCyan)
+	magenta    = color.New(color.FgHiMagenta)
+	yellow     = color.New(color.FgHiYellow)
+	blue       = color.New(color.FgHiBlue)
+	black      = color.New(color.FgHiBlack)
+	white      = color.New(color.FgHiWhite)
+	colorArr   = []*color.Color{green, cyan, magenta, yellow, white}
 	users      = make([]*user, 0, 10)
-	backlog    = make([]string, 0, 10)
 	port       = 2222
 	scrollback = 16
+	backlog    = make([]string, 0, scrollback)
 )
 
 func broadcast(msg string, toSlack bool) {
@@ -172,8 +170,9 @@ func main() {
 			}
 			if strings.HasPrefix(line, "/color") {
 				parsed := strings.Fields(line)
+				colorMsg := "Which color? Choose from green, cyan, blue, red (orange), magenta (purple, pink), yellow (beige), white (cream) and black (gray, grey)."
 				if len(parsed) < 2 {
-					u.writeln("Which color? Choose from green, cyan (blue), red (orange), magenta (purple, pink) and yellow (beige).")
+					u.writeln(colorMsg)
 				} else {
 					switch parsed[1] {
 					case "green":
@@ -191,7 +190,7 @@ func main() {
 					case "black", "gray", "grey":
 						u.changeColor(*black)
 					default:
-						u.writeln("Which color? Choose from green, cyan, blue, red (orange), magenta (purple, pink), yellow (beige), white (cream) and black (gray, grey).")
+						u.writeln(colorMsg)
 					}
 				}
 			}
