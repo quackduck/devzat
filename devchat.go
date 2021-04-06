@@ -27,7 +27,10 @@ var (
 	cyan      = color.New(color.FgHiCyan)
 	magenta   = color.New(color.FgHiMagenta)
 	yellow    = color.New(color.FgHiYellow)
-	colorArr  = []*color.Color{red, green, cyan, magenta, yellow}
+	blue      = color.New(color.FgHiBlue)
+	black     = color.New(color.FgHiBlack)
+	white     = color.New(color.FgHiWhite)
+	colorArr  = []*color.Color{green, cyan, magenta, yellow}
 	//writers    = make([]func(string), 0, 5) // TODO: make a new type called user that has the writer, session and username
 	//usernames  = make([]string, 0, 5)
 	users      = make([]*user, 0, 10)
@@ -64,6 +67,7 @@ func (u *user) pickNewUsername(possibleName string) {
 	var err error
 	for userDuplicate(possibleName) {
 		u.writeln("Pick a different username")
+		u.term.SetPrompt(">")
 		possibleName, err = u.term.ReadLine()
 		if err != nil {
 			fmt.Println(err)
@@ -75,7 +79,7 @@ func (u *user) pickNewUsername(possibleName string) {
 }
 
 func (u *user) changeColor(color color.Color) {
-	u.name = color.Sprint(u.name)
+	u.name = color.Sprint(stripansi.Strip(u.name))
 	u.term.SetPrompt(u.name + ": ")
 }
 
@@ -110,9 +114,7 @@ func main() {
 		term.SetPrompt(username + ": ")
 
 		u := &user{username, s, term}
-		fmt.Println(*u, u)
 		users = append(users, u)
-		fmt.Println(users)
 
 		defer func() {
 			users = remove(users, u)
@@ -169,19 +171,28 @@ func main() {
 				u.pickNewUsername(strings.TrimSpace(strings.TrimPrefix(line, "/nick")))
 			}
 			if strings.HasPrefix(line, "/color") {
-				switch strings.Fields(line)[1] {
-				case "green":
-					u.changeColor(*green)
-				case "cyan", "blue":
-					u.changeColor(*cyan)
-				case "red", "orange":
-					u.changeColor(*red)
-				case "magenta", "purple", "pink":
-					u.changeColor(*magenta)
-				case "yellow", "beige":
-					u.changeColor(*yellow)
-				default:
+				parsed := strings.Fields(line)
+				if len(parsed) < 2 {
 					u.writeln("Which color? Choose from green, cyan (blue), red (orange), magenta (purple, pink) and yellow (beige).")
+				} else {
+					switch parsed[1] {
+					case "green":
+						u.changeColor(*green)
+					case "cyan", "blue":
+						u.changeColor(*cyan)
+					case "red", "orange":
+						u.changeColor(*red)
+					case "magenta", "purple", "pink":
+						u.changeColor(*magenta)
+					case "yellow", "beige":
+						u.changeColor(*yellow)
+					case "white", "cream":
+						u.changeColor(*white)
+					case "black", "gray", "grey":
+						u.changeColor(*black)
+					default:
+						u.writeln("Which color? Choose from green, cyan, blue, red (orange), magenta (purple, pink), yellow (beige), white (cream) and black (gray, grey).")
+					}
 				}
 			}
 			if line == "/help" {
