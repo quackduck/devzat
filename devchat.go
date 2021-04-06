@@ -33,6 +33,7 @@ var (
 
 func broadcast(msg string) {
 	backlog = append(backlog, msg+"\n")
+	sendToSlack(msg)
 	for len(backlog) > 16 { // for instead of if just in case
 		backlog = backlog[1:]
 	}
@@ -83,7 +84,7 @@ func main() {
 		defer func() {
 			usernames = remove(usernames, username)
 			broadcast(username + red.Sprint(" has left the chat."))
-			sendToSlack(username + red.Sprint(" has left the chat."))
+			//sendToSlack(username + red.Sprint(" has left the chat."))
 		}()
 		switch len(usernames) - 1 {
 		case 0:
@@ -96,7 +97,7 @@ func main() {
 		_, _ = term.Write([]byte(strings.Join(backlog, ""))) // print out backlog
 
 		broadcast(username + green.Sprint(" has joined the chat"))
-		sendToSlack(username + green.Sprint(" has joined the chat"))
+		//sendToSlack(username + green.Sprint(" has joined the chat"))
 		var line string
 		for {
 			line, err = term.ReadLine()
