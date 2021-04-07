@@ -57,9 +57,14 @@ type user struct {
 }
 
 func (u *user) writeln(msg string) {
-	if !strings.HasPrefix(msg, u.name+": ") { // ignore messages sent by same person
-		_, _ = u.term.Write([]byte("\a" + msg + "\n")) // "\a" is beep
-	}
+	//if !strings.HasPrefix(msg, u.name+": ") { // ignore messages sent by same person
+	u.write(msg + "\n") // "\a" is beep
+	//}
+}
+func (u *user) write(msg string) {
+	//if !strings.HasPrefix(msg, u.name+": ") { // ignore messages sent by same person
+	_, _ = u.term.Write([]byte("\a" + msg)) // "\a" is beep
+	//}
 }
 func (u *user) pickNewUsername(possibleName string) {
 	var err error
@@ -72,13 +77,13 @@ func (u *user) pickNewUsername(possibleName string) {
 		}
 	}
 	possibleName = (*colorArr[rand.Intn(len(colorArr))]).Sprint(possibleName)
-	u.term.SetPrompt(possibleName + ": ")
+	u.term.SetPrompt("      " + possibleName + ": ")
 	u.name = possibleName
 }
 
 func (u *user) changeColor(color color.Color) {
 	u.name = color.Sprint(stripansi.Strip(u.name))
-	u.term.SetPrompt(u.name + ": ")
+	u.term.SetPrompt("      " + u.name + ": ")
 }
 
 // Returns true if the username is taken, false otherwise
@@ -109,7 +114,7 @@ func main() {
 			}
 		}
 		username = myColor.Sprint(username)
-		term.SetPrompt(username + ": ")
+		term.SetPrompt("      " + username + ": ")
 
 		u := &user{username, s, term}
 		users = append(users, u)
@@ -142,13 +147,15 @@ func main() {
 				fmt.Println(u.name, err)
 				continue
 			}
+			u.write("\033[A\033[2K")
+
 			toSlack := true
 
 			if strings.HasPrefix(line, "/hide") {
 				toSlack = false
 			}
 			if !(line == "") {
-				broadcast(u.name+": "+line, toSlack)
+				broadcast(time.Now().Format("3:04")+" "+u.name+": "+line, toSlack)
 			} else {
 				continue
 			}
@@ -172,7 +179,7 @@ func main() {
 				parsed := strings.Fields(line)
 				colorMsg := "Which color? Choose from green, cyan, blue, red (orange), magenta (purple, pink), yellow (beige), white (cream) and black (gray, grey)."
 				if len(parsed) < 2 {
-					u.writeln(colorMsg)
+					broadcast(colorMsg, toSlack)
 				} else {
 					switch parsed[1] {
 					case "green":
@@ -190,7 +197,7 @@ func main() {
 					case "black", "gray", "grey":
 						u.changeColor(*black)
 					default:
-						u.writeln(colorMsg)
+						broadcast(colorMsg, toSlack)
 					}
 				}
 			}
