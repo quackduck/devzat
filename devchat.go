@@ -6,6 +6,7 @@ import (
 	"io"
 	"math/rand"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -32,7 +33,7 @@ var (
 	white      = color.New(color.FgHiWhite)
 	colorArr   = []*color.Color{green, cyan, magenta, yellow, white}
 	users      = make([]*user, 0, 10)
-	port       = 2222
+	port       = 22
 	scrollback = 16
 	backlog    = make([]string, 0, scrollback)
 )
@@ -54,24 +55,31 @@ type user struct {
 	name    string
 	session ssh.Session
 	term    *terminal.Terminal
+	bell    bool
+	color   color.Color
 }
 
 func (u *user) writeln(msg string) {
 	if !strings.HasPrefix(msg, u.name+": ") { // ignore messages sent by same person
-		_, _ = u.term.Write([]byte("\a" + msg + "\n")) // "\a" is beep
+		if u.bell {
+			u.term.Write([]byte("\a" + msg + "\n")) // "\a" is beep
+		} else {
+			u.term.Write([]byte(msg + "\n"))
+		}
 	}
 }
 func (u *user) pickNewUsername(possibleName string) {
 	var err error
 	for userDuplicate(possibleName) {
 		u.writeln("Pick a different username")
-		u.term.SetPrompt(">")
+		u.term.SetPrompt("> ")
 		possibleName, err = u.term.ReadLine()
 		if err != nil {
 			fmt.Println(err)
 		}
 	}
-	possibleName = (*colorArr[rand.Intn(len(colorArr))]).Sprint(possibleName)
+	u.color = *colorArr[rand.Intn(len(colorArr))]
+	possibleName = u.color.Sprint(possibleName)
 	u.term.SetPrompt(possibleName + ": ")
 	u.name = possibleName
 }
@@ -95,23 +103,13 @@ func main() {
 	rand.Seed(time.Now().Unix())
 	var err error
 	ssh.Handle(func(s ssh.Session) {
-		myColor := *colorArr[rand.Intn(len(colorArr))]
-		username := s.User()
+		//myColor := *colorArr[rand.Intn(len(colorArr))]
 
 		term := terminal.NewTerminal(s, "> ")
 		_ = term.SetSize(10000, 10000) // disable any formatting done by term
 
-		for userDuplicate(username) {
-			term.Write([]byte("Pick a different username\n"))
-			username, err = term.ReadLine()
-			if err != nil {
-				fmt.Println(err)
-			}
-		}
-		username = myColor.Sprint(username)
-		term.SetPrompt(username + ": ")
-
-		u := &user{username, s, term}
+		u := &user{"", s, term, true, color.Color{}}
+		u.pickNewUsername(s.User())
 		users = append(users, u)
 
 		defer func() {
@@ -150,6 +148,7 @@ func main() {
 			if !(line == "") {
 				broadcast(u.name+": "+line, toSlack)
 			} else {
+				u.writeln("An empty message? Send some content!")
 				continue
 			}
 			if line == "/users" {
@@ -165,6 +164,10 @@ func main() {
 			if line == "/exit" {
 				return
 			}
+			if line == "/bell" {
+				u.bell = !u.bell
+				broadcast(fmt.Sprint("bell: ", u.bell), toSlack)
+			}
 			if strings.HasPrefix(line, "/nick") {
 				u.pickNewUsername(strings.TrimSpace(strings.TrimPrefix(line, "/nick")))
 			}
@@ -172,13 +175,15 @@ func main() {
 				parsed := strings.Fields(line)
 				colorMsg := "Which color? Choose from green, cyan, blue, red (orange), magenta (purple, pink), yellow (beige), white (cream) and black (gray, grey)."
 				if len(parsed) < 2 {
-					u.writeln(colorMsg)
+					broadcast(colorMsg, toSlack)
 				} else {
 					switch parsed[1] {
 					case "green":
 						u.changeColor(*green)
-					case "cyan", "blue":
+					case "cyan":
 						u.changeColor(*cyan)
+					case "blue":
+						u.changeColor(*blue)
 					case "red", "orange":
 						u.changeColor(*red)
 					case "magenta", "purple", "pink":
@@ -189,8 +194,12 @@ func main() {
 						u.changeColor(*white)
 					case "black", "gray", "grey":
 						u.changeColor(*black)
+					case "easter":
+						u.changeColor(*color.New(color.BgHiMagenta, color.FgHiGreen))
+					case "baby":
+						u.changeColor(*color.New(color.BgBlue, color.FgHiMagenta))
 					default:
-						u.writeln(colorMsg)
+						broadcast(colorMsg, toSlack)
 					}
 				}
 			}
@@ -198,6 +207,7 @@ func main() {
 				broadcast(`Available commands:
    /users   list users
    /nick    change your name
+   /bell    toggle the ascii bell
    /color   change your name color
    /exit    leave the chat
    /help    show this help message
@@ -206,10 +216,17 @@ Made by Ishan Goel (@quackduck)`, toSlack)
 			}
 		}
 	})
+	if os.Getenv("PORT") != "" {
+		port, err = strconv.Atoi(os.Getenv("PORT"))
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
 
 	fmt.Println(fmt.Sprintf("Starting chat server on port %d", port))
 	go getMsgsFromSlack()
-	err = ssh.ListenAndServe(fmt.Sprintf(":%d", port), nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"))
+	err = ssh.ListenAndServe(fmt.Sprintf(":%d", port), nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"), ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool { return true }))
 	if err != nil {
 		fmt.Println(err)
 	}
