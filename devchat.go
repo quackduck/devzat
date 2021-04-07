@@ -14,6 +14,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/gliderlabs/ssh"
 	"github.com/slack-go/slack"
+	gossh "golang.org/x/crypto/ssh"
 	terminal "golang.org/x/term"
 )
 
@@ -86,6 +87,7 @@ func (u *user) pickNewUsername(possibleName string) {
 
 func (u *user) changeColor(color color.Color) {
 	u.name = color.Sprint(stripansi.Strip(u.name))
+	u.color = color
 	u.term.SetPrompt(u.name + ": ")
 }
 
@@ -168,40 +170,49 @@ func main() {
 				u.bell = !u.bell
 				broadcast(fmt.Sprint("bell: ", u.bell), toSlack)
 			}
+			if strings.HasPrefix(line, "/id") {
+				victim, ok := findUserByName(strings.TrimSpace(strings.TrimPrefix(line, "/id")))
+				if !ok {
+					broadcast("User not found", toSlack)
+				} else {
+					broadcast(strings.TrimSpace(string(gossh.MarshalAuthorizedKey(victim.session.PublicKey()))), toSlack)
+				}
+			}
 			if strings.HasPrefix(line, "/nick") {
 				u.pickNewUsername(strings.TrimSpace(strings.TrimPrefix(line, "/nick")))
 			}
 			if strings.HasPrefix(line, "/color") {
-				parsed := strings.Fields(line)
 				colorMsg := "Which color? Choose from green, cyan, blue, red (orange), magenta (purple, pink), yellow (beige), white (cream) and black (gray, grey)."
-				if len(parsed) < 2 {
+				//if len(parsed) < 2 {
+				//	broadcast(colorMsg, toSlack)
+				//} else {
+				switch strings.TrimPrefix(line, "/color") {
+				case "green":
+					u.changeColor(*green)
+				case "cyan":
+					u.changeColor(*cyan)
+				case "blue":
+					u.changeColor(*blue)
+				case "red", "orange":
+					u.changeColor(*red)
+				case "magenta", "purple", "pink":
+					u.changeColor(*magenta)
+				case "yellow", "beige":
+					u.changeColor(*yellow)
+				case "white", "cream":
+					u.changeColor(*white)
+				case "black", "gray", "grey":
+					u.changeColor(*black)
+				case "easter":
+					u.changeColor(*color.New(color.BgHiMagenta, color.FgHiGreen))
+				case "baby":
+					u.changeColor(*color.New(color.BgBlue, color.FgHiMagenta))
+				case "l33t":
+					u.changeColor(*u.color.Add(color.BgHiBlack))
+				default:
 					broadcast(colorMsg, toSlack)
-				} else {
-					switch parsed[1] {
-					case "green":
-						u.changeColor(*green)
-					case "cyan":
-						u.changeColor(*cyan)
-					case "blue":
-						u.changeColor(*blue)
-					case "red", "orange":
-						u.changeColor(*red)
-					case "magenta", "purple", "pink":
-						u.changeColor(*magenta)
-					case "yellow", "beige":
-						u.changeColor(*yellow)
-					case "white", "cream":
-						u.changeColor(*white)
-					case "black", "gray", "grey":
-						u.changeColor(*black)
-					case "easter":
-						u.changeColor(*color.New(color.BgHiMagenta, color.FgHiGreen))
-					case "baby":
-						u.changeColor(*color.New(color.BgBlue, color.FgHiMagenta))
-					default:
-						broadcast(colorMsg, toSlack)
-					}
 				}
+				//}
 			}
 			if line == "/help" {
 				broadcast(`Available commands:
@@ -209,6 +220,7 @@ func main() {
    /nick    change your name
    /bell    toggle the ascii bell
    /color   change your name color
+   /id      get a unique identifier for a user
    /exit    leave the chat
    /help    show this help message
    /hide    hide messages from HC Slack
@@ -226,7 +238,11 @@ Made by Ishan Goel (@quackduck)`, toSlack)
 
 	fmt.Println(fmt.Sprintf("Starting chat server on port %d", port))
 	go getMsgsFromSlack()
-	err = ssh.ListenAndServe(fmt.Sprintf(":%d", port), nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"), ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool { return true }))
+	err = ssh.ListenAndServe(
+		fmt.Sprintf(":%d", port),
+		nil,
+		ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"),
+		ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool { return true }))
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -266,6 +282,15 @@ func getSendToSlackChan() chan string {
 		}
 	}()
 	return msgs
+}
+
+func findUserByName(name string) (*user, bool) {
+	for _, u := range users {
+		if stripansi.Strip(u.name) == name {
+			return u, true
+		}
+	}
+	return nil, false
 }
 
 func remove(s []*user, a *user) []*user {
