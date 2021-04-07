@@ -1,7 +1,9 @@
 package main
 
 import (
+	"crypto/sha256"
 	_ "embed"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"math/rand"
@@ -175,7 +177,9 @@ func main() {
 				if !ok {
 					broadcast("User not found", toSlack)
 				} else {
-					broadcast(strings.TrimSpace(string(gossh.MarshalAuthorizedKey(victim.session.PublicKey()))), toSlack)
+					hash := sha256.New()
+					hash.Write([]byte(strings.TrimSpace(string(gossh.MarshalAuthorizedKey(victim.session.PublicKey())))))
+					broadcast(hex.EncodeToString(hash.Sum(nil)), toSlack)
 				}
 			}
 			if strings.HasPrefix(line, "/nick") {
