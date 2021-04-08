@@ -1,5 +1,8 @@
-# Devchat
-Chat over SSH
+# Devsat
+
+Where are the devs at? Devsat!
+
+Devsat is chat over SSH
 
 Try it out:
 
