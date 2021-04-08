@@ -20,3 +20,5 @@ Now you can join with just:
 ```sh
 ssh chat
 ```
+
+We also have a Slack bridge! If you're on the [Hack Club](https://hackclub.com) Slack, check out the `#ssh-chat-bridge` channel!
