@@ -6,8 +6,13 @@ import (
 	"encoding/gob"
 	"encoding/hex"
 	"fmt"
-	gossh "golang.org/x/crypto/ssh"
+	"github.com/acarl005/stripansi"
+	"github.com/fatih/color"
+	"github.com/gliderlabs/ssh"
+	"github.com/slack-go/slack"
+	terminal "golang.org/x/term"
 	"io"
+	"log"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -16,12 +21,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
-
-	"github.com/acarl005/stripansi"
-	"github.com/fatih/color"
-	"github.com/gliderlabs/ssh"
-	"github.com/slack-go/slack"
-	terminal "golang.org/x/term"
+	"unicode"
 )
 
 var (
@@ -46,6 +46,9 @@ var (
 	port       = 22
 	scrollback = 16
 	backlog    = make([]string, 0, scrollback)
+
+	logfile, _ = os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	l          = log.New(logfile, "", log.Ldate|log.Ltime|log.Lshortfile)
 )
 
 func broadcast(msg string, toSlack bool) {
@@ -76,8 +79,10 @@ func newUser(s ssh.Session) *user {
 	_ = term.SetSize(10000, 10000) // disable any formatting done by term
 
 	hash := sha256.New()
-	hash.Write([]byte(strings.TrimSpace(string(gossh.MarshalAuthorizedKey(s.PublicKey())))))
+	hash.Write([]byte(s.RemoteAddr().String()))
 	u := &user{"", s, term, true, color.Color{}, hex.EncodeToString(hash.Sum(nil)), sync.Once{}}
+	//u := &user{"", s, term, true, color.Color{}, s.RemoteAddr().String(), sync.Once{}}
+
 	u.pickUsername(s.User())
 	users = append(users, u)
 	allUsers[u.id] = u.name
@@ -141,7 +146,11 @@ func (u *user) repl() {
 		}
 		if line == "/bell" {
 			u.bell = !u.bell
-			broadcast(fmt.Sprint("bell: ", u.bell), toSlack)
+			if u.bell {
+				broadcast(fmt.Sprint("bell on"), toSlack)
+			} else {
+				broadcast(fmt.Sprint("bell off"), toSlack)
+			}
 		}
 		if strings.HasPrefix(line, "/id") {
 			victim, ok := findUserByName(strings.TrimSpace(strings.TrimPrefix(line, "/id")))
@@ -165,14 +174,14 @@ func (u *user) repl() {
 					fmt.Println(u.name, err)
 				}
 				if strings.TrimSpace(pass) == strings.TrimSpace(string(adminPass)) {
-					victim.close(true, u)
+					victim.close(victim.name + red.Sprint(" has been kicked by ") + u.name)
 				} else {
 					broadcast("Incorrect password", toSlack)
 				}
 			}
 		}
 		if strings.HasPrefix(line, "/color") {
-			colorMsg := "Which color? Choose from green, cyan, blue, red (orange), magenta (purple, pink), yellow (beige), white (cream) and black (gray, grey)."
+			colorMsg := "Which color? Choose from green, cyan, blue, red/orange, magenta/purple/pink, yellow/beige, white/cream and black/gray/grey.\nThere's also a few secret colors :)"
 			switch strings.TrimSpace(strings.TrimPrefix(line, "/color")) {
 			case "green":
 				u.changeColor(*green)
@@ -190,12 +199,17 @@ func (u *user) repl() {
 				u.changeColor(*white)
 			case "black", "gray", "grey":
 				u.changeColor(*black)
+				// secret colors
 			case "easter":
-				u.changeColor(*color.New(color.BgHiMagenta, color.FgHiGreen))
+				u.changeColor(*color.New(color.BgMagenta, color.FgHiYellow))
 			case "baby":
 				u.changeColor(*color.New(color.BgBlue, color.FgHiMagenta))
 			case "l33t":
 				u.changeColor(*u.color.Add(color.BgHiBlack))
+			case "whiten":
+				u.changeColor(*u.color.Add(color.BgWhite))
+			case "hacker":
+				u.changeColor(*color.New(color.FgHiGreen, color.BgBlack))
 			default:
 				broadcast(colorMsg, toSlack)
 			}
@@ -218,14 +232,14 @@ Thanks to Caleb Denio for lending me his server!`, toSlack)
 	}
 }
 
-func (u *user) close(kicked bool, kicker *user) {
+func (u *user) close(msg string) {
 	u.closeOnce.Do(func() {
 		users = remove(users, u)
-		if kicked {
-			broadcast(u.name+red.Sprint(" has been kicked by ")+kicker.name, true)
-		} else {
-			broadcast(u.name+red.Sprint(" has left the chat"), true)
-		}
+		//if kicked {
+		broadcast(msg, true)
+		//} else {
+		//	broadcast(u.name+red.Sprint(" has left the chat"), true)
+		//}
 		u.session.Close()
 	})
 }
@@ -241,7 +255,15 @@ func (u *user) writeln(msg string) {
 }
 
 func (u *user) pickUsername(possibleName string) {
+	var s string
+	s = ""
 	possibleName = strings.TrimSpace(possibleName)
+	for _, r := range possibleName {
+		if unicode.IsGraphic(r) {
+			s += string(r)
+		}
+	}
+	possibleName = s
 	var err error
 	for userDuplicate(possibleName) {
 		u.writeln("Pick a different username")
@@ -250,7 +272,14 @@ func (u *user) pickUsername(possibleName string) {
 		if err != nil {
 			fmt.Println(err)
 		}
+		s = ""
 		possibleName = strings.TrimSpace(possibleName)
+		for _, r := range possibleName {
+			if unicode.IsGraphic(r) {
+				s += string(r)
+			}
+		}
+		possibleName = s
 	}
 	u.color = *colorArr[rand.Intn(len(colorArr))]
 	possibleName = u.color.Sprint(possibleName)
@@ -274,7 +303,7 @@ func userDuplicate(a string) bool {
 	return false
 }
 
-func saveAllUsersToLog() {
+func saveAllUsersToFile() {
 	f, err := os.Create("allUsers.gob")
 	if err != nil {
 		fmt.Println(err)
@@ -295,16 +324,17 @@ func main() {
 	d := gob.NewDecoder(f)
 	d.Decode(&allUsers)
 	c := make(chan os.Signal)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGKILL)
 	go func() {
 		<-c
-		saveAllUsersToLog()
+		saveAllUsersToFile()
+		broadcast("Server going down! This is probably because it is being updated. Try again in a minute.\nIf you still can't join, make an issues at github.com/quackduck/issues", true)
 		os.Exit(0)
 	}()
 	ssh.Handle(func(s ssh.Session) {
 		u := newUser(s)
 		u.repl()
-		u.close(false, nil)
+		u.close(u.name + red.Sprint(" has left the chat"))
 	})
 	if os.Getenv("PORT") != "" {
 		port, err = strconv.Atoi(os.Getenv("PORT"))
@@ -323,6 +353,7 @@ func main() {
 		ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool { return true }))
 	if err != nil {
 		fmt.Println(err)
+		l.Println(err)
 	}
 }
 
