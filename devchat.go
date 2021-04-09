@@ -6,11 +6,6 @@ import (
 	"encoding/gob"
 	"encoding/hex"
 	"fmt"
-	"github.com/acarl005/stripansi"
-	"github.com/fatih/color"
-	"github.com/gliderlabs/ssh"
-	"github.com/slack-go/slack"
-	terminal "golang.org/x/term"
 	"io"
 	"log"
 	"math/rand"
@@ -22,6 +17,12 @@ import (
 	"syscall"
 	"time"
 	"unicode"
+
+	"github.com/acarl005/stripansi"
+	"github.com/fatih/color"
+	"github.com/gliderlabs/ssh"
+	"github.com/slack-go/slack"
+	terminal "golang.org/x/term"
 )
 
 var (
@@ -49,6 +50,7 @@ var (
 
 	logfile, _ = os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	l          = log.New(logfile, "", log.Ldate|log.Ltime|log.Lshortfile)
+	bans       = make([]string, 0, 10)
 )
 
 func broadcast(msg string, toSlack bool) {
@@ -98,6 +100,20 @@ func newUser(s ssh.Session) *user {
 
 	broadcast(u.name+green.Sprint(" has joined the chat"), true)
 	return u
+}
+
+func (u *user) banUser(victim *user) {
+	bans = append(bans, victim.id)
+	f, err := os.Create("bans.gob")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	g := gob.NewEncoder(f)
+	g.Encode(bans)
+	f.Close()
+	victim.writeln(victim.name + " has been banned.")
+	victim.close(true, u)
 }
 
 func (u *user) repl() {
@@ -163,6 +179,24 @@ func (u *user) repl() {
 		if strings.HasPrefix(line, "/nick") {
 			u.pickUsername(strings.TrimSpace(strings.TrimPrefix(line, "/nick")))
 		}
+
+		if strings.HasPrefix(line, "/ban") {
+			victim, ok := findUserByName(strings.TrimSpace(strings.TrimPrefix(line, "/ban")))
+			if !ok {
+				broadcast("User not found", toSlack)
+			} else {
+				var pass string
+				pass, err = u.term.ReadPassword("Admin password: ")
+				if err != nil {
+					fmt.Println(u.name, err)
+				}
+				if strings.TrimSpace(pass) == strings.TrimSpace(string(adminPass)) {
+					u.banUser(victim)
+				} else {
+					broadcast("Incorrect password", toSlack)
+				}
+			}
+		}
 		if strings.HasPrefix(line, "/kick") {
 			victim, ok := findUserByName(strings.TrimSpace(strings.TrimPrefix(line, "/kick")))
 			if !ok {
@@ -224,6 +258,7 @@ func (u *user) repl() {
    /bell    toggle the ascii bell
    /id      get a unique identifier for a user
    /all     get a list of all unique users ever
+   /ban     ban a user, requires an admin pass
    /kick    kick a user, requires an admin pass
    /help    show this help message
 Made by Ishan Goel with feature ideas from Hack Club members.
@@ -314,6 +349,14 @@ func saveAllUsersToFile() {
 	f.Close()
 }
 
+func (u *user) detectBan() {
+	for _, banId := range bans {
+		if u.id == banId {
+			u.close(true, u)
+		}
+	}
+}
+
 func main() {
 	rand.Seed(time.Now().Unix())
 	f, err := os.Open("allUsers.gob")
@@ -323,6 +366,16 @@ func main() {
 	}
 	d := gob.NewDecoder(f)
 	d.Decode(&allUsers)
+
+	f2, err2 := os.Open("bans.gob")
+	if err2 != nil {
+		fmt.Println(err2)
+		return
+	}
+
+	d2 := gob.NewDecoder(f2)
+	d2.Decode(&bans)
+
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGKILL)
 	go func() {
@@ -333,6 +386,7 @@ func main() {
 	}()
 	ssh.Handle(func(s ssh.Session) {
 		u := newUser(s)
+		u.detectBan()
 		u.repl()
 		u.close(u.name + red.Sprint(" has left the chat"))
 	})
