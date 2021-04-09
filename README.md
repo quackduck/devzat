@@ -1,8 +1,8 @@
-# Devsat
+# Devzat
 
-Where are the devs at? Devsat!
+Where are the devs at? Devzat!
 
-Devsat is chat over SSH
+Devzat is chat over SSH
 
 Try it out:
 
