@@ -3,11 +3,10 @@ package main
 import (
 	"crypto/sha256"
 	_ "embed"
-	"encoding/gob"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"net"
@@ -383,37 +382,39 @@ func main() {
 }
 
 func saveBansAndUsers() {
-	f, err := os.Create("allUsers.gob") // consider changing this ones format to json
+	f, err := os.Create("allusers.json")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	g := gob.NewEncoder(f)
-	g.Encode(allUsers)
+	json.NewEncoder(f).Encode(allUsers)
 	f.Close()
 
-	err = ioutil.WriteFile("bans.gob", []byte(strings.Join(bans, "\n")), 0666)
+	f, err = os.Create("bans.json")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+	json.NewEncoder(f).Encode(bans)
+	f.Close()
 }
 
 func readBansAndUsers() {
-	f, err := os.Open("allUsers.gob")
+	f, err := os.Open("allusers.json")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	d := gob.NewDecoder(f)
-	d.Decode(&allUsers)
+	json.NewDecoder(f).Decode(&allUsers)
+	f.Close()
 
-	banned, err := ioutil.ReadFile("bans.gob")
+	f, err = os.Open("bans.json")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	bans = strings.Split(string(banned), "\n")
+	json.NewDecoder(f).Decode(&bans)
+	f.Close()
 }
 
 func getMsgsFromSlack() {
