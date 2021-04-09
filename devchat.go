@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"math/rand"
+	"net"
 	"os"
 	"os/signal"
 	"strconv"
@@ -54,6 +55,9 @@ var (
 )
 
 func broadcast(msg string, toSlack bool) {
+	if msg == "" {
+		return
+	}
 	backlog = append(backlog, msg+"\n")
 	if toSlack {
 		slackChan <- msg
@@ -80,8 +84,14 @@ func newUser(s ssh.Session) *user {
 	term := terminal.NewTerminal(s, "> ")
 	_ = term.SetSize(10000, 10000) // disable any formatting done by term
 
+	host, _, err := net.SplitHostPort(s.RemoteAddr().String()) // definitely should not give an err
+	if err != nil {
+		term.Write([]byte(fmt.Sprintln(err) + "\n"))
+		s.Close()
+		return nil
+	}
 	hash := sha256.New()
-	hash.Write([]byte(s.RemoteAddr().String()))
+	hash.Write([]byte(host))
 	u := &user{"", s, term, true, color.Color{}, hex.EncodeToString(hash.Sum(nil)), sync.Once{}}
 	//u := &user{"", s, term, true, color.Color{}, s.RemoteAddr().String(), sync.Once{}}
 
@@ -102,20 +112,6 @@ func newUser(s ssh.Session) *user {
 	return u
 }
 
-func (u *user) banUser(victim *user) {
-	bans = append(bans, victim.id)
-	f, err := os.Create("bans.gob")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	g := gob.NewEncoder(f)
-	g.Encode(bans)
-	f.Close()
-	victim.writeln(victim.name + " has been banned.")
-	victim.close(true, u)
-}
-
 func (u *user) repl() {
 	for {
 		line, err := u.term.ReadLine()
@@ -129,8 +125,8 @@ func (u *user) repl() {
 			fmt.Println(u.name, err)
 			continue
 		}
-		toSlack := true
 
+		toSlack := true
 		if strings.HasPrefix(line, "/hide") {
 			toSlack = false
 		}
@@ -173,13 +169,13 @@ func (u *user) repl() {
 			if !ok {
 				broadcast("User not found", toSlack)
 			} else {
+
 				broadcast(victim.id, toSlack)
 			}
 		}
 		if strings.HasPrefix(line, "/nick") {
 			u.pickUsername(strings.TrimSpace(strings.TrimPrefix(line, "/nick")))
 		}
-
 		if strings.HasPrefix(line, "/ban") {
 			victim, ok := findUserByName(strings.TrimSpace(strings.TrimPrefix(line, "/ban")))
 			if !ok {
@@ -191,9 +187,10 @@ func (u *user) repl() {
 					fmt.Println(u.name, err)
 				}
 				if strings.TrimSpace(pass) == strings.TrimSpace(string(adminPass)) {
-					u.banUser(victim)
+					bans = append(bans, victim.id)
+					victim.close(victim.name + " has been banned by " + u.name)
 				} else {
-					broadcast("Incorrect password", toSlack)
+					u.writeln("Incorrect password")
 				}
 			}
 		}
@@ -210,7 +207,7 @@ func (u *user) repl() {
 				if strings.TrimSpace(pass) == strings.TrimSpace(string(adminPass)) {
 					victim.close(victim.name + red.Sprint(" has been kicked by ") + u.name)
 				} else {
-					broadcast("Incorrect password", toSlack)
+					u.writeln("Incorrect password")
 				}
 			}
 		}
@@ -316,10 +313,8 @@ func (u *user) pickUsername(possibleName string) {
 		}
 		possibleName = s
 	}
-	u.color = *colorArr[rand.Intn(len(colorArr))]
-	possibleName = u.color.Sprint(possibleName)
-	u.term.SetPrompt(possibleName + ": ")
 	u.name = possibleName
+	u.changeColor(*colorArr[rand.Intn(len(colorArr))])
 }
 
 func (u *user) changeColor(color color.Color) {
@@ -338,25 +333,6 @@ func userDuplicate(a string) bool {
 	return false
 }
 
-func saveAllUsersToFile() {
-	f, err := os.Create("allUsers.gob")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	g := gob.NewEncoder(f)
-	g.Encode(allUsers)
-	f.Close()
-}
-
-func (u *user) detectBan() {
-	for _, banId := range bans {
-		if u.id == banId {
-			u.close(true, u)
-		}
-	}
-}
-
 func main() {
 	rand.Seed(time.Now().Unix())
 	f, err := os.Open("allUsers.gob")
@@ -367,26 +343,48 @@ func main() {
 	d := gob.NewDecoder(f)
 	d.Decode(&allUsers)
 
-	f2, err2 := os.Open("bans.gob")
-	if err2 != nil {
-		fmt.Println(err2)
+	f2, err := os.Open("bans.gob")
+	if err != nil {
+		fmt.Println(err)
 		return
 	}
-
-	d2 := gob.NewDecoder(f2)
-	d2.Decode(&bans)
+	d = gob.NewDecoder(f2)
+	d.Decode(&bans)
 
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGKILL)
 	go func() {
 		<-c
-		saveAllUsersToFile()
-		broadcast("Server going down! This is probably because it is being updated. Try again in a minute.\nIf you still can't join, make an issues at github.com/quackduck/issues", true)
+		f, err = os.Create("allUsers.gob")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		g := gob.NewEncoder(f)
+		g.Encode(allUsers)
+		f.Close()
+		f, err = os.Create("bans.gob")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		g = gob.NewEncoder(f)
+		g.Encode(bans)
+		f.Close()
+		broadcast("Server going down! This is probably because it is being updated. Try again in a minute.\nIf you still can't join, make an issue at github.com/quackduck/devzat/issues", true)
 		os.Exit(0)
 	}()
 	ssh.Handle(func(s ssh.Session) {
 		u := newUser(s)
-		u.detectBan()
+		if u == nil {
+			return
+		}
+		for _, banId := range bans {
+			if u.id == banId {
+				u.writeln("You have been banned. If you feel this was done wrongly, please reach out at github.com/quackduck/devzat/issues")
+				u.close("")
+			}
+		}
 		u.repl()
 		u.close(u.name + red.Sprint(" has left the chat"))
 	})
