@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net"
@@ -94,10 +95,17 @@ func newUser(s ssh.Session) *user {
 	hash.Write([]byte(host))
 	u := &user{"", s, term, true, color.Color{}, hex.EncodeToString(hash.Sum(nil)), sync.Once{}}
 	//u := &user{"", s, term, true, color.Color{}, s.RemoteAddr().String(), sync.Once{}}
+	for _, banId := range bans {
+		if u.id == banId {
+			u.writeln("You have been banned. If you feel this was done wrongly, please reach out at github.com/quackduck/devzat/issues")
+			u.close("")
+		}
+	}
 
 	u.pickUsername(s.User())
 	users = append(users, u)
 	allUsers[u.id] = u.name
+	saveBansAndUsers()
 	switch len(users) - 1 {
 	case 0:
 		u.writeln(cyan.Sprint("Welcome to the chat. There are no more users"))
@@ -188,6 +196,7 @@ func (u *user) repl() {
 				}
 				if strings.TrimSpace(pass) == strings.TrimSpace(string(adminPass)) {
 					bans = append(bans, victim.id)
+					saveBansAndUsers()
 					victim.close(victim.name + " has been banned by " + u.name)
 				} else {
 					u.writeln("Incorrect password")
@@ -287,15 +296,7 @@ func (u *user) writeln(msg string) {
 }
 
 func (u *user) pickUsername(possibleName string) {
-	var s string
-	s = ""
-	possibleName = strings.TrimSpace(possibleName)
-	for _, r := range possibleName {
-		if unicode.IsGraphic(r) {
-			s += string(r)
-		}
-	}
-	possibleName = s
+	possibleName = cleanName(possibleName)
 	var err error
 	for userDuplicate(possibleName) {
 		u.writeln("Pick a different username")
@@ -304,17 +305,23 @@ func (u *user) pickUsername(possibleName string) {
 		if err != nil {
 			fmt.Println(err)
 		}
-		s = ""
-		possibleName = strings.TrimSpace(possibleName)
-		for _, r := range possibleName {
-			if unicode.IsGraphic(r) {
-				s += string(r)
-			}
-		}
-		possibleName = s
+		possibleName = cleanName(possibleName)
 	}
 	u.name = possibleName
 	u.changeColor(*colorArr[rand.Intn(len(colorArr))])
+}
+
+func cleanName(name string) string {
+	var s string
+	s = ""
+	name = strings.TrimSpace(name)
+	name = strings.Split(name, "\n")[0] // use only one line
+	for _, r := range name {
+		if unicode.IsGraphic(r) {
+			s += string(r)
+		}
+	}
+	return s
 }
 
 func (u *user) changeColor(color color.Color) {
@@ -334,56 +341,22 @@ func userDuplicate(a string) bool {
 }
 
 func main() {
+	var err error
 	rand.Seed(time.Now().Unix())
-	f, err := os.Open("allUsers.gob")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	d := gob.NewDecoder(f)
-	d.Decode(&allUsers)
-
-	f2, err := os.Open("bans.gob")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	d = gob.NewDecoder(f2)
-	d.Decode(&bans)
-
+	readBansAndUsers()
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGKILL)
 	go func() {
 		<-c
-		f, err = os.Create("allUsers.gob")
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		g := gob.NewEncoder(f)
-		g.Encode(allUsers)
-		f.Close()
-		f, err = os.Create("bans.gob")
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		g = gob.NewEncoder(f)
-		g.Encode(bans)
-		f.Close()
-		broadcast("Server going down! This is probably because it is being updated. Try again in a minute.\nIf you still can't join, make an issue at github.com/quackduck/devzat/issues", true)
+		saveBansAndUsers()
+		broadcast("Server going down! This is probably because it is being updated. Try joining in ~5 minutes.\nIf you still can't join, make an issue at github.com/quackduck/devzat/issues", true)
 		os.Exit(0)
 	}()
+
 	ssh.Handle(func(s ssh.Session) {
 		u := newUser(s)
 		if u == nil {
 			return
-		}
-		for _, banId := range bans {
-			if u.id == banId {
-				u.writeln("You have been banned. If you feel this was done wrongly, please reach out at github.com/quackduck/devzat/issues")
-				u.close("")
-			}
 		}
 		u.repl()
 		u.close(u.name + red.Sprint(" has left the chat"))
@@ -407,6 +380,40 @@ func main() {
 		fmt.Println(err)
 		l.Println(err)
 	}
+}
+
+func saveBansAndUsers() {
+	f, err := os.Create("allUsers.gob") // consider changing this ones format to json
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	g := gob.NewEncoder(f)
+	g.Encode(allUsers)
+	f.Close()
+
+	err = ioutil.WriteFile("bans.gob", []byte(strings.Join(bans, "\n")), 0666)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+}
+
+func readBansAndUsers() {
+	f, err := os.Open("allUsers.gob")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	d := gob.NewDecoder(f)
+	d.Decode(&allUsers)
+
+	banned, err := ioutil.ReadFile("bans.gob")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	bans = strings.Split(string(banned), "\n")
 }
 
 func getMsgsFromSlack() {
