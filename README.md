@@ -7,13 +7,13 @@ Devzat is chat over SSH
 Try it out:
 
 ```sh
-ssh sshchat.hackclub.com
+ssh devzat.hackclub.com
 ```
 
 Add this to `~/.ssh/config`:
-```json
+```ssh
 Host chat
-    HostName sshchat.hackclub.com
+    HostName devzat.hackclub.com
 ```
 
 Now you can join with just:
