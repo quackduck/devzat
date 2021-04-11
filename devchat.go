@@ -33,43 +33,59 @@ var (
 	slackAPI []byte
 	//go:embed adminPass.txt
 	adminPass  []byte
-	slackChan  = getSendToSlackChan()
-	api        = slack.New(string(slackAPI))
-	rtm        = api.NewRTM()
-	red        = color.New(color.FgHiRed)
-	green      = color.New(color.FgHiGreen)
-	cyan       = color.New(color.FgHiCyan)
-	magenta    = color.New(color.FgHiMagenta)
-	yellow     = color.New(color.FgHiYellow)
-	blue       = color.New(color.FgHiBlue)
-	black      = color.New(color.FgHiBlack)
-	white      = color.New(color.FgHiWhite)
-	colorArr   = []*color.Color{green, cyan, magenta, yellow, white, blue}
-	users      = make([]*user, 0, 10)
-	allUsers   = make(map[string]string, 100) //map format is u.id => u.name
 	port       = 22
 	scrollback = 16
-	backlog    = make([]string, 0, scrollback)
+
+	slackChan = getSendToSlackChan()
+	api       = slack.New(string(slackAPI))
+	rtm       = api.NewRTM()
+
+	red      = color.New(color.FgHiRed)
+	green    = color.New(color.FgHiGreen)
+	cyan     = color.New(color.FgHiCyan)
+	magenta  = color.New(color.FgHiMagenta)
+	yellow   = color.New(color.FgHiYellow)
+	blue     = color.New(color.FgHiBlue)
+	black    = color.New(color.FgHiBlack)
+	white    = color.New(color.FgHiWhite)
+	colorArr = []*color.Color{green, cyan, magenta, yellow, white, blue}
+
+	users      = make([]*user, 0, 10)
+	usersMutex = sync.Mutex{}
+
+	allUsers      = make(map[string]string, 100) //map format is u.id => u.name
+	allUsersMutex = sync.Mutex{}
+
+	backlog      = make([]string, 0, scrollback)
+	backlogMutex = sync.Mutex{}
 
 	logfile, _ = os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	l          = log.New(logfile, "", log.Ldate|log.Ltime|log.Lshortfile)
-	bans       = make([]string, 0, 10)
+
+	bans      = make([]string, 0, 10)
+	bansMutex = sync.Mutex{}
 )
 
 func broadcast(msg string, toSlack bool) {
 	if msg == "" {
 		return
 	}
+	backlogMutex.Lock()
 	backlog = append(backlog, msg+"\n")
+	backlogMutex.Unlock()
 	if toSlack {
 		slackChan <- msg
 	}
+	backlogMutex.Lock()
 	for len(backlog) > scrollback { // for instead of if just in case
 		backlog = backlog[1:]
 	}
+	backlogMutex.Unlock()
+	usersMutex.Lock()
 	for i := range users {
 		users[i].writeln(msg)
 	}
+	usersMutex.Unlock()
 }
 
 type user struct {
@@ -96,16 +112,21 @@ func newUser(s ssh.Session) *user {
 	hash.Write([]byte(host))
 	u := &user{"", s, term, true, color.Color{}, hex.EncodeToString(hash.Sum(nil)), sync.Once{}}
 	//u := &user{"", s, term, true, color.Color{}, s.RemoteAddr().String(), sync.Once{}}
+	bansMutex.Lock()
 	for _, banId := range bans {
 		if u.id == banId {
+			fmt.Println("Rejected a banned user")
 			u.writeln("You have been banned. If you feel this was done wrongly, please reach out at github.com/quackduck/devzat/issues")
 			u.close("")
+			return nil
 		}
 	}
+	bansMutex.Unlock()
 
 	u.pickUsername(s.User())
+	usersMutex.Lock()
 	users = append(users, u)
-	allUsers[u.id] = u.name
+	usersMutex.Unlock()
 	saveBansAndUsers()
 	switch len(users) - 1 {
 	case 0:
@@ -144,7 +165,7 @@ func (u *user) repl() {
 		line = strings.ReplaceAll(line, `\n`, "\n")
 
 		line = strings.TrimSpace(mdRender(line, len([]rune(stripansi.Strip(u.name)))))
-		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(len([]rune(inputLine)))/(float64(w.Width)))))))
+		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(len([]rune(u.name+inputLine))+2)/(float64(w.Width))))))) // basically, ceil(length of line divided by term width)
 
 		toSlack := true
 		if strings.HasPrefix(line, "/hide") {
@@ -158,16 +179,20 @@ func (u *user) repl() {
 		}
 		if line == "/users" {
 			names := make([]string, 0, len(users))
+			usersMutex.Lock()
 			for _, us := range users {
 				names = append(names, us.name)
 			}
+			usersMutex.Unlock()
 			broadcast(fmt.Sprint(names), toSlack)
 		}
 		if line == "/all" {
+			allUsersMutex.Lock()
 			names := make([]string, 0, len(allUsers))
 			for _, name := range allUsers {
 				names = append(names, name)
 			}
+			allUsersMutex.Unlock()
 			broadcast(fmt.Sprint(names), toSlack)
 		}
 		if line == "easter" {
@@ -207,12 +232,29 @@ func (u *user) repl() {
 					fmt.Println(u.name, err)
 				}
 				if strings.TrimSpace(pass) == strings.TrimSpace(string(adminPass)) {
+					bansMutex.Lock()
 					bans = append(bans, victim.id)
+					bansMutex.Unlock()
 					saveBansAndUsers()
 					victim.close(victim.name + " has been banned by " + u.name)
 				} else {
 					u.writeln("Incorrect password")
 				}
+			}
+		}
+		if strings.HasPrefix(line, "/banid") {
+			var pass string
+			pass, err = u.term.ReadPassword("Admin password: ")
+			if err != nil {
+				fmt.Println(u.name, err)
+			}
+			if strings.TrimSpace(pass) == strings.TrimSpace(string(adminPass)) {
+				bansMutex.Lock()
+				bans = append(bans, strings.TrimSpace(strings.TrimPrefix(line, "/banid")))
+				bansMutex.Unlock()
+				saveBansAndUsers()
+			} else {
+				u.writeln("Incorrect password")
 			}
 		}
 		if strings.HasPrefix(line, "/kick") {
@@ -268,17 +310,17 @@ func (u *user) repl() {
 		}
 		if line == "/help" {
 			broadcast(`Available commands:
-   /users   list users
-   /nick    change your name
-   /color   change your name color
-   /exit    leave the chat
-   /hide    hide messages from HC Slack
-   /bell    toggle the ansi bell
-   /id      get a unique identifier for a user
-   /all     get a list of all unique users ever
-   /ban     ban a user, requires an admin pass
-   /kick    kick a user, requires an admin pass
-   /help    show this help message
+   /users         list users
+   /nick          change your name
+   /color         change your name color
+   /exit          leave the chat
+   /hide          hide messages from HC Slack
+   /bell          toggle the ansi bell
+   /id            get a unique identifier for a user
+   /all           get a list of all unique users ever
+   /ban, /banid   ban a user, requires an admin pass
+   /kick          kick a user, requires an admin pass
+   /help          show this help message
 Made by Ishan Goel with feature ideas from Hack Club members.
 Thanks to Caleb Denio for lending me his server!`, toSlack)
 		}
@@ -287,7 +329,9 @@ Thanks to Caleb Denio for lending me his server!`, toSlack)
 
 func (u *user) close(msg string) {
 	u.closeOnce.Do(func() {
+		usersMutex.Lock()
 		users = remove(users, u)
+		usersMutex.Unlock()
 		//if kicked {
 		broadcast(msg, true)
 		//} else {
@@ -321,7 +365,10 @@ func (u *user) pickUsername(possibleName string) {
 	}
 	u.name = possibleName
 	u.changeColor(*colorArr[rand.Intn(len(colorArr))])
+	allUsersMutex.Lock()
 	allUsers[u.id] = u.name
+	allUsersMutex.Unlock()
+	saveBansAndUsers()
 }
 
 func cleanName(name string) string {
@@ -340,7 +387,6 @@ func cleanName(name string) string {
 func mdRender(a string, nameLen int) string {
 	md := string(markdown.Render(a, 1000000, 0))
 	md = strings.TrimSuffix(md, "\n")
-	fmt.Println(nameLen)
 	split := strings.Split(md, "\n")
 	for i := range split {
 		if i == 0 {
@@ -371,15 +417,18 @@ func (u *user) changeColor(color color.Color) {
 	u.name = color.Sprint(stripansi.Strip(u.name))
 	u.color = color
 	u.term.SetPrompt(u.name + ": ")
+	saveBansAndUsers()
 }
 
 // Returns true if the username is taken, false otherwise
 func userDuplicate(a string) bool {
+	usersMutex.Lock()
 	for i := range users {
 		if stripansi.Strip(users[i].name) == stripansi.Strip(a) {
 			return true
 		}
 	}
+	usersMutex.Unlock()
 	return false
 }
 
@@ -432,7 +481,9 @@ func saveBansAndUsers() {
 	}
 	j := json.NewEncoder(f)
 	j.SetIndent("", "   ")
+	allUsersMutex.Lock()
 	j.Encode(allUsers)
+	allUsersMutex.Unlock()
 	f.Close()
 
 	f, err = os.Create("bans.json")
@@ -442,7 +493,9 @@ func saveBansAndUsers() {
 	}
 	j = json.NewEncoder(f)
 	j.SetIndent("", "   ")
+	bansMutex.Lock()
 	j.Encode(bans)
+	bansMutex.Unlock()
 	f.Close()
 }
 
@@ -452,7 +505,9 @@ func readBansAndUsers() {
 		fmt.Println(err)
 		return
 	}
+	allUsersMutex.Lock()
 	json.NewDecoder(f).Decode(&allUsers)
+	allUsersMutex.Unlock()
 	f.Close()
 
 	f, err = os.Open("bans.json")
@@ -460,7 +515,9 @@ func readBansAndUsers() {
 		fmt.Println(err)
 		return
 	}
+	bansMutex.Lock()
 	json.NewDecoder(f).Decode(&bans)
+	bansMutex.Unlock()
 	f.Close()
 }
 
@@ -501,11 +558,13 @@ func getSendToSlackChan() chan string {
 }
 
 func findUserByName(name string) (*user, bool) {
+	usersMutex.Lock()
 	for _, u := range users {
 		if stripansi.Strip(u.name) == name {
 			return u, true
 		}
 	}
+	usersMutex.Unlock()
 	return nil, false
 }
 
