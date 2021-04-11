@@ -7,3 +7,6 @@ slackAPI.txt
 adminPass.txt
 *.gob
 *.swp
+log.txt
+bans.json
+allusers.json

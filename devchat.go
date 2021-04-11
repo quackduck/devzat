@@ -214,7 +214,6 @@ func (u *user) repl() {
 			if !ok {
 				broadcast("User not found", toSlack)
 			} else {
-
 				broadcast(victim.id, toSlack)
 			}
 		}
@@ -433,6 +432,7 @@ func userDuplicate(a string) bool {
 }
 
 func main() {
+	fmt.Println("yep")
 	var err error
 	rand.Seed(time.Now().Unix())
 	readBansAndUsers()
@@ -559,12 +559,12 @@ func getSendToSlackChan() chan string {
 
 func findUserByName(name string) (*user, bool) {
 	usersMutex.Lock()
+	defer usersMutex.Unlock()
 	for _, u := range users {
 		if stripansi.Strip(u.name) == name {
 			return u, true
 		}
 	}
-	usersMutex.Unlock()
 	return nil, false
 }
 
