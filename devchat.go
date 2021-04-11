@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"math/rand"
 	"net"
 	"os"
@@ -19,6 +20,7 @@ import (
 	"time"
 	"unicode"
 
+	markdown "github.com/MichaelMure/go-term-markdown"
 	"github.com/acarl005/stripansi"
 	"github.com/fatih/color"
 	"github.com/gliderlabs/ssh"
@@ -120,9 +122,15 @@ func newUser(s ssh.Session) *user {
 }
 
 func (u *user) repl() {
+	pty, winchan, _ := u.session.Pty()
+	w := pty.Window
+	go func() {
+		for w = range winchan {
+		}
+	}()
 	for {
 		line, err := u.term.ReadLine()
-		line = strings.TrimSpace(line)
+		line = clean(line)
 
 		if err == io.EOF {
 			return
@@ -132,6 +140,11 @@ func (u *user) repl() {
 			fmt.Println(u.name, err)
 			continue
 		}
+		inputLine := line
+		line = strings.ReplaceAll(line, `\n`, "\n")
+
+		line = strings.TrimSpace(mdRender(line, len([]rune(stripansi.Strip(u.name)))))
+		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(len([]rune(inputLine)))/(float64(w.Width)))))))
 
 		toSlack := true
 		if strings.HasPrefix(line, "/hide") {
@@ -260,7 +273,7 @@ func (u *user) repl() {
    /color   change your name color
    /exit    leave the chat
    /hide    hide messages from HC Slack
-   /bell    toggle the ascii bell
+   /bell    toggle the ansi bell
    /id      get a unique identifier for a user
    /all     get a list of all unique users ever
    /ban     ban a user, requires an admin pass
@@ -285,13 +298,13 @@ func (u *user) close(msg string) {
 }
 
 func (u *user) writeln(msg string) {
-	if !strings.HasPrefix(msg, u.name+": ") { // ignore messages sent by same person
-		if u.bell {
-			u.term.Write([]byte("\a" + msg + "\n")) // "\a" is beep
-		} else {
-			u.term.Write([]byte(msg + "\n"))
-		}
+	//if !strings.HasPrefix(msg, u.name+": ") { // ignore messages sent by same person
+	if u.bell {
+		u.term.Write([]byte("\a" + msg + "\n")) // "\a" is beep
+	} else {
+		u.term.Write([]byte(msg + "\n"))
 	}
+	//}
 }
 
 func (u *user) pickUsername(possibleName string) {
@@ -308,6 +321,7 @@ func (u *user) pickUsername(possibleName string) {
 	}
 	u.name = possibleName
 	u.changeColor(*colorArr[rand.Intn(len(colorArr))])
+	allUsers[u.id] = u.name
 }
 
 func cleanName(name string) string {
@@ -316,6 +330,36 @@ func cleanName(name string) string {
 	name = strings.TrimSpace(name)
 	name = strings.Split(name, "\n")[0] // use only one line
 	for _, r := range name {
+		if unicode.IsGraphic(r) {
+			s += string(r)
+		}
+	}
+	return s
+}
+
+func mdRender(a string, nameLen int) string {
+	md := string(markdown.Render(a, 1000000, 0))
+	md = strings.TrimSuffix(md, "\n")
+	fmt.Println(nameLen)
+	split := strings.Split(md, "\n")
+	for i := range split {
+		if i == 0 {
+			continue // the first line will automatically be padded
+		}
+		split[i] = strings.Repeat(" ", nameLen+2) + split[i]
+	}
+	if len(split) == 1 {
+		return md
+	}
+	return strings.Join(split, "\n")
+}
+
+// trims space and invisible characters
+func clean(a string) string {
+	var s string
+	s = ""
+	a = strings.TrimSpace(a)
+	for _, r := range a {
 		if unicode.IsGraphic(r) {
 			s += string(r)
 		}
@@ -373,8 +417,7 @@ func main() {
 	err = ssh.ListenAndServe(
 		fmt.Sprintf(":%d", port),
 		nil,
-		ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"),
-		ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool { return true }))
+		ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"))
 	if err != nil {
 		fmt.Println(err)
 		l.Println(err)
@@ -387,7 +430,9 @@ func saveBansAndUsers() {
 		fmt.Println(err)
 		return
 	}
-	json.NewEncoder(f).Encode(allUsers)
+	j := json.NewEncoder(f)
+	j.SetIndent("", "   ")
+	j.Encode(allUsers)
 	f.Close()
 
 	f, err = os.Create("bans.json")
@@ -395,7 +440,9 @@ func saveBansAndUsers() {
 		fmt.Println(err)
 		return
 	}
-	json.NewEncoder(f).Encode(bans)
+	j = json.NewEncoder(f)
+	j.SetIndent("", "   ")
+	j.Encode(bans)
 	f.Close()
 }
 
