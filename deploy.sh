@@ -12,7 +12,8 @@ ssh -o StrictHostKeyChecking=no -T -p 4242 ishan@34.75.6.116 <<'EOL'
 	echo Built
 	echo $SERVER_PASS | sudo -S pkill devchat
 	echo Killed
-	echo $SERVER_PASS | sudo -S HOME=/home/ishan ./devchat &; disown
+	echo $SERVER_PASS | sudo -S HOME=/home/ishan ./devchat &
+	disown
 	echo Started server
 EOL
 #rm -r ~/.ssh
