@@ -1,9 +1,9 @@
 echo Started
 echo -n $PRIVKEY > privkey
 echo -n $PUBKEY > pubkey
-scp -i privkey -P 4242 ./devchat.go go.sum go.mod ishan@34.75.6.116:~/devchat
+scp -o StrictHostKeyChecking=no -i privkey -P 4242 ./devchat.go go.sum go.mod ishan@34.75.6.116:~/devchat
 echo Copied files
-ssh -i privkey -T -p 4242 ishan@34.75.6.116 <<'EOL'
+ssh -o StrictHostKeyChecking=no -i privkey -T -p 4242 ishan@34.75.6.116 <<'EOL'
 	cd ~/devchat
 	go build
 	echo Built
