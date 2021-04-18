@@ -60,10 +60,14 @@ var (
 	backlogMutex = sync.Mutex{}
 
 	logfile, _ = os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-	l          = log.New(logfile, "", log.Ldate|log.Ltime|log.Lshortfile)
+	l          = log.New(io.MultiWriter(logfile, os.Stdout), "", log.Ldate|log.Ltime|log.Lshortfile)
 
 	bans      = make([]string, 0, 10)
 	bansMutex = sync.Mutex{}
+
+	// stores the ids which have joined in 20 seconds and how many times this happened
+	idsIn20ToTimes = make(map[string]int, 10)
+	idsIn20Mutex   = sync.Mutex{}
 )
 
 func broadcast(msg string, toSlack bool) {
@@ -95,6 +99,7 @@ type user struct {
 	bell      bool
 	color     color.Color
 	id        string
+	addr      string
 	closeOnce sync.Once
 }
 
@@ -110,19 +115,37 @@ func newUser(s ssh.Session) *user {
 	}
 	hash := sha256.New()
 	hash.Write([]byte(host))
-	u := &user{"", s, term, true, color.Color{}, hex.EncodeToString(hash.Sum(nil)), sync.Once{}}
+	u := &user{s.User(), s, term, true, color.Color{}, hex.EncodeToString(hash.Sum(nil)), host, sync.Once{}}
+	l.Println("Connected " + u.name)
 	//u := &user{"", s, term, true, color.Color{}, s.RemoteAddr().String(), sync.Once{}}
-	bansMutex.Lock()
-	for _, banId := range bans {
-		if u.id == banId {
-			fmt.Println("Rejected a banned user")
+	for _, banAddr := range bans {
+		if u.addr == banAddr {
+			l.Println("Rejected " + u.addr)
 			u.writeln("You have been banned. If you feel this was done wrongly, please reach out at github.com/quackduck/devzat/issues")
 			u.close("")
 			return nil
 		}
 	}
-	bansMutex.Unlock()
-
+	idsIn20Mutex.Lock()
+	idsIn20ToTimes[u.id]++
+	idsIn20Mutex.Unlock()
+	time.AfterFunc(20*time.Second, func() {
+		idsIn20Mutex.Lock()
+		idsIn20ToTimes[u.id]--
+		idsIn20Mutex.Unlock()
+	})
+	if idsIn20ToTimes[u.id] > 3 { // 10 minute ban
+		bansMutex.Lock()
+		bans = append(bans, u.addr)
+		bansMutex.Unlock()
+		broadcast(u.name+" has been banned for ten minutes. IP: "+u.addr, true)
+		//time.AfterFunc(10*time.Minute, func() {
+		//	bansMutex.Lock()
+		//	bans = removes(bans, u.addr)
+		//	bansMutex.Unlock()
+		//})
+		return nil
+	}
 	u.pickUsername(s.User())
 	usersMutex.Lock()
 	users = append(users, u)
@@ -137,7 +160,6 @@ func newUser(s ssh.Session) *user {
 		u.writeln(cyan.Sprint("Welcome to the chat. There are ", len(users)-1, " more users"))
 	}
 	_, _ = term.Write([]byte(strings.Join(backlog, ""))) // print out backlog
-
 	broadcast(u.name+green.Sprint(" has joined the chat"), true)
 	return u
 }
@@ -232,7 +254,7 @@ func (u *user) repl() {
 				}
 				if strings.TrimSpace(pass) == strings.TrimSpace(string(adminPass)) {
 					bansMutex.Lock()
-					bans = append(bans, victim.id)
+					bans = append(bans, victim.addr)
 					bansMutex.Unlock()
 					saveBansAndUsers()
 					victim.close(victim.name + " has been banned by " + u.name)
@@ -241,15 +263,15 @@ func (u *user) repl() {
 				}
 			}
 		}
-		if strings.HasPrefix(line, "/banid") {
+		if strings.HasPrefix(line, "/banIP") {
 			var pass string
 			pass, err = u.term.ReadPassword("Admin password: ")
 			if err != nil {
-				fmt.Println(u.name, err)
+				l.Println(u.name, err)
 			}
 			if strings.TrimSpace(pass) == strings.TrimSpace(string(adminPass)) {
 				bansMutex.Lock()
-				bans = append(bans, strings.TrimSpace(strings.TrimPrefix(line, "/banid")))
+				bans = append(bans, strings.TrimSpace(strings.TrimPrefix(line, "/banIP")))
 				bansMutex.Unlock()
 				saveBansAndUsers()
 			} else {
@@ -432,7 +454,6 @@ func userDuplicate(a string) bool {
 }
 
 func main() {
-	fmt.Println("yep")
 	var err error
 	rand.Seed(time.Now().Unix())
 	readBansAndUsers()
@@ -440,7 +461,9 @@ func main() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGKILL)
 	go func() {
 		<-c
+		fmt.Println("Shutting down...")
 		saveBansAndUsers()
+		logfile.Close()
 		broadcast("Server going down! This is probably because it is being updated. Try joining in ~5 minutes.\nIf you still can't join, make an issue at github.com/quackduck/devzat/issues", true)
 		os.Exit(0)
 	}()
@@ -580,3 +603,16 @@ func remove(s []*user, a *user) []*user {
 	}
 	return append(s[:i], s[i+1:]...)
 }
+
+//func removes(s []string, a string) []string {
+//	var i int
+//	for i = range s {
+//		if s[i] == a {
+//			break // i is now where it is
+//		}
+//	}
+//	if i == 0 {
+//		return make([]string, 0)
+//	}
+//	return append(s[:i], s[i+1:]...)
+//}
