@@ -186,7 +186,7 @@ func (u *user) repl() {
 		inputLine := line
 		line = strings.ReplaceAll(line, `\n`, "\n")
 
-		line = strings.TrimSpace(mdRender(line, len([]rune(stripansi.Strip(u.name)))))
+		line = strings.TrimSpace(mdRender(line, len([]rune(stripansi.Strip(u.name))), w.Width))
 		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(len([]rune(u.name+inputLine))+2)/(float64(w.Width))))))) // basically, ceil(length of line divided by term width)
 
 		toSlack := true
@@ -242,7 +242,21 @@ func (u *user) repl() {
 		if strings.HasPrefix(line, "/nick") {
 			u.pickUsername(strings.TrimSpace(strings.TrimPrefix(line, "/nick")))
 		}
-		if strings.HasPrefix(line, "/ban") {
+		if strings.HasPrefix(line, "/banIP") {
+			var pass string
+			pass, err = u.term.ReadPassword("Admin password: ")
+			if err != nil {
+				l.Println(u.name, err)
+			}
+			if strings.TrimSpace(pass) == strings.TrimSpace(string(adminPass)) {
+				bansMutex.Lock()
+				bans = append(bans, strings.TrimSpace(strings.TrimPrefix(line, "/banIP")))
+				bansMutex.Unlock()
+				saveBansAndUsers()
+			} else {
+				u.writeln("Incorrect password")
+			}
+		} else if strings.HasPrefix(line, "/ban") {
 			victim, ok := findUserByName(strings.TrimSpace(strings.TrimPrefix(line, "/ban")))
 			if !ok {
 				broadcast("User not found", toSlack)
@@ -261,21 +275,6 @@ func (u *user) repl() {
 				} else {
 					u.writeln("Incorrect password")
 				}
-			}
-		}
-		if strings.HasPrefix(line, "/banIP") {
-			var pass string
-			pass, err = u.term.ReadPassword("Admin password: ")
-			if err != nil {
-				l.Println(u.name, err)
-			}
-			if strings.TrimSpace(pass) == strings.TrimSpace(string(adminPass)) {
-				bansMutex.Lock()
-				bans = append(bans, strings.TrimSpace(strings.TrimPrefix(line, "/banIP")))
-				bansMutex.Unlock()
-				saveBansAndUsers()
-			} else {
-				u.writeln("Incorrect password")
 			}
 		}
 		if strings.HasPrefix(line, "/kick") {
@@ -405,8 +404,8 @@ func cleanName(name string) string {
 	return s
 }
 
-func mdRender(a string, nameLen int) string {
-	md := string(markdown.Render(a, 1000000, 0))
+func mdRender(a string, nameLen int, lineWidth int) string {
+	md := string(markdown.Render(a, lineWidth-(nameLen+2), 0))
 	md = strings.TrimSuffix(md, "\n")
 	split := strings.Split(md, "\n")
 	for i := range split {

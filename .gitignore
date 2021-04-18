@@ -10,3 +10,4 @@ adminPass.txt
 log.txt
 bans.json
 allusers.json
+iptables.sh
