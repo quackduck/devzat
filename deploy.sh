@@ -1,4 +1,5 @@
 echo Started
+mkdir ~/.ssh
 echo -n $PRIVKEY > ~/.ssh/id_rsa
 echo -n $PUBKEY > ~/.ssh/id_rsa.pub
 #chmod 600 privkey pubkey
