@@ -11,9 +11,8 @@ ssh -o StrictHostKeyChecking=no -T -p 4242 ishan@34.75.6.116 <<EOL # Unquote so 
 	go build && echo Built
 	echo $SERVER_PASS | sudo -S pkill devchat && echo Killed
 	echo $SERVER_PASS | sudo -S HOME=/home/ishan ./devchat &
-	disown || echo Could not disown
 	echo Started server
-	exit 123
+	disown && exit
 EOL
 #rm -r ~/.ssh
 echo Finished
