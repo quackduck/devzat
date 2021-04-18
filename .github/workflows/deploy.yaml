@@ -9,6 +9,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - uses: webfactory/ssh-agent@v0.5.2
+      with:
+          ssh-private-key: ${{ secrets.PRIVKEY }}
     - name: Deploy
       run: bash deploy.sh
       env:
