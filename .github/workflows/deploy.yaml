@@ -1,0 +1,17 @@
+name: Deploy
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Deploy
+      run: deploy.sh
+      env:
+          PRIVKEY: ${{ secrets.PRIVKEY }}
+          SERVER_PASS: ${{ secrets.SERVER_PASS }}
+      
