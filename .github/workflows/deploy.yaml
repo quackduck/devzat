@@ -13,5 +13,6 @@ jobs:
       run: bash deploy.sh
       env:
           PRIVKEY: ${{ secrets.PRIVKEY }}
+          PUBKEY: ${{ secrets.PUBKEY }}
           SERVER_PASS: ${{ secrets.SERVER_PASS }}
       
