@@ -453,6 +453,7 @@ func userDuplicate(a string) bool {
 }
 
 func main() {
+	color.NoColor = false
 	var err error
 	rand.Seed(time.Now().Unix())
 	readBansAndUsers()
