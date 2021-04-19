@@ -355,7 +355,7 @@ func (u *user) writeln(senderName string, msg string) {
 	msg = strings.ReplaceAll(msg, `\n`, "\n")
 	if senderName != "" {
 		msg = strings.TrimSpace(mdRender(msg, len([]rune(stripansi.Strip(senderName))), u.win.Width))
-		msg = u.name + ": " + msg
+		msg = senderName + ": " + msg
 	} else {
 		msg = strings.TrimSpace(mdRender(msg, -2, u.win.Width)) // -2 so linewidth is used as is
 	}
