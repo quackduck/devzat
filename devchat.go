@@ -127,7 +127,7 @@ func newUser(s ssh.Session) *user {
 	for _, banAddr := range bans {
 		if u.addr == banAddr {
 			l.Println("Rejected " + u.addr)
-			u.writeln(nil, "You have been banned. If you feel this was done wrongly, please reach out at github.com/quackduck/devzat/issues")
+			u.writeln(nil, "**You have been banned**. If you feel this was done wrongly, please reach out at https://github.com/quackduck/devzat/issues")
 			u.close("")
 			return nil
 		}
@@ -154,14 +154,14 @@ func newUser(s ssh.Session) *user {
 	saveBansAndUsers()
 	switch len(users) - 1 {
 	case 0:
-		u.writeln(nil, cyan.Sprint("Welcome to the chat. There are no more users"))
+		u.writeln(nil, cyan.Sprint("_Welcome to the chat. There are no more users_"))
 	case 1:
-		u.writeln(nil, cyan.Sprint("Welcome to the chat. There is one more user"))
+		u.writeln(nil, cyan.Sprint("_Welcome to the chat. There is one more user_"))
 	default:
-		u.writeln(nil, cyan.Sprint("Welcome to the chat. There are ", len(users)-1, " more users"))
+		u.writeln(nil, cyan.Sprint("_Welcome to the chat. There are ", len(users)-1, " more users_"))
 	}
 	_, _ = term.Write([]byte(strings.Join(backlog, ""))) // print out backlog
-	broadcast(nil, u.name+green.Sprint(" has joined the chat"), true)
+	broadcast(nil, "_"+u.name+green.Sprint(" has joined the chat")+"_", true)
 	return u
 }
 
@@ -282,7 +282,7 @@ func (u *user) repl() {
 			}
 		}
 		if strings.HasPrefix(line, "/color") {
-			colorMsg := "Which color? Choose from green, cyan, blue, red/orange, magenta/purple/pink, yellow/beige, white/cream and black/gray/grey.\n\nThere's also a few secret colors :)"
+			colorMsg := "Which color? Choose from green, cyan, blue, red/orange, magenta/purple/pink, yellow/beige, white/cream and black/gray/grey.  \nThere's also a few secret colors :)"
 			switch strings.TrimSpace(strings.TrimPrefix(line, "/color")) {
 			case "green":
 				u.changeColor(*green)
@@ -316,18 +316,18 @@ func (u *user) repl() {
 			}
 		}
 		if line == "/help" {
-			broadcast(nil, `# Available commands:  
-   /users         list users  
-   /nick          change your name  
-   /color         change your name color  
-   /exit          leave the chat  
-   /hide          hide messages from HC Slack  
-   /bell          toggle the ansi bell  
-   /id            get a unique identifier for a user  
-   /all           get a list of all unique users ever  
-   /ban, /banid   ban a user, requires an admin pass  
-   /kick          kick a user, requires an admin pass  
-   /help          show this help message  
+			broadcast(nil, `## Available commands  
+   /users   list users  
+   /nick    change your name  
+   /color   change your name color  
+   /exit    leave the chat  
+   /hide    hide messages from HC Slack  
+   /bell    toggle the ansi bell  
+   /id      get a unique identifier for a user  
+   /all     get a list of all unique users ever  
+   /ban     ban a user, requires an admin pass  
+   /kick    kick a user, requires an admin pass  
+   /help    show this help message  
 Made by Ishan Goel with feature ideas from Hack Club members.  
 Thanks to Caleb Denio for lending his server!`, toSlack)
 		}
@@ -448,7 +448,7 @@ func main() {
 		fmt.Println("Shutting down...")
 		saveBansAndUsers()
 		logfile.Close()
-		broadcast(nil, "Server going down! This is probably because it is being updated. Try joining in ~5 minutes.\nIf you still can't join, make an issue at github.com/quackduck/devzat/issues", true)
+		broadcast(nil, "Server going down! This is probably because it is being updated. Try joining in ~5 minutes.  \nIf you still can't join, make an issue at github.com/quackduck/devzat/issues", true)
 		os.Exit(0)
 	}()
 
