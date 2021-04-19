@@ -282,7 +282,7 @@ func (u *user) repl() {
 			}
 		}
 		if strings.HasPrefix(line, "/color") {
-			colorMsg := "Which color? Choose from green, cyan, blue, red/orange, magenta/purple/pink, yellow/beige, white/cream and black/gray/grey.\nThere's also a few secret colors :)"
+			colorMsg := "Which color? Choose from green, cyan, blue, red/orange, magenta/purple/pink, yellow/beige, white/cream and black/gray/grey.\n\nThere's also a few secret colors :)"
 			switch strings.TrimSpace(strings.TrimPrefix(line, "/color")) {
 			case "green":
 				u.changeColor(*green)
