@@ -56,7 +56,7 @@ var (
 	allUsers      = make(map[string]string, 100) //map format is u.id => u.name
 	allUsersMutex = sync.Mutex{}
 
-	backlog      = make([]string, 0, scrollback)
+	backlog      = make([]message, 0, scrollback)
 	backlogMutex = sync.Mutex{}
 
 	logfile, _ = os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
@@ -75,7 +75,7 @@ func broadcast(sender *user, msg string, toSlack bool) {
 		return
 	}
 	backlogMutex.Lock()
-	backlog = append(backlog, msg+"\n")
+	backlog = append(backlog, message{sender, msg + "\n"})
 	backlogMutex.Unlock()
 	if toSlack {
 		if sender != nil {
@@ -102,6 +102,11 @@ type user struct {
 	addr      string
 	win       ssh.Window
 	closeOnce sync.Once
+}
+
+type message struct {
+	sender *user
+	text   string
 }
 
 func newUser(s ssh.Session) *user {
@@ -160,7 +165,10 @@ func newUser(s ssh.Session) *user {
 	default:
 		u.writeln(nil, "_"+cyan.Sprint("_Welcome to the chat. There are ", len(users)-1, " more users_")+"_")
 	}
-	_, _ = term.Write([]byte(strings.Join(backlog, ""))) // print out backlog
+	//_, _ = term.Write([]byte(strings.Join(backlog, ""))) // print out backlog
+	for i := range backlog {
+		u.writeln(backlog[i].sender, backlog[i].text)
+	}
 	broadcast(nil, "_"+u.name+"_"+" _"+green.Sprint("has joined the chat")+"_", true)
 	return u
 }
