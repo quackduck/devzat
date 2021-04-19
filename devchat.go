@@ -75,7 +75,7 @@ func broadcast(sender *user, msg string, toSlack bool) {
 		return
 	}
 	backlogMutex.Lock()
-	backlog = append(backlog, message{sender, msg + "\n"})
+	backlog = append(backlog, message{sender.name, msg + "\n"})
 	backlogMutex.Unlock()
 	if toSlack {
 		if sender != nil {
@@ -105,8 +105,8 @@ type user struct {
 }
 
 type message struct {
-	sender *user
-	text   string
+	senderName string
+	text       string
 }
 
 func newUser(s ssh.Session) *user {
@@ -167,7 +167,7 @@ func newUser(s ssh.Session) *user {
 	}
 	//_, _ = term.Write([]byte(strings.Join(backlog, ""))) // print out backlog
 	for i := range backlog {
-		u.writeln(backlog[i].sender, backlog[i].text)
+		u.writeln(&user{backlog[i].senderName, nil, nil, false, color.Color{}, nil, nil, nil, sync.Once{}}, backlog[i].text)
 	}
 	broadcast(nil, "**"+u.name+"** **"+green.Sprint("has joined the chat")+"**", true)
 	return u
