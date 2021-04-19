@@ -520,6 +520,7 @@ func readBansAndUsers() {
 	allUsersMutex.Lock()
 	json.NewDecoder(f).Decode(&allUsers)
 	allUsersMutex.Unlock()
+	fmt.Println(allUsers)
 	f.Close()
 
 	f, err = os.Open("bans.json")
