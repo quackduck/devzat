@@ -84,16 +84,12 @@ func broadcast(sender *user, msg string, toSlack bool) {
 			slackChan <- msg
 		}
 	}
-	backlogMutex.Lock()
 	for len(backlog) > scrollback { // for instead of if just in case
 		backlog = backlog[1:]
 	}
-	backlogMutex.Unlock()
-	usersMutex.Lock()
 	for i := range users {
 		users[i].writeln(sender, msg)
 	}
-	usersMutex.Unlock()
 }
 
 type user struct {
@@ -148,7 +144,7 @@ func newUser(s ssh.Session) *user {
 		bansMutex.Lock()
 		bans = append(bans, u.addr)
 		bansMutex.Unlock()
-		broadcast(nil, u.name+" has been banned for ten minutes. IP: "+u.addr, true)
+		broadcast(nil, u.name+" has been banned automatically. IP: "+u.addr, true)
 		//time.AfterFunc(10*time.Minute, func() {
 		//	bansMutex.Lock()
 		//	bans = removes(bans, u.addr)
@@ -204,20 +200,16 @@ func (u *user) repl() {
 		}
 		if line == "/users" {
 			names := make([]string, 0, len(users))
-			usersMutex.Lock()
 			for _, us := range users {
 				names = append(names, us.name)
 			}
-			usersMutex.Unlock()
 			broadcast(nil, fmt.Sprint(names), toSlack)
 		}
 		if line == "/all" {
-			allUsersMutex.Lock()
 			names := make([]string, 0, len(allUsers))
 			for _, name := range allUsers {
 				names = append(names, name)
 			}
-			allUsersMutex.Unlock()
 			broadcast(nil, fmt.Sprint(names), toSlack)
 		}
 		if line == "easter" {
@@ -267,7 +259,7 @@ func (u *user) repl() {
 				var pass string
 				pass, err = u.term.ReadPassword("Admin password: ")
 				if err != nil {
-					fmt.Println(u.name, err)
+					l.Println(u.name, err)
 				}
 				if strings.TrimSpace(pass) == strings.TrimSpace(string(adminPass)) {
 					bansMutex.Lock()
@@ -288,7 +280,7 @@ func (u *user) repl() {
 				var pass string
 				pass, err = u.term.ReadPassword("Admin password: ")
 				if err != nil {
-					fmt.Println(u.name, err)
+					l.Println(u.name, err)
 				}
 				if strings.TrimSpace(pass) == strings.TrimSpace(string(adminPass)) {
 					victim.close(victim.name + red.Sprint(" has been kicked by ") + u.name)
@@ -332,7 +324,7 @@ func (u *user) repl() {
 			}
 		}
 		if line == "/help" {
-			broadcast(nil, `Available commands:
+			broadcast(nil, `# Available commands:
    /users         list users
    /nick          change your name
    /color         change your name color
@@ -345,7 +337,7 @@ func (u *user) repl() {
    /kick          kick a user, requires an admin pass
    /help          show this help message
 Made by Ishan Goel with feature ideas from Hack Club members.
-Thanks to Caleb Denio for lending me his server!`, toSlack)
+Thanks to Caleb Denio for lending his server!`, toSlack)
 		}
 	}
 }
@@ -366,10 +358,8 @@ func (u *user) close(msg string) {
 
 func (u *user) writeln(sender *user, msg string) {
 	//if !strings.HasPrefix(msg, u.name+": ") { // ignore messages sent by same person
-	fmt.Println(msg)
 	msg = strings.ReplaceAll(msg, `\n`, "\n")
 	msg = strings.TrimSpace(mdRender(msg, len([]rune(stripansi.Strip(u.name))), u.win.Width))
-	fmt.Println(msg)
 	if sender != nil {
 		msg = u.name + ": " + msg
 	}
@@ -389,21 +379,16 @@ func (u *user) pickUsername(possibleName string) {
 		u.term.SetPrompt("> ")
 		possibleName, err = u.term.ReadLine()
 		if err != nil {
-			fmt.Println(err)
+			l.Println(err)
 		}
 		possibleName = cleanName(possibleName)
 	}
 	u.name = possibleName
-	l.Println()
 	u.changeColor(*colorArr[rand.Intn(len(colorArr))])
-	l.Println()
 	allUsersMutex.Lock()
 	allUsers[u.id] = u.name
-	l.Println()
 	allUsersMutex.Unlock()
-	l.Println()
 	saveBansAndUsers()
-	l.Println()
 }
 
 func cleanName(name string) string {
@@ -457,13 +442,11 @@ func (u *user) changeColor(color color.Color) {
 
 // Returns true if the username is taken, false otherwise
 func userDuplicate(a string) bool {
-	usersMutex.Lock()
 	for i := range users {
 		if stripansi.Strip(users[i].name) == stripansi.Strip(a) {
 			return true
 		}
 	}
-	usersMutex.Unlock()
 	return false
 }
 
@@ -507,40 +490,35 @@ func main() {
 		ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"))
 	if err != nil {
 		fmt.Println(err)
-		l.Println(err)
 	}
 }
 
 func saveBansAndUsers() {
 	f, err := os.Create("allusers.json")
 	if err != nil {
-		fmt.Println(err)
+		l.Println(err)
 		return
 	}
 	j := json.NewEncoder(f)
 	j.SetIndent("", "   ")
-	allUsersMutex.Lock()
 	j.Encode(allUsers)
-	allUsersMutex.Unlock()
 	f.Close()
 
 	f, err = os.Create("bans.json")
 	if err != nil {
-		fmt.Println(err)
+		l.Println(err)
 		return
 	}
 	j = json.NewEncoder(f)
 	j.SetIndent("", "   ")
-	bansMutex.Lock()
 	j.Encode(bans)
-	bansMutex.Unlock()
 	f.Close()
 }
 
 func readBansAndUsers() {
 	f, err := os.Open("allusers.json")
 	if err != nil {
-		fmt.Println(err)
+		l.Println(err)
 		return
 	}
 	allUsersMutex.Lock()
@@ -550,7 +528,7 @@ func readBansAndUsers() {
 
 	f, err = os.Open("bans.json")
 	if err != nil {
-		fmt.Println(err)
+		l.Println(err)
 		return
 	}
 	bansMutex.Lock()
@@ -618,16 +596,3 @@ func remove(s []*user, a *user) []*user {
 	}
 	return append(s[:i], s[i+1:]...)
 }
-
-//func removes(s []string, a string) []string {
-//	var i int
-//	for i = range s {
-//		if s[i] == a {
-//			break // i is now where it is
-//		}
-//	}
-//	if i == 0 {
-//		return make([]string, 0)
-//	}
-//	return append(s[:i], s[i+1:]...)
-//}
