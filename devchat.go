@@ -70,7 +70,7 @@ var (
 	idsIn20Mutex   = sync.Mutex{}
 )
 
-func broadcast(msg string, toSlack bool) {
+func broadcast(sender *user, msg string, toSlack bool) {
 	if msg == "" {
 		return
 	}
@@ -87,7 +87,7 @@ func broadcast(msg string, toSlack bool) {
 	backlogMutex.Unlock()
 	usersMutex.Lock()
 	for i := range users {
-		users[i].writeln(msg)
+		users[i].writeln(sender, msg)
 	}
 	usersMutex.Unlock()
 }
@@ -100,13 +100,15 @@ type user struct {
 	color     color.Color
 	id        string
 	addr      string
+	win       ssh.Window
 	closeOnce sync.Once
 }
 
 func newUser(s ssh.Session) *user {
 	term := terminal.NewTerminal(s, "> ")
 	_ = term.SetSize(10000, 10000) // disable any formatting done by term
-
+	pty, winchan, _ := s.Pty()
+	w := pty.Window
 	host, _, err := net.SplitHostPort(s.RemoteAddr().String()) // definitely should not give an err
 	if err != nil {
 		term.Write([]byte(fmt.Sprintln(err) + "\n"))
@@ -115,13 +117,17 @@ func newUser(s ssh.Session) *user {
 	}
 	hash := sha256.New()
 	hash.Write([]byte(host))
-	u := &user{s.User(), s, term, true, color.Color{}, hex.EncodeToString(hash.Sum(nil)), host, sync.Once{}}
+	u := &user{s.User(), s, term, true, color.Color{}, hex.EncodeToString(hash.Sum(nil)), host, w, sync.Once{}}
+	go func() {
+		for u.win = range winchan {
+		}
+	}()
 	l.Println("Connected " + u.name)
 	//u := &user{"", s, term, true, color.Color{}, s.RemoteAddr().String(), sync.Once{}}
 	for _, banAddr := range bans {
 		if u.addr == banAddr {
 			l.Println("Rejected " + u.addr)
-			u.writeln("You have been banned. If you feel this was done wrongly, please reach out at github.com/quackduck/devzat/issues")
+			u.writeln(nil, "You have been banned. If you feel this was done wrongly, please reach out at github.com/quackduck/devzat/issues")
 			u.close("")
 			return nil
 		}
@@ -138,7 +144,7 @@ func newUser(s ssh.Session) *user {
 		bansMutex.Lock()
 		bans = append(bans, u.addr)
 		bansMutex.Unlock()
-		broadcast(u.name+" has been banned for ten minutes. IP: "+u.addr, true)
+		broadcast(nil, u.name+" has been banned for ten minutes. IP: "+u.addr, true)
 		//time.AfterFunc(10*time.Minute, func() {
 		//	bansMutex.Lock()
 		//	bans = removes(bans, u.addr)
@@ -153,24 +159,18 @@ func newUser(s ssh.Session) *user {
 	saveBansAndUsers()
 	switch len(users) - 1 {
 	case 0:
-		u.writeln(cyan.Sprint("Welcome to the chat. There are no more users"))
+		u.writeln(nil, cyan.Sprint("Welcome to the chat. There are no more users"))
 	case 1:
-		u.writeln(cyan.Sprint("Welcome to the chat. There is one more user"))
+		u.writeln(nil, cyan.Sprint("Welcome to the chat. There is one more user"))
 	default:
-		u.writeln(cyan.Sprint("Welcome to the chat. There are ", len(users)-1, " more users"))
+		u.writeln(nil, cyan.Sprint("Welcome to the chat. There are ", len(users)-1, " more users"))
 	}
 	_, _ = term.Write([]byte(strings.Join(backlog, ""))) // print out backlog
-	broadcast(u.name+green.Sprint(" has joined the chat"), true)
+	broadcast(nil, u.name+green.Sprint(" has joined the chat"), true)
 	return u
 }
 
 func (u *user) repl() {
-	pty, winchan, _ := u.session.Pty()
-	w := pty.Window
-	go func() {
-		for w = range winchan {
-		}
-	}()
 	for {
 		line, err := u.term.ReadLine()
 		line = clean(line)
@@ -179,24 +179,23 @@ func (u *user) repl() {
 			return
 		}
 		if err != nil {
-			u.writeln(fmt.Sprint(err))
-			fmt.Println(u.name, err)
+			l.Println(u.name, err)
 			continue
 		}
 		inputLine := line
-		line = strings.ReplaceAll(line, `\n`, "\n")
+		//line = strings.ReplaceAll(line, `\n`, "\n")
 
-		line = strings.TrimSpace(mdRender(line, len([]rune(stripansi.Strip(u.name))), w.Width))
-		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(len([]rune(u.name+inputLine))+2)/(float64(w.Width))))))) // basically, ceil(length of line divided by term width)
+		//line = strings.TrimSpace(mdRender(line, len([]rune(stripansi.Strip(u.name))), w.Width))
+		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(len([]rune(u.name+inputLine))+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
 
 		toSlack := true
 		if strings.HasPrefix(line, "/hide") {
 			toSlack = false
 		}
 		if !(line == "") {
-			broadcast(u.name+": "+line, toSlack)
+			broadcast(u, line, toSlack)
 		} else {
-			u.writeln("An empty message? Send some content!")
+			u.writeln(nil, "An empty message? Send some content!")
 			continue
 		}
 		if line == "/users" {
@@ -206,7 +205,7 @@ func (u *user) repl() {
 				names = append(names, us.name)
 			}
 			usersMutex.Unlock()
-			broadcast(fmt.Sprint(names), toSlack)
+			broadcast(nil, fmt.Sprint(names), toSlack)
 		}
 		if line == "/all" {
 			allUsersMutex.Lock()
@@ -215,10 +214,10 @@ func (u *user) repl() {
 				names = append(names, name)
 			}
 			allUsersMutex.Unlock()
-			broadcast(fmt.Sprint(names), toSlack)
+			broadcast(nil, fmt.Sprint(names), toSlack)
 		}
 		if line == "easter" {
-			broadcast("eggs?", toSlack)
+			broadcast(nil, "eggs?", toSlack)
 		}
 		if line == "/exit" {
 			return
@@ -226,17 +225,17 @@ func (u *user) repl() {
 		if line == "/bell" {
 			u.bell = !u.bell
 			if u.bell {
-				broadcast(fmt.Sprint("bell on"), toSlack)
+				broadcast(nil, fmt.Sprint("bell on"), toSlack)
 			} else {
-				broadcast(fmt.Sprint("bell off"), toSlack)
+				broadcast(nil, fmt.Sprint("bell off"), toSlack)
 			}
 		}
 		if strings.HasPrefix(line, "/id") {
 			victim, ok := findUserByName(strings.TrimSpace(strings.TrimPrefix(line, "/id")))
 			if !ok {
-				broadcast("User not found", toSlack)
+				broadcast(nil, "User not found", toSlack)
 			} else {
-				broadcast(victim.id, toSlack)
+				broadcast(nil, victim.id, toSlack)
 			}
 		}
 		if strings.HasPrefix(line, "/nick") {
@@ -254,12 +253,12 @@ func (u *user) repl() {
 				bansMutex.Unlock()
 				saveBansAndUsers()
 			} else {
-				u.writeln("Incorrect password")
+				u.writeln(nil, "Incorrect password")
 			}
 		} else if strings.HasPrefix(line, "/ban") {
 			victim, ok := findUserByName(strings.TrimSpace(strings.TrimPrefix(line, "/ban")))
 			if !ok {
-				broadcast("User not found", toSlack)
+				broadcast(nil, "User not found", toSlack)
 			} else {
 				var pass string
 				pass, err = u.term.ReadPassword("Admin password: ")
@@ -273,14 +272,14 @@ func (u *user) repl() {
 					saveBansAndUsers()
 					victim.close(victim.name + " has been banned by " + u.name)
 				} else {
-					u.writeln("Incorrect password")
+					u.writeln(nil, "Incorrect password")
 				}
 			}
 		}
 		if strings.HasPrefix(line, "/kick") {
 			victim, ok := findUserByName(strings.TrimSpace(strings.TrimPrefix(line, "/kick")))
 			if !ok {
-				broadcast("User not found", toSlack)
+				broadcast(nil, "User not found", toSlack)
 			} else {
 				var pass string
 				pass, err = u.term.ReadPassword("Admin password: ")
@@ -290,7 +289,7 @@ func (u *user) repl() {
 				if strings.TrimSpace(pass) == strings.TrimSpace(string(adminPass)) {
 					victim.close(victim.name + red.Sprint(" has been kicked by ") + u.name)
 				} else {
-					u.writeln("Incorrect password")
+					u.writeln(nil, "Incorrect password")
 				}
 			}
 		}
@@ -325,11 +324,11 @@ func (u *user) repl() {
 			case "hacker":
 				u.changeColor(*color.New(color.FgHiGreen, color.BgBlack))
 			default:
-				broadcast(colorMsg, toSlack)
+				broadcast(nil, colorMsg, toSlack)
 			}
 		}
 		if line == "/help" {
-			broadcast(`Available commands:
+			broadcast(nil, `Available commands:
    /users         list users
    /nick          change your name
    /color         change your name color
@@ -353,7 +352,7 @@ func (u *user) close(msg string) {
 		users = remove(users, u)
 		usersMutex.Unlock()
 		//if kicked {
-		broadcast(msg, true)
+		broadcast(nil, msg, true)
 		//} else {
 		//	broadcast(u.name+red.Sprint(" has left the chat"), true)
 		//}
@@ -361,8 +360,15 @@ func (u *user) close(msg string) {
 	})
 }
 
-func (u *user) writeln(msg string) {
+func (u *user) writeln(sender *user, msg string) {
 	//if !strings.HasPrefix(msg, u.name+": ") { // ignore messages sent by same person
+	fmt.Println(msg)
+	msg = strings.ReplaceAll(msg, `\n`, "\n")
+	msg = strings.TrimSpace(mdRender(msg, len([]rune(stripansi.Strip(u.name))), u.win.Width))
+	fmt.Println(msg)
+	if sender != nil {
+		msg = u.name + ": " + msg
+	}
 	if u.bell {
 		u.term.Write([]byte("\a" + msg + "\n")) // "\a" is beep
 	} else {
@@ -375,7 +381,7 @@ func (u *user) pickUsername(possibleName string) {
 	possibleName = cleanName(possibleName)
 	var err error
 	for userDuplicate(possibleName) {
-		u.writeln("Pick a different username")
+		u.writeln(nil, "Pick a different username")
 		u.term.SetPrompt("> ")
 		possibleName, err = u.term.ReadLine()
 		if err != nil {
@@ -464,7 +470,7 @@ func main() {
 		fmt.Println("Shutting down...")
 		saveBansAndUsers()
 		logfile.Close()
-		broadcast("Server going down! This is probably because it is being updated. Try joining in ~5 minutes.\nIf you still can't join, make an issue at github.com/quackduck/devzat/issues", true)
+		broadcast(nil, "Server going down! This is probably because it is being updated. Try joining in ~5 minutes.\nIf you still can't join, make an issue at github.com/quackduck/devzat/issues", true)
 		os.Exit(0)
 	}()
 
@@ -555,7 +561,7 @@ func getMsgsFromSlack() {
 			}
 			u, _ := api.GetUserInfo(msg.User)
 			if !strings.HasPrefix(msg.Text, "hide") {
-				broadcast("slack: "+u.RealName+": "+msg.Text, false)
+				broadcast(nil, "slack: "+u.RealName+": "+msg.Text, false)
 			}
 		case *slack.ConnectedEvent:
 			fmt.Println("Connected to Slack")
@@ -573,7 +579,7 @@ func getSendToSlackChan() chan string {
 			if strings.HasPrefix(msg, "slack: ") { // just in case
 				continue
 			}
-			msg = stripansi.Strip(msg)
+			msg = strings.ReplaceAll(stripansi.Strip(msg), `\n`, "\n")
 			rtm.SendMessage(rtm.NewOutgoingMessage(msg, "C01T5J557AA"))
 		}
 	}()
