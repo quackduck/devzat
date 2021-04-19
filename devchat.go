@@ -145,11 +145,6 @@ func newUser(s ssh.Session) *user {
 		bans = append(bans, u.addr)
 		bansMutex.Unlock()
 		broadcast(nil, u.name+" has been banned automatically. IP: "+u.addr, true)
-		//time.AfterFunc(10*time.Minute, func() {
-		//	bansMutex.Lock()
-		//	bans = removes(bans, u.addr)
-		//	bansMutex.Unlock()
-		//})
 		return nil
 	}
 	u.pickUsername(s.User())
@@ -183,9 +178,6 @@ func (u *user) repl() {
 			continue
 		}
 		inputLine := line
-		//line = strings.ReplaceAll(line, `\n`, "\n")
-
-		//line = strings.TrimSpace(mdRender(line, len([]rune(stripansi.Strip(u.name))), w.Width))
 		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(len([]rune(u.name+inputLine))+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
 
 		toSlack := true
@@ -347,17 +339,12 @@ func (u *user) close(msg string) {
 		usersMutex.Lock()
 		users = remove(users, u)
 		usersMutex.Unlock()
-		//if kicked {
 		broadcast(nil, msg, true)
-		//} else {
-		//	broadcast(u.name+red.Sprint(" has left the chat"), true)
-		//}
 		u.session.Close()
 	})
 }
 
 func (u *user) writeln(sender *user, msg string) {
-	//if !strings.HasPrefix(msg, u.name+": ") { // ignore messages sent by same person
 	msg = strings.ReplaceAll(msg, `\n`, "\n")
 	msg = strings.TrimSpace(mdRender(msg, len([]rune(stripansi.Strip(u.name))), u.win.Width))
 	if sender != nil {
@@ -368,7 +355,6 @@ func (u *user) writeln(sender *user, msg string) {
 	} else {
 		u.term.Write([]byte(msg + "\n"))
 	}
-	//}
 }
 
 func (u *user) pickUsername(possibleName string) {
