@@ -316,19 +316,19 @@ func (u *user) repl() {
 			}
 		}
 		if line == "/help" {
-			broadcast(nil, `# Available commands:
-   /users         list users
-   /nick          change your name
-   /color         change your name color
-   /exit          leave the chat
-   /hide          hide messages from HC Slack
-   /bell          toggle the ansi bell
-   /id            get a unique identifier for a user
-   /all           get a list of all unique users ever
-   /ban, /banid   ban a user, requires an admin pass
-   /kick          kick a user, requires an admin pass
-   /help          show this help message
-Made by Ishan Goel with feature ideas from Hack Club members.
+			broadcast(nil, `# Available commands:  
+   /users         list users  
+   /nick          change your name  
+   /color         change your name color  
+   /exit          leave the chat  
+   /hide          hide messages from HC Slack  
+   /bell          toggle the ansi bell  
+   /id            get a unique identifier for a user  
+   /all           get a list of all unique users ever  
+   /ban, /banid   ban a user, requires an admin pass  
+   /kick          kick a user, requires an admin pass  
+   /help          show this help message  
+Made by Ishan Goel with feature ideas from Hack Club members.  
 Thanks to Caleb Denio for lending his server!`, toSlack)
 		}
 	}
