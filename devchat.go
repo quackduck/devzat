@@ -78,7 +78,7 @@ func broadcast(sender *user, msg string, toSlack bool) {
 	backlog = append(backlog, msg+"\n")
 	backlogMutex.Unlock()
 	if toSlack {
-		slackChan <- msg
+		slackChan <- sender.name + ": " + msg
 	}
 	backlogMutex.Lock()
 	for len(backlog) > scrollback { // for instead of if just in case
