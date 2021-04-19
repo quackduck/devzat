@@ -346,9 +346,11 @@ func (u *user) close(msg string) {
 
 func (u *user) writeln(sender *user, msg string) {
 	msg = strings.ReplaceAll(msg, `\n`, "\n")
-	msg = strings.TrimSpace(mdRender(msg, len([]rune(stripansi.Strip(u.name))), u.win.Width))
 	if sender != nil {
+		msg = strings.TrimSpace(mdRender(msg, len([]rune(stripansi.Strip(sender.name))), u.win.Width))
 		msg = u.name + ": " + msg
+	} else {
+		msg = strings.TrimSpace(mdRender(msg, -2, u.win.Width)) // -2 so linewidth is used as is
 	}
 	if u.bell {
 		u.term.Write([]byte("\a" + msg + "\n")) // "\a" is beep
