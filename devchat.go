@@ -159,17 +159,17 @@ func newUser(s ssh.Session) *user {
 	saveBansAndUsers()
 	switch len(users) - 1 {
 	case 0:
-		u.writeln(nil, "_"+cyan.Sprint("Welcome to the chat. There are no more users")+"_")
+		u.writeln(nil, "**"+cyan.Sprint("Welcome to the chat. There are no more users")+"**")
 	case 1:
-		u.writeln(nil, "_"+cyan.Sprint("Welcome to the chat. There is one more user")+"_")
+		u.writeln(nil, "**"+cyan.Sprint("Welcome to the chat. There is one more user")+"**")
 	default:
-		u.writeln(nil, "_"+cyan.Sprint("_Welcome to the chat. There are ", len(users)-1, " more users_")+"_")
+		u.writeln(nil, "**"+cyan.Sprint("Welcome to the chat. There are ", len(users)-1, " more users")+"**")
 	}
 	//_, _ = term.Write([]byte(strings.Join(backlog, ""))) // print out backlog
 	for i := range backlog {
 		u.writeln(backlog[i].sender, backlog[i].text)
 	}
-	broadcast(nil, "_"+u.name+"_"+" _"+green.Sprint("has joined the chat")+"_", true)
+	broadcast(nil, "**"+u.name+"** **"+green.Sprint("has joined the chat")+"**", true)
 	return u
 }
 
@@ -468,7 +468,7 @@ func main() {
 			return
 		}
 		u.repl()
-		u.close(u.name + red.Sprint(" has left the chat"))
+		u.close("**" + u.name + "** **" + red.Sprint("has left the chat") + "**")
 	})
 	if os.Getenv("PORT") != "" {
 		port, err = strconv.Atoi(os.Getenv("PORT"))
