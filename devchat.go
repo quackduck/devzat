@@ -78,7 +78,11 @@ func broadcast(sender *user, msg string, toSlack bool) {
 	backlog = append(backlog, msg+"\n")
 	backlogMutex.Unlock()
 	if toSlack {
-		slackChan <- sender.name + ": " + msg
+		if sender != nil {
+			slackChan <- sender.name + ": " + msg
+		} else {
+			slackChan <- msg
+		}
 	}
 	backlogMutex.Lock()
 	for len(backlog) > scrollback { // for instead of if just in case
@@ -390,11 +394,16 @@ func (u *user) pickUsername(possibleName string) {
 		possibleName = cleanName(possibleName)
 	}
 	u.name = possibleName
+	l.Println()
 	u.changeColor(*colorArr[rand.Intn(len(colorArr))])
+	l.Println()
 	allUsersMutex.Lock()
 	allUsers[u.id] = u.name
+	l.Println()
 	allUsersMutex.Unlock()
+	l.Println()
 	saveBansAndUsers()
+	l.Println()
 }
 
 func cleanName(name string) string {
