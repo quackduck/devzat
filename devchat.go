@@ -324,26 +324,26 @@ func (u *user) repl() {
 		}
 		if line == "/people" {
 			broadcast("", `
-**Hack Club members**
-Zach - Founder of Hack Club
-Zachary - HC Game Designer
-Caleb, Safin, Eleeza, Jubril
+**Hack Club members**  
+Zach - Founder of Hack Club  
+Zachary - HC Game Designer  
+Caleb, Safin, Eleeza, Jubril  
 Sarthak, Anghe, Tommy, Sam  
 _Possibly more people_
 
 
-**From my school:**
+**From my school:**  
 Kiyan, Riya
 
 
-**From Twitter:**
-Ayush @ayshptk
-Srushti @srushtiuniverse
-Arav @tregsthedev
+**From Twitter:**  
+Ayush @ayshptk  
+Srushti @srushtiuniverse  
+Arav @tregsthedev  
 Bereket @heybereket
 
 
-**And many more have joined!**`, toSlack)
+**And many more have joined! (especially from HN)**`, toSlack)
 		}
 		if line == "/help" {
 			broadcast("", `**Available commands**  
