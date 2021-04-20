@@ -322,8 +322,31 @@ func (u *user) repl() {
 				broadcast("", colorMsg, toSlack)
 			}
 		}
+		if line == "/people" {
+			broadcast("", `
+**Hack Club members**
+Zach - Founder of Hack Club
+Zachary - HC Game Designer
+Caleb, Safin, Eleeza, Jubril
+Sarthak, Anghe, Tommy, Sam  
+_Possibly more people_
+
+
+**From my school:**
+Kiyan, Riya
+
+
+**From Twitter:**
+Ayush @ayshptk
+Srushti @srushtiuniverse
+Arav @tregsthedev
+Bereket @heybereket
+
+
+**And many more have joined!**`, toSlack)
+		}
 		if line == "/help" {
-			broadcast("", `**Available commands** 
+			broadcast("", `**Available commands**  
    /users   list users  
    /nick    change your name  
    /color   change your name color  
@@ -332,6 +355,7 @@ func (u *user) repl() {
    /bell    toggle the ansi bell  
    /id      get a unique identifier for a user  
    /all     get a list of all unique users ever  
+   /people  see info about nice people who joined
    /ban     ban a user, requires an admin pass  
    /kick    kick a user, requires an admin pass  
    /help    show this help message  
