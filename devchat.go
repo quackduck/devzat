@@ -59,7 +59,7 @@ var (
 	backlog      = make([]message, 0, scrollback)
 	backlogMutex = sync.Mutex{}
 
-	logfile, _ = os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	logfile, _ = os.OpenFile("log.txt", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0666)
 	l          = log.New(io.MultiWriter(logfile, os.Stdout), "", log.Ldate|log.Ltime|log.Lshortfile)
 
 	bans      = make([]string, 0, 10)
@@ -323,7 +323,7 @@ func (u *user) repl() {
 			}
 		}
 		if line == "/help" {
-			broadcast("", `## Available commands  
+			broadcast("", `**Available commands** 
    /users   list users  
    /nick    change your name  
    /color   change your name color  
@@ -375,6 +375,7 @@ func (u *user) pickUsername(possibleName string) {
 		possibleName, err = u.term.ReadLine()
 		if err != nil {
 			l.Println(err)
+			return
 		}
 		possibleName = cleanName(possibleName)
 	}
