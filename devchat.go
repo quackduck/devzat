@@ -355,7 +355,7 @@ Bereket @heybereket
    /bell    toggle the ansi bell  
    /id      get a unique identifier for a user  
    /all     get a list of all unique users ever  
-   /people  see info about nice people who joined
+   /people  see info about nice people who joined  
    /ban     ban a user, requires an admin pass  
    /kick    kick a user, requires an admin pass  
    /help    show this help message  
