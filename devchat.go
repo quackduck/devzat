@@ -341,7 +341,7 @@ Ayush @ayshptk
 Srushti @srushtiuniverse  
 Arav @tregsthedev  
 Bereket @heybereket
-
+Krish @krishnerkar_
 
 **And many more have joined! (especially from HN)**`, toSlack)
 		}
