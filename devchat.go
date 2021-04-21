@@ -504,6 +504,14 @@ func main() {
 
 	fmt.Println(fmt.Sprintf("Starting chat server on port %d", port))
 	go getMsgsFromSlack()
+	go func() {
+		if port == 22 {
+			err = ssh.ListenAndServe(
+				":443",
+				nil,
+				ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"))
+		}
+	}()
 	err = ssh.ListenAndServe(
 		fmt.Sprintf(":%d", port),
 		nil,
