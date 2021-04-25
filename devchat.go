@@ -328,7 +328,7 @@ func (u *user) repl() {
 Zach - Founder of Hack Club  
 Zachary - HC Game Designer  
 Caleb, Safin, Eleeza, Jubril  
-Sarthak, Anghe, Tommy, Sam  
+Sarthak, Anghe, Tommy, Sam, Rishi  
 _Possibly more people_
 
 
@@ -338,10 +338,11 @@ Kiyan, Riya
 
 **From Twitter:**  
 Ayush @ayshptk  
+Bereket @heybereket  
 Srushti @srushtiuniverse  
 Arav @tregsthedev  
-Bereket @heybereket
-Krish @krishnerkar_
+Krish @krishnerkar_  
+Amrit @astro_shenava
 
 **And many more have joined! (especially from HN)**`, toSlack)
 		}

@@ -63,4 +63,4 @@ Krish [@krishnerkar_](https://twitter.com/krishnerkar_):  [_"SHIT! THIS IS SO DO
 Amrit [@astro_shenava](https://twitter.com/astro_shenava): _"Super cool man"_
 
 From Hack Club: 
-Sam Poder, Caleb Denio, Safin Singh, Eleeza A, Jubril, Sarthak Mohanty, Anghe, Tommy Pujol
+Sam Poder, Caleb Denio, Safin Singh, Eleeza A, Jubril, Sarthak Mohanty, Anghe, Tommy Pujol, Rishi Kothari
