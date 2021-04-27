@@ -129,7 +129,7 @@ func newUser(s ssh.Session) *user {
 	}()
 	l.Println("Connected " + u.name)
 	for _, banAddr := range bans {
-		if u.addr == banAddr {
+		if u.addr == banAddr || u.id == banAddr {
 			l.Println("Rejected " + u.addr)
 			u.writeln("", "**You have been banned**. If you feel this was done wrongly, please reach out at https://github.com/quackduck/devzat/issues")
 			u.close("")
