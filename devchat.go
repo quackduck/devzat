@@ -384,7 +384,7 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
    **/ban**   <user>    _Ban a user, requires an admin pass_  
    **/kick**  <user>    _Kick a user, requires an admin pass_  
    **/help**            _Show help_  
-   **/commands          _Show this message_`, toSlack)
+   **/commands**        _Show this message_`, toSlack)
 		}
 	}
 }
