@@ -351,7 +351,7 @@ Amrit          @astro_shenava
 **And many more have joined!**`, toSlack)
 		}
 		if line == "/help" {
-			broadcast("", `Welcome to Devzat! Devzat is chat over SSH.  
+			broadcast("", `Welcome to Devzat! Devzat is chat over SSH: github.com/quackduck/devzat  
 Because there's SSH apps on all platforms, even on mobile, you can join from anywhere.
 
 Interesting features:
@@ -361,7 +361,10 @@ Interesting features:
 * Emoji replacements :fire: [colon, rocket, colon] => :rocket: (like on Slack and Discord)
 * Code syntax highlighting. Use Markdown fences to send code.
 
-For replacing newlines, I use bulkseotools.com/add-remove-line-breaks.php.`, toSlack)
+For replacing newlines, I use bulkseotools.com/add-remove-line-breaks.php.
+
+Made by Ishan Goel with feature ideas from friends.  
+Thanks to Caleb Denio for lending his server!`, toSlack)
 		}
 		if line == "/sample-code" {
 			broadcast("", "\n```go\npackage main\nimport \"fmt\"\nfunc main() {\n   fmt.Println(\"Example!\")\n}\n```", toSlack)
