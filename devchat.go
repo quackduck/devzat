@@ -376,10 +376,10 @@ For replacing newlines, I use bulkseotools.com/add-remove-line-breaks.php.`, toS
    **/hide**            _Hide messages from HC Slack_  
    **/bell**            _Toggle the ansi bell_  
    **/id**    <user>    _Get a unique identifier for a user_  
-   **/all**             _Get a list of all unique users ever_
+   **/all**             _Get a list of all unique users ever_  
    **/ban**   <user>    _Ban a user, requires an admin pass_  
    **/kick**  <user>    _Kick a user, requires an admin pass_  
-   **/help**            _Show help_
+   **/help**            _Show help_  
    **/commands          _Show this message_`, toSlack)
 		}
 	}
