@@ -351,14 +351,17 @@ Amrit          @astro_shenava
 **And many more have joined!**`, toSlack)
 		}
 		if line == "/help" {
-			broadcast("", `Welcome to Devzat! Devzat is chat over SSH.
+			broadcast("", `Welcome to Devzat! Devzat is chat over SSH.  
 Because there's SSH apps on all platforms, even on mobile, you can join from anywhere.
 
 Features:
-1. Markdown support! Tables, headers, code, everything! Use "[backslash]n" (like in many languages) in place of newlines for multiline messages. You can even send ascii art with code fences.
-2. Emoji replacements. colon, rocket, colon => :rocket: (like on Slack and Discord)
-3. Code syntax highlighting. Devzat is for developers. Use Markdown and replace newlines with "[backslash]n" to send code. I like bulkseotools.com/add-remove-line-breaks.php.
-4. Many commands. Check em out by sending /commands`, toSlack)
+1. Many, many commands. Check em out by using /commands
+2. Markdown support! Tables, headers, code, everything, just use "[backslash]n" in place of newlines.  
+   You can even send ascii art with code fences.
+3. Emoji replacements. colon, rocket, colon => :rocket: (like on Slack and Discord)
+4. Code syntax highlighting. Use Markdown to send code.
+
+For replacing newlines, I use bulkseotools.com/add-remove-line-breaks.php.`, toSlack)
 		}
 		if line == "/sample-code" {
 			broadcast("", "\n```go\npackage main\nimport \"fmt\"\nfunc main() {\n   fmt.Println(\"Example!\")\n}\n```", toSlack)
