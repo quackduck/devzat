@@ -131,7 +131,7 @@ func newUser(s ssh.Session) *user {
 	for _, banAddr := range bans {
 		if u.addr == banAddr || u.id == banAddr {
 			l.Println("Rejected " + u.addr)
-			u.writeln("", "**You have been banned**. If you feel this was done wrongly, please reach out at https://github.com/quackduck/devzat/issues")
+			u.writeln("", "**You have been banned**. If you feel this was done wrongly, please reach out at github.com/quackduck/devzat/issues")
 			u.close("")
 			return nil
 		}
@@ -325,41 +325,45 @@ func (u *user) repl() {
 		if line == "/people" {
 			broadcast("", `
 **Hack Club members**  
-Zach - Founder of Hack Club  
-Zachary - HC Game Designer  
-Caleb, Safin, Eleeza, Jubril  
-Sarthak, Anghe, Tommy, Sam, Rishi  
+Zach Latta     - Founder of Hack Club  
+Zachary Fogg   - Hack Club Game Designer  
+Matthew        - Hack Club HQ  
+Caleb Denio, Safin Singh, Eleeza A  
+Jubril, Sarthak M, Anghe,  
+Tommy P, Sam Poder, Rishi Kothari  
+Amogh Chaubey, Ella Xu  
 _Possibly more people_
 
 
 **From my school:**  
-Kiyan, Riya
+Kiyan, Riya, Georgie  
+Rayed Hamayun, Aarush Kumar
 
 
 **From Twitter:**  
-Ayush @ayshptk  
-Bereket @heybereket  
-Srushti @srushtiuniverse  
-Arav @tregsthedev  
-Krish @krishnerkar_  
-Amrit @astro_shenava
+Ayush Pathak   @ayshptk  
+Bereket        @heybereket  
+Srushti        @srushtiuniverse  
+Arav Nerula    @tregsthedev  
+Krish Nerkar   @krishnerkar_  
+Amrit          @astro_shenava
 
-**And many more have joined! (especially from HN)**`, toSlack)
+**And many more have joined!**`, toSlack)
 		}
 		if line == "/help" {
 			broadcast("", `**Available commands**  
-   /users   list users  
-   /nick    change your name  
-   /color   change your name color  
-   /exit    leave the chat  
-   /hide    hide messages from HC Slack  
-   /bell    toggle the ansi bell  
-   /id      get a unique identifier for a user  
-   /all     get a list of all unique users ever  
-   /people  see info about nice people who joined  
-   /ban     ban a user, requires an admin pass  
-   /kick    kick a user, requires an admin pass  
-   /help    show this help message  
+   **/users**           _list users_  
+   **/nick**  <name>    _change your name_  
+   **/color** <color>   _change your name color_  
+   **/exit**            _leave the chat_  
+   **/hide**            _hide messages from HC Slack_  
+   **/bell**            _toggle the ansi bell_  
+   **/id**    <user>    _get a unique identifier for a user_  
+   **/all**             _get a list of all unique users ever_  
+   **/people**          _see info about nice people who joined_  
+   **/ban**   <user>    _ban a user, requires an admin pass_  
+   **/kick**  <user>    _kick a user, requires an admin pass_  
+   **/help**            _show this help message_  
 Made by Ishan Goel with feature ideas from Hack Club members.  
 Thanks to Caleb Denio for lending his server!`, toSlack)
 		}
