@@ -344,6 +344,7 @@ Rayed Hamayun, Aarush Kumar
 Ayush Pathak   @ayshptk  
 Bereket        @heybereket  
 Srushti        @srushtiuniverse  
+Surjith        @surjithctly  
 Arav Nerula    @tregsthedev  
 Krish Nerkar   @krishnerkar_  
 Amrit          @astro_shenava
