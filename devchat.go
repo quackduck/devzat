@@ -32,7 +32,9 @@ var (
 	//go:embed slackAPI.txt
 	slackAPI []byte
 	//go:embed adminPass.txt
-	adminPass  []byte
+	adminPass []byte
+	//go:embed art.txt
+	artBytes   []byte
 	port       = 22
 	scrollback = 16
 
@@ -367,8 +369,11 @@ For replacing newlines, I use bulkseotools.com/add-remove-line-breaks.php.
 Made by Ishan Goel with feature ideas from friends.  
 Thanks to Caleb Denio for lending his server!`, toSlack)
 		}
-		if line == "/sample-code" {
+		if line == "/example-code" {
 			broadcast("", "\n```go\npackage main\nimport \"fmt\"\nfunc main() {\n   fmt.Println(\"Example!\")\n}\n```", toSlack)
+		}
+		if line == "/ascii-art" {
+			broadcast("", string(artBytes), toSlack)
 		}
 		if line == "/commands" {
 			broadcast("", `**Available commands**  
