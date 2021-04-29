@@ -358,7 +358,7 @@ Features:
 1. Markdown support. Use "[backslash]n" (like in many languages) for multiline messages. You can even send ascii art with code fences!
 2. Emoji replacements! colon, rocket, colon => :rocket: (like on Slack and Discord)
 3. Code syntax highlighting. Devzat is for developers. Use Markdown and replace newlines with "[backslash]n" to send code. I like to use gillmeister-software.com/online-tools/text/remove-line-breaks.aspx.
-`+"```go\npackage main\nimport \"fmt\"\nfunc main() {\n   fmt.Println(\"Example!\")\n}\n```"+`
+`+"\n```go\npackage main\nimport \"fmt\"\nfunc main() {\n   fmt.Println(\"Example!\")\n}\n```"+`
 4. Many commands. Check em out by sending /commands`, toSlack)
 		}
 		if line == "/commands" {
