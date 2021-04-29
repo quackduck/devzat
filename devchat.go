@@ -355,26 +355,29 @@ Amrit          @astro_shenava
 Because there's SSH apps on all platforms, even on mobile, you can join from anywhere.
 
 Features:
-1. Markdown support. Use "[backslash]n" (like in many languages) for multiline messages. You can even send ascii art with code fences!
-2. Emoji replacements! colon, rocket, colon => :rocket: (like on Slack and Discord)
-3. Code syntax highlighting. Devzat is for developers. Use Markdown and replace newlines with "[backslash]n" to send code. I like to use gillmeister-software.com/online-tools/text/remove-line-breaks.aspx.
-`+"\n```go\npackage main\nimport \"fmt\"\nfunc main() {\n   fmt.Println(\"Example!\")\n}\n```"+`
+1. Markdown support! Tables, headers, code, everything! Use "[backslash]n" (like in many languages) in place of newlines for multiline messages. You can even send ascii art with code fences.
+2. Emoji replacements. colon, rocket, colon => :rocket: (like on Slack and Discord)
+3. Code syntax highlighting. Devzat is for developers. Use Markdown and replace newlines with "[backslash]n" to send code. I like bulkseotools.com/add-remove-line-breaks.php.
 4. Many commands. Check em out by sending /commands`, toSlack)
+		}
+		if line == "/sample-code" {
+			broadcast("", "\n```go\npackage main\nimport \"fmt\"\nfunc main() {\n   fmt.Println(\"Example!\")\n}\n```", toSlack)
 		}
 		if line == "/commands" {
 			broadcast("", `**Available commands**  
-   **/users**           _list users_  
-   **/nick**  <name>    _change your name_  
-   **/color** <color>   _change your name color_  
-   **/exit**            _leave the chat_  
-   **/hide**            _hide messages from HC Slack_  
-   **/bell**            _toggle the ansi bell_  
-   **/id**    <user>    _get a unique identifier for a user_  
-   **/all**             _get a list of all unique users ever_  
-   **/people**          _see info about nice people who joined_  
-   **/ban**   <user>    _ban a user, requires an admin pass_  
-   **/kick**  <user>    _kick a user, requires an admin pass_  
-   **/help**            _show this help message_`, toSlack)
+   **/users**           _List users_  
+   **/nick**  <name>    _Change your name_  
+   **/color** <color>   _Change your name color_  
+   **/people**          _See info about nice people who joined_  
+   **/exit**            _Leave the chat_  
+   **/hide**            _Hide messages from HC Slack_  
+   **/bell**            _Toggle the ansi bell_  
+   **/id**    <user>    _Get a unique identifier for a user_  
+   **/all**             _Get a list of all unique users ever_
+   **/ban**   <user>    _Ban a user, requires an admin pass_  
+   **/kick**  <user>    _Kick a user, requires an admin pass_  
+   **/help**            _Show help_
+   **/commands          _Show this message_`, toSlack)
 		}
 	}
 }
