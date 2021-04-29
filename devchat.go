@@ -354,12 +354,12 @@ Amrit          @astro_shenava
 			broadcast("", `Welcome to Devzat! Devzat is chat over SSH.  
 Because there's SSH apps on all platforms, even on mobile, you can join from anywhere.
 
-Features:
-1. Many, many commands. Check em out by using /commands
-2. Markdown support! Tables, headers, code, everything, just use "[backslash]n" in place of newlines.  
+Interesting features:
+* Many, many commands. Check em out by using /commands.
+* Markdown support! Tables, headers, italics and everything. Just use "\\n" in place of newlines.  
    You can even send ascii art with code fences.
-3. Emoji replacements. colon, rocket, colon => :rocket: (like on Slack and Discord)
-4. Code syntax highlighting. Use Markdown to send code.
+* Emoji replacements :fire: [colon, rocket, colon] => :rocket: (like on Slack and Discord)
+* Code syntax highlighting. Use Markdown fences to send code.
 
 For replacing newlines, I use bulkseotools.com/add-remove-line-breaks.php.`, toSlack)
 		}
@@ -397,6 +397,7 @@ func (u *user) close(msg string) {
 
 func (u *user) writeln(senderName string, msg string) {
 	msg = strings.ReplaceAll(msg, `\n`, "\n")
+	msg = strings.ReplaceAll(msg, `\`+"\n", `\n`) // let people escape newlines
 	if senderName != "" {
 		msg = strings.TrimSpace(mdRender(msg, len([]rune(stripansi.Strip(senderName))), u.win.Width))
 		msg = senderName + ": " + msg
