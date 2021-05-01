@@ -193,7 +193,7 @@ func newUser(s ssh.Session) *user {
 	idsIn20Mutex.Lock()
 	idsIn20ToTimes[u.id]++
 	idsIn20Mutex.Unlock()
-	time.AfterFunc(20*time.Second, func() {
+	time.AfterFunc(30*time.Second, func() {
 		idsIn20Mutex.Lock()
 		idsIn20ToTimes[u.id]--
 		idsIn20Mutex.Unlock()
