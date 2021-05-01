@@ -193,7 +193,24 @@ func (u *user) repl() {
 		if strings.HasPrefix(line, "/hide") {
 			toSlack = false
 		}
-		if !(line == "") {
+		if strings.HasPrefix(line, "/dm") {
+			toSlack = false
+			rest := strings.TrimSpace(strings.TrimPrefix(line, "/dm"))
+			restSplit := strings.Fields(rest)
+			if len(restSplit) < 2 {
+				u.writeln("", "Not enough arguments to /dm. Use /dm <user> <msg>")
+			} else {
+				peer, ok := findUserByName(restSplit[0])
+				if !ok {
+					u.writeln("", "User not found")
+				} else {
+					msg := strings.TrimSpace(strings.TrimPrefix(rest, restSplit[0]))
+					u.writeln(u.name+" -> "+peer.name, msg)
+					//peer.writeln(u.name+" -> "+peer.name, msg)
+					peer.writeln(peer.name+" <- "+u.name, msg)
+				}
+			}
+		} else if !(line == "") {
 			broadcast(u.name, line, toSlack)
 		} else {
 			u.writeln("", "An empty message? Send some content!")
@@ -360,11 +377,11 @@ Because there's SSH apps on all platforms, even on mobile, you can join from any
 Interesting features:
 * Many, many commands. Check em out by using /commands.
 * Markdown support! Tables, headers, italics and everything. Just use "\\n" in place of newlines.  
-   You can even send ascii art with code fences.
+   You can even send _ascii art_ with code fences. Run /ascii-art to see an example.
 * Emoji replacements :fire: [colon, rocket, colon] => :rocket: (like on Slack and Discord)
-* Code syntax highlighting. Use Markdown fences to send code.
+* Code syntax highlighting. Use Markdown fences to send code. Run /example-code to see an example.
 
-For replacing newlines, I use bulkseotools.com/add-remove-line-breaks.php.
+For replacing newlines, I often use bulkseotools.com/add-remove-line-breaks.php.
 
 Made by Ishan Goel with feature ideas from friends.  
 Thanks to Caleb Denio for lending his server!`, toSlack)
