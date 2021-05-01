@@ -403,19 +403,20 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
 		}
 		if line == "/commands" {
 			broadcast("", `**Available commands**  
-   **/users**           _List users_  
-   **/nick**  <name>    _Change your name_  
-   **/color** <color>   _Change your name color_  
-   **/people**          _See info about nice people who joined_  
-   **/exit**            _Leave the chat_  
-   **/hide**            _Hide messages from HC Slack_  
-   **/bell**            _Toggle the ansi bell_  
-   **/id**    <user>    _Get a unique identifier for a user_  
-   **/all**             _Get a list of all unique users ever_  
-   **/ban**   <user>    _Ban a user, requires an admin pass_  
-   **/kick**  <user>    _Kick a user, requires an admin pass_  
-   **/help**            _Show help_  
-   **/commands**        _Show this message_`, toSlack)
+   **/dm**    <user> <msg>   _Privately message people_  
+   **/users**                _List users_  
+   **/nick**  <name>         _Change your name_  
+   **/color** <color>        _Change your name color_  
+   **/people**               _See info about nice people who joined_  
+   **/exit**                 _Leave the chat_  
+   **/hide**                 _Hide messages from HC Slack_  
+   **/bell**                 _Toggle the ansi bell_  
+   **/id**    <user>         _Get a unique identifier for a user_  
+   **/all**                  _Get a list of all unique users ever_  
+   **/ban**   <user>         _Ban a user, requires an admin pass_  
+   **/kick**  <user>         _Kick a user, requires an admin pass_  
+   **/help**                 _Show help_  
+   **/commands**             _Show this message_`, toSlack)
 		}
 	}
 }
