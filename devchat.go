@@ -208,7 +208,7 @@ func (u *user) repl() {
 					u.writeln(u.name+" -> "+peer.name, msg)
 					//peer.writeln(u.name+" -> "+peer.name, msg)
 					if u == peer {
-						u.writeln(color.HiGreenString("Server"), "You must be really lonely, DMing yourself. Don't worry, I won't judge :wink:")
+						u.writeln(color.HiGreenString("devbot"), "You must be really lonely, DMing yourself. Don't worry, I won't judge :wink:")
 					} else {
 						peer.writeln(peer.name+" <- "+u.name, msg)
 					}
@@ -219,6 +219,11 @@ func (u *user) repl() {
 		} else {
 			u.writeln("", "An empty message? Send some content!")
 			continue
+		}
+		if strings.Contains(line, "devbot") {
+			devbotMessages := []string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "I'm in the middle of something can you not", "Devbot to the rescue!", "Run /help, you need it."}
+			pick := devbotMessages[rand.Intn(len(devbotMessages))]
+			broadcast(color.HiGreenString("devbot"), pick, toSlack)
 		}
 		if line == "/users" {
 			names := make([]string, 0, len(users))
