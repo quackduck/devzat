@@ -13,6 +13,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -71,6 +72,57 @@ var (
 	idsIn20ToTimes = make(map[string]int, 10)
 	idsIn20Mutex   = sync.Mutex{}
 )
+
+func main() {
+	color.NoColor = false
+	var err error
+	rand.Seed(time.Now().Unix())
+	readBansAndUsers()
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGKILL)
+	go func() {
+		<-c
+		fmt.Println("Shutting down...")
+		saveBansAndUsers()
+		logfile.Close()
+		broadcast("", "Server going down! This is probably because it is being updated. Try joining in ~5 minutes.  \nIf you still can't join, make an issue at github.com/quackduck/devzat/issues", true)
+		os.Exit(0)
+	}()
+
+	ssh.Handle(func(s ssh.Session) {
+		u := newUser(s)
+		if u == nil {
+			return
+		}
+		u.repl()
+		u.close("**" + u.name + "** **" + red.Sprint("has left the chat") + "**")
+	})
+	if os.Getenv("PORT") != "" {
+		port, err = strconv.Atoi(os.Getenv("PORT"))
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
+
+	fmt.Println(fmt.Sprintf("Starting chat server on port %d", port))
+	go getMsgsFromSlack()
+	go func() {
+		if port == 22 {
+			err = ssh.ListenAndServe(
+				":443",
+				nil,
+				ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"))
+		}
+	}()
+	err = ssh.ListenAndServe(
+		fmt.Sprintf(":%d", port),
+		nil,
+		ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"))
+	if err != nil {
+		fmt.Println(err)
+	}
+}
 
 func broadcast(senderName, msg string, toSlack bool) {
 	if msg == "" {
@@ -157,7 +209,6 @@ func newUser(s ssh.Session) *user {
 	usersMutex.Lock()
 	users = append(users, u)
 	usersMutex.Unlock()
-	saveBansAndUsers()
 	switch len(users) - 1 {
 	case 0:
 		u.writeln("", "**"+cyan.Sprint("Welcome to the chat. There are no more users")+"**")
@@ -172,6 +223,59 @@ func newUser(s ssh.Session) *user {
 	}
 	broadcast("", "**"+u.name+"** **"+green.Sprint("has joined the chat")+"**", true)
 	return u
+}
+
+func (u *user) close(msg string) {
+	u.closeOnce.Do(func() {
+		usersMutex.Lock()
+		users = remove(users, u)
+		usersMutex.Unlock()
+		broadcast("", msg, true)
+		u.session.Close()
+	})
+}
+
+func (u *user) writeln(senderName string, msg string) {
+	msg = strings.ReplaceAll(msg, `\n`, "\n")
+	msg = strings.ReplaceAll(msg, `\`+"\n", `\n`) // let people escape newlines
+	if senderName != "" {
+		msg = strings.TrimSpace(mdRender(msg, len([]rune(stripansi.Strip(senderName))), u.win.Width))
+		msg = senderName + ": " + msg
+	} else {
+		msg = strings.TrimSpace(mdRender(msg, -2, u.win.Width)) // -2 so linewidth is used as is
+	}
+	if u.bell {
+		u.term.Write([]byte("\a" + msg + "\n")) // "\a" is beep
+	} else {
+		u.term.Write([]byte(msg + "\n"))
+	}
+}
+
+func (u *user) pickUsername(possibleName string) {
+	possibleName = cleanName(possibleName)
+	var err error
+	for userDuplicate(possibleName) || possibleName == "" {
+		u.writeln("", "Pick a different username")
+		u.term.SetPrompt("> ")
+		possibleName, err = u.term.ReadLine()
+		if err != nil {
+			l.Println(err)
+			return
+		}
+		possibleName = cleanName(possibleName)
+	}
+	u.name = possibleName
+	u.changeColor(*colorArr[rand.Intn(len(colorArr))])
+	allUsersMutex.Lock()
+	allUsers[u.id] = u.name
+	allUsersMutex.Unlock()
+	saveBansAndUsers()
+}
+
+func (u *user) changeColor(color color.Color) {
+	u.name = color.Sprint(stripansi.Strip(u.name))
+	u.color = color
+	u.term.SetPrompt(u.name + ": ")
 }
 
 func (u *user) repl() {
@@ -237,6 +341,7 @@ func (u *user) repl() {
 			for _, name := range allUsers {
 				names = append(names, name)
 			}
+			sort.Strings(names)
 			broadcast("", fmt.Sprint(names), toSlack)
 		}
 		if line == "easter" {
@@ -421,53 +526,6 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
 	}
 }
 
-func (u *user) close(msg string) {
-	u.closeOnce.Do(func() {
-		usersMutex.Lock()
-		users = remove(users, u)
-		usersMutex.Unlock()
-		broadcast("", msg, true)
-		u.session.Close()
-	})
-}
-
-func (u *user) writeln(senderName string, msg string) {
-	msg = strings.ReplaceAll(msg, `\n`, "\n")
-	msg = strings.ReplaceAll(msg, `\`+"\n", `\n`) // let people escape newlines
-	if senderName != "" {
-		msg = strings.TrimSpace(mdRender(msg, len([]rune(stripansi.Strip(senderName))), u.win.Width))
-		msg = senderName + ": " + msg
-	} else {
-		msg = strings.TrimSpace(mdRender(msg, -2, u.win.Width)) // -2 so linewidth is used as is
-	}
-	if u.bell {
-		u.term.Write([]byte("\a" + msg + "\n")) // "\a" is beep
-	} else {
-		u.term.Write([]byte(msg + "\n"))
-	}
-}
-
-func (u *user) pickUsername(possibleName string) {
-	possibleName = cleanName(possibleName)
-	var err error
-	for userDuplicate(possibleName) || possibleName == "" {
-		u.writeln("", "Pick a different username")
-		u.term.SetPrompt("> ")
-		possibleName, err = u.term.ReadLine()
-		if err != nil {
-			l.Println(err)
-			return
-		}
-		possibleName = cleanName(possibleName)
-	}
-	u.name = possibleName
-	u.changeColor(*colorArr[rand.Intn(len(colorArr))])
-	allUsersMutex.Lock()
-	allUsers[u.id] = u.name
-	allUsersMutex.Unlock()
-	saveBansAndUsers()
-}
-
 func cleanName(name string) string {
 	var s string
 	s = ""
@@ -510,13 +568,6 @@ func clean(a string) string {
 	return s
 }
 
-func (u *user) changeColor(color color.Color) {
-	u.name = color.Sprint(stripansi.Strip(u.name))
-	u.color = color
-	u.term.SetPrompt(u.name + ": ")
-	saveBansAndUsers()
-}
-
 // Returns true if the username is taken, false otherwise
 func userDuplicate(a string) bool {
 	for i := range users {
@@ -525,57 +576,6 @@ func userDuplicate(a string) bool {
 		}
 	}
 	return false
-}
-
-func main() {
-	color.NoColor = false
-	var err error
-	rand.Seed(time.Now().Unix())
-	readBansAndUsers()
-	c := make(chan os.Signal)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGKILL)
-	go func() {
-		<-c
-		fmt.Println("Shutting down...")
-		saveBansAndUsers()
-		logfile.Close()
-		broadcast("", "Server going down! This is probably because it is being updated. Try joining in ~5 minutes.  \nIf you still can't join, make an issue at github.com/quackduck/devzat/issues", true)
-		os.Exit(0)
-	}()
-
-	ssh.Handle(func(s ssh.Session) {
-		u := newUser(s)
-		if u == nil {
-			return
-		}
-		u.repl()
-		u.close("**" + u.name + "** **" + red.Sprint("has left the chat") + "**")
-	})
-	if os.Getenv("PORT") != "" {
-		port, err = strconv.Atoi(os.Getenv("PORT"))
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-	}
-
-	fmt.Println(fmt.Sprintf("Starting chat server on port %d", port))
-	go getMsgsFromSlack()
-	go func() {
-		if port == 22 {
-			err = ssh.ListenAndServe(
-				":443",
-				nil,
-				ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"))
-		}
-	}()
-	err = ssh.ListenAndServe(
-		fmt.Sprintf(":%d", port),
-		nil,
-		ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"))
-	if err != nil {
-		fmt.Println(err)
-	}
 }
 
 func saveBansAndUsers() {

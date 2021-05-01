@@ -33,22 +33,41 @@ ssh chat
 
 We also have a Slack bridge! If you're on the [Hack Club](https://hackclub.com) Slack, check out the `#ssh-chat-bridge` channel!
 
+Help:
+
 ```text
-Available commands
-   /users   list users
-   /nick    change your name
-   /color   change your name color
-   /exit    leave the chat
-   /hide    hide messages from HC Slack
-   /bell    toggle the ansi bell
-   /id      get a unique identifier for a user
-   /all     get a list of all unique users ever
-   /people  see info about nice people who joined
-   /ban     ban a user, requires an admin pass
-   /kick    kick a user, requires an admin pass
-   /help    show this help message
-Made by Ishan Goel with feature ideas from Hack Club members.
+Welcome to Devzat! Devzat is chat over SSH: github.com/quackduck/devzat  
+Because there's SSH apps on all platforms, even on mobile, you can join from anywhere.
+
+Interesting features:
+* Many, many commands. Check em out by using /commands.
+* Markdown support! Tables, headers, italics and everything. Just use "\n" in place of newlines.  
+   You can even send ascii art with code fences. Run /ascii-art to see an example.
+* Emoji replacements 🔥 [colon, rocket, colon] => 🚀 (like on Slack and Discord)
+* Code syntax highlighting. Use Markdown fences to send code. Run /example-code to see an example.
+
+For replacing newlines, I often use bulkseotools.com/add-remove-line-breaks.php.
+
+Made by Ishan Goel with feature ideas from friends.  
 Thanks to Caleb Denio for lending his server!
+```
+
+```text
+Available commands  
+   /dm    <user> <msg>   Privately message people  
+   /users                List users  
+   /nick  <name>         Change your name  
+   /color <color>        Change your name color  
+   /people               See info about nice people who joined  
+   /exit                 Leave the chat  
+   /hide                 Hide messages from HC Slack  
+   /bell                 Toggle the ansi bell  
+   /id    <user>         Get a unique identifier for a user  
+   /all                  Get a list of all unique users ever  
+   /ban   <user>         Ban a user, requires an admin pass  
+   /kick  <user>         Kick a user, requires an admin pass  
+   /help                 Show help  
+   /commands             Show this message
 ```
 
 ## People
@@ -58,7 +77,8 @@ People who you might know who have joined:
 Zach Latta - Founder of Hack Club: _"omg amazing! this is so awesome"_  
 Bereket [@heybereket](https://twitter.com/heybereket): _"this is pretty cool"_  
 Ayush [@ayshptk](https://twitter.com/ayshptk): _"Can I double star the repo somehow :pleading_face:"_  
-Srushti [@srushtiuniverse](https://twitter.com/srushtiuniverse): _"Yess It's awesome. I tried it."_   
+Srushti [@srushtiuniverse](https://twitter.com/srushtiuniverse): _"Yess It's awesome. I tried it."_  
+Surjith [@surjithctly](https://twitter.com/surjithctly): _""_  
 Arav [@tregsthedev](https://twitter.com/tregsthedev): [_"Okay, this is actually super aweasome."_](https://twitter.com/tregsthedev/status/1384180393893498880)  
 Krish [@krishnerkar_](https://twitter.com/krishnerkar_):  [_"SHIT! THIS IS SO DOPE"_](https://twitter.com/krishnerkar_/status/1384173042616573960)  
 Amrit [@astro_shenava](https://twitter.com/astro_shenava): _"Super cool man"_
