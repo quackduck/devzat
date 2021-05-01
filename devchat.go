@@ -343,7 +343,7 @@ func (u *user) repl() {
 			}
 			//sort.Strings(names)
 			sort.Slice(names, func(i, j int) bool {
-				return stripansi.Strip(names[i]) > stripansi.Strip(names[j])
+				return strings.ToLower(stripansi.Strip(names[i])) < strings.ToLower(stripansi.Strip(names[j]))
 			})
 			broadcast("", fmt.Sprint(names), toSlack)
 		}
