@@ -341,7 +341,10 @@ func (u *user) repl() {
 			for _, name := range allUsers {
 				names = append(names, name)
 			}
-			sort.Strings(names)
+			//sort.Strings(names)
+			sort.Slice(names, func(i, j int) bool {
+				return stripansi.Strip(names[i]) > stripansi.Strip(names[j])
+			})
 			broadcast("", fmt.Sprint(names), toSlack)
 		}
 		if line == "easter" {
