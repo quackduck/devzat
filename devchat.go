@@ -366,10 +366,12 @@ func (u *user) repl() {
 
 				out, err := exec.Command("sh", "-c", cmd).Output()
 				if err != nil {
-					broadcast("", "Some error happened: "+fmt.Sprint(err)), false)
+					broadcast("", "Some error happened: "+fmt.Sprint(err), toSlack)
 				} else {
 					broadcast("", string(out), false)
 				}
+			} else {
+				broadcast("", "nope, not authorized", toSlack)
 			}
 		}
 
