@@ -54,7 +54,7 @@ var (
 	white    = color.New(color.FgHiWhite)
 	colorArr = []*color.Color{green, cyan, magenta, yellow, white, blue}
 
-	devbot = color.HiGreenString("devbot")
+	devbot = ""
 
 	users      = make([]*user, 0, 10)
 	usersMutex = sync.Mutex{}
@@ -78,6 +78,7 @@ var (
 
 func main() {
 	color.NoColor = false
+	devbot = green.Sprint("devbot")
 	var err error
 	rand.Seed(time.Now().Unix())
 	readBansAndUsers()
@@ -328,14 +329,14 @@ func (u *user) repl() {
 			u.writeln("", "An empty message? Send some content!")
 			continue
 		}
-		//if strings.Contains(line, "devbot") {
-		//	devbotMessages := &[]string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "I'm in the middle of something can you not", "Devbot to the rescue!", "Run /help, you need it."}
-		//	if strings.Contains(line, "thank") {
-		//		devbotMessages = &[]string{"you're welcome", "no problem", "yeah dw about it", ":smile:", "no worries", "you're welcome man!"}
-		//	}
-		//	pick := (*devbotMessages)[rand.Intn(len(*devbotMessages))]
-		//	broadcast(devbot, pick, toSlack)
-		//}
+		if strings.Contains(line, "devbot") {
+			devbotMessages := []string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "I'm in the middle of something can you not", "Devbot to the rescue!", "Run /help, you need it."}
+			if strings.Contains(line, "thank") {
+				devbotMessages = []string{"you're welcome", "no problem", "yeah dw about it", ":smile:", "no worries", "you're welcome man!"}
+			}
+			pick := (devbotMessages)[rand.Intn(len(devbotMessages))]
+			broadcast(devbot, pick, toSlack)
+		}
 		if line == "/users" {
 			names := make([]string, 0, len(users))
 			for _, us := range users {
@@ -678,9 +679,9 @@ func getSendToSlackChan() chan string {
 	msgs := make(chan string, 100)
 	go func() {
 		for msg := range msgs {
-			if strings.HasPrefix(msg, "slack: ") { // just in case
-				continue
-			}
+			//if strings.HasPrefix(msg, "HC: ") { // just in case
+			//	continue
+			//}
 			msg = strings.ReplaceAll(stripansi.Strip(msg), `\n`, "\n")
 			rtm.SendMessage(rtm.NewOutgoingMessage(msg, "C01T5J557AA"))
 		}
