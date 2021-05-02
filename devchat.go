@@ -258,7 +258,7 @@ func (u *user) writeln(senderName string, msg string) {
 func (u *user) pickUsername(possibleName string) {
 	possibleName = cleanName(possibleName)
 	var err error
-	for userDuplicate(possibleName) || possibleName == "" {
+	for userDuplicate(possibleName) || possibleName == "" || possibleName == "devbot" {
 		u.writeln("", "Pick a different username")
 		u.term.SetPrompt("> ")
 		possibleName, err = u.term.ReadLine()
