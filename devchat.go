@@ -334,7 +334,22 @@ func (u *user) repl() {
 			if strings.Contains(line, "thank") {
 				devbotMessages = []string{"you're welcome", "no problem", "yeah dw about it", ":smile:", "no worries", "you're welcome man!"}
 			}
-			pick := (devbotMessages)[rand.Intn(len(devbotMessages))]
+			pick := devbotMessages[rand.Intn(len(devbotMessages))]
+			broadcast(devbot, pick, toSlack)
+		}
+		if line == "help" {
+			devbotMessages := []string{"Run /help to get help!", "Looking for /help?", "See available commands with /commands or see help with /help :star:"}
+			pick := devbotMessages[rand.Intn(len(devbotMessages))]
+			broadcast(devbot, pick, toSlack)
+		}
+		if strings.Contains(line, "star") {
+			devbotMessages := []string{"Someone say :star:? If you like Devzat, do give it a star at github.com/quackduck/devzat!"}
+			pick := devbotMessages[rand.Intn(len(devbotMessages))]
+			broadcast(devbot, pick, toSlack)
+		}
+		if strings.Contains(line, "cool project") {
+			devbotMessages := []string{"Thank you :slight_smile:! If you like Devzat, do give it a star at github.com/quackduck/devzat!"}
+			pick := devbotMessages[rand.Intn(len(devbotMessages))]
 			broadcast(devbot, pick, toSlack)
 		}
 		if line == "/users" {
