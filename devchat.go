@@ -314,7 +314,8 @@ func (u *user) repl() {
 					if u == peer {
 						u.writeln(color.HiGreenString("devbot"), "You must be really lonely, DMing yourself. Don't worry, I won't judge :wink:")
 					} else {
-						peer.writeln(peer.name+" <- "+u.name, msg)
+						//peer.writeln(peer.name+" <- "+u.name, msg)
+						peer.writeln(u.name+" -> "+peer.name, msg)
 					}
 				}
 			}
