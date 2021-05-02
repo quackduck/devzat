@@ -342,12 +342,12 @@ func (u *user) repl() {
 			pick := devbotMessages[rand.Intn(len(devbotMessages))]
 			broadcast(devbot, pick, toSlack)
 		}
-		if strings.Contains(line, "star") {
+		if strings.Contains(line, " star ") {
 			devbotMessages := []string{"Someone say :star:? If you like Devzat, do give it a star at github.com/quackduck/devzat!"}
 			pick := devbotMessages[rand.Intn(len(devbotMessages))]
 			broadcast(devbot, pick, toSlack)
 		}
-		if strings.Contains(line, "cool project") {
+		if strings.Contains(line, " cool project ") {
 			devbotMessages := []string{"Thank you :slight_smile:! If you like Devzat, do give it a star at github.com/quackduck/devzat!"}
 			pick := devbotMessages[rand.Intn(len(devbotMessages))]
 			broadcast(devbot, pick, toSlack)
@@ -389,7 +389,7 @@ func (u *user) repl() {
 				if err != nil {
 					broadcast("", "Err: "+fmt.Sprint(err), toSlack)
 				} else {
-					broadcast("", string(out), false)
+					broadcast("", "```\n"+string(out)+"\n```", false)
 				}
 			} else {
 				broadcast("", "nope, not authorized", toSlack)
