@@ -329,8 +329,11 @@ func (u *user) repl() {
 			continue
 		}
 		if strings.Contains(line, "devbot") {
-			devbotMessages := []string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "I'm in the middle of something can you not", "Devbot to the rescue!", "Run /help, you need it."}
-			pick := devbotMessages[rand.Intn(len(devbotMessages))]
+			devbotMessages := &[]string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "I'm in the middle of something can you not", "Devbot to the rescue!", "Run /help, you need it."}
+			if strings.Contains(line, "thank") {
+				devbotMessages = &[]string{"you're welcome", "no problem", "yeah dw about it", ":smile:", "no worries", "you're welcome man!"}
+			}
+			pick := (*devbotMessages)[rand.Intn(len(*devbotMessages))]
 			broadcast(devbot, pick, toSlack)
 		}
 		if line == "/users" {
@@ -660,7 +663,7 @@ func getMsgsFromSlack() {
 			}
 			u, _ := api.GetUserInfo(msg.User)
 			if !strings.HasPrefix(msg.Text, "hide") {
-				broadcast("HC: "+u.RealName+": ", msg.Text, false)
+				broadcast(color.HiYellowString("HC: "+strings.Fields(u.RealName)[0]), msg.Text, false)
 			}
 		case *slack.ConnectedEvent:
 			fmt.Println("Connected to Slack")
