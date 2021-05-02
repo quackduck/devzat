@@ -54,6 +54,8 @@ var (
 	white    = color.New(color.FgHiWhite)
 	colorArr = []*color.Color{green, cyan, magenta, yellow, white, blue}
 
+	devbot = color.HiGreenString("devbot")
+
 	users      = make([]*user, 0, 10)
 	usersMutex = sync.Mutex{}
 
@@ -186,7 +188,7 @@ func newUser(s ssh.Session) *user {
 	for _, banAddr := range bans {
 		if u.addr == banAddr || u.id == banAddr {
 			l.Println("Rejected " + u.addr)
-			u.writeln("", "**You have been banned**. If you feel this was done wrongly, please reach out at github.com/quackduck/devzat/issues")
+			u.writeln(devbot, "**You have been banned**. If you feel this was done wrongly, please reach out at github.com/quackduck/devzat/issues")
 			u.close("")
 			return nil
 		}
@@ -203,7 +205,7 @@ func newUser(s ssh.Session) *user {
 		bansMutex.Lock()
 		bans = append(bans, u.addr)
 		bansMutex.Unlock()
-		broadcast("", u.name+" has been banned automatically. IP: "+u.addr, true)
+		broadcast(devbot, u.name+" has been banned automatically. IP: "+u.addr, true)
 		return nil
 	}
 	u.pickUsername(s.User())
@@ -222,7 +224,7 @@ func newUser(s ssh.Session) *user {
 	for i := range backlog {
 		u.writeln(backlog[i].senderName, backlog[i].text)
 	}
-	broadcast("", "**"+u.name+"** **"+green.Sprint("has joined the chat")+"**", true)
+	broadcast(devbot, "**"+u.name+"** **"+green.Sprint("has joined the chat")+"**", true)
 	return u
 }
 
@@ -231,7 +233,7 @@ func (u *user) close(msg string) {
 		usersMutex.Lock()
 		users = remove(users, u)
 		usersMutex.Unlock()
-		broadcast("", msg, true)
+		broadcast(devbot, msg, true)
 		u.session.Close()
 	})
 }
@@ -313,7 +315,7 @@ func (u *user) repl() {
 					u.writeln(u.name+" -> "+peer.name, msg)
 					//peer.writeln(u.name+" -> "+peer.name, msg)
 					if u == peer {
-						u.writeln(color.HiGreenString("devbot"), "You must be really lonely, DMing yourself. Don't worry, I won't judge :wink:")
+						u.writeln(devbot, "You must be really lonely, DMing yourself. Don't worry, I won't judge :wink:")
 					} else {
 						//peer.writeln(peer.name+" <- "+u.name, msg)
 						peer.writeln(u.name+" -> "+peer.name, msg)
@@ -329,7 +331,7 @@ func (u *user) repl() {
 		if strings.Contains(line, "devbot") {
 			devbotMessages := []string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "I'm in the middle of something can you not", "Devbot to the rescue!", "Run /help, you need it."}
 			pick := devbotMessages[rand.Intn(len(devbotMessages))]
-			broadcast(color.HiGreenString("devbot"), pick, toSlack)
+			broadcast(devbot, pick, toSlack)
 		}
 		if line == "/users" {
 			names := make([]string, 0, len(users))
@@ -350,7 +352,7 @@ func (u *user) repl() {
 			broadcast("", fmt.Sprint(names), toSlack)
 		}
 		if line == "easter" {
-			broadcast("", "eggs?", toSlack)
+			broadcast(devbot, "eggs?", toSlack)
 		}
 		if line == "/exit" {
 			return
@@ -366,7 +368,7 @@ func (u *user) repl() {
 
 				out, err := exec.Command("sh", "-c", cmd).Output()
 				if err != nil {
-					broadcast("", "Some error happened: "+fmt.Sprint(err), toSlack)
+					broadcast("", "Err: "+fmt.Sprint(err), toSlack)
 				} else {
 					broadcast("", string(out), false)
 				}
@@ -477,7 +479,7 @@ func (u *user) repl() {
 			case "hacker":
 				u.changeColor(*color.New(color.FgHiGreen, color.BgBlack))
 			default:
-				broadcast("", colorMsg, toSlack)
+				broadcast(devbot, colorMsg, toSlack)
 			}
 		}
 		if line == "/people" {
@@ -526,7 +528,7 @@ Made by Ishan Goel with feature ideas from friends.
 Thanks to Caleb Denio for lending his server!`, toSlack)
 		}
 		if line == "/example-code" {
-			broadcast("", "\n```go\npackage main\nimport \"fmt\"\nfunc main() {\n   fmt.Println(\"Example!\")\n}\n```", toSlack)
+			broadcast(devbot, "\n```go\npackage main\nimport \"fmt\"\nfunc main() {\n   fmt.Println(\"Example!\")\n}\n```", toSlack)
 		}
 		if line == "/ascii-art" {
 			broadcast("", string(artBytes), toSlack)
@@ -658,7 +660,7 @@ func getMsgsFromSlack() {
 			}
 			u, _ := api.GetUserInfo(msg.User)
 			if !strings.HasPrefix(msg.Text, "hide") {
-				broadcast("", "slack: "+u.RealName+": "+msg.Text, false)
+				broadcast("HC: "+u.RealName+": ", msg.Text, false)
 			}
 		case *slack.ConnectedEvent:
 			fmt.Println("Connected to Slack")
