@@ -1,7 +1,7 @@
 echo Started
-scp -o StrictHostKeyChecking=no -P 4242 ./devchat.go go.sum go.mod ishan@34.75.6.116:~/devchat
+scp -o StrictHostKeyChecking=no -P 4242 ./devchat.go go.sum go.mod ishan@devzat.hackclub.com:~/devchat
 echo Copied files
-ssh -o StrictHostKeyChecking=no -p 4242 ishan@34.75.6.116 <<EOL # Unquote so lines are expanded
+ssh -o StrictHostKeyChecking=no -p 4242 ishan@devzat.hackclub.com <<EOL # Unquote so lines are expanded
 	cd ~/devchat
 	go build && echo Built
 	echo $SERVER_PASS | sudo -S pkill devchat && echo Killed
