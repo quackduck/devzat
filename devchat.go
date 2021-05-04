@@ -90,7 +90,7 @@ func main() {
 		fmt.Println("Shutting down...")
 		saveBansAndUsers()
 		logfile.Close()
-		broadcast("", "Server going down! This is probably because it is being updated. Try joining in ~5 minutes.  \nIf you still can't join, make an issue at github.com/quackduck/devzat/issues", true)
+		broadcast("", "Server going down! This is probably because it is being updated. Try joining back immediately.  \nIf you still can't join, try joining back in 2 minutes. If you _still_ can't join, make an issue at github.com/quackduck/devzat/issues", true)
 		os.Exit(0)
 	}()
 
