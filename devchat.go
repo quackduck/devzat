@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/sha1"
 	"crypto/sha256"
 	_ "embed"
 	"encoding/binary"
@@ -188,14 +187,14 @@ func newUser(s ssh.Session) *user {
 		for u.win = range winchan {
 		}
 	}()
-	l.Println("Connected "+u.name, u.id)
+	l.Println("Connected " + u.name + " [" + u.id + "]")
 	for i := range bans {
-		if u.addr == bans[i] || u.id == bans[i] {
-			if u.id == bans[i] {
+		if u.addr == bans[i] || u.id == bans[i] { // allow banning by ID
+			if u.id == bans[i] { // then replace the ID in the ban with the actual IP
 				bans[i] = u.addr
 				saveBansAndUsers()
 			}
-			l.Println("Rejected " + u.addr)
+			l.Println("Rejected " + u.name + " [" + u.addr + "]")
 			u.writeln(devbot, "**You have been banned**. If you feel this was done wrongly, please reach out at github.com/quackduck/devzat/issues")
 			u.close("")
 			return nil
@@ -686,10 +685,10 @@ func getMsgsFromSlack() {
 			}
 			u, _ := api.GetUserInfo(msg.User)
 			if !strings.HasPrefix(msg.Text, "hide") {
-				h := sha1.Sum([]byte(msg.User))
-				i, _ := binary.Varint(h[:])
+				//h := sha1.Sum([]byte(msg.User))
+				i, _ := binary.Varint([]byte(msg.User))
 
-				broadcast(color.HiYellowString("HC: ")+(*colorArr[rand.New(rand.NewSource(i)).Intn(len(colorArr))]).Sprint(strings.Fields(u.RealName)[0]), msg.Text, false)
+				broadcast(color.HiYellowString("HC ")+(*colorArr[rand.New(rand.NewSource(i)).Intn(len(colorArr))]).Sprint(strings.Fields(u.RealName)[0]), msg.Text, false)
 			}
 		case *slack.ConnectedEvent:
 			fmt.Println("Connected to Slack")

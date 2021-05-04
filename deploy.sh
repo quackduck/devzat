@@ -7,7 +7,8 @@ ssh -o StrictHostKeyChecking=no -p 4242 ubuntu@150.136.142.44 <<EOL # Unquote so
 	echo $SERVER_PASS | sudo -S pkill devchat && echo Killed
 	sleep 2
 	echo $SERVER_PASS | sudo -S pkill -9 devchat && echo Killed with SIGKILL
-	echo $SERVER_PASS | nohup sudo -S HOME=/home/ishan ./devchat > /dev/null 2>&1 </dev/null &
+	echo $SERVER_PASS | nohup sudo -S HOME=/home/ishan ./devchat  2>&1 </dev/null &
+	# > /dev/null
 	echo Started server
 	disown
 	exit
