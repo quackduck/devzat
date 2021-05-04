@@ -100,7 +100,6 @@ func main() {
 			return
 		}
 		u.repl()
-		u.close("**" + u.name + "** **" + red.Sprint("has left the chat") + "**")
 	})
 	if os.Getenv("PORT") != "" {
 		port, err = strconv.Atoi(os.Getenv("PORT"))
@@ -294,7 +293,7 @@ func (u *user) repl() {
 		line = clean(line)
 
 		if err == io.EOF {
-			return
+			u.close("**" + u.name + "** **" + red.Sprint("has left the chat") + "**")
 		}
 		if err != nil {
 			l.Println(u.name, err)
@@ -348,12 +347,12 @@ func (u *user) repl() {
 			pick := devbotMessages[rand.Intn(len(devbotMessages))]
 			broadcast(devbot, pick, toSlack)
 		}
-		if strings.Contains(line, " star ") {
+		if strings.Contains(line, "star") {
 			devbotMessages := []string{"Someone say :star:? If you like Devzat, do give it a star at github.com/quackduck/devzat!"}
 			pick := devbotMessages[rand.Intn(len(devbotMessages))]
 			broadcast(devbot, pick, toSlack)
 		}
-		if strings.Contains(line, " cool project ") {
+		if strings.Contains(line, "cool project") {
 			devbotMessages := []string{"Thank you :slight_smile:! If you like Devzat, do give it a star at github.com/quackduck/devzat!"}
 			pick := devbotMessages[rand.Intn(len(devbotMessages))]
 			broadcast(devbot, pick, toSlack)
