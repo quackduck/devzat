@@ -115,6 +115,7 @@ func main() {
 	go getMsgsFromSlack()
 	go func() {
 		if port == 22 {
+			fmt.Println("Also starting chat server on port 443")
 			err = ssh.ListenAndServe(
 				":443",
 				nil,
@@ -187,9 +188,13 @@ func newUser(s ssh.Session) *user {
 		for u.win = range winchan {
 		}
 	}()
-	l.Println("Connected " + u.name)
-	for _, banAddr := range bans {
-		if u.addr == banAddr || u.id == banAddr {
+	l.Println("Connected "+u.name, u.id)
+	for i := range bans {
+		if u.addr == bans[i] || u.id == bans[i] {
+			if u.id == bans[i] {
+				bans[i] = u.addr
+				saveBansAndUsers()
+			}
 			l.Println("Rejected " + u.addr)
 			u.writeln(devbot, "**You have been banned**. If you feel this was done wrongly, please reach out at github.com/quackduck/devzat/issues")
 			u.close("")
