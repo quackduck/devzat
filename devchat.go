@@ -1,8 +1,10 @@
 package main
 
 import (
+	"crypto/sha1"
 	"crypto/sha256"
 	_ "embed"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -679,7 +681,10 @@ func getMsgsFromSlack() {
 			}
 			u, _ := api.GetUserInfo(msg.User)
 			if !strings.HasPrefix(msg.Text, "hide") {
-				broadcast(color.HiYellowString("HC: "+strings.Fields(u.RealName)[0]), msg.Text, false)
+				h := sha1.Sum([]byte(msg.User))
+				i, _ := binary.Varint(h[:])
+
+				broadcast(color.HiYellowString("HC: ")+(*colorArr[rand.New(rand.NewSource(i)).Intn(len(colorArr))]).Sprint(strings.Fields(u.RealName)[0]), msg.Text, false)
 			}
 		case *slack.ConnectedEvent:
 			fmt.Println("Connected to Slack")
