@@ -83,5 +83,9 @@ Arav [@tregsthedev](https://twitter.com/tregsthedev): [_"Okay, this is actually 
 Krish [@krishnerkar_](https://twitter.com/krishnerkar_):  [_"SHIT! THIS IS SO DOPE"_](https://twitter.com/krishnerkar_/status/1384173042616573960)  
 Amrit [@astro_shenava](https://twitter.com/astro_shenava): _"Super cool man"_
 
-From Hack Club: 
-Sam Poder, Caleb Denio, Safin Singh, Eleeza A, Jubril, Sarthak Mohanty, Anghe, Tommy Pujol, Rishi Kothari
+From Hack Club:  
+Caleb Denio, Safin Singh, Eleeza A    
+Jubril, Sarthak Mohanty, Anghe    
+Tommy Pujol, Sam Poder, Rishi Kothari    
+Amogh Chaubey, Ella Xu, Hugo Hu  
+Matthew Stanciu
