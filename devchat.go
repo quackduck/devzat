@@ -517,7 +517,7 @@ Matthew        - Hack Club HQ
 Caleb Denio, Safin Singh, Eleeza A  
 Jubril, Sarthak M, Anghe,  
 Tommy P, Sam Poder, Rishi Kothari  
-Amogh Chaubey, Ella Xu  
+Amogh Chaubey, Ella Xu, Hugo Hu  
 _Possibly more people_
 
 
