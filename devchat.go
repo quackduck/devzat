@@ -195,7 +195,7 @@ func newUser(s ssh.Session) *user {
 				saveBansAndUsers()
 			}
 			l.Println("Rejected " + u.name + " [" + u.addr + "]")
-			u.writeln(devbot, "**You have been banned**. If you feel this was done wrongly, please reach out at github.com/quackduck/devzat/issues")
+			u.writeln(devbot, "**You are banned**. If you feel this was done wrongly, please reach out at github.com/quackduck/devzat/issues. Please include the following information: [IP "+u.addr+"]")
 			u.close("")
 			return nil
 		}
