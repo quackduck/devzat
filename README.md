@@ -43,7 +43,7 @@ Interesting features:
 * Many, many commands. Check em out by using /commands.
 * Markdown support! Tables, headers, italics and everything. Just use "\n" in place of newlines.  
    You can even send ascii art with code fences. Run /ascii-art to see an example.
-* Emoji replacements 🔥 [colon, rocket, colon] => 🚀 (like on Slack and Discord)
+* Emoji replacements 🔥 :rocket: => 🚀 (like on Slack and Discord)
 * Code syntax highlighting. Use Markdown fences to send code. Run /example-code to see an example.
 
 For replacing newlines, I often use bulkseotools.com/add-remove-line-breaks.php.
