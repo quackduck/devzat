@@ -90,7 +90,8 @@ func main() {
 		fmt.Println("Shutting down...")
 		saveBansAndUsers()
 		logfile.Close()
-		broadcast("", "Server going down! This is probably because it is being updated. Try joining back immediately.  \nIf you still can't join, try joining back in 2 minutes. If you _still_ can't join, make an issue at github.com/quackduck/devzat/issues", true)
+		broadcast("", "Server going down! This is probably because it is being updated. Try joining back immediately.  \n"+
+			"If you still can't join, try joining back in 2 minutes. If you _still_ can't join, make an issue at github.com/quackduck/devzat/issues", true)
 		os.Exit(0)
 	}()
 
@@ -294,6 +295,7 @@ func (u *user) repl() {
 
 		if err == io.EOF {
 			u.close("**" + u.name + "** **" + red.Sprint("has left the chat") + "**")
+			return
 		}
 		if err != nil {
 			l.Println(u.name, err)
