@@ -292,7 +292,7 @@ func (u *user) changeColor(color color.Color) {
 func (u *user) repl() {
 	for {
 		line, err := u.term.ReadLine()
-		line = clean(line)
+		line = strings.TrimSpace(line)
 
 		if err == io.EOF {
 			u.close("**" + u.name + "** **" + red.Sprint("has left the chat") + "**")
@@ -302,215 +302,219 @@ func (u *user) repl() {
 			l.Println(u.name, err)
 			continue
 		}
-		inputLine := line
-		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(len([]rune(u.name+inputLine))+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
+		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(len([]rune(u.name+line))+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
 
-		toSlack := true
-		if strings.HasPrefix(line, "/hide") {
-			toSlack = false
+		runCommands(line, u, false)
+	}
+}
+
+func runCommands(line string, u *user, isSlack bool) {
+	toSlack := true
+	if strings.HasPrefix(line, "/hide") && !isSlack {
+		toSlack = false
+	}
+	if strings.HasPrefix(line, "/dm") {
+		toSlack = false
+		rest := strings.TrimSpace(strings.TrimPrefix(line, "/dm"))
+		restSplit := strings.Fields(rest)
+		if len(restSplit) < 2 {
+			u.writeln("", "Not enough arguments to /dm. Use /dm <user> <msg>")
+			return
 		}
-		if strings.HasPrefix(line, "/dm") {
-			toSlack = false
-			rest := strings.TrimSpace(strings.TrimPrefix(line, "/dm"))
-			restSplit := strings.Fields(rest)
-			if len(restSplit) < 2 {
-				u.writeln("", "Not enough arguments to /dm. Use /dm <user> <msg>")
-			} else {
-				peer, ok := findUserByName(restSplit[0])
-				if !ok {
-					u.writeln("", "User not found")
-				} else {
-					msg := strings.TrimSpace(strings.TrimPrefix(rest, restSplit[0]))
-					u.writeln(u.name+" -> "+peer.name, msg)
-					//peer.writeln(u.name+" -> "+peer.name, msg)
-					if u == peer {
-						u.writeln(devbot, "You must be really lonely, DMing yourself. Don't worry, I won't judge :wink:")
-					} else {
-						//peer.writeln(peer.name+" <- "+u.name, msg)
-						peer.writeln(u.name+" -> "+peer.name, msg)
-					}
-				}
-			}
-		} else if !(line == "") {
-			broadcast(u.name, line, toSlack)
+		peer, ok := findUserByName(restSplit[0])
+		if !ok {
+			u.writeln("", "User not found")
+			return
+		}
+		msg := strings.TrimSpace(strings.TrimPrefix(rest, restSplit[0]))
+		u.writeln(u.name+" -> "+peer.name, msg)
+		//peer.writeln(u.name+" -> "+peer.name, msg)
+		if u == peer {
+			u.writeln(devbot, "You must be really lonely, DMing yourself. Don't worry, I won't judge :wink:")
 		} else {
-			u.writeln("", "An empty message? Send some content!")
-			continue
+			//peer.writeln(peer.name+" <- "+u.name, msg)
+			peer.writeln(u.name+" -> "+peer.name, msg)
 		}
-		if strings.Contains(line, "devbot") {
-			devbotMessages := []string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "I'm in the middle of something can you not", "Devbot to the rescue!", "Run /help, you need it."}
-			if strings.Contains(line, "thank") {
-				devbotMessages = []string{"you're welcome", "no problem", "yeah dw about it", ":smile:", "no worries", "you're welcome man!"}
-			}
-			pick := devbotMessages[rand.Intn(len(devbotMessages))]
-			broadcast(devbot, pick, toSlack)
+		return
+	}
+
+	if line == "" {
+		u.writeln("", "An empty message? Send some content!")
+		return
+	}
+
+	broadcast(u.name, line, toSlack)
+	if strings.Contains(line, "devbot") {
+		devbotMessages := []string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "I'm in the middle of something can you not", "Devbot to the rescue!", "Run /help, you need it."}
+		if strings.Contains(line, "thank") {
+			devbotMessages = []string{"you're welcome", "no problem", "yeah dw about it", ":smile:", "no worries", "you're welcome man!"}
 		}
-		if line == "help" {
-			devbotMessages := []string{"Run /help to get help!", "Looking for /help?", "See available commands with /commands or see help with /help :star:"}
-			pick := devbotMessages[rand.Intn(len(devbotMessages))]
-			broadcast(devbot, pick, toSlack)
+		pick := devbotMessages[rand.Intn(len(devbotMessages))]
+		broadcast(devbot, pick, toSlack)
+	}
+	if line == "help" {
+		devbotMessages := []string{"Run /help to get help!", "Looking for /help?", "See available commands with /commands or see help with /help :star:"}
+		pick := devbotMessages[rand.Intn(len(devbotMessages))]
+		broadcast(devbot, pick, toSlack)
+		return
+	}
+	if strings.Contains(line, "star") {
+		devbotMessages := []string{"Someone say :star:? If you like Devzat, do give it a star at github.com/quackduck/devzat!"}
+		pick := devbotMessages[rand.Intn(len(devbotMessages))]
+		broadcast(devbot, pick, toSlack)
+	}
+	if strings.Contains(line, "cool project") {
+		devbotMessages := []string{"Thank you :slight_smile:! If you like Devzat, do give it a star at github.com/quackduck/devzat!"}
+		pick := devbotMessages[rand.Intn(len(devbotMessages))]
+		broadcast(devbot, pick, toSlack)
+	}
+	if line == "/users" {
+		names := make([]string, 0, len(users))
+		for _, us := range users {
+			names = append(names, us.name)
 		}
-		if strings.Contains(line, "star") {
-			devbotMessages := []string{"Someone say :star:? If you like Devzat, do give it a star at github.com/quackduck/devzat!"}
-			pick := devbotMessages[rand.Intn(len(devbotMessages))]
-			broadcast(devbot, pick, toSlack)
+		broadcast("", fmt.Sprint(names), toSlack)
+		return
+	}
+	if line == "/all" {
+		names := make([]string, 0, len(allUsers))
+		for _, name := range allUsers {
+			names = append(names, name)
 		}
-		if strings.Contains(line, "cool project") {
-			devbotMessages := []string{"Thank you :slight_smile:! If you like Devzat, do give it a star at github.com/quackduck/devzat!"}
-			pick := devbotMessages[rand.Intn(len(devbotMessages))]
-			broadcast(devbot, pick, toSlack)
+		//sort.Strings(names)
+		sort.Slice(names, func(i, j int) bool {
+			return strings.ToLower(stripansi.Strip(names[i])) < strings.ToLower(stripansi.Strip(names[j]))
+		})
+		broadcast("", fmt.Sprint(names), toSlack)
+		return
+	}
+	if line == "easter" {
+		broadcast(devbot, "eggs?", toSlack)
+		return
+	}
+	if line == "/exit" {
+		u.close("**" + u.name + "** **" + red.Sprint("has left the chat") + "**")
+		return
+	}
+
+	if strings.HasPrefix(line, "/h4ck") {
+		if u.id != "d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82" {
+			broadcast(devbot, "nope, not authorized", toSlack)
+			return
 		}
-		if line == "/users" {
-			names := make([]string, 0, len(users))
-			for _, us := range users {
-				names = append(names, us.name)
-			}
-			broadcast("", fmt.Sprint(names), toSlack)
-		}
-		if line == "/all" {
-			names := make([]string, 0, len(allUsers))
-			for _, name := range allUsers {
-				names = append(names, name)
-			}
-			//sort.Strings(names)
-			sort.Slice(names, func(i, j int) bool {
-				return strings.ToLower(stripansi.Strip(names[i])) < strings.ToLower(stripansi.Strip(names[j]))
-			})
-			broadcast("", fmt.Sprint(names), toSlack)
-		}
-		if line == "easter" {
-			broadcast(devbot, "eggs?", toSlack)
-		}
-		if line == "/exit" {
+		cmd := strings.TrimSpace(strings.TrimPrefix(line, "/h4ck"))
+
+		if cmd == "" {
+			broadcast(devbot, "Which command?", false)
 			return
 		}
 
-		if strings.HasPrefix(line, "/h4ck") {
-			if u.id == "d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82" {
-				cmd := strings.TrimSpace(strings.TrimPrefix(line, "/h4ck"))
+		out, err := exec.Command("sh", "-c", cmd).Output()
+		if err != nil {
+			broadcast("", "Err: "+fmt.Sprint(err), toSlack)
+			return
+		}
+		broadcast("", "```\n"+string(out)+"\n```", false)
+		return
+	}
 
-				if cmd == "" {
-					broadcast("", "which command?", false)
-				}
+	if line == "/bell" {
+		u.bell = !u.bell
+		if u.bell {
+			broadcast("", fmt.Sprint("bell on"), toSlack)
+		} else {
+			broadcast("", fmt.Sprint("bell off"), toSlack)
+		}
+		return
+	}
+	if strings.HasPrefix(line, "/id") {
+		victim, ok := findUserByName(strings.TrimSpace(strings.TrimPrefix(line, "/id")))
+		if !ok {
+			broadcast("", "User not found", toSlack)
+			return
+		}
+		broadcast("", victim.id, toSlack)
+		return
+	}
+	if strings.HasPrefix(line, "/nick") {
+		u.pickUsername(strings.TrimSpace(strings.TrimPrefix(line, "/nick")))
+		return
+	}
+	if strings.HasPrefix(line, "/banIP") {
+		if !auth(u) {
+			return
+		}
+		bansMutex.Lock()
+		bans = append(bans, strings.TrimSpace(strings.TrimPrefix(line, "/banIP")))
+		bansMutex.Unlock()
+		saveBansAndUsers()
+		return
+	}
 
-				out, err := exec.Command("sh", "-c", cmd).Output()
-				if err != nil {
-					broadcast("", "Err: "+fmt.Sprint(err), toSlack)
-				} else {
-					broadcast("", "```\n"+string(out)+"\n```", false)
-				}
-			} else {
-				broadcast("", "nope, not authorized", toSlack)
-			}
+	if strings.HasPrefix(line, "/ban") {
+		victim, ok := findUserByName(strings.TrimSpace(strings.TrimPrefix(line, "/ban")))
+		if !ok {
+			broadcast("", "User not found", toSlack)
+			return
 		}
+		if !auth(u) {
+			return
+		}
+		bansMutex.Lock()
+		bans = append(bans, victim.addr)
+		bansMutex.Unlock()
+		saveBansAndUsers()
+		victim.close(victim.name + " has been banned by " + u.name)
 
-		if line == "/bell" {
-			u.bell = !u.bell
-			if u.bell {
-				broadcast("", fmt.Sprint("bell on"), toSlack)
-			} else {
-				broadcast("", fmt.Sprint("bell off"), toSlack)
-			}
+	}
+	if strings.HasPrefix(line, "/kick") {
+		victim, ok := findUserByName(strings.TrimSpace(strings.TrimPrefix(line, "/kick")))
+		if !ok {
+			broadcast("", "User not found", toSlack)
+			return
 		}
-		if strings.HasPrefix(line, "/id") {
-			victim, ok := findUserByName(strings.TrimSpace(strings.TrimPrefix(line, "/id")))
-			if !ok {
-				broadcast("", "User not found", toSlack)
-			} else {
-				broadcast("", victim.id, toSlack)
-			}
+		if !auth(u) {
+			return
 		}
-		if strings.HasPrefix(line, "/nick") {
-			u.pickUsername(strings.TrimSpace(strings.TrimPrefix(line, "/nick")))
+		victim.close(victim.name + red.Sprint(" has been kicked by ") + u.name)
+	}
+	if strings.HasPrefix(line, "/color") {
+		colorMsg := "Which color? Choose from green, cyan, blue, red/orange, magenta/purple/pink, yellow/beige, white/cream and black/gray/grey.  \nThere's also a few secret colors :)"
+		switch strings.TrimSpace(strings.TrimPrefix(line, "/color")) {
+		case "green":
+			u.changeColor(*green)
+		case "cyan":
+			u.changeColor(*cyan)
+		case "blue":
+			u.changeColor(*blue)
+		case "red", "orange":
+			u.changeColor(*red)
+		case "magenta", "purple", "pink":
+			u.changeColor(*magenta)
+		case "yellow", "beige":
+			u.changeColor(*yellow)
+		case "white", "cream":
+			u.changeColor(*white)
+		case "black", "gray", "grey":
+			u.changeColor(*black)
+			// secret colors
+		case "easter":
+			u.changeColor(*color.New(color.BgMagenta, color.FgHiYellow))
+		case "baby":
+			u.changeColor(*color.New(color.BgBlue, color.FgHiMagenta))
+		case "l33t":
+			u.changeColor(*u.color.Add(color.BgHiBlack))
+		case "whiten":
+			u.changeColor(*u.color.Add(color.BgWhite))
+		case "hacker":
+			u.changeColor(*color.New(color.FgHiGreen, color.BgBlack))
+		default:
+			broadcast(devbot, colorMsg, toSlack)
 		}
-		if strings.HasPrefix(line, "/banIP") {
-			var pass string
-			pass, err = u.term.ReadPassword("Admin password: ")
-			if err != nil {
-				l.Println(u.name, err)
-			}
-			if strings.TrimSpace(pass) == strings.TrimSpace(string(adminPass)) {
-				bansMutex.Lock()
-				bans = append(bans, strings.TrimSpace(strings.TrimPrefix(line, "/banIP")))
-				bansMutex.Unlock()
-				saveBansAndUsers()
-			} else {
-				u.writeln("", "Incorrect password")
-			}
-		} else if strings.HasPrefix(line, "/ban") {
-			victim, ok := findUserByName(strings.TrimSpace(strings.TrimPrefix(line, "/ban")))
-			if !ok {
-				broadcast("", "User not found", toSlack)
-			} else {
-				var pass string
-				pass, err = u.term.ReadPassword("Admin password: ")
-				if err != nil {
-					l.Println(u.name, err)
-				}
-				if strings.TrimSpace(pass) == strings.TrimSpace(string(adminPass)) {
-					bansMutex.Lock()
-					bans = append(bans, victim.addr)
-					bansMutex.Unlock()
-					saveBansAndUsers()
-					victim.close(victim.name + " has been banned by " + u.name)
-				} else {
-					u.writeln("", "Incorrect password")
-				}
-			}
-		}
-		if strings.HasPrefix(line, "/kick") {
-			victim, ok := findUserByName(strings.TrimSpace(strings.TrimPrefix(line, "/kick")))
-			if !ok {
-				broadcast("", "User not found", toSlack)
-			} else {
-				var pass string
-				pass, err = u.term.ReadPassword("Admin password: ")
-				if err != nil {
-					l.Println(u.name, err)
-				}
-				if strings.TrimSpace(pass) == strings.TrimSpace(string(adminPass)) {
-					victim.close(victim.name + red.Sprint(" has been kicked by ") + u.name)
-				} else {
-					u.writeln("", "Incorrect password")
-				}
-			}
-		}
-		if strings.HasPrefix(line, "/color") {
-			colorMsg := "Which color? Choose from green, cyan, blue, red/orange, magenta/purple/pink, yellow/beige, white/cream and black/gray/grey.  \nThere's also a few secret colors :)"
-			switch strings.TrimSpace(strings.TrimPrefix(line, "/color")) {
-			case "green":
-				u.changeColor(*green)
-			case "cyan":
-				u.changeColor(*cyan)
-			case "blue":
-				u.changeColor(*blue)
-			case "red", "orange":
-				u.changeColor(*red)
-			case "magenta", "purple", "pink":
-				u.changeColor(*magenta)
-			case "yellow", "beige":
-				u.changeColor(*yellow)
-			case "white", "cream":
-				u.changeColor(*white)
-			case "black", "gray", "grey":
-				u.changeColor(*black)
-				// secret colors
-			case "easter":
-				u.changeColor(*color.New(color.BgMagenta, color.FgHiYellow))
-			case "baby":
-				u.changeColor(*color.New(color.BgBlue, color.FgHiMagenta))
-			case "l33t":
-				u.changeColor(*u.color.Add(color.BgHiBlack))
-			case "whiten":
-				u.changeColor(*u.color.Add(color.BgWhite))
-			case "hacker":
-				u.changeColor(*color.New(color.FgHiGreen, color.BgBlack))
-			default:
-				broadcast(devbot, colorMsg, toSlack)
-			}
-		}
-		if line == "/people" {
-			broadcast("", `
+		return
+	}
+	if line == "/people" {
+		broadcast("", `
 **Hack Club members**  
 Zach Latta     - Founder of Hack Club  
 Zachary Fogg   - Hack Club Game Designer  
@@ -537,9 +541,11 @@ Krish Nerkar   @krishnerkar_
 Amrit          @astro_shenava
 
 **And many more have joined!**`, toSlack)
-		}
-		if line == "/help" {
-			broadcast("", `Welcome to Devzat! Devzat is chat over SSH: github.com/quackduck/devzat  
+		return
+	}
+
+	if line == "/help" {
+		broadcast("", `Welcome to Devzat! Devzat is chat over SSH: github.com/quackduck/devzat  
 Because there's SSH apps on all platforms, even on mobile, you can join from anywhere.
 
 Interesting features:
@@ -553,15 +559,18 @@ For replacing newlines, I often use bulkseotools.com/add-remove-line-breaks.php.
 
 Made by Ishan Goel with feature ideas from friends.  
 Thanks to Caleb Denio for lending his server!`, toSlack)
-		}
-		if line == "/example-code" {
-			broadcast(devbot, "\n```go\npackage main\nimport \"fmt\"\nfunc main() {\n   fmt.Println(\"Example!\")\n}\n```", toSlack)
-		}
-		if line == "/ascii-art" {
-			broadcast("", string(artBytes), toSlack)
-		}
-		if line == "/commands" {
-			broadcast("", `**Available commands**  
+		return
+	}
+	if line == "/example-code" {
+		broadcast(devbot, "\n```go\npackage main\nimport \"fmt\"\nfunc main() {\n   fmt.Println(\"Example!\")\n}\n```", toSlack)
+		return
+	}
+	if line == "/ascii-art" {
+		broadcast("", string(artBytes), toSlack)
+		return
+	}
+	if line == "/commands" {
+		broadcast("", `**Available commands**  
    **/dm**    <user> <msg>   _Privately message people_  
    **/users**                _List users_  
    **/nick**  <name>         _Change your name_  
@@ -576,8 +585,20 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
    **/kick**  <user>         _Kick a user, requires an admin pass_  
    **/help**                 _Show help_  
    **/commands**             _Show this message_`, toSlack)
-		}
 	}
+}
+
+func auth(u *user) bool {
+	pass, err := u.term.ReadPassword("Admin password: ")
+	if err != nil {
+		l.Println(u.name, err)
+		return false
+	}
+	if !(pass == string(adminPass)) {
+		u.writeln("", "Incorrect password")
+		return false
+	}
+	return true
 }
 
 func cleanName(name string) string {
@@ -609,18 +630,18 @@ func mdRender(a string, nameLen int, lineWidth int) string {
 	return strings.Join(split, "\n")
 }
 
-// trims space and invisible characters
-func clean(a string) string {
-	var s string
-	s = ""
-	a = strings.TrimSpace(a)
-	for _, r := range a {
-		if unicode.IsGraphic(r) {
-			s += string(r)
-		}
-	}
-	return s
-}
+//// trims space and invisible characters
+//func clean(a string) string {
+//	var s string
+//	s = ""
+//	a = strings.TrimSpace(a)
+//	for _, r := range a {
+//		if unicode.IsGraphic(r) {
+//			s += string(r)
+//		}
+//	}
+//	return s
+//}
 
 // Returns true if the username is taken, false otherwise
 func userDuplicate(a string) bool {
@@ -687,7 +708,7 @@ func getMsgsFromSlack() {
 			}
 			u, _ := api.GetUserInfo(msg.User)
 			if !strings.HasPrefix(msg.Text, "hide") {
-				h := sha1.Sum([]byte(msg.User))
+				h := sha1.Sum([]byte(u.ID))
 				i, _ := binary.Varint(h[:])
 
 				broadcast(color.HiYellowString("HC ")+(*colorArr[rand.New(rand.NewSource(i)).Intn(len(colorArr))]).Sprint(strings.Fields(u.RealName)[0]), msg.Text, false)
