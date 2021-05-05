@@ -53,7 +53,7 @@ var (
 	blue     = color.New(color.FgHiBlue)
 	black    = color.New(color.FgHiBlack)
 	white    = color.New(color.FgHiWhite)
-	colorArr = []*color.Color{yellow, cyan, magenta, green, white, blue}
+	colorArr = []*color.Color{yellow, cyan, magenta, green, white, blue, black, red}
 
 	devbot = ""
 
