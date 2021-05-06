@@ -520,8 +520,8 @@ Zach Latta     - Founder of Hack Club
 Zachary Fogg   - Hack Club Game Designer  
 Matthew        - Hack Club HQ  
 Caleb Denio, Safin Singh, Eleeza A  
-Jubril, Sarthak M, Anghe,  
-Tommy P, Sam Poder, Rishi Kothari  
+Jubril, Sarthak Mohanty, Anghe,  
+Tommy Pujol, Sam Poder, Rishi Kothari  
 Amogh Chaubey, Ella Xu, Hugo Hu  
 _Possibly more people_
 
@@ -629,19 +629,6 @@ func mdRender(a string, nameLen int, lineWidth int) string {
 	}
 	return strings.Join(split, "\n")
 }
-
-//// trims space and invisible characters
-//func clean(a string) string {
-//	var s string
-//	s = ""
-//	a = strings.TrimSpace(a)
-//	for _, r := range a {
-//		if unicode.IsGraphic(r) {
-//			s += string(r)
-//		}
-//	}
-//	return s
-//}
 
 // Returns true if the username is taken, false otherwise
 func userDuplicate(a string) bool {
