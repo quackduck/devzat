@@ -586,7 +586,7 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
    **/users**                _List users_  
    **/nick**  <name>         _Change your name_  
    **/color** <color>        _Change your name color_  
-   **/emojis**               _See a list of emojis_
+   **/emojis**               _See a list of emojis_  
    **/all**                  _Get a list of all unique users ever_  
    **/people**               _See info about nice people who joined_  
    **/exit**                 _Leave the chat_  
