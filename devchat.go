@@ -78,6 +78,9 @@ var (
 	idsIn20Mutex   = sync.Mutex{}
 )
 
+// TODO: devbot hangman/tic-tac-toe game
+// TODO: slack command support
+// TODO: email people on ping word idea
 func main() {
 	color.NoColor = false
 	devbot = green.Sprint("devbot")
@@ -256,7 +259,7 @@ func (u *user) writeln(senderName string, msg string) {
 		msg = strings.TrimSpace(mdRender(msg, -2, u.win.Width)) // -2 so linewidth is used as is
 	}
 	if u.bell {
-		u.term.Write([]byte("\a" + msg + "\n")) // "\a" is beep
+		u.term.Write([]byte(msg + "\a\n")) // "\a" is beep
 	} else {
 		u.term.Write([]byte(msg + "\n"))
 	}
@@ -278,6 +281,9 @@ func (u *user) pickUsername(possibleName string) {
 	u.name = possibleName
 	u.changeColor(*colorArr[rand.Intn(len(colorArr))])
 	allUsersMutex.Lock()
+	if _, ok := allUsers[u.id]; !ok {
+		broadcast(devbot, "You seem to be new here "+u.name+". Welcome to Devzat! Run /help to see what you can do.", true)
+	}
 	allUsers[u.id] = u.name
 	allUsersMutex.Unlock()
 	saveBansAndUsers()
@@ -532,13 +538,14 @@ Rayed Hamayun, Aarush Kumar
 
 
 **From Twitter:**  
-Ayush Pathak   @ayshptk  
-Bereket        @heybereket  
-Srushti        @srushtiuniverse  
-Surjith        @surjithctly  
-Arav Nerula    @tregsthedev  
-Krish Nerkar   @krishnerkar_  
-Amrit          @astro_shenava
+Ayush Pathak    @ayshptk  
+Bereket         @heybereket  
+Srushti         @srushtiuniverse  
+Surjith         @surjithctly  
+Arav Nerula     @tregsthedev  
+Krish Nerkar    @krishnerkar_  
+Amrit           @astro_shenava  
+Mudrank Gupta   @mudrankgupta
 
 **And many more have joined!**`, toSlack)
 		return
@@ -569,18 +576,23 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
 		broadcast("", string(artBytes), toSlack)
 		return
 	}
+	if line == "/emojis" {
+		broadcast(devbot, "Check out github.com/ikatyang/emoji-cheat-sheet", toSlack)
+		return
+	}
 	if line == "/commands" {
 		broadcast("", `**Available commands**  
    **/dm**    <user> <msg>   _Privately message people_  
    **/users**                _List users_  
    **/nick**  <name>         _Change your name_  
    **/color** <color>        _Change your name color_  
+   **/emojis**               _See a list of emojis_
+   **/all**                  _Get a list of all unique users ever_  
    **/people**               _See info about nice people who joined_  
    **/exit**                 _Leave the chat_  
    **/hide**                 _Hide messages from HC Slack_  
    **/bell**                 _Toggle the ansi bell_  
    **/id**    <user>         _Get a unique identifier for a user_  
-   **/all**                  _Get a list of all unique users ever_  
    **/ban**   <user>         _Ban a user, requires an admin pass_  
    **/kick**  <user>         _Kick a user, requires an admin pass_  
    **/help**                 _Show help_  
