@@ -573,6 +573,11 @@ Mudrank Gupta   @mudrankgupta
 			broadcast(devbot, err.Error(), toSlack)
 		}
 		broadcast(devbot, "```\n"+tttGame.String()+"\n```", toSlack)
+		if currentPlayer == ttt.X {
+			currentPlayer = ttt.O
+		} else {
+			currentPlayer = ttt.X
+		}
 		if !(tttGame.Condition() == ttt.NotEnd) {
 			broadcast(devbot, tttGame.Condition().String(), toSlack)
 		}
