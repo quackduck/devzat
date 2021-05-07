@@ -555,7 +555,7 @@ Ayush Pathak    @ayshptk
 Bereket         @heybereket  
 Srushti         @srushtiuniverse  
 Surjith         @surjithctly  
-Arav Nerula     @tregsthedev  
+Arav Nerula     @HeyArav 
 Krish Nerkar    @krishnerkar_  
 Amrit           @astro_shenava  
 Mudrank Gupta   @mudrankgupta
