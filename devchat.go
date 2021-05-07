@@ -574,7 +574,10 @@ Mudrank Gupta   @mudrankgupta
 		if err != nil {
 			broadcast(devbot, "There's something wrong with that command :thinking:", toSlack)
 		}
-		err = tttGame.Apply(ttt.Move(m), currentPlayer)
+		if m < 1 || m > 9 {
+			broadcast(devbot, "Moves are numbers between 1 and 9!", toSlack)
+		}
+		err = tttGame.Apply(ttt.Move(m-1), currentPlayer)
 		if err != nil {
 			broadcast(devbot, err.Error(), toSlack)
 		}
