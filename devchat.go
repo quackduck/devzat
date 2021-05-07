@@ -369,6 +369,13 @@ func runCommands(line string, u *user, isSlack bool) {
 		broadcast(devbot, pick, toSlack)
 		return
 	}
+	
+	if line == "rocket" {
+		devbotMessages := []string{"Doge coin to the moon"}
+		pick := devbotMessages[rand.Intn(len(devbotMessages))]
+		broadcast(devbot, pick, toSlack)
+		return
+	}
 	if strings.Contains(line, "star") {
 		devbotMessages := []string{"Someone say :star:? If you like Devzat, do give it a star at github.com/quackduck/devzat!"}
 		pick := devbotMessages[rand.Intn(len(devbotMessages))]
