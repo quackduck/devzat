@@ -562,7 +562,7 @@ Ayush Pathak    @ayshptk
 Bereket         @heybereket  
 Srushti         @srushtiuniverse  
 Surjith         @surjithctly  
-Arav Nerula     @HeyArav  
+Arav Narula     @HeyArav  
 Krish Nerkar    @krishnerkar_  
 Amrit           @astro_shenava  
 Mudrank Gupta   @mudrankgupta
