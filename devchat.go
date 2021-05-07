@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/sha1"
 	"crypto/sha256"
 	_ "embed"
@@ -558,21 +559,17 @@ Mudrank Gupta   @mudrankgupta
 	if strings.HasPrefix(line, "/tic") {
 		rest := strings.TrimSpace(strings.TrimPrefix(line, "/tic"))
 		if rest == "" {
-			//fmt.Fprintf(&buf, "%v│%v│%v\n", b.Cells[0], b.Cells[1], b.Cells[2])
-			//fmt.Fprintln(&buf, "─┼─┼─")
-			//fmt.Fprintf(&buf, "%v│%v│%v\n", b.Cells[3], b.Cells[4], b.Cells[5])
-			//fmt.Fprintln(&buf, "─┼─┼─")
-			//fmt.Fprintf(&buf, "%v│%v│%v", b.Cells[6], b.Cells[7], b.Cells[8])
 			broadcast(devbot, "Starting a new game of Tic Tac Toe! The first player is always X.", toSlack)
 			currentPlayer = ttt.X
 			tttGame = new(ttt.Board)
 			//broadcast(devbot, "```\n"+"0│1│2\n3"+"\n```", toSlack)
-			broadcast(devbot, "```\n"+tttGame.String()+"\n```", toSlack)
+			broadcast(devbot, "```\n"+tttPrint(tttGame.Cells)+"\n```", toSlack)
 			return
 		}
 		m, err := strconv.Atoi(rest)
 		if err != nil {
 			broadcast(devbot, "There's something wrong with that command :thinking:", toSlack)
+			return
 		}
 		if m < 1 || m > 9 {
 			broadcast(devbot, "Moves are numbers between 1 and 9!", toSlack)
@@ -581,8 +578,9 @@ Mudrank Gupta   @mudrankgupta
 		err = tttGame.Apply(ttt.Move(m-1), currentPlayer)
 		if err != nil {
 			broadcast(devbot, err.Error(), toSlack)
+			return
 		}
-		broadcast(devbot, "```\n"+tttGame.String()+"\n```", toSlack)
+		broadcast(devbot, "```\n"+tttPrint(tttGame.Cells)+"\n```", toSlack)
 		if currentPlayer == ttt.X {
 			currentPlayer = ttt.O
 		} else {
@@ -643,6 +641,16 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
    **/help**                 _Show help_  
    **/commands**             _Show this message_`, toSlack)
 	}
+}
+
+func tttPrint(cells [9]ttt.State) string {
+	var buf bytes.Buffer
+	fmt.Fprintf(&buf, "%v │ %v │ %v\n", cells[0], cells[1], cells[2])
+	fmt.Fprintln(&buf, "──┼──┼──")
+	fmt.Fprintf(&buf, "%v │ %v │ %v\n", cells[3], cells[4], cells[5])
+	fmt.Fprintln(&buf, "──┼──┼──")
+	fmt.Fprintf(&buf, "%v │ %v │ %v", cells[6], cells[7], cells[8])
+	return buf.String()
 }
 
 func auth(u *user) bool {
