@@ -369,9 +369,15 @@ func runCommands(line string, u *user, isSlack bool) {
 		broadcast(devbot, pick, toSlack)
 		return
 	}
+
 	
 	if line == "rocket" {
 		devbotMessages := []string{"Doge coin to the moon"}
+
+
+	if strings.Contains(line, "rocket") {
+		devbotMessages := []string{"Doge to the mooooon :rocket:", ":rocket:", "I like rockets", "SpaceX"}
+
 		pick := devbotMessages[rand.Intn(len(devbotMessages))]
 		broadcast(devbot, pick, toSlack)
 		return
@@ -644,8 +650,9 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
    **/users**                _List users_  
    **/nick**  <name>         _Change your name_  
    **/color** <color>        _Change your name color_  
-   **/emojis**               _See a list of emojis_  
+   **/tic**   <move>         _Play Tic Tac Toe!_  
    **/all**                  _Get a list of all unique users ever_  
+   **/emojis**               _See a list of emojis_  
    **/people**               _See info about nice people who joined_  
    **/exit**                 _Leave the chat_  
    **/hide**                 _Hide messages from HC Slack_  
@@ -663,6 +670,9 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
 }
 
 func tttPrint(cells [9]ttt.State) string {
+	for i := range cells {
+
+	}
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, " %v │ %v │ %v \n", cells[0], cells[1], cells[2])
 	fmt.Fprintln(&buf, "───┼───┼───")
