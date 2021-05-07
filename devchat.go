@@ -371,7 +371,7 @@ func runCommands(line string, u *user, isSlack bool) {
 	}
 	
 	if line == "rocket" {
-		devbotMessages := []string{"Doge coin to the moon"}
+		devbotMessages := []string{"Doge to the mooooon :rocket:", ":rocket:", "I like rockets", "SpaceX"}
 		pick := devbotMessages[rand.Intn(len(devbotMessages))]
 		broadcast(devbot, pick, toSlack)
 		return
