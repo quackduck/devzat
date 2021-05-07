@@ -531,6 +531,24 @@ func runCommands(line string, u *user, isSlack bool) {
 		}
 		return
 	}
+	
+	
+	
+	
+		
+	if line == "/emojis" {
+		broadcast("", `
+**List of Emojis you can have on Devzat**  
+Smile Face       : smile : (no spaces)
+Rocket           : rocket : (no spaces)
+Laughing         : rofl   :  (no spaces)
+
+_Possibly more Emojis_
+
+
+`, toSlack)
+		return
+	}
 	if line == "/people" {
 		broadcast("", `
 **Hack Club members**  
@@ -554,7 +572,7 @@ Ayush Pathak    @ayshptk
 Bereket         @heybereket  
 Srushti         @srushtiuniverse  
 Surjith         @surjithctly  
-Arav Nerula     @tregsthedev  
+Arav Nerula     @HeyArav  
 Krish Nerkar    @krishnerkar_  
 Amrit           @astro_shenava  
 Mudrank Gupta   @mudrankgupta
@@ -648,6 +666,7 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
    **/ban**   <user>         _Ban a user, requires an admin pass_  
    **/kick**  <user>         _Kick a user, requires an admin pass_  
    **/help**                 _Show help_  
+   **/emojis**                 _List some common emojis, you can use on devzat_  
    **/commands**             _Show this message_`, toSlack)
 	}
 }
