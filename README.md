@@ -2,7 +2,9 @@
 
 Where are the devs at? Devzat!
 
-Devzat is chat over SSH. Because there's SSH apps literally on all platforms, even your phone, you can connect to Devzat on any device!
+Devzat is a chat, built in your SSH.
+
+Because there's SSH apps literally on all platforms, even your phone, you can connect to Devzat on any device!
 
 ![image](https://user-images.githubusercontent.com/38882631/115499526-a4d70280-a280-11eb-8723-817f54eccf3e.png)
 
