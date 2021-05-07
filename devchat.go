@@ -564,17 +564,16 @@ Mudrank Gupta   @mudrankgupta
 			broadcast(devbot, "```\n"+tttGame.String()+"\n```", toSlack)
 			return
 		}
-		if tttGame.Condition() == ttt.NotEnd {
-			m, err := strconv.Atoi(rest)
-			if err != nil {
-				broadcast(devbot, "There's something wrong with that command :thinking:", toSlack)
-			}
-			err = tttGame.Apply(ttt.Move(m), currentPlayer)
-			if err != nil {
-				broadcast(devbot, err.Error(), toSlack)
-			}
-			broadcast(devbot, "```\n"+tttGame.String()+"\n```", toSlack)
-		} else {
+		m, err := strconv.Atoi(rest)
+		if err != nil {
+			broadcast(devbot, "There's something wrong with that command :thinking:", toSlack)
+		}
+		err = tttGame.Apply(ttt.Move(m), currentPlayer)
+		if err != nil {
+			broadcast(devbot, err.Error(), toSlack)
+		}
+		broadcast(devbot, "```\n"+tttGame.String()+"\n```", toSlack)
+		if !(tttGame.Condition() == ttt.NotEnd) {
 			broadcast(devbot, tttGame.Condition().String(), toSlack)
 		}
 		return
