@@ -377,12 +377,12 @@ func runCommands(line string, u *user, isSlack bool) {
 		return
 	}
 	if strings.Contains(line, "star") {
-		devbotMessages := []string{"Someone say :star:? If you like Devzat, do give it a star at github.com/quackduck/devzat!"}
+		devbotMessages := []string{"Someone say :star:? If you like Devzat, do give it a star at github.com/quackduck/devzat!", "You should :star: github.com/quackduck/devzat", ":star:"}
 		pick := devbotMessages[rand.Intn(len(devbotMessages))]
 		broadcast(devbot, pick, toSlack)
 	}
 	if strings.Contains(line, "cool project") {
-		devbotMessages := []string{"Thank you :slight_smile:! If you like Devzat, do give it a star at github.com/quackduck/devzat!"}
+		devbotMessages := []string{"Thank you :slight_smile:! If you like Devzat, do give it a star at github.com/quackduck/devzat!", "Star Devzat here: github.com/quackduck/devzat"}
 		pick := devbotMessages[rand.Intn(len(devbotMessages))]
 		broadcast(devbot, pick, toSlack)
 	}
