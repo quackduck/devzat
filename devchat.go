@@ -28,6 +28,7 @@ import (
 	"github.com/acarl005/stripansi"
 	"github.com/fatih/color"
 	"github.com/gliderlabs/ssh"
+	ttt "github.com/shurcooL/tictactoe"
 	"github.com/slack-go/slack"
 	terminal "golang.org/x/term"
 )
@@ -76,6 +77,9 @@ var (
 	// stores the ids which have joined in 20 seconds and how many times this happened
 	idsIn20ToTimes = make(map[string]int, 10)
 	idsIn20Mutex   = sync.Mutex{}
+
+	tttGame       = new(ttt.Board)
+	currentPlayer = ttt.X
 )
 
 // TODO: devbot hangman/tic-tac-toe game
@@ -548,6 +552,31 @@ Amrit           @astro_shenava
 Mudrank Gupta   @mudrankgupta
 
 **And many more have joined!**`, toSlack)
+		return
+	}
+
+	if strings.HasPrefix(line, "/tic") {
+		rest := strings.TrimSpace(strings.TrimPrefix(line, "/tic"))
+		if rest == "" {
+			broadcast(devbot, "Starting a new game of Tic Tac Toe! The first player is always X.", toSlack)
+			currentPlayer = ttt.X
+			tttGame = new(ttt.Board)
+			broadcast(devbot, "```\n"+tttGame.String()+"\n```", toSlack)
+			return
+		}
+		if tttGame.Condition() == ttt.NotEnd {
+			m, err := strconv.Atoi(rest)
+			if err != nil {
+				broadcast(devbot, "There's something wrong with that command :thinking:", toSlack)
+			}
+			err = tttGame.Apply(ttt.Move(m), currentPlayer)
+			if err != nil {
+				broadcast(devbot, err.Error(), toSlack)
+			}
+			broadcast(devbot, "```\n"+tttGame.String()+"\n```", toSlack)
+		} else {
+			broadcast(devbot, tttGame.Condition().String(), toSlack)
+		}
 		return
 	}
 
