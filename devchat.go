@@ -607,6 +607,7 @@ Because there's SSH apps on all platforms, even on mobile, you can join from any
 
 Interesting features:
 * Many, many commands. Check em out by using /commands.
+* Tic Tac Toe! Run /tic
 * Markdown support! Tables, headers, italics and everything. Just use "\\n" in place of newlines.  
    You can even send _ascii art_ with code fences. Run /ascii-art to see an example.
 * Emoji replacements :fire:! \:rocket\: => :rocket: (like on Slack and Discord)
@@ -652,9 +653,9 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
 }
 
 func tttPrint(cells [9]ttt.State) string {
-	for i := range cells {
-
-	}
+	//for i := range cells {
+	//
+	//}
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, " %v │ %v │ %v \n", cells[0], cells[1], cells[2])
 	fmt.Fprintln(&buf, "───┼───┼───")
