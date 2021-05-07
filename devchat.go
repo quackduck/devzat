@@ -371,11 +371,19 @@ func runCommands(line string, u *user, isSlack bool) {
 	}
 	
 	if line == "rocket" {
-		devbotMessages := []string{"Doge to the mooooon :rocket:", ":rocket:", "I like rockets", "SpaceX"}
+		devbotMessages := []string{"Doge coin to the moon"}
 		pick := devbotMessages[rand.Intn(len(devbotMessages))]
 		broadcast(devbot, pick, toSlack)
 		return
 	}
+	
+	
+	if strings.Contains(line, "/unicode") {
+		devbotMessages := []string{"Here are some emojis you can use, :smile:, :rofl:, :rocket:"}
+		pick := devbotMessages[rand.Intn(len(devbotMessages))]
+		broadcast(devbot, pick, toSlack)
+	}
+	
 	if strings.Contains(line, "star") {
 		devbotMessages := []string{"Someone say :star:? If you like Devzat, do give it a star at github.com/quackduck/devzat!"}
 		pick := devbotMessages[rand.Intn(len(devbotMessages))]
@@ -646,7 +654,11 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
    **/ban**   <user>         _Ban a user, requires an admin pass_  
    **/kick**  <user>         _Kick a user, requires an admin pass_  
    **/help**                 _Show help_  
-   **/commands**             _Show this message_`, toSlack)
+   **/commands**             _Show this message_
+   **/tic**                  _Play a game of Tic Tac Toe_
+   **/unicode**              _List some emojis_
+
+`, toSlack)
 	}
 }
 
