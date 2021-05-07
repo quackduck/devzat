@@ -656,7 +656,7 @@ func tttPrint(cells [9]ttt.State) string {
 	strcells := new([9]string)
 	for i := range cells {
 		if cells[i].String() == " " {
-			strcells[i] = strconv.Itoa(i)
+			strcells[i] = strconv.Itoa(i + 1)
 			continue
 		}
 		strcells[i] = cells[i].String()
