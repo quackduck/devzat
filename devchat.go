@@ -653,15 +653,20 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
 }
 
 func tttPrint(cells [9]ttt.State) string {
-	//for i := range cells {
-	//
-	//}
+	strcells := new([9]string)
+	for i := range cells {
+		if cells[i].String() == " " {
+			strcells[i] = strconv.Itoa(i)
+			continue
+		}
+		strcells[i] = cells[i].String()
+	}
 	var buf bytes.Buffer
-	fmt.Fprintf(&buf, " %v │ %v │ %v \n", cells[0], cells[1], cells[2])
+	fmt.Fprintf(&buf, " %v │ %v │ %v \n", strcells[0], strcells[1], strcells[2])
 	fmt.Fprintln(&buf, "───┼───┼───")
-	fmt.Fprintf(&buf, " %v │ %v │ %v \n", cells[3], cells[4], cells[5])
+	fmt.Fprintf(&buf, " %v │ %v │ %v \n", strcells[3], strcells[4], strcells[5])
 	fmt.Fprintln(&buf, "───┼───┼───")
-	fmt.Fprintf(&buf, " %v │ %v │ %v ", cells[6], cells[7], cells[8])
+	fmt.Fprintf(&buf, " %v │ %v │ %v ", strcells[6], strcells[7], strcells[8])
 	return buf.String()
 }
 
