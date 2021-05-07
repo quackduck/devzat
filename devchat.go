@@ -576,6 +576,7 @@ Mudrank Gupta   @mudrankgupta
 		}
 		if m < 1 || m > 9 {
 			broadcast(devbot, "Moves are numbers between 1 and 9!", toSlack)
+			return
 		}
 		err = tttGame.Apply(ttt.Move(m-1), currentPlayer)
 		if err != nil {
@@ -589,6 +590,8 @@ Mudrank Gupta   @mudrankgupta
 		}
 		if !(tttGame.Condition() == ttt.NotEnd) {
 			broadcast(devbot, tttGame.Condition().String(), toSlack)
+			currentPlayer = ttt.X
+			tttGame = new(ttt.Board)
 		}
 		return
 	}
