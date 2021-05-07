@@ -558,9 +558,15 @@ Mudrank Gupta   @mudrankgupta
 	if strings.HasPrefix(line, "/tic") {
 		rest := strings.TrimSpace(strings.TrimPrefix(line, "/tic"))
 		if rest == "" {
+			//fmt.Fprintf(&buf, "%v│%v│%v\n", b.Cells[0], b.Cells[1], b.Cells[2])
+			//fmt.Fprintln(&buf, "─┼─┼─")
+			//fmt.Fprintf(&buf, "%v│%v│%v\n", b.Cells[3], b.Cells[4], b.Cells[5])
+			//fmt.Fprintln(&buf, "─┼─┼─")
+			//fmt.Fprintf(&buf, "%v│%v│%v", b.Cells[6], b.Cells[7], b.Cells[8])
 			broadcast(devbot, "Starting a new game of Tic Tac Toe! The first player is always X.", toSlack)
 			currentPlayer = ttt.X
 			tttGame = new(ttt.Board)
+			//broadcast(devbot, "```\n"+"0│1│2\n3"+"\n```", toSlack)
 			broadcast(devbot, "```\n"+tttGame.String()+"\n```", toSlack)
 			return
 		}
