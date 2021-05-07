@@ -8,6 +8,7 @@ require (
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
 	github.com/fatih/color v1.10.0
 	github.com/gliderlabs/ssh v0.3.2
+	github.com/lynn9388/supsub v0.0.0-20210304091550-458423b0e16a
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/shurcooL/tictactoe v0.0.0-20190901224142-67fd35c6a520
 	github.com/slack-go/slack v0.8.2

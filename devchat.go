@@ -29,6 +29,7 @@ import (
 	"github.com/acarl005/stripansi"
 	"github.com/fatih/color"
 	"github.com/gliderlabs/ssh"
+	"github.com/lynn9388/supsub"
 	ttt "github.com/shurcooL/tictactoe"
 	"github.com/slack-go/slack"
 	terminal "golang.org/x/term"
@@ -656,7 +657,7 @@ func tttPrint(cells [9]ttt.State) string {
 	strcells := new([9]string)
 	for i := range cells {
 		if cells[i].String() == " " {
-			strcells[i] = strconv.Itoa(i + 1)
+			strcells[i] = supsub.ToSub(strconv.Itoa(i + 1))
 			continue
 		}
 		strcells[i] = cells[i].String()
