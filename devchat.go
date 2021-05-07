@@ -645,11 +645,11 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
 
 func tttPrint(cells [9]ttt.State) string {
 	var buf bytes.Buffer
-	fmt.Fprintf(&buf, "%v │ %v │ %v\n", cells[0], cells[1], cells[2])
-	fmt.Fprintln(&buf, "──┼──┼──")
-	fmt.Fprintf(&buf, "%v │ %v │ %v\n", cells[3], cells[4], cells[5])
-	fmt.Fprintln(&buf, "──┼──┼──")
-	fmt.Fprintf(&buf, "%v │ %v │ %v", cells[6], cells[7], cells[8])
+	fmt.Fprintf(&buf, " %v │ %v │ %v \n", cells[0], cells[1], cells[2])
+	fmt.Fprintln(&buf, "───┼───┼───")
+	fmt.Fprintf(&buf, " %v │ %v │ %v \n", cells[3], cells[4], cells[5])
+	fmt.Fprintln(&buf, "───┼───┼───")
+	fmt.Fprintf(&buf, " %v │ %v │ %v ", cells[6], cells[7], cells[8])
 	return buf.String()
 }
 
