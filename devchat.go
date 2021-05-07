@@ -381,7 +381,7 @@ func runCommands(line string, u *user, isSlack bool) {
 	if strings.Contains(line, "elon") {
 		devbotMessages := []string{"When something is important enough, you do it even if the odds are not in your favor.", "I do think there is a lot of potential if you have a compelling product", "If you're trying to create a company, it's like baking a cake. You have to have all the ingredients in the right proportion.", "Patience is a virtue, and I'm learning patience. It's a tough lesson."}
 		pick := devbotMessages[rand.Intn(len(devbotMessages))]
-		broadcast(devbot, "> "+pick+"\n\n- Elon Musk", toSlack)
+		broadcast(devbot, "> "+pick+"\n\n\\- Elon Musk", toSlack)
 		return
 	}
 
