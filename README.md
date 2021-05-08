@@ -74,18 +74,25 @@ Available commands
 
 People who you might know who have joined:
 
-Zach Latta - Founder of Hack Club: _"omg amazing! this is so awesome"_  
+**Zach Latta - Founder of Hack Club: _"omg amazing! this is so awesome"_  
 Bereket [@heybereket](https://twitter.com/heybereket): _"this is pretty cool"_  
 Ayush [@ayshptk](https://twitter.com/ayshptk): _"Can I double star the repo somehow :pleading_face:"_  
-Srushti [@srushtiuniverse](https://twitter.com/srushtiuniverse): _"Yess It's awesome. I tried it."_  
-Surjith [@surjithctly](https://twitter.com/surjithctly): _""_  
-Arav [@HeyArav](https://twitter.com/HeyArav): [_"Okay, this is actually super aweasome."_](https://twitter.com/tregsthedev/status/1384180393893498880)  
+Srushti [@srushtiuniverse](https://twitter.com/srushtiuniverse): _"Yess it's awesome. I tried it."_  
+Surjith [@surjithctly](https://twitter.com/surjithctly): _"Whoa, who made this?"_  
+Arav [@HeyArav](https://twitter.com/HeyArav): [_"Okay, this is actually super awesome."_](https://twitter.com/tregsthedev/status/1384180393893498880)  
 Krish [@krishnerkar_](https://twitter.com/krishnerkar_):  [_"SHIT! THIS IS SO DOPE"_](https://twitter.com/krishnerkar_/status/1384173042616573960)  
 Amrit [@astro_shenava](https://twitter.com/astro_shenava): _"Super cool man"_
+Mudrank [@mudrankgupta](https://twitter.com/mudrankgupta): "🔥🚀🚀"**
 
 From Hack Club:  
-Caleb Denio, Safin Singh, Eleeza A    
+**Caleb Denio, Safin Singh, Eleeza A    
 Jubril, Sarthak Mohanty, Anghe    
 Tommy Pujol, Sam Poder, Rishi Kothari    
 Amogh Chaubey, Ella Xu, Hugo Hu  
-Matthew Stanciu
+Matthew Stanciu**
+
+
+
+
+
+### *Made by [Ishan Goel](https://twitter.com/IshanTheIshan) with feature ideas from friends. Thanks to [Caleb Denio](https://twitter.com/CalebDenio) for lending his server!*
