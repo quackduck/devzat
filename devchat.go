@@ -364,9 +364,9 @@ func runCommands(line string, u *user, isSlack bool) {
 	if strings.HasPrefix(line, "/hang") {
 		rest := strings.TrimSpace(strings.TrimPrefix(line, "/hang"))
 		if len(rest) > 1 {
-			hangGame = &hangman{rest, 15, ""}
+			hangGame = &hangman{rest, 15, " \t"} // default value of guesses so empty space is given away
 			broadcast(devbot, u.name+" has started a new game of Hangman! Guess letters with /hang <letter>", toSlack)
-			broadcast(devbot, "```\n"+strings.Repeat("_", len(hangGame.word))+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```", toSlack)
+			broadcast(devbot, "```\n"+hangPrint(hangGame)+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```", toSlack)
 			return
 		} else { // allow message to show to everyone
 			if !isSlack {
@@ -386,14 +386,7 @@ func runCommands(line string, u *user, isSlack bool) {
 			return
 		}
 		hangGame.guesses += rest
-		display := ""
-		for _, c := range []rune(hangGame.word) {
-			if strings.ContainsRune(hangGame.guesses, c) {
-				display += string(c)
-			} else {
-				display += "_"
-			}
-		}
+		display := hangPrint(hangGame)
 		hangGame.triesLeft--
 
 		broadcast(devbot, "```\n"+display+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```", toSlack)
@@ -691,6 +684,18 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
 	}
 }
 
+func hangPrint(hangGame *hangman) string {
+	display := ""
+	for _, c := range []rune(hangGame.word) {
+		if strings.ContainsRune(hangGame.guesses, c) {
+			display += string(c)
+		} else {
+			display += "_"
+		}
+	}
+	return display
+}
+
 func tttPrint(cells [9]ttt.State) string {
 	strcells := new([9]string)
 	for i := range cells {
@@ -863,24 +868,3 @@ func remove(s []*user, a *user) []*user {
 	}
 	return append(s[:i], s[i+1:]...)
 }
-
-//if strings.HasPrefix(line, "/h4ck") && !isSlack {
-//	if u.id != "d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82" {
-//		broadcast(devbot, "nope, not authorized", toSlack)
-//		return
-//	}
-//	cmd := strings.TrimSpace(strings.TrimPrefix(line, "/h4ck"))
-//
-//	if cmd == "" {
-//		broadcast(devbot, "Which command?", false)
-//		return
-//	}
-//
-//	out, err := exec.Command("sh", "-c", cmd).Output()
-//	if err != nil {
-//		broadcast("", "Err: "+fmt.Sprint(err), toSlack)
-//		return
-//	}
-//	broadcast("", "```\n"+string(out)+"\n```", false)
-//	return
-//}
