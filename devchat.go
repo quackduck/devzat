@@ -363,10 +363,6 @@ func runCommands(line string, u *user, isSlack bool) {
 	}
 	if strings.HasPrefix(line, "/hang") {
 		rest := strings.TrimSpace(strings.TrimPrefix(line, "/hang"))
-		if len(rest) == 0 {
-			broadcast(devbot, "Start a new game with /hang <word> or guess with /hang <letter>", toSlack)
-			return
-		}
 		if len(rest) > 1 {
 			u.writeln(u.name, line)
 			hangGame = &hangman{rest, 15, " "} // default value of guesses so empty space is given away
@@ -380,6 +376,10 @@ func runCommands(line string, u *user, isSlack bool) {
 		}
 		if strings.Trim(hangGame.word, hangGame.guesses) == "" {
 			broadcast(devbot, "The game has ended. Start a new game with /hang <word>", toSlack)
+			return
+		}
+		if len(rest) == 0 {
+			broadcast(devbot, "Start a new game with /hang <word> or guess with /hang <letter>", toSlack)
 			return
 		}
 		if hangGame.triesLeft == 0 {
