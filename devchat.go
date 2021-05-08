@@ -379,6 +379,11 @@ func runCommands(line string, u *user, isSlack bool) {
 		}
 		if hangGame.triesLeft == 0 {
 			broadcast(devbot, "No more tries! The word was "+hangGame.word, toSlack)
+			return
+		}
+		if strings.Contains(hangGame.guesses, rest) {
+			broadcast(devbot, "You already guessed "+rest, toSlack)
+			return
 		}
 		hangGame.guesses += rest
 		display := ""
