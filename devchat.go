@@ -366,7 +366,7 @@ func runCommands(line string, u *user, isSlack bool) {
 		if len(rest) > 1 {
 			hangGame = &hangman{rest, 15, ""}
 			broadcast(devbot, u.name+" has started a new game of Hangman! Guess letters with /hang <letter>", toSlack)
-			broadcast(devbot, ">"+strings.Repeat("_", len(hangGame.word))+"\nTries: "+strconv.Itoa(hangGame.triesLeft), toSlack)
+			broadcast(devbot, "```\n"+strings.Repeat("_", len(hangGame.word))+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```", toSlack)
 			return
 		}
 		if len(rest) == 0 {
