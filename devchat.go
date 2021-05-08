@@ -377,9 +377,13 @@ func runCommands(line string, u *user, isSlack bool) {
 			broadcast(devbot, "No more tries! The word was "+hangGame.word, toSlack)
 		}
 		hangGame.guesses += rest
-		display := hangGame.word
-		for _, c := range []rune(hangGame.guesses) {
-			display = strings.ReplaceAll(display, string(c), "_")
+		display := ""
+		for _, c := range []rune(hangGame.word) {
+			if strings.ContainsRune(hangGame.guesses, c) {
+				display += string(c)
+			} else {
+				display += "_"
+			}
 		}
 		hangGame.triesLeft--
 
