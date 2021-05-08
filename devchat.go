@@ -81,11 +81,12 @@ var (
 	tttGame       = new(ttt.Board)
 	currentPlayer = ttt.X
 
+	hangGame = new(hangman)
+
 	admins = []string{"d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82"}
 )
 
 // TODO: devbot hangman game
-// TODO: slack command support
 // TODO: email people on ping word idea
 func main() {
 	color.NoColor = false
@@ -177,6 +178,12 @@ type user struct {
 type message struct {
 	senderName string
 	text       string
+}
+
+type hangman struct {
+	word      string
+	triesLeft int
+	guesses   string // string containing all the guessed characters
 }
 
 func newUser(s ssh.Session) *user {
@@ -321,6 +328,11 @@ func (u *user) repl() {
 }
 
 func runCommands(line string, u *user, isSlack bool) {
+	if line == "" {
+		u.writeln("", "An empty message? Send some content!")
+		return
+	}
+
 	toSlack := true
 	if strings.HasPrefix(line, "/hide") && !isSlack {
 		toSlack = false
@@ -349,12 +361,36 @@ func runCommands(line string, u *user, isSlack bool) {
 		}
 		return
 	}
+	if strings.HasPrefix(line, "/hang") {
+		rest := strings.TrimSpace(strings.TrimPrefix(line, "/hang"))
+		if len(rest) > 1 {
+			hangGame = &hangman{rest, 15, ""}
+			broadcast(devbot, u.name+" has started a new game of Hangman! Guess letters with /hang <letter>", toSlack)
+			broadcast(devbot, ">"+strings.Repeat("_", len(hangGame.word))+"\nTries: "+strconv.Itoa(hangGame.triesLeft), toSlack)
+			return
+		}
+		if len(rest) == 0 {
+			broadcast(devbot, "Start a new game with /hang <word> or guess with /hang <letter>", toSlack)
+			return
+		}
+		if hangGame.triesLeft == 0 {
+			broadcast(devbot, "No more tries! The word was "+hangGame.word, toSlack)
+		}
+		hangGame.guesses += rest
+		display := hangGame.word
+		for _, c := range []rune(hangGame.guesses) {
+			display = strings.ReplaceAll(display, string(c), "_")
+		}
+		hangGame.triesLeft--
 
-	if line == "" {
-		u.writeln("", "An empty message? Send some content!")
+		broadcast(devbot, ">"+display+"\nTries: "+strconv.Itoa(hangGame.triesLeft), toSlack)
+		if strings.Trim(hangGame.word, hangGame.guesses) == "" {
+			broadcast(devbot, "You got it! The word was "+hangGame.word, toSlack)
+		} else if hangGame.triesLeft == 0 {
+			broadcast(devbot, "No more tries! The word was "+hangGame.word, toSlack)
+		}
 		return
 	}
-
 	if !isSlack {
 		broadcast(u.name, line, toSlack)
 	}
@@ -426,7 +462,6 @@ func runCommands(line string, u *user, isSlack bool) {
 		u.close("**" + u.name + "** **" + red.Sprint("has left the chat") + "**")
 		return
 	}
-
 	if line == "/bell" && !isSlack {
 		u.bell = !u.bell
 		if u.bell {
