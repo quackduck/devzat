@@ -79,7 +79,7 @@ Bereket [@heybereket](https://twitter.com/heybereket): _"this is pretty cool"_
 Ayush [@ayshptk](https://twitter.com/ayshptk): _"Can I double star the repo somehow :pleading_face:"_  
 Srushti [@srushtiuniverse](https://twitter.com/srushtiuniverse): _"Yess it's awesome. I tried it."_  
 Surjith [@surjithctly](https://twitter.com/surjithctly): _"Whoa, who made this?"_  
-Arav [@tregsthedev](https://twitter.com/tregsthedev): [_"Okay, this is actually super awesome."_](https://twitter.com/tregsthedev/status/1384180393893498880)  
+Arav [@HeyArav](https://twitter.com/HeyArav): [_"Okay, this is actually super awesome."_](https://twitter.com/tregsthedev/status/1384180393893498880)  
 Krish [@krishnerkar_](https://twitter.com/krishnerkar_):  [_"SHIT! THIS IS SO DOPE"_](https://twitter.com/krishnerkar_/status/1384173042616573960)  
 Amrit [@astro_shenava](https://twitter.com/astro_shenava): _"Super cool man"_
 Mudrank [@mudrankgupta](https://twitter.com/mudrankgupta): "🔥🚀🚀"**
