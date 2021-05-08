@@ -389,10 +389,10 @@ func runCommands(line string, u *user, isSlack bool) {
 		if strings.Contains(hangGame.guesses, rest) {
 			broadcast(devbot, "You already guessed "+rest, toSlack)
 			return
-		}
-		if strings.Contains(hangGame.word, rest) {
-			hangGame.guesses += rest
 		} else {
+                        hangGame.guesses += rest
+                }
+		if !(strings.Contains(hangGame.word, rest)) {
 			hangGame.triesLeft--
 		}
 
