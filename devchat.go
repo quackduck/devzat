@@ -374,6 +374,9 @@ func runCommands(line string, u *user, isSlack bool) {
 				broadcast(u.name, line, toSlack)
 			}
 		}
+		if strings.Trim(hangGame.word, hangGame.guesses) == "" {
+			broadcast(devbot, "The game has ended. Start a new game with /hang <word>", toSlack)
+		}
 		if len(rest) == 0 {
 			broadcast(devbot, "Start a new game with /hang <word> or guess with /hang <letter>", toSlack)
 			return
