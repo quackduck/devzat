@@ -387,7 +387,7 @@ func runCommands(line string, u *user, isSlack bool) {
 		}
 		hangGame.triesLeft--
 
-		broadcast(devbot, ">"+display+"\nTries: "+strconv.Itoa(hangGame.triesLeft), toSlack)
+		broadcast(devbot, "```\n"+display+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```", toSlack)
 		if strings.Trim(hangGame.word, hangGame.guesses) == "" {
 			broadcast(devbot, "You got it! The word was "+hangGame.word, toSlack)
 		} else if hangGame.triesLeft == 0 {
