@@ -83,7 +83,7 @@ var (
 	currentPlayer = ttt.X
 )
 
-// TODO: devbot hangman/tic-tac-toe game
+// TODO: devbot hangman game
 // TODO: slack command support
 // TODO: email people on ping word idea
 func main() {
@@ -324,7 +324,7 @@ func runCommands(line string, u *user, isSlack bool) {
 	if strings.HasPrefix(line, "/hide") && !isSlack {
 		toSlack = false
 	}
-	if strings.HasPrefix(line, "/dm") {
+	if strings.HasPrefix(line, "/dm") && !isSlack {
 		toSlack = false
 		rest := strings.TrimSpace(strings.TrimPrefix(line, "/dm"))
 		restSplit := strings.Fields(rest)
@@ -354,7 +354,10 @@ func runCommands(line string, u *user, isSlack bool) {
 		return
 	}
 
-	broadcast(u.name, line, toSlack)
+	if !isSlack {
+		broadcast(u.name, line, toSlack)
+	}
+
 	if strings.Contains(line, "devbot") {
 		devbotMessages := []string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "I'm in the middle of something can you not", "Devbot to the rescue!", "Run /help, you need it."}
 		if strings.Contains(line, "thank") {
@@ -371,7 +374,7 @@ func runCommands(line string, u *user, isSlack bool) {
 	}
 
 	if strings.Contains(line, "rocket") {
-		devbotMessages := []string{"Doge to the mooooon :rocket:", ":rocket:", "I like rockets", "SpaceX" , ":dog2:"}
+		devbotMessages := []string{"Doge to the mooooon :rocket:", ":rocket:", "I like rockets", "SpaceX", ":dog2:"}
 		pick := devbotMessages[rand.Intn(len(devbotMessages))]
 		broadcast(devbot, pick, toSlack)
 		return
@@ -418,12 +421,12 @@ func runCommands(line string, u *user, isSlack bool) {
 		broadcast(devbot, "eggs?", toSlack)
 		return
 	}
-	if line == "/exit" {
+	if line == "/exit" && !isSlack {
 		u.close("**" + u.name + "** **" + red.Sprint("has left the chat") + "**")
 		return
 	}
 
-	if strings.HasPrefix(line, "/h4ck") {
+	if strings.HasPrefix(line, "/h4ck") && !isSlack {
 		if u.id != "d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82" {
 			broadcast(devbot, "nope, not authorized", toSlack)
 			return
@@ -444,7 +447,7 @@ func runCommands(line string, u *user, isSlack bool) {
 		return
 	}
 
-	if line == "/bell" {
+	if line == "/bell" && !isSlack {
 		u.bell = !u.bell
 		if u.bell {
 			broadcast("", fmt.Sprint("bell on"), toSlack)
@@ -462,11 +465,11 @@ func runCommands(line string, u *user, isSlack bool) {
 		broadcast("", victim.id, toSlack)
 		return
 	}
-	if strings.HasPrefix(line, "/nick") {
+	if strings.HasPrefix(line, "/nick") && !isSlack {
 		u.pickUsername(strings.TrimSpace(strings.TrimPrefix(line, "/nick")))
 		return
 	}
-	if strings.HasPrefix(line, "/banIP") {
+	if strings.HasPrefix(line, "/banIP") && !isSlack {
 		if !auth(u) {
 			return
 		}
@@ -477,7 +480,7 @@ func runCommands(line string, u *user, isSlack bool) {
 		return
 	}
 
-	if strings.HasPrefix(line, "/ban") {
+	if strings.HasPrefix(line, "/ban") && !isSlack {
 		victim, ok := findUserByName(strings.TrimSpace(strings.TrimPrefix(line, "/ban")))
 		if !ok {
 			broadcast("", "User not found", toSlack)
@@ -493,7 +496,7 @@ func runCommands(line string, u *user, isSlack bool) {
 		victim.close(victim.name + " has been banned by " + u.name)
 
 	}
-	if strings.HasPrefix(line, "/kick") {
+	if strings.HasPrefix(line, "/kick") && !isSlack {
 		victim, ok := findUserByName(strings.TrimSpace(strings.TrimPrefix(line, "/kick")))
 		if !ok {
 			broadcast("", "User not found", toSlack)
@@ -504,7 +507,7 @@ func runCommands(line string, u *user, isSlack bool) {
 		}
 		victim.close(victim.name + red.Sprint(" has been kicked by ") + u.name)
 	}
-	if strings.HasPrefix(line, "/color") {
+	if strings.HasPrefix(line, "/color") && !isSlack {
 		colorMsg := "Which color? Choose from green, cyan, blue, red/orange, magenta/purple/pink, yellow/beige, white/cream and black/gray/grey.  \nThere's also a few secret colors :)"
 		switch strings.TrimSpace(strings.TrimPrefix(line, "/color")) {
 		case "green":
@@ -787,7 +790,7 @@ func getMsgsFromSlack() {
 			if !strings.HasPrefix(msg.Text, "hide") {
 				h := sha1.Sum([]byte(u.ID))
 				i, _ := binary.Varint(h[:])
-
+				runCommands(msg.Text, nil, true)
 				broadcast(color.HiYellowString("HC ")+(*colorArr[rand.New(rand.NewSource(i)).Intn(len(colorArr))]).Sprint(strings.Fields(u.RealName)[0]), msg.Text, false)
 			}
 		case *slack.ConnectedEvent:
