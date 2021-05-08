@@ -101,7 +101,7 @@ func main() {
 		fmt.Println("Shutting down...")
 		saveBansAndUsers()
 		logfile.Close()
-		broadcast("", "Server going down! This is probably because it is being updated. Try joining back immediately.  \n"+
+		broadcast(devbot, "Server going down! This is probably because it is being updated. Try joining back immediately.  \n"+
 			"If you still can't join, try joining back in 2 minutes. If you _still_ can't join, make an issue at github.com/quackduck/devzat/issues", true)
 		os.Exit(0)
 	}()
@@ -385,11 +385,15 @@ func runCommands(line string, u *user, isSlack bool) {
 			broadcast(devbot, "You already guessed "+rest, toSlack)
 			return
 		}
-		hangGame.guesses += rest
-		display := hangPrint(hangGame)
-		hangGame.triesLeft--
+		if strings.Contains(hangGame.word, rest) {
+			hangGame.guesses += rest
+		} else {
+			hangGame.triesLeft--
+		}
 
+		display := hangPrint(hangGame)
 		broadcast(devbot, "```\n"+display+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```", toSlack)
+
 		if strings.Trim(hangGame.word, hangGame.guesses) == "" {
 			broadcast(devbot, "You got it! The word was "+hangGame.word, toSlack)
 		} else if hangGame.triesLeft == 0 {
