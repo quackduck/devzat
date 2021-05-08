@@ -368,6 +368,10 @@ func runCommands(line string, u *user, isSlack bool) {
 			broadcast(devbot, u.name+" has started a new game of Hangman! Guess letters with /hang <letter>", toSlack)
 			broadcast(devbot, "```\n"+strings.Repeat("_", len(hangGame.word))+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```", toSlack)
 			return
+		} else { // allow message to show to everyone
+			if !isSlack {
+				broadcast(u.name, line, toSlack)
+			}
 		}
 		if len(rest) == 0 {
 			broadcast(devbot, "Start a new game with /hang <word> or guess with /hang <letter>", toSlack)
