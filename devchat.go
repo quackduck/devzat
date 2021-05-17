@@ -599,6 +599,7 @@ Arav Narula     @HeyArav
 Krish Nerkar    @krishnerkar_  
 Amrit           @astro_shenava  
 Mudrank Gupta   @mudrankgupta
+Harsh           @harshb_
 
 **And many more have joined!**`, toSlack)
 		return
