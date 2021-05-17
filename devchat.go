@@ -580,8 +580,9 @@ Zachary Fogg   - Hack Club Game Designer
 Matthew        - Hack Club HQ  
 Caleb Denio, Safin Singh, Eleeza A  
 Jubril, Sarthak Mohanty, Anghe,  
-Tommy Pujol, Sam Poder, Rishi Kothari  
-Amogh Chaubey, Ella Xu, Hugo Hu  
+Tommy Pujol, Sam Poder, Rishi Kothari,  
+Amogh Chaubey, Ella Xu, Hugo Hu,  
+Robert Goll  
 _Possibly more people_
 
 
@@ -648,7 +649,7 @@ Because there's SSH apps on all platforms, even on mobile, you can join from any
 
 Interesting features:
 * Many, many commands. Check em out by using /commands.
-* Tic Tac Toe! Run /tic
+* Built in Tic Tac Toe and Hangman! Run /tic or /hang <word>
 * Markdown support! Tables, headers, italics and everything. Just use "\\n" in place of newlines.  
    You can even send _ascii art_ with code fences. Run /ascii-art to see an example.
 * Emoji replacements :fire:! \:rocket\: => :rocket: (like on Slack and Discord)
@@ -679,6 +680,7 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
    **/nick**  <name>         _Change your name_  
    **/color** <color>        _Change your name color_  
    **/tic**   <move>         _Play Tic Tac Toe!_  
+   **/hang**  <letter/word>  _Play Hangman!_  
    **/all**                  _Get a list of all unique users ever_  
    **/emojis**               _See a list of emojis_  
    **/people**               _See info about nice people who joined_  
