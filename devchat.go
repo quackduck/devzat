@@ -5,7 +5,6 @@ import (
 	"crypto/sha1"
 	"crypto/sha256"
 	_ "embed"
-	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -850,7 +849,9 @@ func getMsgsFromSlack() {
 			u, _ := api.GetUserInfo(msg.User)
 			if !strings.HasPrefix(msg.Text, "hide") {
 				h := sha1.Sum([]byte(u.ID))
-				i, _ := binary.Varint(h[:])
+				//i, _ := binary.Varint(h[:])
+				i, _ := strconv.ParseInt(hex.EncodeToString(h[:])[:6], 16, 0)
+				fmt.Println(i)
 				broadcast(color.HiYellowString("HC ")+(*colorArr[rand.New(rand.NewSource(i)).Intn(len(colorArr))]).Sprint(strings.Fields(u.RealName)[0]), msg.Text, false)
 				runCommands(msg.Text, nil, true)
 			}
