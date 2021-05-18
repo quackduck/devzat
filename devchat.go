@@ -240,8 +240,8 @@ func newUser(s ssh.Session) *user {
 	//u.pickUsername(s.User())
 
 	if _, ok := allUsers[u.id]; !ok {
-		broadcast(devbot, "You seem to be new here "+u.name+". Welcome to Devzat! Run /help to see what you can do.", true)
 		u.pickUsername(s.User())
+		broadcast(devbot, "You seem to be new here "+u.name+". Welcome to Devzat! Run /help to see what you can do.", true)
 	} else { // load from allusers
 		possibleName := allUsers[u.id]
 		//var err error
@@ -258,9 +258,6 @@ func newUser(s ssh.Session) *user {
 		}
 		u.name = possibleName
 		u.term.SetPrompt(u.name + ": ")
-		allUsersMutex.Lock()
-		allUsers[u.id] = u.name
-		allUsersMutex.Unlock()
 		saveBansAndUsers()
 	}
 	usersMutex.Lock()
@@ -320,19 +317,16 @@ func (u *user) pickUsername(possibleName string) {
 	}
 	u.name = possibleName
 	u.changeColor(*colorArr[rand.Intn(len(colorArr))]) // also sets prompt
-	allUsersMutex.Lock()
-	if _, ok := allUsers[u.id]; !ok {
-		broadcast(devbot, "You seem to be new here "+u.name+". Welcome to Devzat! Run /help to see what you can do.", true)
-	}
-	allUsers[u.id] = u.name
-	allUsersMutex.Unlock()
-	saveBansAndUsers()
 }
 
 func (u *user) changeColor(color color.Color) {
 	u.name = color.Sprint(stripansi.Strip(u.name))
 	u.color = color
 	u.term.SetPrompt(u.name + ": ")
+	allUsersMutex.Lock()
+	allUsers[u.id] = u.name
+	allUsersMutex.Unlock()
+	saveBansAndUsers()
 }
 
 func (u *user) repl() {
