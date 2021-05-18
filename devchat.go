@@ -850,15 +850,14 @@ func getMsgsFromSlack() {
 			if !strings.HasPrefix(msg.Text, "hide") {
 				h := sha1.Sum([]byte(u.ID))
 				//i, _ := binary.Varint(h[:])
-				i, _ := strconv.ParseInt(hex.EncodeToString(h[:])[:6], 16, 0)
-				fmt.Println(i)
-				broadcast(color.HiYellowString("HC ")+(*colorArr[rand.New(rand.NewSource(i)).Intn(len(colorArr))]).Sprint(strings.Fields(u.RealName)[0]), msg.Text, false)
+				i, _ := strconv.ParseInt(hex.EncodeToString(h[:1]), 16, 0)
+				broadcast(color.HiYellowString("HC ")+(*colorArr[int(i) % len(colorArr)]).Sprint(strings.Fields(u.RealName)[0]), msg.Text, false)
 				runCommands(msg.Text, nil, true)
 			}
 		case *slack.ConnectedEvent:
-			fmt.Println("Connected to Slack")
+			l.Println("Connected to Slack")
 		case *slack.InvalidAuthEvent:
-			fmt.Println("Invalid token")
+			l.Println("Invalid token")
 			return
 		}
 	}
