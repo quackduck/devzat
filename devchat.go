@@ -256,8 +256,8 @@ func newUser(s ssh.Session) *user {
 			possibleName = cleanName(possibleName)
 			u.changeColor(*colorArr[rand.Intn(len(colorArr))])
 		}
-		u.term.SetPrompt(u.name + ": ")
 		u.name = possibleName
+		u.term.SetPrompt(u.name + ": ")
 		allUsersMutex.Lock()
 		allUsers[u.id] = u.name
 		allUsersMutex.Unlock()
