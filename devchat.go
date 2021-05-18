@@ -232,7 +232,36 @@ func newUser(s ssh.Session) *user {
 		broadcast(devbot, u.name+" has been banned automatically. IP: "+u.addr, true)
 		return nil
 	}
-	u.pickUsername(s.User())
+
+	for i := range backlog {
+		u.writeln(backlog[i].senderName, backlog[i].text)
+	}
+
+	//u.pickUsername(s.User())
+
+	if _, ok := allUsers[u.id]; !ok {
+		broadcast(devbot, "You seem to be new here "+u.name+". Welcome to Devzat! Run /help to see what you can do.", true)
+		u.pickUsername(s.User())
+	} else { // load from allusers
+		possibleName := allUsers[u.id]
+		//var err error
+		for userDuplicate(stripansi.Strip(possibleName)) {
+			u.writeln("", "Pick a different username")
+			u.term.SetPrompt("> ")
+			possibleName, err = u.term.ReadLine()
+			if err != nil {
+				l.Println(err)
+				return nil
+			}
+			possibleName = cleanName(possibleName)
+			u.changeColor(*colorArr[rand.Intn(len(colorArr))])
+		}
+		u.name = possibleName
+		allUsersMutex.Lock()
+		allUsers[u.id] = u.name
+		allUsersMutex.Unlock()
+		saveBansAndUsers()
+	}
 	usersMutex.Lock()
 	users = append(users, u)
 	usersMutex.Unlock()
@@ -245,9 +274,6 @@ func newUser(s ssh.Session) *user {
 		u.writeln("", "**"+cyan.Sprint("Welcome to the chat. There are ", len(users)-1, " more users")+"**")
 	}
 	//_, _ = term.Write([]byte(strings.Join(backlog, ""))) // print out backlog
-	for i := range backlog {
-		u.writeln(backlog[i].senderName, backlog[i].text)
-	}
 	broadcast(devbot, "**"+u.name+"** **"+green.Sprint("has joined the chat")+"**", true)
 	return u
 }
