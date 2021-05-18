@@ -256,6 +256,7 @@ func newUser(s ssh.Session) *user {
 			possibleName = cleanName(possibleName)
 			u.changeColor(*colorArr[rand.Intn(len(colorArr))])
 		}
+		u.term.SetPrompt(u.name + ": ")
 		u.name = possibleName
 		allUsersMutex.Lock()
 		allUsers[u.id] = u.name
@@ -318,7 +319,7 @@ func (u *user) pickUsername(possibleName string) {
 		possibleName = cleanName(possibleName)
 	}
 	u.name = possibleName
-	u.changeColor(*colorArr[rand.Intn(len(colorArr))])
+	u.changeColor(*colorArr[rand.Intn(len(colorArr))]) // also sets prompt
 	allUsersMutex.Lock()
 	if _, ok := allUsers[u.id]; !ok {
 		broadcast(devbot, "You seem to be new here "+u.name+". Welcome to Devzat! Run /help to see what you can do.", true)
