@@ -36,37 +36,41 @@ We also have a Slack bridge! If you're on the [Hack Club](https://hackclub.com) 
 Help:
 
 ```text
-Welcome to Devzat! Devzat is chat over SSH: github.com/quackduck/devzat  
+Welcome to Devzat! Devzat is chat over SSH: github.com/quackduck/devzat
 Because there's SSH apps on all platforms, even on mobile, you can join from anywhere.
 
 Interesting features:
-* Many, many commands. Check em out by using /commands.
-* Markdown support! Tables, headers, italics and everything. Just use "\n" in place of newlines.  
-   You can even send ascii art with code fences. Run /ascii-art to see an example.
-* Emoji replacements 🔥 :rocket: => 🚀 (like on Slack and Discord)
-* Code syntax highlighting. Use Markdown fences to send code. Run /example-code to see an example.
+• Many, many commands. Check em out by using /commands.
+• Built in Tic Tac Toe and Hangman! Run /tic or /hang <word>
+• Markdown support! Tables, headers, italics and everything. Just use "\n" in place of newlines.
+  You can even send ascii art with code fences. Run /ascii-art to see an example.
+• Emoji replacements 🔥 ! :rocket: => 🚀  (like on Slack and Discord)
+• Code syntax highlighting. Use Markdown fences to send code. Run /example-code to see an example.
 
 For replacing newlines, I often use bulkseotools.com/add-remove-line-breaks.php.
 
-Made by Ishan Goel with feature ideas from friends.  
+Made by Ishan Goel with feature ideas from friends.
 Thanks to Caleb Denio for lending his server!
 ```
 
 ```text
-Available commands  
-   /dm    <user> <msg>   Privately message people  
-   /users                List users  
-   /nick  <name>         Change your name  
-   /color <color>        Change your name color  
-   /people               See info about nice people who joined  
-   /exit                 Leave the chat  
-   /hide                 Hide messages from HC Slack  
-   /bell                 Toggle the ansi bell  
-   /id    <user>         Get a unique identifier for a user  
-   /all                  Get a list of all unique users ever  
-   /ban   <user>         Ban a user, requires an admin pass  
-   /kick  <user>         Kick a user, requires an admin pass  
-   /help                 Show help  
+Available commands
+   /dm    <user> <msg>   Privately message people
+   /users                List users
+   /nick  <name>         Change your name
+   /color <color>        Change your name color
+   /tic   <move>         Play Tic Tac Toe!
+   /hang  <letter/word>  Play Hangman!
+   /all                  Get a list of all unique users ever
+   /emojis               See a list of emojis
+   /people               See info about nice people who joined
+   /exit                 Leave the chat
+   /hide                 Hide messages from HC Slack
+   /bell                 Toggle the ansi bell
+   /id    <user>         Get a unique identifier for a user
+   /ban   <user>         Ban a user, requires an admin pass
+   /kick  <user>         Kick a user, requires an admin pass
+   /help                 Show help
    /commands             Show this message
 ```
 
