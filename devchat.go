@@ -33,7 +33,7 @@ import (
 )
 
 var (
-	// //go:embed slackAPI.txt
+	//go:embed slackAPI.txt
 	slackAPI []byte
 	//go:embed adminPass.txt
 	adminPass []byte
