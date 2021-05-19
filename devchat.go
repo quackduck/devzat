@@ -762,6 +762,7 @@ func cleanName(name string) string {
 			s += string(r)
 		}
 	}
+	name = strings.ReplaceAll(name, " ", "-")
 	return s
 }
 
