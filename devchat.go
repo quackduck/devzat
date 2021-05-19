@@ -347,7 +347,7 @@ func (u *user) repl() {
 
 func runCommands(line string, u *user, isSlack bool) {
 	if line == "" {
-		u.writeln("", "An empty message? Send some content!")
+		//u.writeln("", "An empty message? Send some content!")
 		return
 	}
 
