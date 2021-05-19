@@ -82,7 +82,7 @@ var (
 
 	hangGame = new(hangman)
 
-	admins = []string{"d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82"}
+	admins = []string{"d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82", "f5c7f9826b6e143f6e9c3920767680f503f259570f121138b2465bb2b052a85d"}
 )
 
 // TODO: devbot hangman game
