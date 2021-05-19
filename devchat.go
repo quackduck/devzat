@@ -33,7 +33,7 @@ import (
 )
 
 var (
-	//go:embed slackAPI.txt
+	// //go:embed slackAPI.txt
 	slackAPI []byte
 	//go:embed adminPass.txt
 	adminPass []byte
@@ -85,7 +85,6 @@ var (
 	admins = []string{"d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82", "f5c7f9826b6e143f6e9c3920767680f503f259570f121138b2465bb2b052a85d"}
 )
 
-// TODO: devbot hangman game
 // TODO: email people on ping word idea
 func main() {
 	color.NoColor = false
@@ -236,29 +235,28 @@ func newUser(s ssh.Session) *user {
 		u.writeln(backlog[i].senderName, backlog[i].text)
 	}
 
-	//u.pickUsername(s.User())
-
+	u.pickUsername(s.User())
 	if _, ok := allUsers[u.id]; !ok {
-		u.pickUsername(s.User())
 		broadcast(devbot, "You seem to be new here "+u.name+". Welcome to Devzat! Run /help to see what you can do.", true)
-	} else { // load from allusers
-		possibleName := allUsers[u.id]
-		//var err error
-		for userDuplicate(stripansi.Strip(possibleName)) {
-			u.writeln("", "Pick a different username")
-			u.term.SetPrompt("> ")
-			possibleName, err = u.term.ReadLine()
-			if err != nil {
-				l.Println(err)
-				return nil
-			}
-			possibleName = cleanName(possibleName)
-			u.changeColor(*colorArr[rand.Intn(len(colorArr))])
-		}
-		u.name = possibleName
-		u.term.SetPrompt(u.name + ": ")
-		saveBansAndUsers()
 	}
+	//else { // load from allusers
+	//	possibleName := allUsers[u.id]
+	//	//var err error
+	//	for userDuplicate(stripansi.Strip(possibleName)) {
+	//		u.writeln("", "Pick a different username")
+	//		u.term.SetPrompt("> ")
+	//		possibleName, err = u.term.ReadLine()
+	//		if err != nil {
+	//			l.Println(err)
+	//			return nil
+	//		}
+	//		possibleName = cleanName(possibleName)
+	//		u.changeColor(*colorArr[rand.Intn(len(colorArr))])
+	//	}
+	//	u.name = possibleName
+	//	u.term.SetPrompt(u.name + ": ")
+	//	saveBansAndUsers()
+	//}
 	usersMutex.Lock()
 	users = append(users, u)
 	usersMutex.Unlock()
@@ -851,7 +849,7 @@ func getMsgsFromSlack() {
 				h := sha1.Sum([]byte(u.ID))
 				//i, _ := binary.Varint(h[:])
 				i, _ := strconv.ParseInt(hex.EncodeToString(h[:1]), 16, 0)
-				broadcast(color.HiYellowString("HC ")+(*colorArr[int(i) % len(colorArr)]).Sprint(strings.Fields(u.RealName)[0]), msg.Text, false)
+				broadcast(color.HiYellowString("HC ")+(*colorArr[int(i)%len(colorArr)]).Sprint(strings.Fields(u.RealName)[0]), msg.Text, false)
 				runCommands(msg.Text, nil, true)
 			}
 		case *slack.ConnectedEvent:

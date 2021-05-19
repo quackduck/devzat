@@ -3,7 +3,7 @@
 /devchat
 .idea
 /dist
-slackAPI.txt
+slackAPI.txt*
 adminPass.txt
 *.gob
 *.swp
