@@ -381,18 +381,18 @@ func runCommands(line string, u *user, isSlack bool) {
 		}
 		peer, ok := findUserByName(restSplit[0])
 		if !ok {
-			u.writeln(devbot, "no such person lol, who you wanna dm?")
+			u.writeln(devbot, "No such person lol, who you wanna dm?")
 			return
 		}
 		msg := strings.TrimSpace(strings.TrimPrefix(rest, restSplit[0]))
-		u.writeln(u.name+" -> "+peer.name, msg)
-		//peer.writeln(u.name+" -> "+peer.name, msg)
+		//u.writeln(u.name+" -> "+peer.name, msg)
+		u.writeln(peer.name+" <- ", msg)
 		if u == peer {
 			u.writeln(devbot, "You must be really lonely, DMing yourself. Don't worry, I won't judge :wink:")
-		} else {
-			//peer.writeln(peer.name+" <- "+u.name, msg)
-			peer.writeln(u.name+" -> "+peer.name, msg)
+			return
 		}
+		peer.writeln(u.name+" -> ", msg)
+		//peer.writeln(u.name+" -> "+peer.name, msg)
 		return
 	}
 	if strings.HasPrefix(line, "/hang") {
