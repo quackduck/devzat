@@ -278,7 +278,7 @@ func (u *user) writeln(senderName string, msg string) {
 		msg = strings.TrimSpace(mdRender(msg, -2, u.win.Width)) // -2 so linewidth is used as is
 	}
 	//fmt.Println(u.lastMessageTime, time.Now())
-	if time.Since(u.lastMessageTime) > time.Minute/3 {
+	if time.Since(u.lastMessageTime) > time.Minute {
 		if u.timezone == nil {
 			//u.term.Write([]byte(color.HiBlackString(strconv.Itoa(int(time.Since(u.joinTime).Round(time.Minute).Minutes())) + " minutes in\n")))
 			u.term.Write([]byte(color.HiBlackString(strings.TrimSuffix(time.Since(u.joinTime).Round(time.Minute).String(), "0s") + " in\n")))
@@ -452,7 +452,7 @@ func runCommands(line string, u *user, isSlack bool) {
 		return
 	}
 
-	if strings.Contains(line, "star") {
+	if !strings.Contains(line, "start") && strings.Contains(line, "star") {
 		devbotMessages := []string{"Someone say :star:? If you like Devzat, do give it a star at github.com/quackduck/devzat!", "You should :star: github.com/quackduck/devzat", ":star:"}
 		pick := devbotMessages[rand.Intn(len(devbotMessages))]
 		broadcast(devbot, pick, toSlack)
