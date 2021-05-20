@@ -85,7 +85,7 @@ var (
 		"f5c7f9826b6e143f6e9c3920767680f503f259570f121138b2465bb2b052a85d", // Ella Xu
 		"6056734cc4d9fce31569167735e4808382004629a2d7fe6cb486e663714452fc", // Tommy Pujol
 		"e9d47bb4522345d019086d0ed48da8ce491a491923a44c59fd6bfffe6ea73317", // Arav Narula
-		"1eab2de20e41abed903ab2f22e7ff56dc059666dbe2ebbce07a8afeece8d0424"} // Shok (will prolly have to remove soon)
+		"1eab2de20e41abed903ab2f22e7ff56dc059666dbe2ebbce07a8afeece8d0424"} // Shok
 )
 
 // TODO: email people on ping word idea
@@ -364,17 +364,24 @@ func runCommands(line string, u *user, isSlack bool) {
 	if strings.HasPrefix(line, "/hide") && !isSlack {
 		toSlack = false
 	}
-	if strings.HasPrefix(line, "/dm") && !isSlack {
+
+	//for i := range users {
+	//	if strings.HasPrefix(line, "@"+stripansi.Strip(users[i].name)) {
+	//
+	//	}
+	//}
+
+	if strings.HasPrefix(line, "@") && !isSlack {
 		toSlack = false
-		rest := strings.TrimSpace(strings.TrimPrefix(line, "/dm"))
+		rest := strings.TrimSpace(strings.TrimPrefix(line, "@"))
 		restSplit := strings.Fields(rest)
 		if len(restSplit) < 2 {
-			u.writeln("", "Not enough arguments to /dm. Use /dm <user> <msg>")
+			u.writeln(devbot, "You gotta have a message mate")
 			return
 		}
 		peer, ok := findUserByName(restSplit[0])
 		if !ok {
-			u.writeln("", "User not found")
+			u.writeln(devbot, "no such person lol, who you wanna dm?")
 			return
 		}
 		msg := strings.TrimSpace(strings.TrimPrefix(rest, restSplit[0]))
@@ -752,24 +759,24 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
 	}
 	if line == "/commands" {
 		broadcast("", `**Available commands**  
-   **/dm**    <user> <msg>   _Privately message people_  
-   **/users**                _List users_  
-   **/nick**  <name>         _Change your name_  
-   **/tz**    <zone>         _Change timezone as per IANA (eg: /tz Asia/Dubai)_  
-   **/color** <color>        _Change your name color_  
-   **/tic**   <move>         _Play Tic Tac Toe!_  
-   **/hang**  <letter/word>  _Play Hangman!_  
-   **/all**                  _Get a list of all unique users ever_  
-   **/emojis**               _See a list of emojis_  
-   **/people**               _See info about nice people who joined_  
-   **/exit**                 _Leave the chat_  
-   **/hide**                 _Hide messages from HC Slack_  
-   **/bell**                 _Toggle the ansi bell_  
-   **/id**    <user>         _Get a unique identifier for a user_  
-   **/ban**   <user>         _Ban a user, requires an admin pass_  
-   **/kick**  <user>         _Kick a user, requires an admin pass_  
-   **/help**                 _Show help_  
-   **/commands**             _Show this message_`, toSlack)
+   @<user> <msg>           _Privately message people_  
+   /users                  _List users_  
+   /nick   <name>          _Change your name_  
+   /tz     <zone>          _Change timezone as per IANA (eg: /tz Asia/Dubai)_  
+   /color  <color>         _Change your name color_  
+   /tic    <move>          _Play Tic Tac Toe!_  
+   /hang   <letter/word>   _Play Hangman!_  
+   /all                    _Get a list of all unique users ever_  
+   /emojis                 _See a list of emojis_  
+   /people                 _See info about nice people who joined_  
+   /exit                   _Leave the chat_  
+   /hide                   _Hide messages from HC Slack_  
+   /bell                   _Toggle the ansi bell_  
+   /id     <user>          _Get a unique identifier for a user_  
+   /ban    <user>          _Ban a user, requires an admin pass_  
+   /kick   <user>          _Kick a user, requires an admin pass_  
+   /help                   _Show help_  
+   /commands               _Show this message_`, toSlack)
 	}
 }
 
