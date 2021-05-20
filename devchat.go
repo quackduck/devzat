@@ -501,7 +501,7 @@ func runCommands(line string, u *user, isSlack bool) {
 	}
 	if strings.HasPrefix(line, "/tz") && !isSlack {
 		var err error
-		tz := strings.TrimSpace(strings.TrimPrefix(line, "/id"))
+		tz := strings.TrimSpace(strings.TrimPrefix(line, "/tz"))
 		if tz == "" {
 			u.timezone = nil
 			return
