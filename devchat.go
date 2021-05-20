@@ -36,8 +36,6 @@ import (
 var (
 	//go:embed slackAPI.txt
 	slackAPI []byte
-	//go:embed adminPass.txt
-	adminPass []byte
 	//go:embed art.txt
 	artBytes   []byte
 	port       = 22
@@ -80,7 +78,7 @@ var (
 
 	tttGame       = new(ttt.Board)
 	currentPlayer = ttt.X
-	hasStartedGame = false
+	// hasStartedGame = false
 	hangGame = new(hangman)
 
 	admins = []string{"d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82", "f5c7f9826b6e143f6e9c3920767680f503f259570f121138b2465bb2b052a85d", "6056734cc4d9fce31569167735e4808382004629a2d7fe6cb486e663714452fc"}
@@ -678,11 +676,11 @@ Harsh           @harshb__
 			return
 		}
 
-		if !hasStartedGame {
-			broadcast(devbot, "You need to start a game first!", toSlack)
-			broadcast(devbot, "Start again using the /tic command.", toSlack)
-			return
-		}
+		// if !hasGameStarted(tttGame.Cells) {
+		// 	broadcast(devbot, "You need to start a game first!", toSlack)
+		// 	broadcast(devbot, "Start again using the /tic command.", toSlack)
+		// 	return
+		// }
 
 		m, err := strconv.Atoi(rest)
 		if err != nil {
@@ -708,7 +706,7 @@ Harsh           @harshb__
 			broadcast(devbot, tttGame.Condition().String(), toSlack)
 			currentPlayer = ttt.X
 			tttGame = new(ttt.Board)
-			hasStartedGame = false
+			// hasStartedGame = false
 		}
 		return
 	}
@@ -782,11 +780,21 @@ func emptyCell(cell string) bool {
 	return cell == " "
 }
 
+func hasGameStarted(cells [9]ttt.State) bool {
+	for i := range cells {
+		if !emptyCell(cells[i].String()) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func tttPrint(cells [9]ttt.State) string {
 	strcells := new([9]string)
 
 	for i := range cells {
-		if !hasStartedGame {
+		if !hasGameStarted(cells) {
 			strcells[i] = strconv.Itoa(i+1)
 		} else {
 			strcells[i] = cells[i].String()
@@ -794,22 +802,14 @@ func tttPrint(cells [9]ttt.State) string {
 	}
 
 	var buf bytes.Buffer
-	for i := range strcells {
-		fmt.Fprintf(&buf, " %v ", strcells[i])
 
-		if (i+1) % 3 == 0 {
-			fmt.Fprintf(&buf, "\n")
-			if (i+1) != 9 {
-				fmt.Fprintln(&buf, "───┼───┼───")
-			}
-		}
+	fmt.Fprintf(&buf, " %v │ %v │ %v \n", strcells[0], strcells[1], strcells[2])
+	fmt.Fprintln(&buf, "───┼───┼───")
+	fmt.Fprintf(&buf, " %v │ %v │ %v \n", strcells[3], strcells[4], strcells[5])
+	fmt.Fprintln(&buf, "───┼───┼───")
+	fmt.Fprintf(&buf, " %v │ %v │ %v ", strcells[6], strcells[7], strcells[8])
 
-		if (i+1) % 3 != 0 {
-		 fmt.Fprintf(&buf, "|")
-		}
-	}
-
-	hasStartedGame = true
+	// hasStartedGame = true
 	return buf.String()
 }
 
