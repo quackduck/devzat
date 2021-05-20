@@ -159,6 +159,7 @@ func broadcast(senderName, msg string, toSlack bool) {
 	}
 	for i := range users {
 		msg = strings.ReplaceAll(msg, "@"+stripansi.Strip(users[i].name), users[i].name)
+		msg = strings.ReplaceAll(msg, "\\"+users[i].name, "@"+stripansi.Strip(users[i].name))
 	}
 	for i := range users {
 		users[i].writeln(senderName, msg)
