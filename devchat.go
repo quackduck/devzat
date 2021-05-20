@@ -80,7 +80,7 @@ var (
 
 	tttGame       = new(ttt.Board)
 	currentPlayer = ttt.X
-
+	hasStartedGame = false
 	hangGame = new(hangman)
 
 	admins = []string{"d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82", "f5c7f9826b6e143f6e9c3920767680f503f259570f121138b2465bb2b052a85d", "6056734cc4d9fce31569167735e4808382004629a2d7fe6cb486e663714452fc"}
@@ -677,6 +677,13 @@ Harsh           @harshb__
 			broadcast(devbot, "```\n"+tttPrint(tttGame.Cells)+"\n```", toSlack)
 			return
 		}
+
+		if !hasStartedGame {
+			broadcast(devbot, "You need to start a game first!", toSlack)
+			broadcast(devbot, "Start again using the /tic command.", toSlack)
+			return
+		}
+
 		m, err := strconv.Atoi(rest)
 		if err != nil {
 			broadcast(devbot, "There's something wrong with that command :thinking:", toSlack)
@@ -701,6 +708,7 @@ Harsh           @harshb__
 			broadcast(devbot, tttGame.Condition().String(), toSlack)
 			currentPlayer = ttt.X
 			tttGame = new(ttt.Board)
+			hasStartedGame = false
 		}
 		return
 	}
@@ -774,31 +782,19 @@ func emptyCell(cell string) bool {
 	return cell == " "
 }
 
-func allEmpty(cells [9]ttt.State) bool {
-	for i := range cells {
-		if !emptyCell(cells[i].String()) {
-			return false
-		}
-	}
-
-	return true
-}
-
 func tttPrint(cells [9]ttt.State) string {
 	strcells := new([9]string)
-	intCells := new([9]int)
 
 	for i := range cells {
-		strcells[i] = cells[i].String()
+		if !hasStartedGame {
+			strcells[i] = strconv.Itoa(i+1)
+		} else {
+			strcells[i] = cells[i].String()
+		}
 	}
 
 	var buf bytes.Buffer
-	for i := range intCells {
-		if allEmpty(cells) {
-			if emptyCell(strcells[i]) {
-				strcells[i] = strconv.Itoa(i+1)
-			}
-		}
+	for i := range strcells {
 		fmt.Fprintf(&buf, " %v ", strcells[i])
 
 		if (i+1) % 3 == 0 {
@@ -813,6 +809,7 @@ func tttPrint(cells [9]ttt.State) string {
 		}
 	}
 
+	hasStartedGame = true
 	return buf.String()
 }
 
