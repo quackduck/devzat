@@ -628,7 +628,8 @@ Surjith         @surjithctly
 Arav Narula     @HeyArav  
 Krish Nerkar    @krishnerkar_  
 Amrit           @astro_shenava  
-Mudrank Gupta   @mudrankgupta
+Mudrank Gupta   @mudrankgupta  
+Harsh           @harshb__
 
 **And many more have joined!**`, toSlack)
 		return
