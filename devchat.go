@@ -508,8 +508,10 @@ func runCommands(line string, u *user, isSlack bool) {
 		}
 		u.timezone, err = time.LoadLocation(tz)
 		if err != nil {
-			broadcast(devbot, "Invalid timezone, use Continent/City or refer to nodatime.org/TimeZones", toSlack)
+			broadcast(devbot, "Weird timezone you have there, use Continent/City, EST, PST or see nodatime.org/TimeZones!", toSlack)
+			return
 		}
+		broadcast(devbot, "Done!", toSlack)
 		return
 	}
 	if strings.HasPrefix(line, "/id") {
