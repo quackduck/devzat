@@ -426,49 +426,57 @@ func runCommands(line string, u *user, isSlack bool) {
 	}
 
 	if strings.Contains(line, "devbot") {
-		time.Sleep(time.Second)
-		devbotMessages := []string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "I'm in the middle of something can you not", "Devbot to the rescue!", "Run /help, you need it.", ":wave:"}
-		if strings.Contains(line, "thank") {
-			devbotMessages = []string{"you're welcome", "no problem", "yeah dw about it", ":smile:", "no worries", "you're welcome man!"}
-		}
-		pick := devbotMessages[rand.Intn(len(devbotMessages))]
-		broadcast(devbot, pick, toSlack)
+		go func() {
+			time.Sleep(time.Second)
+			devbotMessages := []string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "I'm in the middle of something can you not", "Devbot to the rescue!", "Run /help, you need it.", ":wave:"}
+			if strings.Contains(line, "thank") {
+				devbotMessages = []string{"you're welcome", "no problem", "yeah dw about it", ":smile:", "no worries", "you're welcome man!"}
+			}
+			pick := devbotMessages[rand.Intn(len(devbotMessages))]
+			broadcast(devbot, pick, toSlack)
+		}()
 	}
 	if line == "help" {
-		time.Sleep(time.Second)
-		devbotMessages := []string{"Run /help to get help!", "Looking for /help?", "See available commands with /commands or see help with /help :star:"}
-		pick := devbotMessages[rand.Intn(len(devbotMessages))]
-		broadcast(devbot, pick, toSlack)
-		return
+		go func() {
+			time.Sleep(time.Second)
+			devbotMessages := []string{"Run /help to get help!", "Looking for /help?", "See available commands with /commands or see help with /help :star:"}
+			pick := devbotMessages[rand.Intn(len(devbotMessages))]
+			broadcast(devbot, pick, toSlack)
+		}()
 	}
 
 	if strings.Contains(line, "rocket") {
-		time.Sleep(time.Second)
-		devbotMessages := []string{"Doge to the mooooon :rocket:", ":rocket:", "I like rockets", "SpaceX", ":dog2:"}
-		pick := devbotMessages[rand.Intn(len(devbotMessages))]
-		broadcast(devbot, pick, toSlack)
-		return
+		go func() {
+			time.Sleep(time.Second)
+			devbotMessages := []string{"Doge to the mooooon :rocket:", ":rocket:", "I like rockets", "SpaceX", ":dog2:"}
+			pick := devbotMessages[rand.Intn(len(devbotMessages))]
+			broadcast(devbot, pick, toSlack)
+		}()
 	}
 
 	if strings.Contains(line, "elon") {
-		time.Sleep(time.Second)
-		devbotMessages := []string{"When something is important enough, you do it even if the odds are not in your favor.", "I do think there is a lot of potential if you have a compelling product", "If you're trying to create a company, it's like baking a cake. You have to have all the ingredients in the right proportion.", "Patience is a virtue, and I'm learning patience. It's a tough lesson."}
-		pick := devbotMessages[rand.Intn(len(devbotMessages))]
-		broadcast(devbot, "> "+pick+"\n\n\\- Elon Musk", toSlack)
-		return
+		go func() {
+			time.Sleep(time.Second)
+			devbotMessages := []string{"When something is important enough, you do it even if the odds are not in your favor.", "I do think there is a lot of potential if you have a compelling product", "If you're trying to create a company, it's like baking a cake. You have to have all the ingredients in the right proportion.", "Patience is a virtue, and I'm learning patience. It's a tough lesson."}
+			pick := devbotMessages[rand.Intn(len(devbotMessages))]
+			broadcast(devbot, "> "+pick+"\n\n\\- Elon Musk", toSlack)
+		}()
 	}
 
 	if !strings.Contains(line, "start") && strings.Contains(line, "star") {
-		time.Sleep(time.Second)
-		devbotMessages := []string{"Someone say :star:? If you like Devzat, do give it a star at github.com/quackduck/devzat!", "You should :star: github.com/quackduck/devzat", ":star:"}
-		pick := devbotMessages[rand.Intn(len(devbotMessages))]
-		broadcast(devbot, pick, toSlack)
+		go func() {
+			devbotMessages := []string{"Someone say :star:? If you like Devzat, do give it a star at github.com/quackduck/devzat!", "You should :star: github.com/quackduck/devzat", ":star:"}
+			pick := devbotMessages[rand.Intn(len(devbotMessages))]
+			broadcast(devbot, pick, toSlack)
+		}()
 	}
 	if strings.Contains(line, "cool project") || strings.Contains(line, "this is cool") {
-		time.Sleep(time.Second)
-		devbotMessages := []string{"Thank you :slight_smile:! If you like Devzat, do give it a star at github.com/quackduck/devzat!", "Star Devzat here: github.com/quackduck/devzat"}
-		pick := devbotMessages[rand.Intn(len(devbotMessages))]
-		broadcast(devbot, pick, toSlack)
+		go func() {
+			time.Sleep(time.Second)
+			devbotMessages := []string{"Thank you :slight_smile:! If you like Devzat, do give it a star at github.com/quackduck/devzat!", "Star Devzat here: github.com/quackduck/devzat"}
+			pick := devbotMessages[rand.Intn(len(devbotMessages))]
+			broadcast(devbot, pick, toSlack)
+		}()
 	}
 	if line == "/users" {
 		names := make([]string, 0, len(users))
@@ -491,8 +499,10 @@ func runCommands(line string, u *user, isSlack bool) {
 		return
 	}
 	if line == "easter" {
-		time.Sleep(time.Second)
-		broadcast(devbot, "eggs?", toSlack)
+		go func() {
+			time.Sleep(time.Second)
+			broadcast(devbot, "eggs?", toSlack)
+		}()
 		return
 	}
 	if line == "/exit" && !isSlack {
@@ -563,7 +573,7 @@ func runCommands(line string, u *user, isSlack bool) {
 		bansMutex.Unlock()
 		saveBansAndUsers()
 		victim.close(victim.name + " has been banned by " + u.name)
-
+		return
 	}
 	if strings.HasPrefix(line, "/kick") && !isSlack {
 		victim, ok := findUserByName(strings.TrimSpace(strings.TrimPrefix(line, "/kick")))
@@ -576,6 +586,7 @@ func runCommands(line string, u *user, isSlack bool) {
 			return
 		}
 		victim.close(victim.name + red.Sprint(" has been kicked by ") + u.name)
+		return
 	}
 	if strings.HasPrefix(line, "/color") && !isSlack {
 		colorMsg := "Which color? Choose from green, cyan, blue, red/orange, magenta/purple/pink, yellow/beige, white/cream and black/gray/grey.  \nThere's also a few secret colors :)"
