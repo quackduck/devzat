@@ -281,7 +281,7 @@ func (u *user) writeln(senderName string, msg string) {
 	if time.Since(u.lastMessageTime) > time.Minute {
 		if u.timezone == nil {
 			//u.term.Write([]byte(color.HiBlackString(strconv.Itoa(int(time.Since(u.joinTime).Round(time.Minute).Minutes())) + " minutes in\n")))
-			u.term.Write([]byte(color.HiBlackString(strings.TrimSuffix(time.Since(u.joinTime).Round(time.Minute).String(), "0s") + " in\n")))
+			u.term.Write([]byte(strings.TrimSuffix(time.Since(u.joinTime).Round(time.Minute).String(), "0s") + " in\n"))
 		} else {
 			u.term.Write([]byte(time.Now().In(u.timezone).Format("3:04 pm") + "\n"))
 		}
