@@ -280,14 +280,16 @@ func (u *user) writeln(senderName string, msg string) {
 	msg = strings.ReplaceAll(msg, `\`+"\n", `\n`) // let people escape newlines
 	if senderName != "" {
 		msg = strings.TrimSpace(mdRender(msg, len([]rune(stripansi.Strip(senderName))), u.win.Width))
-		msg = senderName + ": " + msg
+		if strings.HasSuffix(senderName, " <- ") || strings.HasSuffix(senderName, " -> ") {
+			msg = senderName + msg
+		} else {
+			msg = senderName + ": " + msg
+		}
 	} else {
 		msg = strings.TrimSpace(mdRender(msg, -2, u.win.Width)) // -2 so linewidth is used as is
 	}
-	//fmt.Println(u.lastMessageTime, time.Now())
 	if time.Since(u.lastMessageTime) > time.Minute {
 		if u.timezone == nil {
-			//u.term.Write([]byte(color.HiBlackString(strconv.Itoa(int(time.Since(u.joinTime).Round(time.Minute).Minutes())) + " minutes in\n")))
 			u.term.Write([]byte(strings.TrimSuffix(time.Since(u.joinTime).Round(time.Minute).String(), "0s") + " in\n"))
 		} else {
 			u.term.Write([]byte(time.Now().In(u.timezone).Format("3:04 pm") + "\n"))
@@ -848,6 +850,8 @@ func cleanName(name string) string {
 			s += string(r)
 		}
 	}
+	s = strings.ReplaceAll(s, "<-", "")
+	s = strings.ReplaceAll(s, "->", "")
 	s = strings.ReplaceAll(s, " ", "-")
 	return s
 }
