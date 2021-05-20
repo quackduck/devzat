@@ -294,11 +294,16 @@ func (u *user) writeln(senderName string, msg string) {
 		}
 		u.lastMessageTime = time.Now()
 	}
+	//if u.bell {
+	//	u.term.Write([]byte(msg + "\a\n")) // "\a" is beep
+	//} else {
 	if u.bell {
-		u.term.Write([]byte(msg + "\a\n")) // "\a" is beep
-	} else {
-		u.term.Write([]byte(msg + "\n"))
+		if strings.Contains(msg, u.name) { // is a ping
+			msg += "\a"
+		}
 	}
+	u.term.Write([]byte(msg + "\n"))
+	//}
 }
 
 func (u *user) pickUsername(possibleName string) {
@@ -799,7 +804,7 @@ func tttPrint(cells [9]ttt.State) string {
 
 	for i := range cells {
 		if !hasGameStarted(cells) {
-			strcells[i] = strconv.Itoa(i+1)
+			strcells[i] = strconv.Itoa(i + 1)
 		} else {
 			strcells[i] = cells[i].String()
 		}
