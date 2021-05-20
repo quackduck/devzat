@@ -54,7 +54,7 @@ var (
 	blue     = color.New(color.FgHiBlue)
 	black    = color.New(color.FgHiBlack)
 	white    = color.New(color.FgHiWhite)
-	colorArr = []*color.Color{yellow, cyan, magenta, green, white, blue, black, red}
+	colorArr = []*color.Color{yellow, cyan, magenta, green, white, blue, red}
 
 	devbot = ""
 
@@ -162,15 +162,18 @@ func broadcast(senderName, msg string, toSlack bool) {
 }
 
 type user struct {
-	name      string
-	session   ssh.Session
-	term      *terminal.Terminal
-	bell      bool
-	color     color.Color
-	id        string
-	addr      string
-	win       ssh.Window
-	closeOnce sync.Once
+	name            string
+	session         ssh.Session
+	term            *terminal.Terminal
+	bell            bool
+	color           color.Color
+	id              string
+	addr            string
+	win             ssh.Window
+	closeOnce       sync.Once
+	lastMessageTime time.Time
+	joinTime        time.Time
+	timezone        *time.Location
 }
 
 type message struct {
@@ -197,7 +200,7 @@ func newUser(s ssh.Session) *user {
 	}
 	hash := sha256.New()
 	hash.Write([]byte(host))
-	u := &user{s.User(), s, term, true, color.Color{}, hex.EncodeToString(hash.Sum(nil)), host, w, sync.Once{}}
+	u := &user{s.User(), s, term, true, color.Color{}, hex.EncodeToString(hash.Sum(nil)), host, w, sync.Once{}, time.Now(), time.Now(), nil}
 	go func() {
 		for u.win = range winchan {
 		}
@@ -239,24 +242,6 @@ func newUser(s ssh.Session) *user {
 	if _, ok := allUsers[u.id]; !ok {
 		broadcast(devbot, "You seem to be new here "+u.name+". Welcome to Devzat! Run /help to see what you can do.", true)
 	}
-	//else { // load from allusers
-	//	possibleName := allUsers[u.id]
-	//	//var err error
-	//	for userDuplicate(stripansi.Strip(possibleName)) {
-	//		u.writeln("", "Pick a different username")
-	//		u.term.SetPrompt("> ")
-	//		possibleName, err = u.term.ReadLine()
-	//		if err != nil {
-	//			l.Println(err)
-	//			return nil
-	//		}
-	//		possibleName = cleanName(possibleName)
-	//		u.changeColor(*colorArr[rand.Intn(len(colorArr))])
-	//	}
-	//	u.name = possibleName
-	//	u.term.SetPrompt(u.name + ": ")
-	//	saveBansAndUsers()
-	//}
 	usersMutex.Lock()
 	users = append(users, u)
 	usersMutex.Unlock()
@@ -291,6 +276,16 @@ func (u *user) writeln(senderName string, msg string) {
 		msg = senderName + ": " + msg
 	} else {
 		msg = strings.TrimSpace(mdRender(msg, -2, u.win.Width)) // -2 so linewidth is used as is
+	}
+	//fmt.Println(u.lastMessageTime, time.Now())
+	if time.Since(u.lastMessageTime) > time.Minute/3 {
+		if u.timezone == nil {
+			//u.term.Write([]byte(color.HiBlackString(strconv.Itoa(int(time.Since(u.joinTime).Round(time.Minute).Minutes())) + " minutes in\n")))
+			u.term.Write([]byte(color.HiBlackString(strings.TrimSuffix(time.Since(u.joinTime).Round(time.Minute).String(), "0s") + " in\n")))
+		} else {
+			u.term.Write([]byte(time.Now().In(u.timezone).Format("3:04 pm") + "\n"))
+		}
+		u.lastMessageTime = time.Now()
 	}
 	if u.bell {
 		u.term.Write([]byte(msg + "\a\n")) // "\a" is beep
@@ -504,6 +499,19 @@ func runCommands(line string, u *user, isSlack bool) {
 		}
 		return
 	}
+	if strings.HasPrefix(line, "/tz") && !isSlack {
+		var err error
+		tz := strings.TrimSpace(strings.TrimPrefix(line, "/id"))
+		if tz == "" {
+			u.timezone = nil
+			return
+		}
+		u.timezone, err = time.LoadLocation(tz)
+		if err != nil {
+			broadcast(devbot, "Invalid timezone, use Continent/City or refer to nodatime.org/TimeZones", toSlack)
+		}
+		return
+	}
 	if strings.HasPrefix(line, "/id") {
 		victim, ok := findUserByName(strings.TrimSpace(strings.TrimPrefix(line, "/id")))
 		if !ok {
@@ -519,6 +527,7 @@ func runCommands(line string, u *user, isSlack bool) {
 	}
 	if strings.HasPrefix(line, "/banIP") && !isSlack {
 		if !auth(u) {
+			broadcast(devbot, "Not authorized", toSlack)
 			return
 		}
 		bansMutex.Lock()
@@ -535,6 +544,7 @@ func runCommands(line string, u *user, isSlack bool) {
 			return
 		}
 		if !auth(u) {
+			broadcast(devbot, "Not authorized", toSlack)
 			return
 		}
 		bansMutex.Lock()
@@ -551,6 +561,7 @@ func runCommands(line string, u *user, isSlack bool) {
 			return
 		}
 		if !auth(u) {
+			broadcast(devbot, "Not authorized", toSlack)
 			return
 		}
 		victim.close(victim.name + red.Sprint(" has been kicked by ") + u.name)
@@ -696,6 +707,7 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
    **/dm**    <user> <msg>   _Privately message people_  
    **/users**                _List users_  
    **/nick**  <name>         _Change your name_  
+   **/tz**    <zone>         _Change timezone as per IANA (eg: /tz Asia/Dubai)_  
    **/color** <color>        _Change your name color_  
    **/tic**   <move>         _Play Tic Tac Toe!_  
    **/hang**  <letter/word>  _Play Hangman!_  
