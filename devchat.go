@@ -347,7 +347,6 @@ func (u *user) repl() {
 
 func runCommands(line string, u *user, isSlack bool) {
 	t := time.Now()
-	l.Println(time.Since(t))
 	defer l.Println("runCommands took", time.Since(t))
 
 	if line == "" {
@@ -472,6 +471,7 @@ func runCommands(line string, u *user, isSlack bool) {
 
 	if !strings.Contains(line, "start") && strings.Contains(line, "star") {
 		go func() {
+			time.Sleep(time.Second)
 			devbotMessages := []string{"Someone say :star:? If you like Devzat, do give it a star at github.com/quackduck/devzat!", "You should :star: github.com/quackduck/devzat", ":star:"}
 			pick := devbotMessages[rand.Intn(len(devbotMessages))]
 			broadcast(devbot, pick, toSlack)
@@ -653,11 +653,11 @@ Rayed Hamayun, Aarush Kumar
 Ayush Pathak    @ayshptk  
 Bereket         @heybereket  
 Sanketh         @SankethYS  
-Tony Dinh       @tdinh_me
+Tony Dinh       @tdinh\_me  
 Srushti         @srushtiuniverse  
 Surjith         @surjithctly  
 Arav Narula     @HeyArav  
-Krish Nerkar    @krishnerkar_  
+Krish Nerkar    @krishnerkar\_  
 Amrit           @astro_shenava  
 Mudrank Gupta   @mudrankgupta  
 Harsh           @harshb__
