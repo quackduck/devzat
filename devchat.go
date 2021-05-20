@@ -158,6 +158,9 @@ func broadcast(senderName, msg string, toSlack bool) {
 		backlog = backlog[1:]
 	}
 	for i := range users {
+		msg = strings.ReplaceAll(msg, "@"+stripansi.Strip(users[i].name), users[i].name)
+	}
+	for i := range users {
 		users[i].writeln(senderName, msg)
 	}
 }
@@ -278,7 +281,6 @@ func (u *user) writeln(senderName string, msg string) {
 	} else {
 		msg = strings.TrimSpace(mdRender(msg, -2, u.win.Width)) // -2 so linewidth is used as is
 	}
-	msg = strings.ReplaceAll(msg, "@"+stripansi.Strip(u.name), u.name)
 	//fmt.Println(u.lastMessageTime, time.Now())
 	if time.Since(u.lastMessageTime) > time.Minute {
 		if u.timezone == nil {
