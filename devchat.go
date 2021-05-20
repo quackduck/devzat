@@ -634,7 +634,7 @@ Amrit           @astro_shenava
 Mudrank Gupta   @mudrankgupta  
 Harsh           @harshb__
 
-**And many more have joined!**`, toS lack)
+**And many more have joined!**`, toSlack)
 		return
 	}
 
