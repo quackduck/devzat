@@ -86,6 +86,7 @@ Sanketh [@SankethYS](https://twitter.com/SankethYS): _"Heck! How does this work.
 Srushti [@srushtiuniverse](https://twitter.com/srushtiuniverse): _"Yess it's awesome. I tried it."_  
 Surjith [@surjithctly](https://twitter.com/surjithctly): _"Whoa, who made this?"_  
 Arav [@HeyArav](https://twitter.com/HeyArav): [_"Okay, this is actually super awesome."_](https://twitter.com/tregsthedev/status/1384180393893498880)  
+Harsh [@harshb__](https://twitter.com/harshb__): _"im gonna come here everyday to chill when i get bored of studying lol, this is so cool"_
 Krish [@krishnerkar_](https://twitter.com/krishnerkar_):  [_"SHIT! THIS IS SO DOPE"_](https://twitter.com/krishnerkar_/status/1384173042616573960)  
 Amrit [@astro_shenava](https://twitter.com/astro_shenava): _"Super cool man"_
 Mudrank [@mudrankgupta](https://twitter.com/mudrankgupta): "🔥🚀🚀"**
