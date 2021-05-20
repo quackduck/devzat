@@ -254,7 +254,7 @@ func newUser(s ssh.Session) *user {
 		u.writeln("", "**"+cyan.Sprint("Welcome to the chat. There are ", len(users)-1, " more users")+"**")
 	}
 	//_, _ = term.Write([]byte(strings.Join(backlog, ""))) // print out backlog
-	broadcast(devbot, "**"+u.name+"** **"+green.Sprint("has joined the chat")+"**", true)
+	broadcast(devbot, u.name+green.Sprint("has joined the chat"), true)
 	return u
 }
 
@@ -327,7 +327,7 @@ func (u *user) repl() {
 		line = strings.TrimSpace(line)
 
 		if err == io.EOF {
-			u.close("**" + u.name + "** **" + red.Sprint("has left the chat") + "**")
+			u.close(u.name + red.Sprint("has left the chat"))
 			return
 		}
 		if err != nil {
@@ -487,7 +487,7 @@ func runCommands(line string, u *user, isSlack bool) {
 		return
 	}
 	if line == "/exit" && !isSlack {
-		u.close("**" + u.name + "** **" + red.Sprint("has left the chat") + "**")
+		u.close(u.name + red.Sprint("has left the chat"))
 		return
 	}
 	if line == "/bell" && !isSlack {
