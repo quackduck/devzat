@@ -670,7 +670,7 @@ Harsh           @harshb__
 		rest := strings.TrimSpace(strings.TrimPrefix(line, "/tic"))
 		if rest == "" {
 			broadcast(devbot, "Starting a new game of Tic Tac Toe! The first player is always X.", toSlack)
-			broadcast(devbot, "To make your move type /tic <move>", toSlack)
+			broadcast(devbot, "Play using /tic <cell num>", toSlack)
 			currentPlayer = ttt.X
 			tttGame = new(ttt.Board)
 			//broadcast(devbot, "```\n"+"0│1│2\n3"+"\n```", toSlack)
@@ -774,18 +774,31 @@ func emptyCell(cell string) bool {
 	return cell == " "
 }
 
+func allEmpty(cells [9]ttt.State) bool {
+	for i := range cells {
+		if !emptyCell(cells[i].String()) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func tttPrint(cells [9]ttt.State) string {
 	strcells := new([9]string)
 	intCells := new([9]int)
+
 	for i := range cells {
 		strcells[i] = cells[i].String()
 	}
+
 	var buf bytes.Buffer
 	for i := range intCells {
-		if emptyCell(strcells[i]) {
-			strcells[i] = strconv.Itoa(i+1)
+		if allEmpty(cells) {
+			if emptyCell(strcells[i]) {
+				strcells[i] = strconv.Itoa(i+1)
+			}
 		}
-
 		fmt.Fprintf(&buf, " %v ", strcells[i])
 
 		if (i+1) % 3 == 0 {
