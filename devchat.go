@@ -278,7 +278,7 @@ func (u *user) writeln(senderName string, msg string) {
 	} else {
 		msg = strings.TrimSpace(mdRender(msg, -2, u.win.Width)) // -2 so linewidth is used as is
 	}
-	msg = strings.ReplaceAll(msg, "@"+stripansi.Strip(u.name), "\a"+color.YellowString(u.name))
+	msg = strings.ReplaceAll(msg, "@"+stripansi.Strip(u.name), u.name)
 	//fmt.Println(u.lastMessageTime, time.Now())
 	if time.Since(u.lastMessageTime) > time.Minute {
 		if u.timezone == nil {
