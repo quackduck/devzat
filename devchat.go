@@ -15,6 +15,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"sort"
 	"strconv"
 	"strings"
@@ -82,7 +83,7 @@ var (
 
 	hangGame = new(hangman)
 
-	admins = []string{"d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82", "f5c7f9826b6e143f6e9c3920767680f503f259570f121138b2465bb2b052a85d"}
+	admins = []string{"d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82", "f5c7f9826b6e143f6e9c3920767680f503f259570f121138b2465bb2b052a85d", "6056734cc4d9fce31569167735e4808382004629a2d7fe6cb486e663714452fc"}
 )
 
 // TODO: email people on ping word idea
@@ -277,6 +278,7 @@ func (u *user) writeln(senderName string, msg string) {
 	} else {
 		msg = strings.TrimSpace(mdRender(msg, -2, u.win.Width)) // -2 so linewidth is used as is
 	}
+	msg = strings.ReplaceAll(msg, "@"+u.name, "\a"+color.YellowString(u.name))
 	//fmt.Println(u.lastMessageTime, time.Now())
 	if time.Since(u.lastMessageTime) > time.Minute {
 		if u.timezone == nil {
@@ -424,7 +426,8 @@ func runCommands(line string, u *user, isSlack bool) {
 	}
 
 	if strings.Contains(line, "devbot") {
-		devbotMessages := []string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "I'm in the middle of something can you not", "Devbot to the rescue!", "Run /help, you need it."}
+		time.Sleep(time.Second)
+		devbotMessages := []string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "I'm in the middle of something can you not", "Devbot to the rescue!", "Run /help, you need it.", ":wave:"}
 		if strings.Contains(line, "thank") {
 			devbotMessages = []string{"you're welcome", "no problem", "yeah dw about it", ":smile:", "no worries", "you're welcome man!"}
 		}
@@ -432,6 +435,7 @@ func runCommands(line string, u *user, isSlack bool) {
 		broadcast(devbot, pick, toSlack)
 	}
 	if line == "help" {
+		time.Sleep(time.Second)
 		devbotMessages := []string{"Run /help to get help!", "Looking for /help?", "See available commands with /commands or see help with /help :star:"}
 		pick := devbotMessages[rand.Intn(len(devbotMessages))]
 		broadcast(devbot, pick, toSlack)
@@ -439,6 +443,7 @@ func runCommands(line string, u *user, isSlack bool) {
 	}
 
 	if strings.Contains(line, "rocket") {
+		time.Sleep(time.Second)
 		devbotMessages := []string{"Doge to the mooooon :rocket:", ":rocket:", "I like rockets", "SpaceX", ":dog2:"}
 		pick := devbotMessages[rand.Intn(len(devbotMessages))]
 		broadcast(devbot, pick, toSlack)
@@ -446,6 +451,7 @@ func runCommands(line string, u *user, isSlack bool) {
 	}
 
 	if strings.Contains(line, "elon") {
+		time.Sleep(time.Second)
 		devbotMessages := []string{"When something is important enough, you do it even if the odds are not in your favor.", "I do think there is a lot of potential if you have a compelling product", "If you're trying to create a company, it's like baking a cake. You have to have all the ingredients in the right proportion.", "Patience is a virtue, and I'm learning patience. It's a tough lesson."}
 		pick := devbotMessages[rand.Intn(len(devbotMessages))]
 		broadcast(devbot, "> "+pick+"\n\n\\- Elon Musk", toSlack)
@@ -453,11 +459,13 @@ func runCommands(line string, u *user, isSlack bool) {
 	}
 
 	if !strings.Contains(line, "start") && strings.Contains(line, "star") {
+		time.Sleep(time.Second)
 		devbotMessages := []string{"Someone say :star:? If you like Devzat, do give it a star at github.com/quackduck/devzat!", "You should :star: github.com/quackduck/devzat", ":star:"}
 		pick := devbotMessages[rand.Intn(len(devbotMessages))]
 		broadcast(devbot, pick, toSlack)
 	}
-	if strings.Contains(line, "cool project") {
+	if strings.Contains(line, "cool project") || strings.Contains(line, "this is cool") {
+		time.Sleep(time.Second)
 		devbotMessages := []string{"Thank you :slight_smile:! If you like Devzat, do give it a star at github.com/quackduck/devzat!", "Star Devzat here: github.com/quackduck/devzat"}
 		pick := devbotMessages[rand.Intn(len(devbotMessages))]
 		broadcast(devbot, pick, toSlack)
@@ -483,6 +491,7 @@ func runCommands(line string, u *user, isSlack bool) {
 		return
 	}
 	if line == "easter" {
+		time.Sleep(time.Second)
 		broadcast(devbot, "eggs?", toSlack)
 		return
 	}
@@ -905,6 +914,8 @@ func findUserByName(name string) (*user, bool) {
 }
 
 func remove(s []*user, a *user) []*user {
+	l.Println("remove user was called")
+	l.Println(string(debug.Stack()))
 	var i int
 	for i = range s {
 		if s[i] == a {
