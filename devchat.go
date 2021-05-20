@@ -298,7 +298,7 @@ func (u *user) writeln(senderName string, msg string) {
 	//	u.term.Write([]byte(msg + "\a\n")) // "\a" is beep
 	//} else {
 	if u.bell {
-		if strings.Contains(msg, u.name) { // is a ping
+		if strings.Contains(msg, u.name) && senderName != u.name { // is a ping
 			msg += "\a"
 		}
 	}
