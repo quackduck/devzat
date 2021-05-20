@@ -347,10 +347,10 @@ func (u *user) repl() {
 
 func runCommands(line string, u *user, isSlack bool) {
 	t := time.Now()
+	l.Println(time.Since(t))
 	defer l.Println("runCommands took", time.Since(t))
 
 	if line == "" {
-		//u.writeln("", "An empty message? Send some content!")
 		return
 	}
 
