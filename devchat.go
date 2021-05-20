@@ -36,8 +36,6 @@ import (
 var (
 	//go:embed slackAPI.txt
 	slackAPI []byte
-	//go:embed adminPass.txt
-	adminPass []byte
 	//go:embed art.txt
 	artBytes   []byte
 	port       = 22
@@ -80,7 +78,7 @@ var (
 
 	tttGame       = new(ttt.Board)
 	currentPlayer = ttt.X
-
+	// hasStartedGame = false
 	hangGame = new(hangman)
 
 	admins = []string{"d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82", "f5c7f9826b6e143f6e9c3920767680f503f259570f121138b2465bb2b052a85d", "6056734cc4d9fce31569167735e4808382004629a2d7fe6cb486e663714452fc"}
@@ -670,12 +668,20 @@ Harsh           @harshb__
 		rest := strings.TrimSpace(strings.TrimPrefix(line, "/tic"))
 		if rest == "" {
 			broadcast(devbot, "Starting a new game of Tic Tac Toe! The first player is always X.", toSlack)
+			broadcast(devbot, "Play using /tic <cell num>", toSlack)
 			currentPlayer = ttt.X
 			tttGame = new(ttt.Board)
 			//broadcast(devbot, "```\n"+"0│1│2\n3"+"\n```", toSlack)
 			broadcast(devbot, "```\n"+tttPrint(tttGame.Cells)+"\n```", toSlack)
 			return
 		}
+
+		// if !hasGameStarted(tttGame.Cells) {
+		// 	broadcast(devbot, "You need to start a game first!", toSlack)
+		// 	broadcast(devbot, "Start again using the /tic command.", toSlack)
+		// 	return
+		// }
+
 		m, err := strconv.Atoi(rest)
 		if err != nil {
 			broadcast(devbot, "There's something wrong with that command :thinking:", toSlack)
@@ -700,6 +706,7 @@ Harsh           @harshb__
 			broadcast(devbot, tttGame.Condition().String(), toSlack)
 			currentPlayer = ttt.X
 			tttGame = new(ttt.Board)
+			// hasStartedGame = false
 		}
 		return
 	}
@@ -769,21 +776,40 @@ func hangPrint(hangGame *hangman) string {
 	return display
 }
 
+func emptyCell(cell string) bool {
+	return cell == " "
+}
+
+func hasGameStarted(cells [9]ttt.State) bool {
+	for i := range cells {
+		if !emptyCell(cells[i].String()) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func tttPrint(cells [9]ttt.State) string {
 	strcells := new([9]string)
+
 	for i := range cells {
-		//if cells[i].String() == " " {
-		//	strcells[i] = supsub.ToSub(strconv.Itoa(i + 1))
-		//	continue
-		//}
-		strcells[i] = cells[i].String()
+		if !hasGameStarted(cells) {
+			strcells[i] = strconv.Itoa(i+1)
+		} else {
+			strcells[i] = cells[i].String()
+		}
 	}
+
 	var buf bytes.Buffer
+
 	fmt.Fprintf(&buf, " %v │ %v │ %v \n", strcells[0], strcells[1], strcells[2])
 	fmt.Fprintln(&buf, "───┼───┼───")
 	fmt.Fprintf(&buf, " %v │ %v │ %v \n", strcells[3], strcells[4], strcells[5])
 	fmt.Fprintln(&buf, "───┼───┼───")
 	fmt.Fprintf(&buf, " %v │ %v │ %v ", strcells[6], strcells[7], strcells[8])
+
+	// hasStartedGame = true
 	return buf.String()
 }
 
