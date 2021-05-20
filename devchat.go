@@ -346,6 +346,9 @@ func (u *user) repl() {
 }
 
 func runCommands(line string, u *user, isSlack bool) {
+	t := time.Now()
+	defer l.Println("runCommands took", time.Since(t))
+
 	if line == "" {
 		//u.writeln("", "An empty message? Send some content!")
 		return
@@ -424,7 +427,8 @@ func runCommands(line string, u *user, isSlack bool) {
 		}
 		return
 	}
-	if !isSlack {
+
+	if !isSlack { // actually sends the message
 		broadcast(u.name, line, toSlack)
 	}
 
