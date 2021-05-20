@@ -58,6 +58,7 @@ Available commands
    /dm    <user> <msg>   Privately message people
    /users                List users
    /nick  <name>         Change your name
+   /tz    <zone>         Change timezone as per IANA (eg: /tz Asia/Dubai)
    /color <color>        Change your name color
    /tic   <move>         Play Tic Tac Toe!
    /hang  <letter/word>  Play Hangman!
@@ -81,6 +82,7 @@ People who you might know who have joined:
 **Zach Latta - Founder of Hack Club: _"omg amazing! this is so awesome"_  
 Bereket [@heybereket](https://twitter.com/heybereket): _"this is pretty cool"_  
 Ayush [@ayshptk](https://twitter.com/ayshptk): _"Can I double star the repo somehow :pleading_face:"_  
+Sanketh [@SankethYS](https://twitter.com/SankethYS): _"Heck! How does this work. So cool."_  
 Srushti [@srushtiuniverse](https://twitter.com/srushtiuniverse): _"Yess it's awesome. I tried it."_  
 Surjith [@surjithctly](https://twitter.com/surjithctly): _"Whoa, who made this?"_  
 Arav [@HeyArav](https://twitter.com/HeyArav): [_"Okay, this is actually super awesome."_](https://twitter.com/tregsthedev/status/1384180393893498880)  
