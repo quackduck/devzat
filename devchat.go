@@ -355,9 +355,6 @@ func (u *user) repl() {
 }
 
 func runCommands(line string, u *user, isSlack bool) {
-	t := time.Now()
-	defer func() { l.Println("runCommands took", time.Since(t)) }()
-
 	if line == "" {
 		return
 	}
@@ -366,12 +363,6 @@ func runCommands(line string, u *user, isSlack bool) {
 	if strings.HasPrefix(line, "/hide") && !isSlack {
 		toSlack = false
 	}
-
-	//for i := range users {
-	//	if strings.HasPrefix(line, "@"+stripansi.Strip(users[i].name)) {
-	//
-	//	}
-	//}
 
 	if strings.HasPrefix(line, "@") && !isSlack {
 		toSlack = false
