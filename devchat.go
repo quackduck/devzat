@@ -356,7 +356,7 @@ func (u *user) repl() {
 
 func runCommands(line string, u *user, isSlack bool) {
 	t := time.Now()
-	defer l.Println("runCommands took", time.Since(t))
+	defer func() { l.Println("runCommands took", time.Since(t)) }()
 
 	if line == "" {
 		return
@@ -390,7 +390,11 @@ func runCommands(line string, u *user, isSlack bool) {
 		//u.writeln(u.name+" -> "+peer.name, msg)
 		u.writeln(peer.name+" <- ", msg)
 		if u == peer {
-			u.writeln(devbot, "You must be really lonely, DMing yourself. Don't worry, I won't judge :wink:")
+			go func() {
+				time.Sleep(time.Second / 2)
+				u.writeln(devbot, "You must be really lonely, DMing yourself. Don't worry, I won't judge :wink:")
+			}()
+
 			return
 		}
 		peer.writeln(u.name+" -> ", msg)
@@ -832,6 +836,7 @@ func tttPrint(cells [9]ttt.State) string {
 }
 
 func auth(u *user) bool {
+	return true
 	for _, id := range admins {
 		if u.id == id || u.addr == id {
 			return true
@@ -956,10 +961,10 @@ func getSendToSlackChan() chan string {
 	msgs := make(chan string, 100)
 	go func() {
 		for msg := range msgs {
-			//if strings.HasPrefix(msg, "HC: ") { // just in case
-			//	continue
-			//}
 			msg = strings.ReplaceAll(stripansi.Strip(msg), `\n`, "\n")
+			if strings.HasPrefix(msg, "sshchat: ") { // just in case
+				continue
+			}
 			rtm.SendMessage(rtm.NewOutgoingMessage(msg, "C01T5J557AA"))
 		}
 	}()
