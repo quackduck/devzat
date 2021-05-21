@@ -827,7 +827,7 @@ func tttPrint(cells [9]ttt.State) string {
 }
 
 func auth(u *user) bool {
-	return true
+	//return true
 	for _, id := range admins {
 		if u.id == id || u.addr == id {
 			return true
