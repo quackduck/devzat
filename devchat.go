@@ -380,9 +380,9 @@ func runCommands(line string, u *user, isSlack bool) {
 	if strings.HasPrefix(line, "/hide") && !isSlack {
 		toSlack = false
 	}
-	if strings.HasPrefix(line, "@") && !isSlack {
+	if strings.HasPrefix(line, "#") && !isSlack {
 		toSlack = false
-		rest := strings.TrimSpace(strings.TrimPrefix(line, "@"))
+		rest := strings.TrimSpace(strings.TrimPrefix(line, "#"))
 		restSplit := strings.Fields(rest)
 		if len(restSplit) < 2 {
 			u.writeln(devbot, "You gotta have a message mate")
@@ -719,7 +719,7 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
 	}
 	if line == "/commands" {
 		broadcast("", `**Available commands**  
-   @<user> <msg>           _Privately message people_  
+   #<user> <msg>           _Privately message people_  
    /users                  _List users_  
    /nick   <name>          _Change your name_  
    /tz     <zone>          _Change timezone as per IANA (eg: /tz Asia/Dubai)_  
