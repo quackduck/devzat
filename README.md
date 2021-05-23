@@ -33,7 +33,7 @@ ssh chat
 
 We also have a Slack bridge! If you're on the [Hack Club](https://hackclub.com) Slack, check out the `#ssh-chat-bridge` channel!
 
-Help:
+### Help
 
 ```text
 Welcome to Devzat! Devzat is chat over SSH: github.com/quackduck/devzat
@@ -52,34 +52,35 @@ For replacing newlines, I often use bulkseotools.com/add-remove-line-breaks.php.
 Made by Ishan Goel with feature ideas from friends.
 Thanks to Caleb Denio for lending his server!
 ```
-
+### Commands
 ```text
 Available commands
-   /dm    <user> <msg>   Privately message people
-   /users                List users
-   /nick  <name>         Change your name
-   /tz    <zone>         Change timezone as per IANA (eg: /tz Asia/Dubai)
-   /color <color>        Change your name color
-   /tic   <move>         Play Tic Tac Toe!
-   /hang  <letter/word>  Play Hangman!
-   /all                  Get a list of all unique users ever
-   /emojis               See a list of emojis
-   /people               See info about nice people who joined
-   /exit                 Leave the chat
-   /hide                 Hide messages from HC Slack
-   /bell                 Toggle the ansi bell
-   /id    <user>         Get a unique identifier for a user
-   /ban   <user>         Ban a user, requires an admin pass
-   /kick  <user>         Kick a user, requires an admin pass
-   /help                 Show help
-   /commands             Show this message
+   #<user> <msg>           Privately message people
+   /users                  List users
+   /nick   <name>          Change your name
+   /tz     <zone>          Change timezone as per IANA (eg: /tz Asia/Dubai)
+   /color  <color>         Change your name color
+   /tic    <move>          Play Tic Tac Toe!
+   /hang   <letter/word>   Play Hangman!
+   /all                    Get a list of all unique users ever
+   /emojis                 See a list of emojis
+   /people                 See info about nice people who joined
+   /exit                   Leave the chat
+   /hide                   Hide messages from HC Slack
+   /bell                   Toggle the ansi bell
+   /id     <user>          Get a unique identifier for a user
+   /ban    <user>          Ban a user, requires an admin pass
+   /kick   <user>          Kick a user, requires an admin pass
+   /help                   Show help
+   /commands               Show this message
 ```
 
 ## People
 
 People who you might know who have joined:
 
-**Zach Latta - Founder of Hack Club: _"omg amazing! this is so awesome"_  
+Zach Latta - Founder of Hack Club: _"omg amazing! this is so awesome"_  
+Ant Wilson - Co founder, Supabase: [_"brilliant!"_](https://twitter.com/AntWilson/status/1396444302721445889)  
 Bereket [@heybereket](https://twitter.com/heybereket): _"this is pretty cool"_  
 Ayush [@ayshptk](https://twitter.com/ayshptk): _"Can I double star the repo somehow :pleading_face:"_  
 Sanketh [@SankethYS](https://twitter.com/SankethYS): _"Heck! How does this work. So cool."_  
@@ -89,8 +90,8 @@ Surjith [@surjithctly](https://twitter.com/surjithctly): _"Whoa, who made this?"
 Arav [@HeyArav](https://twitter.com/HeyArav): [_"Okay, this is actually super awesome."_](https://twitter.com/tregsthedev/status/1384180393893498880)  
 Harsh [@harshb__](https://twitter.com/harshb__): _"im gonna come here everyday to chill when i get bored of studying lol, this is so cool"_
 Krish [@krishnerkar_](https://twitter.com/krishnerkar_):  [_"SHIT! THIS IS SO DOPE"_](https://twitter.com/krishnerkar_/status/1384173042616573960)  
-Amrit [@astro_shenava](https://twitter.com/astro_shenava): _"Super cool man"_
-Mudrank [@mudrankgupta](https://twitter.com/mudrankgupta): "🔥🚀🚀"**
+Amrit [@astro_shenava](https://twitter.com/astro_shenava): _"Super cool man"_  
+Mudrank [@mudrankgupta](https://twitter.com/mudrankgupta): "🔥🚀🚀"
 
 From Hack Club:  
 **Caleb Denio, Safin Singh, Eleeza A    
@@ -99,8 +100,6 @@ Tommy Pujol, Sam Poder, Rishi Kothari
 Amogh Chaubey, Ella Xu, Hugo Hu  
 Matthew Stanciu**
 
-
-
-
+Huge thanks to the amazing [Caleb Denio](https://github.com/cjdenio) for lending me the original Devzat server 💖
 
 ### *Made by [Ishan Goel](https://twitter.com/IshanTheIshan) with feature ideas from friends. Thanks to [Caleb Denio](https://twitter.com/CalebDenio) for lending his server!*
