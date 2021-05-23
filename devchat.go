@@ -63,7 +63,7 @@ var (
 	allUsers      = make(map[string]string, 100) //map format is u.id => u.name
 	allUsersMutex = sync.Mutex{}
 
-	backlog      = make([]message, 0, scrollback)
+	backlog      = make([]backlogmessage, 0, scrollback)
 	backlogMutex = sync.Mutex{}
 
 	logfile, _ = os.OpenFile("log.txt", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0666)
@@ -147,7 +147,7 @@ func broadcast(senderName, msg string, toSlack bool) {
 		return
 	}
 	backlogMutex.Lock()
-	backlog = append(backlog, message{senderName, msg + "\n"})
+	backlog = append(backlog, backlogmessage{time.Now(), senderName, msg + "\n"})
 	backlogMutex.Unlock()
 	if toSlack {
 		if senderName != "" {
@@ -183,7 +183,8 @@ type user struct {
 	timezone        *time.Location
 }
 
-type message struct {
+type backlogmessage struct {
+	timestamp  time.Time
 	senderName string
 	text       string
 }
@@ -240,9 +241,23 @@ func newUser(s ssh.Session) *user {
 		broadcast(devbot, u.name+" has been banned automatically. IP: "+u.addr, true)
 		return nil
 	}
-
-	for i := range backlog {
-		u.writeln(backlog[i].senderName, backlog[i].text)
+	if len(backlog) > 0 {
+		lastStamp := backlog[0].timestamp
+		u.term.Write([]byte("\n" + strings.TrimSuffix(u.joinTime.Sub(lastStamp).Round(time.Minute).String(), "0s") + " earlier\n\n"))
+		for i := range backlog {
+			//u.writeln("", backlog[i].timestamp.Format(time.Stamp))
+			if backlog[i].timestamp.Sub(lastStamp) > time.Minute {
+				lastStamp = backlog[i].timestamp
+				//u.writeln("", strconv.Itoa(i))
+				s := strings.TrimSuffix(u.joinTime.Sub(lastStamp).Round(time.Minute).String(), "0s")
+				if s != "" {
+					u.term.Write([]byte("\n" + s + " earlier\n\n"))
+				} else {
+					u.term.Write([]byte("\nJust now (< 1m earlier)\n\n"))
+				}
+			}
+			u.writeln(backlog[i].senderName, backlog[i].text)
+		}
 	}
 
 	u.pickUsername(s.User())
@@ -279,20 +294,22 @@ func (u *user) writeln(senderName string, msg string) {
 	msg = strings.ReplaceAll(msg, `\n`, "\n")
 	msg = strings.ReplaceAll(msg, `\`+"\n", `\n`) // let people escape newlines
 	if senderName != "" {
-		msg = strings.TrimSpace(mdRender(msg, len([]rune(stripansi.Strip(senderName))), u.win.Width))
+		//msg = strings.TrimSpace(mdRender(msg, len(stripansi.Strip(senderName))+2, u.win.Width))
 		if strings.HasSuffix(senderName, " <- ") || strings.HasSuffix(senderName, " -> ") {
+			msg = strings.TrimSpace(mdRender(msg, len(stripansi.Strip(senderName)), u.win.Width))
 			msg = senderName + msg
 		} else {
+			msg = strings.TrimSpace(mdRender(msg, len(stripansi.Strip(senderName))+2, u.win.Width))
 			msg = senderName + ": " + msg
 		}
 	} else {
-		msg = strings.TrimSpace(mdRender(msg, -2, u.win.Width)) // -2 so linewidth is used as is
+		msg = strings.TrimSpace(mdRender(msg, 0, u.win.Width)) // No sender
 	}
 	if time.Since(u.lastMessageTime) > time.Minute {
 		if u.timezone == nil {
-			u.term.Write([]byte(strings.TrimSuffix(time.Since(u.joinTime).Round(time.Minute).String(), "0s") + " in\n"))
+			u.term.Write([]byte("\n" + strings.TrimSuffix(time.Since(u.joinTime).Round(time.Minute).String(), "0s") + " in\n\n"))
 		} else {
-			u.term.Write([]byte(time.Now().In(u.timezone).Format("3:04 pm") + "\n"))
+			u.term.Write([]byte("\n" + time.Now().In(u.timezone).Format("3:04 pm") + "\n\n"))
 		}
 		u.lastMessageTime = time.Now()
 	}
@@ -363,7 +380,6 @@ func runCommands(line string, u *user, isSlack bool) {
 	if strings.HasPrefix(line, "/hide") && !isSlack {
 		toSlack = false
 	}
-
 	if strings.HasPrefix(line, "@") && !isSlack {
 		toSlack = false
 		rest := strings.TrimSpace(strings.TrimPrefix(line, "@"))
@@ -437,65 +453,59 @@ func runCommands(line string, u *user, isSlack bool) {
 		}
 		return
 	}
+	if strings.HasPrefix(line, "/tic") {
+		rest := strings.TrimSpace(strings.TrimPrefix(line, "/tic"))
+		if rest == "" {
+			broadcast(devbot, "Starting a new game of Tic Tac Toe! The first player is always X.", toSlack)
+			broadcast(devbot, "Play using /tic <cell num>", toSlack)
+			currentPlayer = ttt.X
+			tttGame = new(ttt.Board)
+			//broadcast(devbot, "```\n"+"0│1│2\n3"+"\n```", toSlack)
+			broadcast(devbot, "```\n"+tttPrint(tttGame.Cells)+"\n```", toSlack)
+			return
+		}
+
+		// if !hasGameStarted(tttGame.Cells) {
+		// 	broadcast(devbot, "You need to start a game first!", toSlack)
+		// 	broadcast(devbot, "Start again using the /tic command.", toSlack)
+		// 	return
+		// }
+
+		m, err := strconv.Atoi(rest)
+		if err != nil {
+			broadcast(devbot, "There's something wrong with that command :thinking:", toSlack)
+			return
+		}
+		if m < 1 || m > 9 {
+			broadcast(devbot, "Moves are numbers between 1 and 9!", toSlack)
+			return
+		}
+		err = tttGame.Apply(ttt.Move(m-1), currentPlayer)
+		if err != nil {
+			broadcast(devbot, err.Error(), toSlack)
+			return
+		}
+		broadcast(devbot, "```\n"+tttPrint(tttGame.Cells)+"\n```", toSlack)
+		if currentPlayer == ttt.X {
+			currentPlayer = ttt.O
+		} else {
+			currentPlayer = ttt.X
+		}
+		if !(tttGame.Condition() == ttt.NotEnd) {
+			broadcast(devbot, tttGame.Condition().String(), toSlack)
+			currentPlayer = ttt.X
+			tttGame = new(ttt.Board)
+			// hasStartedGame = false
+		}
+		return
+	}
 
 	if !isSlack { // actually sends the message
 		broadcast(u.name, line, toSlack)
 	}
 
-	if strings.Contains(line, "devbot") {
-		go func() {
-			time.Sleep(time.Second)
-			devbotMessages := []string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "I'm in the middle of something can you not", "Devbot to the rescue!", "Run /help, you need it.", ":wave:"}
-			if strings.Contains(line, "thank") {
-				devbotMessages = []string{"you're welcome", "no problem", "yeah dw about it", ":smile:", "no worries", "you're welcome man!"}
-			}
-			pick := devbotMessages[rand.Intn(len(devbotMessages))]
-			broadcast(devbot, pick, toSlack)
-		}()
-	}
-	if line == "help" {
-		go func() {
-			time.Sleep(time.Second)
-			devbotMessages := []string{"Run /help to get help!", "Looking for /help?", "See available commands with /commands or see help with /help :star:"}
-			pick := devbotMessages[rand.Intn(len(devbotMessages))]
-			broadcast(devbot, pick, toSlack)
-		}()
-	}
+	devbotChat(line, toSlack)
 
-	if strings.Contains(line, "rocket") {
-		go func() {
-			time.Sleep(time.Second)
-			devbotMessages := []string{"Doge to the mooooon :rocket:", ":rocket:", "I like rockets", "SpaceX", ":dog2:"}
-			pick := devbotMessages[rand.Intn(len(devbotMessages))]
-			broadcast(devbot, pick, toSlack)
-		}()
-	}
-
-	if strings.Contains(line, "elon") {
-		go func() {
-			time.Sleep(time.Second)
-			devbotMessages := []string{"When something is important enough, you do it even if the odds are not in your favor.", "I do think there is a lot of potential if you have a compelling product", "If you're trying to create a company, it's like baking a cake. You have to have all the ingredients in the right proportion.", "Patience is a virtue, and I'm learning patience. It's a tough lesson."}
-			pick := devbotMessages[rand.Intn(len(devbotMessages))]
-			broadcast(devbot, "> "+pick+"\n\n\\- Elon Musk", toSlack)
-		}()
-	}
-
-	if !strings.Contains(line, "start") && strings.Contains(line, "star") {
-		go func() {
-			time.Sleep(time.Second)
-			devbotMessages := []string{"Someone say :star:? If you like Devzat, do give it a star at github.com/quackduck/devzat!", "You should :star: github.com/quackduck/devzat", ":star:"}
-			pick := devbotMessages[rand.Intn(len(devbotMessages))]
-			broadcast(devbot, pick, toSlack)
-		}()
-	}
-	if strings.Contains(line, "cool project") || strings.Contains(line, "this is cool") {
-		go func() {
-			time.Sleep(time.Second)
-			devbotMessages := []string{"Thank you :slight_smile:! If you like Devzat, do give it a star at github.com/quackduck/devzat!", "Star Devzat here: github.com/quackduck/devzat"}
-			pick := devbotMessages[rand.Intn(len(devbotMessages))]
-			broadcast(devbot, pick, toSlack)
-		}()
-	}
 	if line == "/users" {
 		names := make([]string, 0, len(users))
 		for _, us := range users {
@@ -677,53 +687,6 @@ Harsh           @harshb__
 		return
 	}
 
-	if strings.HasPrefix(line, "/tic") {
-		rest := strings.TrimSpace(strings.TrimPrefix(line, "/tic"))
-		if rest == "" {
-			broadcast(devbot, "Starting a new game of Tic Tac Toe! The first player is always X.", toSlack)
-			broadcast(devbot, "Play using /tic <cell num>", toSlack)
-			currentPlayer = ttt.X
-			tttGame = new(ttt.Board)
-			//broadcast(devbot, "```\n"+"0│1│2\n3"+"\n```", toSlack)
-			broadcast(devbot, "```\n"+tttPrint(tttGame.Cells)+"\n```", toSlack)
-			return
-		}
-
-		// if !hasGameStarted(tttGame.Cells) {
-		// 	broadcast(devbot, "You need to start a game first!", toSlack)
-		// 	broadcast(devbot, "Start again using the /tic command.", toSlack)
-		// 	return
-		// }
-
-		m, err := strconv.Atoi(rest)
-		if err != nil {
-			broadcast(devbot, "There's something wrong with that command :thinking:", toSlack)
-			return
-		}
-		if m < 1 || m > 9 {
-			broadcast(devbot, "Moves are numbers between 1 and 9!", toSlack)
-			return
-		}
-		err = tttGame.Apply(ttt.Move(m-1), currentPlayer)
-		if err != nil {
-			broadcast(devbot, err.Error(), toSlack)
-			return
-		}
-		broadcast(devbot, "```\n"+tttPrint(tttGame.Cells)+"\n```", toSlack)
-		if currentPlayer == ttt.X {
-			currentPlayer = ttt.O
-		} else {
-			currentPlayer = ttt.X
-		}
-		if !(tttGame.Condition() == ttt.NotEnd) {
-			broadcast(devbot, tttGame.Condition().String(), toSlack)
-			currentPlayer = ttt.X
-			tttGame = new(ttt.Board)
-			// hasStartedGame = false
-		}
-		return
-	}
-
 	if line == "/help" {
 		broadcast("", `Welcome to Devzat! Devzat is chat over SSH: github.com/quackduck/devzat  
 Because there's SSH apps on all platforms, even on mobile, you can join from anywhere.
@@ -774,6 +737,76 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
    /kick   <user>          _Kick a user, requires an admin pass_  
    /help                   _Show help_  
    /commands               _Show this message_`, toSlack)
+	}
+}
+
+func devbotChat(line string, toSlack bool) {
+	if strings.Contains(line, "devbot") {
+		if strings.Contains(line, "thank") {
+			devbotRespond([]string{"you're welcome",
+				"no problem",
+				"yeah dw about it",
+				":smile:",
+				"no worries",
+				"you're welcome man!",
+				"lol"}, 93, toSlack)
+			return
+		}
+		if strings.Contains(line, "good") {
+			devbotRespond([]string{"Thanks haha", ":sunglasses:", ":smile:", "lol"}, 93, toSlack)
+			return
+		}
+		if strings.Contains(line, "bad") {
+			devbotRespond([]string{"what an idiot, bullying a bot", ":(", ":angry:", ":anger:", ":cry:", "I'm in the middle of something okay", "shut up", "Run /help, you need it."}, 60, toSlack)
+			return
+		}
+		if strings.Contains(line, "shut up") {
+			devbotRespond([]string{"NO YOU", "You shut up", "what an idiot, bullying a bot"}, 60, toSlack)
+			return
+		}
+		devbotRespond([]string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "Devbot to the rescue!", ":wave:"}, 75, toSlack)
+	}
+	if line == "help" || strings.Contains(line, "help me") {
+		devbotRespond([]string{"Run /help to get help!",
+			"Looking for /help?",
+			"See available commands with /commands or see help with /help :star:"}, 100, toSlack)
+	}
+
+	if strings.Contains(line, "rocket") {
+		devbotRespond([]string{"Doge to the mooooon :rocket:",
+			"I should have bought ETH before it :rocket:ed to the :moon:",
+			":rocket:",
+			"I like rockets",
+			"SpaceX",
+			"Elon Musk OP"}, 80, toSlack)
+	}
+
+	if strings.Contains(line, "elon") || strings.Contains(line, "spacex") || strings.Contains(line, "tesla") {
+		devbotRespond([]string{"When something is important enough, you do it even if the odds are not in your favor. - Elon",
+			"I do think there is a lot of potential if you have a compelling product - Elon",
+			"If you're trying to create a company, it's like baking a cake. You have to have all the ingredients in the right proportion.",
+			"Patience is a virtue, and I'm learning patience. It's a tough lesson."}, 75, toSlack)
+	}
+
+	if !strings.Contains(line, "start") && strings.Contains(line, "star") {
+		devbotRespond([]string{"Someone say :star:?",
+			"If you like Devzat, give it a star at github.com/quackduck/devzat!",
+			":star: github.com/quackduck/devzat", ":star:"}, 90, toSlack)
+	}
+	if strings.Contains(line, "cool project") || strings.Contains(line, "this is cool") {
+		devbotRespond([]string{"Thank you :slight_smile:!",
+			" If you like Devzat, do give it a star at github.com/quackduck/devzat!",
+			"Star Devzat here: github.com/quackduck/devzat"}, 90, toSlack)
+	}
+}
+
+func devbotRespond(messages []string, chance int, toSlack bool) {
+	if chance == 100 || chance > rand.Intn(100) {
+		go func() {
+			time.Sleep(time.Second)
+			pick := messages[rand.Intn(len(messages))]
+			broadcast(devbot, pick, toSlack)
+		}()
 	}
 }
 
@@ -852,15 +885,15 @@ func cleanName(name string) string {
 	return s
 }
 
-func mdRender(a string, nameLen int, lineWidth int) string {
-	md := string(markdown.Render(a, lineWidth-(nameLen+2), 0))
+func mdRender(a string, beforeMessageLen int, lineWidth int) string {
+	md := string(markdown.Render(a, lineWidth-(beforeMessageLen), 0))
 	md = strings.TrimSuffix(md, "\n")
 	split := strings.Split(md, "\n")
 	for i := range split {
 		if i == 0 {
 			continue // the first line will automatically be padded
 		}
-		split[i] = strings.Repeat(" ", nameLen+2) + split[i]
+		split[i] = strings.Repeat(" ", beforeMessageLen) + split[i]
 	}
 	if len(split) == 1 {
 		return md
