@@ -291,6 +291,11 @@ func (u *user) close(msg string) {
 }
 
 func (u *user) writeln(senderName string, msg string) {
+	if u.bell {
+		if strings.Contains(msg, u.name) { // is a ping
+			msg += "\a"
+		}
+	}
 	msg = strings.ReplaceAll(msg, `\n`, "\n")
 	msg = strings.ReplaceAll(msg, `\`+"\n", `\n`) // let people escape newlines
 	if senderName != "" {
@@ -316,11 +321,6 @@ func (u *user) writeln(senderName string, msg string) {
 	//if u.bell {
 	//	u.term.Write([]byte(msg + "\a\n")) // "\a" is beep
 	//} else {
-	if u.bell {
-		if strings.Contains(msg, u.name) && senderName != u.name { // is a ping
-			msg += "\a"
-		}
-	}
 	u.term.Write([]byte(msg + "\n"))
 	//}
 }
@@ -401,7 +401,6 @@ func runCommands(line string, u *user, isSlack bool) {
 				time.Sleep(time.Second / 2)
 				u.writeln(devbot, "You must be really lonely, DMing yourself. Don't worry, I won't judge :wink:")
 			}()
-
 			return
 		}
 		peer.writeln(u.name+" -> ", msg)
@@ -692,12 +691,13 @@ Harsh           @harshb__
 Because there's SSH apps on all platforms, even on mobile, you can join from anywhere.
 
 Interesting features:
-* Many, many commands. Check em out by using /commands.
-* Built in Tic Tac Toe and Hangman! Run /tic or /hang <word>
-* Markdown support! Tables, headers, italics and everything. Just use "\\n" in place of newlines.  
-   You can even send _ascii art_ with code fences. Run /ascii-art to see an example.
-* Emoji replacements :fire:! \:rocket\: => :rocket: (like on Slack and Discord)
+* Many, many commands. Run /commands.
+* Markdown support! Tables, headers, italics and everything. Just use \\n in place of newlines.
 * Code syntax highlighting. Use Markdown fences to send code. Run /example-code to see an example.
+* Direct messages! Send a DM using #user <msg>.
+* Timezone support, use /tz Continent/City to set your timezone.
+* Built in Tic Tac Toe and Hangman! Run /tic or /hang <word> to start new games.
+* Emoji replacements! \:rocket\: => :rocket: (like on Slack and Discord)
 
 For replacing newlines, I often use bulkseotools.com/add-remove-line-breaks.php.
 
@@ -719,22 +719,22 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
 	}
 	if line == "/commands" {
 		broadcast("", `**Available commands**  
-   #<user> <msg>           _Privately message people_  
+   #[user] [msg]           _DM [user] with [msg]_  
    /users                  _List users_  
-   /nick   <name>          _Change your name_  
-   /tz     <zone>          _Change timezone as per IANA (eg: /tz Asia/Dubai)_  
-   /color  <color>         _Change your name color_  
-   /tic    <move>          _Play Tic Tac Toe!_  
-   /hang   <letter/word>   _Play Hangman!_  
-   /all                    _Get a list of all unique users ever_  
-   /emojis                 _See a list of emojis_  
+   /nick   [name]          _Change your name_  
+   /tic    [cell num]      _Play Tic Tac Toe!_  
+   /hang   [char/word]     _Play Hangman!_  
    /people                 _See info about nice people who joined_  
+   /tz     [zone]          _Change IANA timezone (eg: /tz Asia/Dubai)_  
+   /color  [color]         _Change your name's color_
+   /all                    _Get a list of all users ever_  
+   /emojis                 _See a list of emojis_  
    /exit                   _Leave the chat_  
    /hide                   _Hide messages from HC Slack_  
-   /bell                   _Toggle the ansi bell_  
-   /id     <user>          _Get a unique identifier for a user_  
-   /ban    <user>          _Ban a user, requires an admin pass_  
-   /kick   <user>          _Kick a user, requires an admin pass_  
+   /bell                   _Toggle the ANSI bell used in pings_  
+   /id     [user]          _Get a unique ID for a user (hashed IP)_  
+   /ban    [user]          _Ban [user] (admin)_  
+   /kick   [user]          _Kick [user] (admin)_  
    /help                   _Show help_  
    /commands               _Show this message_`, toSlack)
 	}
