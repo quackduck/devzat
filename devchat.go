@@ -243,7 +243,7 @@ func newUser(s ssh.Session) *user {
 	}
 	if len(backlog) > 0 {
 		lastStamp := backlog[0].timestamp
-		u.term.Write([]byte("\n" + strings.TrimSuffix(u.joinTime.Sub(lastStamp).Round(time.Minute).String(), "0s") + " earlier\n\n"))
+		u.term.Write([]byte(strings.TrimSuffix(u.joinTime.Sub(lastStamp).Round(time.Minute).String(), "0s") + " earlier\n"))
 		for i := range backlog {
 			//u.writeln("", backlog[i].timestamp.Format(time.Stamp))
 			if backlog[i].timestamp.Sub(lastStamp) > time.Minute {
@@ -251,9 +251,9 @@ func newUser(s ssh.Session) *user {
 				//u.writeln("", strconv.Itoa(i))
 				s := strings.TrimSuffix(u.joinTime.Sub(lastStamp).Round(time.Minute).String(), "0s")
 				if s != "" {
-					u.term.Write([]byte("\n" + s + " earlier\n\n"))
+					u.term.Write([]byte("\n" + s + " earlier\n"))
 				} else {
-					u.term.Write([]byte("\nJust now (< 1m earlier)\n\n"))
+					u.term.Write([]byte("\nJust now (< 1m earlier)\n"))
 				}
 			}
 			u.writeln(backlog[i].senderName, backlog[i].text)
@@ -307,9 +307,9 @@ func (u *user) writeln(senderName string, msg string) {
 	}
 	if time.Since(u.lastMessageTime) > time.Minute {
 		if u.timezone == nil {
-			u.term.Write([]byte("\n" + strings.TrimSuffix(time.Since(u.joinTime).Round(time.Minute).String(), "0s") + " in\n\n"))
+			u.term.Write([]byte("\n" + strings.TrimSuffix(time.Since(u.joinTime).Round(time.Minute).String(), "0s") + " in\n"))
 		} else {
-			u.term.Write([]byte("\n" + time.Now().In(u.timezone).Format("3:04 pm") + "\n\n"))
+			u.term.Write([]byte("\n" + time.Now().In(u.timezone).Format("3:04 pm") + "\n"))
 		}
 		u.lastMessageTime = time.Now()
 	}
@@ -473,7 +473,7 @@ func runCommands(line string, u *user, isSlack bool) {
 
 		m, err := strconv.Atoi(rest)
 		if err != nil {
-			broadcast(devbot, "There's something wrong with that command :thinking:", toSlack)
+			broadcast(devbot, "Make sure you're using a number lol", toSlack)
 			return
 		}
 		if m < 1 || m > 9 {
