@@ -752,19 +752,19 @@ func devbotChat(line string, toSlack bool) {
 				"lol"}, 93, toSlack)
 			return
 		}
-		if strings.Contains(line, "good") {
-			devbotRespond([]string{"Thanks haha", ":sunglasses:", ":smile:", "lol"}, 93, toSlack)
+		if strings.Contains(line, "good") || strings.Contains(line, "cool") || strings.Contains(line, "awesome") || strings.Contains(line, "amazing") {
+			devbotRespond([]string{"Thanks haha", ":sunglasses:", ":smile:", "lol", "haha", "Thanks lol", "yeeeeeeeee"}, 93, toSlack)
 			return
 		}
-		if strings.Contains(line, "bad") {
+		if strings.Contains(line, "bad") || strings.Contains(line, "idiot") || strings.Contains(line, "stupid") {
 			devbotRespond([]string{"what an idiot, bullying a bot", ":(", ":angry:", ":anger:", ":cry:", "I'm in the middle of something okay", "shut up", "Run /help, you need it."}, 60, toSlack)
 			return
 		}
 		if strings.Contains(line, "shut up") {
-			devbotRespond([]string{"NO YOU", "You shut up", "what an idiot, bullying a bot"}, 60, toSlack)
+			devbotRespond([]string{"NO YOU", "You shut up", "what an idiot, bullying a bot"}, 90, toSlack)
 			return
 		}
-		devbotRespond([]string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "Devbot to the rescue!", ":wave:"}, 75, toSlack)
+		devbotRespond([]string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "Devbot to the rescue!", ":wave:"}, 90, toSlack)
 	}
 	if line == "help" || strings.Contains(line, "help me") {
 		devbotRespond([]string{"Run /help to get help!",
@@ -772,7 +772,7 @@ func devbotChat(line string, toSlack bool) {
 			"See available commands with /commands or see help with /help :star:"}, 100, toSlack)
 	}
 
-	if strings.Contains(line, "rocket") {
+	if strings.Contains(line, "rocket") || strings.Contains(line, "spacex") || strings.Contains(line, "tesla") {
 		devbotRespond([]string{"Doge to the mooooon :rocket:",
 			"I should have bought ETH before it :rocket:ed to the :moon:",
 			":rocket:",
@@ -781,11 +781,11 @@ func devbotChat(line string, toSlack bool) {
 			"Elon Musk OP"}, 80, toSlack)
 	}
 
-	if strings.Contains(line, "elon") || strings.Contains(line, "spacex") || strings.Contains(line, "tesla") {
+	if strings.Contains(line, "elon") {
 		devbotRespond([]string{"When something is important enough, you do it even if the odds are not in your favor. - Elon",
 			"I do think there is a lot of potential if you have a compelling product - Elon",
-			"If you're trying to create a company, it's like baking a cake. You have to have all the ingredients in the right proportion.",
-			"Patience is a virtue, and I'm learning patience. It's a tough lesson."}, 75, toSlack)
+			"If you're trying to create a company, it's like baking a cake. You have to have all the ingredients in the right proportion. - Elon",
+			"Patience is a virtue, and I'm learning patience. It's a tough lesson. - Elon"}, 75, toSlack)
 	}
 
 	if !strings.Contains(line, "start") && strings.Contains(line, "star") {
@@ -793,7 +793,7 @@ func devbotChat(line string, toSlack bool) {
 			"If you like Devzat, give it a star at github.com/quackduck/devzat!",
 			":star: github.com/quackduck/devzat", ":star:"}, 90, toSlack)
 	}
-	if strings.Contains(line, "cool project") || strings.Contains(line, "this is cool") {
+	if strings.Contains(line, "cool project") || strings.Contains(line, "this is cool") || strings.Contains(line, "this is so cool") {
 		devbotRespond([]string{"Thank you :slight_smile:!",
 			" If you like Devzat, do give it a star at github.com/quackduck/devzat!",
 			"Star Devzat here: github.com/quackduck/devzat"}, 90, toSlack)
@@ -803,7 +803,7 @@ func devbotChat(line string, toSlack bool) {
 func devbotRespond(messages []string, chance int, toSlack bool) {
 	if chance == 100 || chance > rand.Intn(100) {
 		go func() {
-			time.Sleep(time.Second)
+			time.Sleep(time.Second / 2)
 			pick := messages[rand.Intn(len(messages))]
 			broadcast(devbot, pick, toSlack)
 		}()
