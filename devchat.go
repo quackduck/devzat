@@ -209,13 +209,15 @@ type Credentials struct {
 }
 
 func sendCurrentUsersTwitterMessage() {
-	broadcast(devbot, "sending twitter update", true)
+	l.Println("Sending twitter update")
+	//broadcast(devbot, "sending twitter update", true)
 	names := make([]string, 0, len(users))
 	for _, us := range users {
 		names = append(names, us.name)
 	}
 	t, _, err := client.Statuses.Update("People on Devzat rn: "+fmt.Sprint(names)+"\n Join em with \"ssh devzat.hackclub.com\"", nil)
 	if err != nil {
+		l.Println("Got twitter err", err)
 		broadcast(devbot, "Sending a twitter update got an error"+fmt.Sprint(err), true)
 		return
 	}
