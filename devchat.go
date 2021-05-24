@@ -719,22 +719,22 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
 	}
 	if line == "/commands" {
 		broadcast("", `**Available commands**  
-   #(user) (msg)           _DM (user) with (msg)_  
+   #<user> <msg>           _DM <user> with <msg>_  
    /users                  _List users_  
-   /nick   (name)          _Change your name_  
-   /tic    (cell num)      _Play Tic Tac Toe!_  
-   /hang   (char/word)     _Play Hangman!_  
+   /nick   <name>          _Change your name_  
+   /tic    <cell num>      _Play Tic Tac Toe!_  
+   /hang   <char/word>     _Play Hangman!_  
    /people                 _See info about nice people who joined_  
-   /tz     (zone)          _Change IANA timezone (eg: /tz Asia/Dubai)_  
-   /color  (color)         _Change your name's color_  
+   /tz     <zone>          _Change IANA timezone (eg: /tz Asia/Dubai)_  
+   /color  <color>         _Change your name's color_  
    /all                    _Get a list of all users ever_  
    /emojis                 _See a list of emojis_  
    /exit                   _Leave the chat_  
    /hide                   _Hide messages from HC Slack_  
    /bell                   _Toggle the ANSI bell used in pings_  
-   /id     (user)          _Get a unique ID for a user (hashed IP)_  
-   /ban    (user)          _Ban (user) [admin]_  
-   /kick   (user)          _Kick (user) [admin]_  
+   /id     <user>          _Get a unique ID for a user (hashed IP)_  
+   /ban    <user>          _Ban <user> (admin)_  
+   /kick   <user>          _Kick <user> (admin)_  
    /help                   _Show help_  
    /commands               _Show this message_`, toSlack)
 	}
