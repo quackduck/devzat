@@ -209,6 +209,7 @@ type Credentials struct {
 }
 
 func sendCurrentUsersTwitterMessage() {
+	broadcast(devbot, "sending twitter update", true)
 	names := make([]string, 0, len(users))
 	for _, us := range users {
 		names = append(names, us.name)
