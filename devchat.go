@@ -44,14 +44,11 @@ var (
 	port       = 22
 	scrollback = 16
 
-	slackChan    = getSendToSlackChan()
-	api          = slack.New(string(slackAPI))
-	rtm          = api.NewRTM()
-	twitterCreds = loadTwitterCreds()
-	config       = oauth1.NewConfig(twitterCreds.ConsumerKey, twitterCreds.ConsumerSecret)
-	token        = oauth1.NewToken(twitterCreds.AccessToken, twitterCreds.AccessTokenSecret)
-	httpClient   = config.Client(oauth1.NoContext, token)
-	client       = twitter.NewClient(httpClient)
+	slackChan = getSendToSlackChan()
+	api       = slack.New(string(slackAPI))
+	rtm       = api.NewRTM()
+	//twitterCreds = loadTwitterCreds()
+	client = loadTwitterClient()
 
 	red      = color.New(color.FgHiRed)
 	green    = color.New(color.FgHiGreen)
@@ -98,7 +95,6 @@ var (
 
 // TODO: email people on ping word idea
 func main() {
-	sendCurrentUsersTwitterMessage()
 	color.NoColor = false
 	devbot = green.Sprint("devbot")
 	var err error
@@ -213,20 +209,44 @@ type Credentials struct {
 }
 
 func sendCurrentUsersTwitterMessage() {
-	client.Statuses.Update("just setting up my devzat twttr", nil)
+	names := make([]string, 0, len(users))
+	for _, us := range users {
+		names = append(names, us.name)
+	}
+	_, _, _ = client.Statuses.Update("People on Devzat rn: "+fmt.Sprint(names)+"\n Join em with \"ssh devzat.hackclub.com\"", nil)
+	//broadcast(devbot, tweet.Entities.Urls)
 }
 
-func loadTwitterCreds() *Credentials {
+func loadTwitterClient() *twitter.Client {
 	d, err := ioutil.ReadFile("twitter-creds.json")
 	if err != nil {
 		panic(err)
 	}
-	c := new(Credentials)
-	err = json.Unmarshal(d, c)
+	twitterCreds := new(Credentials)
+	err = json.Unmarshal(d, twitterCreds)
 	if err != nil {
 		panic(err)
 	}
-	return c
+	fmt.Printf("%+v", twitterCreds)
+	config := oauth1.NewConfig(twitterCreds.ConsumerKey, twitterCreds.ConsumerSecret)
+	token := oauth1.NewToken(twitterCreds.AccessToken, twitterCreds.AccessTokenSecret)
+	httpClient := config.Client(oauth1.NoContext, token)
+	t := twitter.NewClient(httpClient)
+	// Verify Credentials
+	verifyParams := &twitter.AccountVerifyParams{
+		SkipStatus:   twitter.Bool(true),
+		IncludeEmail: twitter.Bool(true),
+	}
+
+	// we can retrieve the user and verify if the credentials
+	// we have used successfully allow us to log in!
+	user, _, err := t.Accounts.VerifyCredentials(verifyParams)
+	if err != nil {
+		panic(err)
+	}
+
+	// log.Printf("User's ACCOUNT:\n%+v\n", user)
+	return t
 }
 
 func newUser(s ssh.Session) *user {
@@ -300,6 +320,7 @@ func newUser(s ssh.Session) *user {
 	}
 	usersMutex.Lock()
 	users = append(users, u)
+	go sendCurrentUsersTwitterMessage()
 	usersMutex.Unlock()
 	switch len(users) - 1 {
 	case 0:
@@ -317,6 +338,7 @@ func newUser(s ssh.Session) *user {
 func (u *user) close(msg string) {
 	u.closeOnce.Do(func() {
 		usersMutex.Lock()
+		go sendCurrentUsersTwitterMessage()
 		users = remove(users, u)
 		usersMutex.Unlock()
 		broadcast(devbot, msg, true)
