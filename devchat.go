@@ -215,13 +215,13 @@ func sendCurrentUsersTwitterMessage() {
 	for _, us := range users {
 		names = append(names, us.name)
 	}
-	t, _, err := client.Statuses.Update("People on Devzat rn: "+fmt.Sprint(names)+"\n Join em with \"ssh devzat.hackclub.com\"", nil)
+	t, _, err := client.Statuses.Update("People on Devzat rn: "+stripansi.Strip(fmt.Sprint(names))+"\nJoin em with \"ssh devzat.hackclub.com\"", nil)
 	if err != nil {
 		l.Println("Got twitter err", err)
 		broadcast(devbot, "Sending a twitter update got an error"+fmt.Sprint(err), true)
 		return
 	}
-	broadcast(devbot, "twitter.com/"+t.User.ScreenName+"/"+t.IDStr, true)
+	broadcast(devbot, "twitter.com/"+t.User.ScreenName+"/status/"+t.IDStr, true)
 	//broadcast(devbot, tweet.Entities.Urls)
 }
 
