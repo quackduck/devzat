@@ -248,7 +248,7 @@ func loadTwitterClient() *twitter.Client {
 
 	// we can retrieve the user and verify if the credentials
 	// we have used successfully allow us to log in!
-	user, _, err := t.Accounts.VerifyCredentials(verifyParams)
+	_, _, err = t.Accounts.VerifyCredentials(verifyParams)
 	if err != nil {
 		panic(err)
 	}
@@ -328,7 +328,7 @@ func newUser(s ssh.Session) *user {
 	}
 	usersMutex.Lock()
 	users = append(users, u)
-	sendCurrentUsersTwitterMessage()
+	go sendCurrentUsersTwitterMessage()
 	usersMutex.Unlock()
 	switch len(users) - 1 {
 	case 0:
@@ -347,7 +347,7 @@ func (u *user) close(msg string) {
 	u.closeOnce.Do(func() {
 		usersMutex.Lock()
 		users = remove(users, u)
-		sendCurrentUsersTwitterMessage()
+		go sendCurrentUsersTwitterMessage()
 		usersMutex.Unlock()
 		broadcast(devbot, msg, true)
 		u.session.Close()
