@@ -24,10 +24,10 @@ import (
 	"time"
 	"unicode"
 
-	markdown "github.com/MichaelMure/go-term-markdown"
 	"github.com/acarl005/stripansi"
 	"github.com/fatih/color"
 	"github.com/gliderlabs/ssh"
+	markdown "github.com/quackduck/go-term-markdown"
 	ttt "github.com/shurcooL/tictactoe"
 	"github.com/slack-go/slack"
 	terminal "golang.org/x/term"
@@ -886,7 +886,7 @@ func cleanName(name string) string {
 }
 
 func mdRender(a string, beforeMessageLen int, lineWidth int) string {
-	md := string(markdown.Render(a, lineWidth-(beforeMessageLen), 0))
+	md := string(markdown.Render(a, lineWidth-(beforeMessageLen), 0, markdown.WithBlockquoteShades()))
 	md = strings.TrimSuffix(md, "\n")
 	split := strings.Split(md, "\n")
 	for i := range split {
