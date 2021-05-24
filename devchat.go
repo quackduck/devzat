@@ -328,7 +328,7 @@ func newUser(s ssh.Session) *user {
 	}
 	usersMutex.Lock()
 	users = append(users, u)
-	go sendCurrentUsersTwitterMessage()
+	sendCurrentUsersTwitterMessage()
 	usersMutex.Unlock()
 	switch len(users) - 1 {
 	case 0:
@@ -346,8 +346,8 @@ func newUser(s ssh.Session) *user {
 func (u *user) close(msg string) {
 	u.closeOnce.Do(func() {
 		usersMutex.Lock()
-		go sendCurrentUsersTwitterMessage()
 		users = remove(users, u)
+		sendCurrentUsersTwitterMessage()
 		usersMutex.Unlock()
 		broadcast(devbot, msg, true)
 		u.session.Close()
