@@ -8,7 +8,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/dghubble/go-twitter/twitter"
+	"github.com/dghubble/oauth1"
 	"io"
+	"io/ioutil"
 	"log"
 	"math"
 	"math/rand"
@@ -41,9 +44,14 @@ var (
 	port       = 22
 	scrollback = 16
 
-	slackChan = getSendToSlackChan()
-	api       = slack.New(string(slackAPI))
-	rtm       = api.NewRTM()
+	slackChan    = getSendToSlackChan()
+	api          = slack.New(string(slackAPI))
+	rtm          = api.NewRTM()
+	twitterCreds = loadTwitterCreds()
+	config       = oauth1.NewConfig(twitterCreds.ConsumerKey, twitterCreds.ConsumerSecret)
+	token        = oauth1.NewToken(twitterCreds.AccessToken, twitterCreds.AccessTokenSecret)
+	httpClient   = config.Client(oauth1.NoContext, token)
+	client       = twitter.NewClient(httpClient)
 
 	red      = color.New(color.FgHiRed)
 	green    = color.New(color.FgHiGreen)
@@ -90,6 +98,7 @@ var (
 
 // TODO: email people on ping word idea
 func main() {
+	sendCurrentUsersTwitterMessage()
 	color.NoColor = false
 	devbot = green.Sprint("devbot")
 	var err error
@@ -193,6 +202,31 @@ type hangman struct {
 	word      string
 	triesLeft int
 	guesses   string // string containing all the guessed characters
+}
+
+// Twitter creds
+type Credentials struct {
+	ConsumerKey       string
+	ConsumerSecret    string
+	AccessToken       string
+	AccessTokenSecret string
+}
+
+func sendCurrentUsersTwitterMessage() {
+	client.Statuses.Update("just setting up my devzat twttr", nil)
+}
+
+func loadTwitterCreds() *Credentials {
+	d, err := ioutil.ReadFile("twitter-creds.json")
+	if err != nil {
+		panic(err)
+	}
+	c := new(Credentials)
+	err = json.Unmarshal(d, c)
+	if err != nil {
+		panic(err)
+	}
+	return c
 }
 
 func newUser(s ssh.Session) *user {
@@ -886,7 +920,7 @@ func cleanName(name string) string {
 }
 
 func mdRender(a string, beforeMessageLen int, lineWidth int) string {
-	md := string(markdown.Render(a, lineWidth-(beforeMessageLen), 0, markdown.WithBlockquoteShades()))
+	md := string(markdown.Render(a, lineWidth-(beforeMessageLen), 0))
 	md = strings.TrimSuffix(md, "\n")
 	split := strings.Split(md, "\n")
 	for i := range split {
