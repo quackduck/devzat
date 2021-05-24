@@ -218,7 +218,7 @@ func sendCurrentUsersTwitterMessage() {
 		broadcast(devbot, "Sending a twitter update got an error"+fmt.Sprint(err), true)
 		return
 	}
-	broadcast(devbot, "twitter.com/"+t.User.ScreenName+"/"+t.User.IDStr, true)
+	broadcast(devbot, "twitter.com/"+t.User.ScreenName+"/"+t.IDStr, true)
 	//broadcast(devbot, tweet.Entities.Urls)
 }
 
