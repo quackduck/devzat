@@ -919,8 +919,11 @@ func tttPrint(cells [9]ttt.State) string {
 	fmt.Fprintln(&buf, "───┼───┼───")
 	fmt.Fprintf(&buf, " %v │ %v │ %v ", strcells[6], strcells[7], strcells[8])
 
+	result := buf.String()
+	result = strings.ReplaceAll(result, ttt.X.String(), color.HiYellowString(ttt.X.String()))
+	result = strings.ReplaceAll(result, ttt.O.String(), color.HiGreenString(ttt.O.String()))
 	// hasStartedGame = true
-	return buf.String()
+	return result
 }
 
 func auth(u *user) bool {
