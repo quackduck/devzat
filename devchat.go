@@ -209,19 +209,34 @@ type Credentials struct {
 }
 
 func sendCurrentUsersTwitterMessage() {
-	l.Println("Sending twitter update")
-	//broadcast(devbot, "sending twitter update", true)
-	names := make([]string, 0, len(users))
-	for _, us := range users {
-		names = append(names, us.name)
+	usersSnapshot := users
+	areUsersEqual := func(a []*user, b []*user) bool {
+		for i := range a {
+			if b[i] != a[i] {
+				return false
+			}
+		}
+		return true
 	}
-	t, _, err := client.Statuses.Update("People on Devzat rn: "+stripansi.Strip(fmt.Sprint(names))+"\nJoin em with \"ssh devzat.hackclub.com\"\n"+strconv.Itoa(rand.Intn(20)), nil)
-	if err != nil {
-		l.Println("Got twitter err", err)
-		broadcast(devbot, "Sending a twitter update got an error"+fmt.Sprint(err), true)
-		return
-	}
-	broadcast(devbot, "twitter.com/"+t.User.ScreenName+"/status/"+t.IDStr, true)
+	go func() {
+		time.Sleep(time.Minute)
+		if !areUsersEqual(users, usersSnapshot) {
+			return
+		}
+		l.Println("Sending twitter update")
+		//broadcast(devbot, "sending twitter update", true)
+		names := make([]string, 0, len(users))
+		for _, us := range users {
+			names = append(names, us.name)
+		}
+		t, _, err := client.Statuses.Update("People on Devzat rn: "+stripansi.Strip(fmt.Sprint(names))+"\nJoin em with \"ssh devzat.hackclub.com\"\n"+strconv.Itoa(rand.Intn(20)), nil)
+		if err != nil {
+			l.Println("Got twitter err", err)
+			broadcast(devbot, "Sending a twitter update got an error"+fmt.Sprint(err), true)
+			return
+		}
+		broadcast(devbot, "twitter.com/"+t.User.ScreenName+"/status/"+t.IDStr, true)
+	}()
 	//broadcast(devbot, tweet.Entities.Urls)
 }
 
