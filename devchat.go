@@ -444,7 +444,7 @@ func runCommands(line string, u *user, isSlack bool) {
 	if strings.HasPrefix(line, "/hide") && !isSlack {
 		toSlack = false
 	}
-	if strings.HasPrefix(line, "#") && !isSlack {
+	if strings.HasPrefix(line, "#") && !isSlack && !strings.HasPrefix(line, "# ") {
 		toSlack = false
 		rest := strings.TrimSpace(strings.TrimPrefix(line, "#"))
 		restSplit := strings.Fields(rest)
