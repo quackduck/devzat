@@ -211,6 +211,9 @@ type Credentials struct {
 func sendCurrentUsersTwitterMessage() {
 	usersSnapshot := users
 	areUsersEqual := func(a []*user, b []*user) bool {
+		if len(a) != len(b) {
+			return false
+		}
 		for i := range a {
 			if b[i] != a[i] {
 				return false
@@ -232,7 +235,7 @@ func sendCurrentUsersTwitterMessage() {
 		t, _, err := client.Statuses.Update("People on Devzat rn: "+stripansi.Strip(fmt.Sprint(names))+"\nJoin em with \"ssh devzat.hackclub.com\"\n"+strconv.Itoa(rand.Intn(20)), nil)
 		if err != nil {
 			l.Println("Got twitter err", err)
-			broadcast(devbot, "Sending a twitter update got an error"+fmt.Sprint(err), true)
+			broadcast(devbot, "err: "+err.Error(), true)
 			return
 		}
 		broadcast(devbot, "twitter.com/"+t.User.ScreenName+"/status/"+t.IDStr, true)
@@ -250,7 +253,6 @@ func loadTwitterClient() *twitter.Client {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("%+v", twitterCreds)
 	config := oauth1.NewConfig(twitterCreds.ConsumerKey, twitterCreds.ConsumerSecret)
 	token := oauth1.NewToken(twitterCreds.AccessToken, twitterCreds.AccessTokenSecret)
 	httpClient := config.Client(oauth1.NoContext, token)
@@ -344,6 +346,9 @@ func (u *user) close(msg string) {
 		go sendCurrentUsersTwitterMessage()
 		usersMutex.Unlock()
 		broadcast(devbot, msg, true)
+		if time.Since(u.joinTime) > time.Minute/2 {
+			broadcast(devbot, u.name+" stayed on for "+printPrettyDuration(time.Since(u.joinTime)), true)
+		}
 		u.session.Close()
 	})
 }
@@ -453,9 +458,9 @@ func runCommands(line string, u *user, isSlack bool) {
 	if strings.HasPrefix(line, "/hide") && !isSlack {
 		toSlack = false
 	}
-	if strings.HasPrefix(line, "#") && !isSlack && !strings.HasPrefix(line, "# ") {
+	if strings.HasPrefix(line, "/") && !isSlack {
 		toSlack = false
-		rest := strings.TrimSpace(strings.TrimPrefix(line, "#"))
+		rest := strings.TrimSpace(strings.TrimPrefix(line, "/"))
 		restSplit := strings.Fields(rest)
 		if len(restSplit) < 2 {
 			u.writeln(devbot, "You gotta have a message mate")
@@ -467,13 +472,12 @@ func runCommands(line string, u *user, isSlack bool) {
 			return
 		}
 		msg := strings.TrimSpace(strings.TrimPrefix(rest, restSplit[0]))
-		//u.writeln(u.name+" -> "+peer.name, msg)
 		u.writeln(peer.name+" <- ", msg)
 		if u == peer {
-			go func() {
-				time.Sleep(time.Second / 2)
-				u.writeln(devbot, "You must be really lonely, DMing yourself. Don't worry, I won't judge :wink:")
-			}()
+			devbotRespond([]string{"You must be really lonely, DMing yourself.",
+				"Don't worry, I won't judge :wink:",
+				"srsly?",
+				"what an idiot"}, 30, false)
 			return
 		}
 		peer.writeln(u.name+" -> ", msg)
@@ -591,7 +595,6 @@ func runCommands(line string, u *user, isSlack bool) {
 		for _, name := range allUsers {
 			names = append(names, name)
 		}
-		//sort.Strings(names)
 		sort.Slice(names, func(i, j int) bool {
 			return strings.ToLower(stripansi.Strip(names[i])) < strings.ToLower(stripansi.Strip(names[j]))
 		})
@@ -792,7 +795,7 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
 	}
 	if line == "/commands" {
 		broadcast("", `**Available commands**  
-   #<user> <msg>           _DM <user> with <msg>_  
+   /<user> <msg>           _DM <user> with <msg>_  
    /users                  _List users_  
    /nick   <name>          _Change your name_  
    /tic    <cell num>      _Play Tic Tac Toe!_  
@@ -815,6 +818,16 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
 
 func devbotChat(line string, toSlack bool) {
 	if strings.Contains(line, "devbot") {
+		if strings.Contains(line, "how are you") || strings.Contains(line, "how you") {
+			devbotRespond([]string{"How are _you_",
+				"Good as always lol",
+				"Ah the usual, solving quantum gravity :smile:",
+				"Howdy?",
+				"Thinking about intergalactic cows",
+				"Could maths be different in other universes?",
+				""}, 99, toSlack)
+			return
+		}
 		if strings.Contains(line, "thank") {
 			devbotRespond([]string{"you're welcome",
 				"no problem",
@@ -839,10 +852,15 @@ func devbotChat(line string, toSlack bool) {
 		}
 		devbotRespond([]string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "Devbot to the rescue!", ":wave:"}, 90, toSlack)
 	}
+
 	if line == "help" || strings.Contains(line, "help me") {
 		devbotRespond([]string{"Run /help to get help!",
 			"Looking for /help?",
 			"See available commands with /commands or see help with /help :star:"}, 100, toSlack)
+	}
+
+	if strings.Contains(line, "where") && strings.Contains(line, "repo") {
+		devbotRespond([]string{"The repo's at github.com/quackduck/devzat!", ":star: github.com/quackduck/devzat :star:", "# github.com/quackduck/devzat"}, 100, toSlack)
 	}
 
 	if strings.Contains(line, "rocket") || strings.Contains(line, "spacex") || strings.Contains(line, "tesla") {
