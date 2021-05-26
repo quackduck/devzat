@@ -328,11 +328,11 @@ func newUser(s ssh.Session) *user {
 	usersMutex.Unlock()
 	switch len(users) - 1 {
 	case 0:
-		u.writeln("", "**"+cyan.Sprint("Welcome to the chat. There are no more users")+"**")
+		u.writeln("", blue.Sprint("Welcome to the chat. There are no more users"))
 	case 1:
-		u.writeln("", "**"+cyan.Sprint("Welcome to the chat. There is one more user")+"**")
+		u.writeln("", yellow.Sprint("Welcome to the chat. There is one more user"))
 	default:
-		u.writeln("", "**"+cyan.Sprint("Welcome to the chat. There are ", len(users)-1, " more users")+"**")
+		u.writeln("", green.Sprint("Welcome to the chat. There are ", len(users)-1, " more users"))
 	}
 	//_, _ = term.Write([]byte(strings.Join(backlog, ""))) // print out backlog
 	broadcast(devbot, u.name+green.Sprint(" has joined the chat"), true)
@@ -458,9 +458,9 @@ func runCommands(line string, u *user, isSlack bool) {
 	if strings.HasPrefix(line, "/hide") && !isSlack {
 		toSlack = false
 	}
-	if strings.HasPrefix(line, "/") && !isSlack {
+	if strings.HasPrefix(line, "&") && !isSlack {
 		toSlack = false
-		rest := strings.TrimSpace(strings.TrimPrefix(line, "/"))
+		rest := strings.TrimSpace(strings.TrimPrefix(line, "&"))
 		restSplit := strings.Fields(rest)
 		if len(restSplit) < 2 {
 			u.writeln(devbot, "You gotta have a message mate")
