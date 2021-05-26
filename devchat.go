@@ -174,18 +174,18 @@ func broadcast(senderName, msg string, toSlack bool) {
 }
 
 type user struct {
-	name            string
-	session         ssh.Session
-	term            *terminal.Terminal
-	bell            bool
-	color           color.Color
-	id              string
-	addr            string
-	win             ssh.Window
-	closeOnce       sync.Once
-	lastMessageTime time.Time
-	joinTime        time.Time
-	timezone        *time.Location
+	name          string
+	session       ssh.Session
+	term          *terminal.Terminal
+	bell          bool
+	color         color.Color
+	id            string
+	addr          string
+	win           ssh.Window
+	closeOnce     sync.Once
+	lastTimestamp time.Time
+	joinTime      time.Time
+	timezone      *time.Location
 }
 
 type backlogmessage struct {
@@ -219,7 +219,7 @@ func sendCurrentUsersTwitterMessage() {
 		return true
 	}
 	go func() {
-		time.Sleep(time.Minute)
+		time.Sleep(time.Second * 30)
 		if !areUsersEqual(users, usersSnapshot) {
 			return
 		}
@@ -255,20 +255,6 @@ func loadTwitterClient() *twitter.Client {
 	token := oauth1.NewToken(twitterCreds.AccessToken, twitterCreds.AccessTokenSecret)
 	httpClient := config.Client(oauth1.NoContext, token)
 	t := twitter.NewClient(httpClient)
-	// Verify Credentials
-	verifyParams := &twitter.AccountVerifyParams{
-		SkipStatus:   twitter.Bool(true),
-		IncludeEmail: twitter.Bool(true),
-	}
-
-	// we can retrieve the user and verify if the credentials
-	// we have used successfully allow us to log in!
-	_, _, err = t.Accounts.VerifyCredentials(verifyParams)
-	if err != nil {
-		panic(err)
-	}
-
-	// log.Printf("User's ACCOUNT:\n%+v\n", user)
 	return t
 }
 
@@ -279,7 +265,7 @@ func newUser(s ssh.Session) *user {
 	w := pty.Window
 	host, _, err := net.SplitHostPort(s.RemoteAddr().String()) // definitely should not give an err
 	if err != nil {
-		term.Write([]byte(fmt.Sprintln(err) + "\n"))
+		term.Write([]byte(err.Error() + "\n"))
 		s.Close()
 		return nil
 	}
@@ -322,16 +308,9 @@ func newUser(s ssh.Session) *user {
 		lastStamp := backlog[0].timestamp
 		u.term.Write([]byte(strings.TrimSuffix(u.joinTime.Sub(lastStamp).Round(time.Minute).String(), "0s") + " earlier\n"))
 		for i := range backlog {
-			//u.writeln("", backlog[i].timestamp.Format(time.Stamp))
 			if backlog[i].timestamp.Sub(lastStamp) > time.Minute {
 				lastStamp = backlog[i].timestamp
-				//u.writeln("", strconv.Itoa(i))
-				s := strings.TrimSuffix(u.joinTime.Sub(lastStamp).Round(time.Minute).String(), "0s")
-				if s != "" {
-					u.term.Write([]byte("\n" + s + " earlier\n"))
-				} else {
-					u.term.Write([]byte("\nJust now (< 1m earlier)\n"))
-				}
+				u.rwriteln(printPrettyDuration(u.joinTime.Sub(lastStamp)) + " earlier")
 			}
 			u.writeln(backlog[i].senderName, backlog[i].text)
 		}
@@ -381,7 +360,7 @@ func (u *user) writeln(senderName string, msg string) {
 		//msg = strings.TrimSpace(mdRender(msg, len(stripansi.Strip(senderName))+2, u.win.Width))
 		if strings.HasSuffix(senderName, " <- ") || strings.HasSuffix(senderName, " -> ") {
 			msg = strings.TrimSpace(mdRender(msg, len(stripansi.Strip(senderName)), u.win.Width))
-			msg = senderName + msg
+			msg = senderName + msg + "\a"
 		} else {
 			msg = strings.TrimSpace(mdRender(msg, len(stripansi.Strip(senderName))+2, u.win.Width))
 			msg = senderName + ": " + msg
@@ -389,19 +368,34 @@ func (u *user) writeln(senderName string, msg string) {
 	} else {
 		msg = strings.TrimSpace(mdRender(msg, 0, u.win.Width)) // No sender
 	}
-	if time.Since(u.lastMessageTime) > time.Minute {
+	if time.Since(u.lastTimestamp) > time.Minute {
 		if u.timezone == nil {
-			u.term.Write([]byte("\n" + strings.TrimSuffix(time.Since(u.joinTime).Round(time.Minute).String(), "0s") + " in\n"))
+			u.rwriteln(printPrettyDuration(time.Since(u.joinTime)) + " in")
 		} else {
-			u.term.Write([]byte("\n" + time.Now().In(u.timezone).Format("3:04 pm") + "\n"))
+			u.rwriteln(time.Now().In(u.timezone).Format("3:04 pm"))
 		}
-		u.lastMessageTime = time.Now()
+		u.lastTimestamp = time.Now()
 	}
-	//if u.bell {
-	//	u.term.Write([]byte(msg + "\a\n")) // "\a" is beep
-	//} else {
 	u.term.Write([]byte(msg + "\n"))
-	//}
+}
+
+func printPrettyDuration(d time.Duration) string {
+	//return strings.TrimSuffix(d.Round(time.Minute).String(), "0s")
+	s := strings.TrimSpace(strings.TrimSuffix(d.Round(time.Minute).String(), "0s"))
+	s = strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(s, "h", " hours "), "m", " minutes"), "1 minutes", "1 minute")
+	if s == "" {
+		s = "Less than a minute"
+	}
+	return strings.TrimSpace(s)
+}
+
+// Write to the right of the user's window
+func (u *user) rwriteln(msg string) {
+	if u.win.Width-len([]rune(msg)) > 0 {
+		u.term.Write([]byte(strings.Repeat(" ", u.win.Width-len([]rune(msg))) + msg + "\n"))
+	} else {
+		u.term.Write([]byte(msg + "\n"))
+	}
 }
 
 func (u *user) pickUsername(possibleName string) {
