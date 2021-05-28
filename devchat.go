@@ -809,9 +809,9 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
    /color  <color>         _Change your name's color_  
    /all                    _Get a list of all users ever_  
    /emojis                 _See a list of emojis_  
-   /exit                   _Leave the chat_
+   /exit                   _Leave the chat_  
    /help                   _Show help_  
-   /commands               _Show this message_
+   /commands               _Show this message_  
    /commands-rest          _Uncommon commands list_`, toSlack)
 		return
 	}
@@ -824,7 +824,7 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
    /kick   <user>          _Kick <user> (admin)_  
    /ascii-art              _Show some panda art_  
    /example-code           _Example syntax-highlighted code_  
-   /banIP  <IP/ID>         _Ban by IP or ID (admin)`, toSlack)
+   /banIP  <IP/ID>         _Ban by IP or ID (admin)_`, toSlack)
 	}
 }
 
