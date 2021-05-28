@@ -308,11 +308,11 @@ func newUser(s ssh.Session) *user {
 	}
 	if len(backlog) > 0 {
 		lastStamp := backlog[0].timestamp
-		u.term.Write([]byte(strings.TrimSuffix(u.joinTime.Sub(lastStamp).Round(time.Minute).String(), "0s") + " earlier\n"))
+		u.midwriteln(printPrettyDuration(u.joinTime.Sub(lastStamp)) + " earlier")
 		for i := range backlog {
 			if backlog[i].timestamp.Sub(lastStamp) > time.Minute {
 				lastStamp = backlog[i].timestamp
-				u.rwriteln(printPrettyDuration(u.joinTime.Sub(lastStamp)) + " earlier")
+				u.midwriteln(printPrettyDuration(u.joinTime.Sub(lastStamp)) + " earlier")
 			}
 			u.writeln(backlog[i].senderName, backlog[i].text)
 		}
@@ -375,9 +375,9 @@ func (u *user) writeln(senderName string, msg string) {
 	}
 	if time.Since(u.lastTimestamp) > time.Minute {
 		if u.timezone == nil {
-			u.rwriteln(printPrettyDuration(time.Since(u.joinTime)) + " in")
+			u.midwriteln(printPrettyDuration(time.Since(u.joinTime)) + " in")
 		} else {
-			u.rwriteln(time.Now().In(u.timezone).Format("3:04 pm"))
+			u.midwriteln(time.Now().In(u.timezone).Format("3:04 pm"))
 		}
 		u.lastTimestamp = time.Now()
 	}
@@ -387,17 +387,21 @@ func (u *user) writeln(senderName string, msg string) {
 func printPrettyDuration(d time.Duration) string {
 	//return strings.TrimSuffix(d.Round(time.Minute).String(), "0s")
 	s := strings.TrimSpace(strings.TrimSuffix(d.Round(time.Minute).String(), "0s"))
-	s = strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(s, "h", " hours "), "m", " minutes"), "1 minutes", "1 minute")
+	s = strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(
+		s, "h", " hours "),
+		"m", " minutes"),
+		"1 minutes", "1 minute"),
+		"1 hours", "1 hour")
 	if s == "" {
 		s = "Less than a minute"
 	}
 	return strings.TrimSpace(s)
 }
 
-// Write to the right of the user's window
-func (u *user) rwriteln(msg string) {
-	if u.win.Width-len([]rune(msg)) > 0 {
-		u.term.Write([]byte(strings.Repeat(" ", u.win.Width-len([]rune(msg))) + msg + "\n"))
+// Write to the middle of the user's window
+func (u *user) midwriteln(msg string) {
+	if (u.win.Width/2)-(len([]rune(msg))/2) > 0 {
+		u.term.Write([]byte(strings.Repeat(" ", (u.win.Width/2)-(len([]rune(msg))/2)) + msg + "\n"))
 	} else {
 		u.term.Write([]byte(msg + "\n"))
 	}
@@ -794,7 +798,7 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
 		return
 	}
 	if line == "/commands" {
-		broadcast("", `**Available commands**  
+		broadcast("", `Available commands  
    =<user> <msg>           _DM <user> with <msg>_  
    /users                  _List users_  
    /nick   <name>          _Change your name_  
@@ -805,14 +809,22 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
    /color  <color>         _Change your name's color_  
    /all                    _Get a list of all users ever_  
    /emojis                 _See a list of emojis_  
-   /exit                   _Leave the chat_  
+   /exit                   _Leave the chat_
+   /help                   _Show help_  
+   /commands               _Show this message_
+   /commands-rest          _Uncommon commands list_`, toSlack)
+		return
+	}
+	if line == "/commands-rest" {
+		broadcast("", `All Commands  
    /hide                   _Hide messages from HC Slack_  
    /bell                   _Toggle the ANSI bell used in pings_  
    /id     <user>          _Get a unique ID for a user (hashed IP)_  
    /ban    <user>          _Ban <user> (admin)_  
    /kick   <user>          _Kick <user> (admin)_  
-   /help                   _Show help_  
-   /commands               _Show this message_`, toSlack)
+   /ascii-art              _Show some panda art_  
+   /example-code           _Example syntax-highlighted code_  
+   /banIP  <IP/ID>         _Ban by IP or ID (admin)`, toSlack)
 	}
 }
 
