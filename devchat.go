@@ -209,6 +209,9 @@ type Credentials struct {
 }
 
 func sendCurrentUsersTwitterMessage() {
+	if len(users) == 0 {
+		return
+	}
 	usersSnapshot := users
 	areUsersEqual := func(a []*user, b []*user) bool {
 		if len(a) != len(b) {
@@ -308,11 +311,11 @@ func newUser(s ssh.Session) *user {
 	}
 	if len(backlog) > 0 {
 		lastStamp := backlog[0].timestamp
-		u.midwriteln(printPrettyDuration(u.joinTime.Sub(lastStamp)) + " earlier")
+		u.rwriteln(printPrettyDuration(u.joinTime.Sub(lastStamp)) + " earlier")
 		for i := range backlog {
 			if backlog[i].timestamp.Sub(lastStamp) > time.Minute {
 				lastStamp = backlog[i].timestamp
-				u.midwriteln(printPrettyDuration(u.joinTime.Sub(lastStamp)) + " earlier")
+				u.rwriteln(printPrettyDuration(u.joinTime.Sub(lastStamp)) + " earlier")
 			}
 			u.writeln(backlog[i].senderName, backlog[i].text)
 		}
@@ -375,9 +378,9 @@ func (u *user) writeln(senderName string, msg string) {
 	}
 	if time.Since(u.lastTimestamp) > time.Minute {
 		if u.timezone == nil {
-			u.midwriteln(printPrettyDuration(time.Since(u.joinTime)) + " in")
+			u.rwriteln(printPrettyDuration(time.Since(u.joinTime)) + " in")
 		} else {
-			u.midwriteln(time.Now().In(u.timezone).Format("3:04 pm"))
+			u.rwriteln(time.Now().In(u.timezone).Format("3:04 pm"))
 		}
 		u.lastTimestamp = time.Now()
 	}
@@ -398,10 +401,10 @@ func printPrettyDuration(d time.Duration) string {
 	return strings.TrimSpace(s)
 }
 
-// Write to the middle of the user's window
-func (u *user) midwriteln(msg string) {
-	if (u.win.Width/2)-(len([]rune(msg))/2) > 0 {
-		u.term.Write([]byte(strings.Repeat(" ", (u.win.Width/2)-(len([]rune(msg))/2)) + msg + "\n"))
+// Write to the right of the user's window
+func (u *user) rwriteln(msg string) {
+	if u.win.Width-len([]rune(msg)) > 0 {
+		u.term.Write([]byte(strings.Repeat(" ", u.win.Width-len([]rune(msg))) + msg + "\n"))
 	} else {
 		u.term.Write([]byte(msg + "\n"))
 	}
@@ -869,6 +872,10 @@ func devbotChat(line string, toSlack bool) {
 		devbotRespond([]string{"Run /help to get help!",
 			"Looking for /help?",
 			"See available commands with /commands or see help with /help :star:"}, 100, toSlack)
+	}
+
+	if line == "ls" {
+		devbotRespond([]string{"/help", "Not a shell.", "bruv", "yeah no, this is not your regular ssh server"}, 100, toSlack)
 	}
 
 	if strings.Contains(line, "where") && strings.Contains(line, "repo") {
