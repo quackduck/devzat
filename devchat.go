@@ -60,7 +60,8 @@ var (
 	white    = color.New(color.FgHiWhite)
 	colorArr = []*color.Color{yellow, cyan, magenta, green, white, blue, red}
 
-	devbot = ""
+	devbot      = ""
+	startupTime = time.Now()
 
 	users      = make([]*user, 0, 10)
 	usersMutex = sync.Mutex{}
@@ -235,7 +236,7 @@ func sendCurrentUsersTwitterMessage() {
 		for _, us := range users {
 			names = append(names, us.name)
 		}
-		t, _, err := client.Statuses.Update("People on Devzat rn: "+stripansi.Strip(fmt.Sprint(names))+"\nJoin em with \"ssh devzat.hackclub.com\"\n"+strconv.Itoa(rand.Intn(20)), nil)
+		t, _, err := client.Statuses.Update("People on Devzat rn: "+stripansi.Strip(fmt.Sprint(names))+"\nJoin em with \"ssh devzat.hackclub.com\"\nUptime: "+printPrettyDuration(time.Since(startupTime)), nil)
 		if err != nil {
 			l.Println("Got twitter err", err)
 			broadcast(devbot, "err: "+err.Error(), true)
@@ -462,11 +463,21 @@ func runCommands(line string, u *user, isSlack bool) {
 	}
 
 	toSlack := true
+	b := func(senderName, msg string) {
+		broadcast(senderName, msg, true)
+	}
+
 	if strings.HasPrefix(line, "/hide") && !isSlack {
 		toSlack = false
+		b = func(senderName, msg string) {
+			broadcast(senderName, msg, false)
+		}
 	}
 	if strings.HasPrefix(line, "=") && !isSlack {
 		toSlack = false
+		b = func(senderName, msg string) {
+			broadcast(senderName, msg, false)
+		}
 		rest := strings.TrimSpace(strings.TrimPrefix(line, "="))
 		restSplit := strings.Fields(rest)
 		if len(restSplit) < 2 {
@@ -496,28 +507,28 @@ func runCommands(line string, u *user, isSlack bool) {
 		if len(rest) > 1 {
 			u.writeln(u.name, line)
 			hangGame = &hangman{rest, 15, " "} // default value of guesses so empty space is given away
-			broadcast(devbot, u.name+" has started a new game of Hangman! Guess letters with /hang <letter>", toSlack)
-			broadcast(devbot, "```\n"+hangPrint(hangGame)+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```", toSlack)
+			b(devbot, u.name+" has started a new game of Hangman! Guess letters with /hang <letter>")
+			b(devbot, "```\n"+hangPrint(hangGame)+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```")
 			return
 		} else { // allow message to show to everyone
 			if !isSlack {
-				broadcast(u.name, line, toSlack)
+				b(u.name, line)
 			}
 		}
 		if strings.Trim(hangGame.word, hangGame.guesses) == "" {
-			broadcast(devbot, "The game has ended. Start a new game with /hang <word>", toSlack)
+			b(devbot, "The game has ended. Start a new game with /hang <word>")
 			return
 		}
 		if len(rest) == 0 {
-			broadcast(devbot, "Start a new game with /hang <word> or guess with /hang <letter>", toSlack)
+			b(devbot, "Start a new game with /hang <word> or guess with /hang <letter>")
 			return
 		}
 		if hangGame.triesLeft == 0 {
-			broadcast(devbot, "No more tries! The word was "+hangGame.word, toSlack)
+			b(devbot, "No more tries! The word was "+hangGame.word)
 			return
 		}
 		if strings.Contains(hangGame.guesses, rest) {
-			broadcast(devbot, "You already guessed "+rest, toSlack)
+			b(devbot, "You already guessed "+rest)
 			return
 		} else {
 			hangGame.guesses += rest
@@ -527,55 +538,55 @@ func runCommands(line string, u *user, isSlack bool) {
 		}
 
 		display := hangPrint(hangGame)
-		broadcast(devbot, "```\n"+display+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```", toSlack)
+		b(devbot, "```\n"+display+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```")
 
 		if strings.Trim(hangGame.word, hangGame.guesses) == "" {
-			broadcast(devbot, "You got it! The word was "+hangGame.word, toSlack)
+			b(devbot, "You got it! The word was "+hangGame.word)
 		} else if hangGame.triesLeft == 0 {
-			broadcast(devbot, "No more tries! The word was "+hangGame.word, toSlack)
+			b(devbot, "No more tries! The word was "+hangGame.word)
 		}
 		return
 	}
 	if strings.HasPrefix(line, "/tic") {
 		rest := strings.TrimSpace(strings.TrimPrefix(line, "/tic"))
 		if rest == "" {
-			broadcast(devbot, "Starting a new game of Tic Tac Toe! The first player is always X.", toSlack)
-			broadcast(devbot, "Play using /tic <cell num>", toSlack)
+			b(devbot, "Starting a new game of Tic Tac Toe! The first player is always X.")
+			b(devbot, "Play using /tic <cell num>")
 			currentPlayer = ttt.X
 			tttGame = new(ttt.Board)
-			//broadcast(devbot, "```\n"+"0│1│2\n3"+"\n```", toSlack)
-			broadcast(devbot, "```\n"+tttPrint(tttGame.Cells)+"\n```", toSlack)
+			//b(devbot, "```\n"+"0│1│2\n3"+"\n```")
+			b(devbot, "```\n"+tttPrint(tttGame.Cells)+"\n```")
 			return
 		}
 
 		// if !hasGameStarted(tttGame.Cells) {
-		// 	broadcast(devbot, "You need to start a game first!", toSlack)
-		// 	broadcast(devbot, "Start again using the /tic command.", toSlack)
+		// 	b(devbot, "You need to start a game first!")
+		// 	b(devbot, "Start again using the /tic command.")
 		// 	return
 		// }
 
 		m, err := strconv.Atoi(rest)
 		if err != nil {
-			broadcast(devbot, "Make sure you're using a number lol", toSlack)
+			b(devbot, "Make sure you're using a number lol")
 			return
 		}
 		if m < 1 || m > 9 {
-			broadcast(devbot, "Moves are numbers between 1 and 9!", toSlack)
+			b(devbot, "Moves are numbers between 1 and 9!")
 			return
 		}
 		err = tttGame.Apply(ttt.Move(m-1), currentPlayer)
 		if err != nil {
-			broadcast(devbot, err.Error(), toSlack)
+			b(devbot, err.Error())
 			return
 		}
-		broadcast(devbot, "```\n"+tttPrint(tttGame.Cells)+"\n```", toSlack)
+		b(devbot, "```\n"+tttPrint(tttGame.Cells)+"\n```")
 		if currentPlayer == ttt.X {
 			currentPlayer = ttt.O
 		} else {
 			currentPlayer = ttt.X
 		}
 		if !(tttGame.Condition() == ttt.NotEnd) {
-			broadcast(devbot, tttGame.Condition().String(), toSlack)
+			b(devbot, tttGame.Condition().String())
 			currentPlayer = ttt.X
 			tttGame = new(ttt.Board)
 			// hasStartedGame = false
@@ -584,7 +595,7 @@ func runCommands(line string, u *user, isSlack bool) {
 	}
 
 	if !isSlack { // actually sends the message
-		broadcast(u.name, line, toSlack)
+		b(u.name, line)
 	}
 
 	devbotChat(line, toSlack)
@@ -594,7 +605,7 @@ func runCommands(line string, u *user, isSlack bool) {
 		for _, us := range users {
 			names = append(names, us.name)
 		}
-		broadcast("", fmt.Sprint(names), toSlack)
+		b("", fmt.Sprint(names))
 		return
 	}
 	if line == "/all" {
@@ -605,13 +616,13 @@ func runCommands(line string, u *user, isSlack bool) {
 		sort.Slice(names, func(i, j int) bool {
 			return strings.ToLower(stripansi.Strip(names[i])) < strings.ToLower(stripansi.Strip(names[j]))
 		})
-		broadcast("", fmt.Sprint(names), toSlack)
+		b("", fmt.Sprint(names))
 		return
 	}
 	if line == "easter" {
 		go func() {
 			time.Sleep(time.Second)
-			broadcast(devbot, "eggs?", toSlack)
+			b(devbot, "eggs?")
 		}()
 		return
 	}
@@ -622,9 +633,9 @@ func runCommands(line string, u *user, isSlack bool) {
 	if line == "/bell" && !isSlack {
 		u.bell = !u.bell
 		if u.bell {
-			broadcast("", fmt.Sprint("bell on"), toSlack)
+			b("", fmt.Sprint("bell on"))
 		} else {
-			broadcast("", fmt.Sprint("bell off"), toSlack)
+			b("", fmt.Sprint("bell off"))
 		}
 		return
 	}
@@ -637,19 +648,19 @@ func runCommands(line string, u *user, isSlack bool) {
 		}
 		u.timezone, err = time.LoadLocation(tz)
 		if err != nil {
-			broadcast(devbot, "Weird timezone you have there, use Continent/City, EST, PST or see nodatime.org/TimeZones!", toSlack)
+			b(devbot, "Weird timezone you have there, use Continent/City, EST, PST or see nodatime.org/TimeZones!")
 			return
 		}
-		broadcast(devbot, "Done!", toSlack)
+		b(devbot, "Done!")
 		return
 	}
 	if strings.HasPrefix(line, "/id") {
 		victim, ok := findUserByName(strings.TrimSpace(strings.TrimPrefix(line, "/id")))
 		if !ok {
-			broadcast("", "User not found", toSlack)
+			b("", "User not found")
 			return
 		}
-		broadcast("", victim.id, toSlack)
+		b("", victim.id)
 		return
 	}
 	if strings.HasPrefix(line, "/nick") && !isSlack {
@@ -658,7 +669,7 @@ func runCommands(line string, u *user, isSlack bool) {
 	}
 	if strings.HasPrefix(line, "/banIP") && !isSlack {
 		if !auth(u) {
-			broadcast(devbot, "Not authorized", toSlack)
+			b(devbot, "Not authorized")
 			return
 		}
 		bansMutex.Lock()
@@ -671,11 +682,11 @@ func runCommands(line string, u *user, isSlack bool) {
 	if strings.HasPrefix(line, "/ban") && !isSlack {
 		victim, ok := findUserByName(strings.TrimSpace(strings.TrimPrefix(line, "/ban")))
 		if !ok {
-			broadcast("", "User not found", toSlack)
+			b("", "User not found")
 			return
 		}
 		if !auth(u) {
-			broadcast(devbot, "Not authorized", toSlack)
+			b(devbot, "Not authorized")
 			return
 		}
 		bansMutex.Lock()
@@ -688,11 +699,11 @@ func runCommands(line string, u *user, isSlack bool) {
 	if strings.HasPrefix(line, "/kick") && !isSlack {
 		victim, ok := findUserByName(strings.TrimSpace(strings.TrimPrefix(line, "/kick")))
 		if !ok {
-			broadcast("", "User not found", toSlack)
+			b("", "User not found")
 			return
 		}
 		if !auth(u) {
-			broadcast(devbot, "Not authorized", toSlack)
+			b(devbot, "Not authorized")
 			return
 		}
 		victim.close(victim.name + red.Sprint(" has been kicked by ") + u.name)
@@ -729,12 +740,12 @@ func runCommands(line string, u *user, isSlack bool) {
 		case "hacker":
 			u.changeColor(*color.New(color.FgHiGreen, color.BgBlack))
 		default:
-			broadcast(devbot, colorMsg, toSlack)
+			b(devbot, colorMsg)
 		}
 		return
 	}
 	if line == "/people" {
-		broadcast("", `
+		b("", `
 **Hack Club members**  
 Zach Latta     - Founder of Hack Club  
 Zachary Fogg   - Hack Club Game Designer  
@@ -765,12 +776,12 @@ Amrit           @astro_shenava
 Mudrank Gupta   @mudrankgupta  
 Harsh           @harshb__
 
-**And many more have joined!**`, toSlack)
+**And many more have joined!**`)
 		return
 	}
 
 	if line == "/help" {
-		broadcast("", `Welcome to Devzat! Devzat is chat over SSH: github.com/quackduck/devzat  
+		b("", `Welcome to Devzat! Devzat is chat over SSH: github.com/quackduck/devzat  
 Because there's SSH apps on all platforms, even on mobile, you can join from anywhere.
 
 Interesting features:
@@ -785,23 +796,23 @@ Interesting features:
 For replacing newlines, I often use bulkseotools.com/add-remove-line-breaks.php.
 
 Made by Ishan Goel with feature ideas from friends.  
-Thanks to Caleb Denio for lending his server!`, toSlack)
+Thanks to Caleb Denio for lending his server!`)
 		return
 	}
 	if line == "/example-code" {
-		broadcast(devbot, "\n```go\npackage main\nimport \"fmt\"\nfunc main() {\n   fmt.Println(\"Example!\")\n}\n```", toSlack)
+		b(devbot, "\n```go\npackage main\nimport \"fmt\"\nfunc main() {\n   fmt.Println(\"Example!\")\n}\n```")
 		return
 	}
 	if line == "/ascii-art" {
-		broadcast("", string(artBytes), toSlack)
+		b("", string(artBytes))
 		return
 	}
 	if line == "/emojis" {
-		broadcast(devbot, "Check out github.com/ikatyang/emoji-cheat-sheet", toSlack)
+		b(devbot, "Check out github.com/ikatyang/emoji-cheat-sheet")
 		return
 	}
 	if line == "/commands" {
-		broadcast("", `Available commands  
+		b("", `Available commands  
    =<user> <msg>           _DM <user> with <msg>_  
    /users                  _List users_  
    /nick   <name>          _Change your name_  
@@ -815,11 +826,11 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
    /exit                   _Leave the chat_  
    /help                   _Show help_  
    /commands               _Show this message_  
-   /commands-rest          _Uncommon commands list_`, toSlack)
+   /commands-rest          _Uncommon commands list_`)
 		return
 	}
 	if line == "/commands-rest" {
-		broadcast("", `All Commands  
+		b("", `All Commands  
    /hide                   _Hide messages from HC Slack_  
    /bell                   _Toggle the ANSI bell used in pings_  
    /id     <user>          _Get a unique ID for a user (hashed IP)_  
@@ -827,7 +838,7 @@ Thanks to Caleb Denio for lending his server!`, toSlack)
    /kick   <user>          _Kick <user> (admin)_  
    /ascii-art              _Show some panda art_  
    /example-code           _Example syntax-highlighted code_  
-   /banIP  <IP/ID>         _Ban by IP or ID (admin)_`, toSlack)
+   /banIP  <IP/ID>         _Ban by IP or ID (admin)_`)
 	}
 }
 
