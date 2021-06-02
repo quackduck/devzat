@@ -391,12 +391,18 @@ func (u *user) writeln(senderName string, msg string) {
 func printPrettyDuration(d time.Duration) string {
 	//return strings.TrimSuffix(d.Round(time.Minute).String(), "0s")
 	s := strings.TrimSpace(strings.TrimSuffix(d.Round(time.Minute).String(), "0s"))
-	s = strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(
-		s, "h", " hours "),
+	s = strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(s,
+		"h", " hours "),
 		"m", " minutes"),
-		"1 minutes", "1 minute"),
-		"1 hours", "1 hour")
-	if s == "" {
+		" 1 minutes", " 1 minute"), // space to ensure it won't match "2 hours 51 minutes"
+		" 1 hours", " 1 hour")
+	if strings.HasPrefix(s, "1 hours") { // since we're using the space to detect if it isn't 51, it won't match if the string is only "1 minutes" so we check if it has that prefix.
+		s = strings.Replace(s, "1 hours", "1 hour", 1) // replace the first occurrence (because we confirmed it has the prefix, it'll only replace the prefix and nothing else)
+	}
+	if strings.HasPrefix(s, "1 minutes") {
+		s = strings.Replace(s, "1 minutes", "1 minute", 1)
+	}
+	if s == "" { // we cut off the seconds so if there's nothing in the string it means it was made of only seconds.
 		s = "Less than a minute"
 	}
 	return strings.TrimSpace(s)
@@ -547,6 +553,13 @@ func runCommands(line string, u *user, isSlack bool) {
 		}
 		return
 	}
+
+	if !isSlack { // actually sends the message
+		b(u.name, line)
+	}
+
+	devbotChat(line, toSlack)
+
 	if strings.HasPrefix(line, "/tic") {
 		rest := strings.TrimSpace(strings.TrimPrefix(line, "/tic"))
 		if rest == "" {
@@ -554,16 +567,9 @@ func runCommands(line string, u *user, isSlack bool) {
 			b(devbot, "Play using /tic <cell num>")
 			currentPlayer = ttt.X
 			tttGame = new(ttt.Board)
-			//b(devbot, "```\n"+"0│1│2\n3"+"\n```")
-			b(devbot, "```\n"+tttPrint(tttGame.Cells)+"\n```")
+			b(devbot, "```\n"+" 1 │ 2 │ 3\n───┼───┼───\n 4 │ 5 │ 6\n───┼───┼───\n 7 │ 8 │ 9\n"+"\n```")
 			return
 		}
-
-		// if !hasGameStarted(tttGame.Cells) {
-		// 	b(devbot, "You need to start a game first!")
-		// 	b(devbot, "Start again using the /tic command.")
-		// 	return
-		// }
 
 		m, err := strconv.Atoi(rest)
 		if err != nil {
@@ -593,12 +599,6 @@ func runCommands(line string, u *user, isSlack bool) {
 		}
 		return
 	}
-
-	if !isSlack { // actually sends the message
-		b(u.name, line)
-	}
-
-	devbotChat(line, toSlack)
 
 	if line == "/users" {
 		names := make([]string, 0, len(users))
@@ -788,7 +788,7 @@ Interesting features:
 * Many, many commands. Run /commands.
 * Markdown support! Tables, headers, italics and everything. Just use \\n in place of newlines.
 * Code syntax highlighting. Use Markdown fences to send code. Run /example-code to see an example.
-* Direct messages! Send a DM using #user <msg>.
+* Direct messages! Send a DM using =user <msg>.
 * Timezone support, use /tz Continent/City to set your timezone.
 * Built in Tic Tac Toe and Hangman! Run /tic or /hang <word> to start new games.
 * Emoji replacements! \:rocket\: => :rocket: (like on Slack and Discord)
@@ -943,38 +943,15 @@ func hangPrint(hangGame *hangman) string {
 	return display
 }
 
-func emptyCell(cell string) bool {
-	return cell == " "
-}
-
-func hasGameStarted(cells [9]ttt.State) bool {
-	for i := range cells {
-		if !emptyCell(cells[i].String()) {
-			return true
-		}
-	}
-
-	return false
-}
-
 func tttPrint(cells [9]ttt.State) string {
-	strcells := new([9]string)
-
-	for i := range cells {
-		if !hasGameStarted(cells) {
-			strcells[i] = strconv.Itoa(i + 1)
-		} else {
-			strcells[i] = cells[i].String()
-		}
-	}
 
 	var buf bytes.Buffer
 
-	fmt.Fprintf(&buf, " %v │ %v │ %v \n", strcells[0], strcells[1], strcells[2])
+	fmt.Fprintf(&buf, " %v │ %v │ %v \n", cells[0], cells[1], cells[2])
 	fmt.Fprintln(&buf, "───┼───┼───")
-	fmt.Fprintf(&buf, " %v │ %v │ %v \n", strcells[3], strcells[4], strcells[5])
+	fmt.Fprintf(&buf, " %v │ %v │ %v \n", cells[3], cells[4], cells[5])
 	fmt.Fprintln(&buf, "───┼───┼───")
-	fmt.Fprintf(&buf, " %v │ %v │ %v ", strcells[6], strcells[7], strcells[8])
+	fmt.Fprintf(&buf, " %v │ %v │ %v ", cells[6], cells[7], cells[8])
 
 	result := buf.String()
 	result = strings.ReplaceAll(result, ttt.X.String(), color.HiYellowString(ttt.X.String()))
