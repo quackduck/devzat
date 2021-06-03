@@ -161,7 +161,7 @@ func (r *room) broadcast(senderName, msg string, toSlack bool) {
 	for len(backlog) > scrollback { // for instead of if just in case
 		backlog = backlog[1:]
 	}
-	msg = strings.ReplaceAll(msg, "@everyone", green.Sprint("everyone"))
+	msg = strings.ReplaceAll(msg, "@everyone", green.Sprint("everyone\a"))
 	for i := range r.users {
 		msg = strings.ReplaceAll(msg, "@"+stripansi.Strip(r.users[i].name), r.users[i].name)
 		msg = strings.ReplaceAll(msg, `\`+r.users[i].name, "@"+stripansi.Strip(r.users[i].name)) // allow escaping
