@@ -60,7 +60,7 @@ var (
 	devbot      = "" // initialized in main
 	startupTime = time.Now()
 
-	mainroom = room{"main", make([]*user, 0, 10), sync.Mutex{}}
+	mainRoom = &room{"main", make([]*user, 0, 10), sync.Mutex{}}
 
 	allUsers      = make(map[string]string, 100) //map format is u.id => u.name
 	allUsersMutex = sync.Mutex{}
@@ -104,7 +104,7 @@ func main() {
 		fmt.Println("Shutting down...")
 		saveBansAndUsers()
 		logfile.Close()
-		mainroom.broadcast(devbot, "Server going down! This is probably because it is being updated. Try joining back immediately.  \n"+
+		mainRoom.broadcast(devbot, "Server going down! This is probably because it is being updated. Try joining back immediately.  \n"+
 			"If you still can't join, try joining back in 2 minutes. If you _still_ can't join, make an issue at github.com/quackduck/devzat/issues", true)
 		os.Exit(0)
 	}()
@@ -214,10 +214,10 @@ type Credentials struct {
 }
 
 func sendCurrentUsersTwitterMessage() {
-	if len(mainroom.users) == 0 {
+	if len(mainRoom.users) == 0 {
 		return
 	}
-	usersSnapshot := mainroom.users
+	usersSnapshot := mainRoom.users
 	areUsersEqual := func(a []*user, b []*user) bool {
 		if len(a) != len(b) {
 			return false
@@ -231,22 +231,22 @@ func sendCurrentUsersTwitterMessage() {
 	}
 	go func() {
 		time.Sleep(time.Second * 30)
-		if !areUsersEqual(mainroom.users, usersSnapshot) {
+		if !areUsersEqual(mainRoom.users, usersSnapshot) {
 			return
 		}
 		l.Println("Sending twitter update")
 		//broadcast(devbot, "sending twitter update", true)
-		names := make([]string, 0, len(mainroom.users))
-		for _, us := range mainroom.users {
+		names := make([]string, 0, len(mainRoom.users))
+		for _, us := range mainRoom.users {
 			names = append(names, us.name)
 		}
 		t, _, err := client.Statuses.Update("People on Devzat rn: "+stripansi.Strip(fmt.Sprint(names))+"\nJoin em with \"ssh devzat.hackclub.com\"\nUptime: "+printPrettyDuration(time.Since(startupTime)), nil)
 		if err != nil {
 			l.Println("Got twitter err", err)
-			mainroom.broadcast(devbot, "err: "+err.Error(), true)
+			mainRoom.broadcast(devbot, "err: "+err.Error(), true)
 			return
 		}
-		mainroom.broadcast(devbot, "twitter.com/"+t.User.ScreenName+"/status/"+t.IDStr, true)
+		mainRoom.broadcast(devbot, "twitter.com/"+t.User.ScreenName+"/status/"+t.IDStr, true)
 	}()
 	//broadcast(devbot, tweet.Entities.Urls)
 }
@@ -281,7 +281,7 @@ func newUser(s ssh.Session) *user {
 	}
 	hash := sha256.New()
 	hash.Write([]byte(host))
-	u := &user{s.User(), s, term, true, color.Color{}, hex.EncodeToString(hash.Sum(nil)), host, w, sync.Once{}, time.Now(), time.Now(), nil, &mainroom}
+	u := &user{s.User(), s, term, true, color.Color{}, hex.EncodeToString(hash.Sum(nil)), host, w, sync.Once{}, time.Now(), time.Now(), nil, mainRoom}
 	go func() {
 		for u.win = range winChan {
 		}
@@ -311,7 +311,7 @@ func newUser(s ssh.Session) *user {
 		bansMutex.Lock()
 		bans = append(bans, u.addr)
 		bansMutex.Unlock()
-		mainroom.broadcast(devbot, u.name+" has been banned automatically. IP: "+u.addr, true)
+		mainRoom.broadcast(devbot, u.name+" has been banned automatically. IP: "+u.addr, true)
 		return nil
 	}
 	if len(backlog) > 0 {
@@ -328,34 +328,34 @@ func newUser(s ssh.Session) *user {
 
 	u.pickUsername(s.User())
 	if _, ok := allUsers[u.id]; !ok {
-		mainroom.broadcast(devbot, "You seem to be new here "+u.name+". Welcome to Devzat! Run /help to see what you can do.", true)
+		mainRoom.broadcast(devbot, "You seem to be new here "+u.name+". Welcome to Devzat! Run /help to see what you can do.", true)
 	}
-	mainroom.usersMutex.Lock()
-	mainroom.users = append(mainroom.users, u)
+	mainRoom.usersMutex.Lock()
+	mainRoom.users = append(mainRoom.users, u)
 	go sendCurrentUsersTwitterMessage()
-	mainroom.usersMutex.Unlock()
-	switch len(mainroom.users) - 1 {
+	mainRoom.usersMutex.Unlock()
+	switch len(mainRoom.users) - 1 {
 	case 0:
 		u.writeln("", blue.Sprint("Welcome to the chat. There are no more users"))
 	case 1:
 		u.writeln("", yellow.Sprint("Welcome to the chat. There is one more user"))
 	default:
-		u.writeln("", green.Sprint("Welcome to the chat. There are ", len(mainroom.users)-1, " more users"))
+		u.writeln("", green.Sprint("Welcome to the chat. There are ", len(mainRoom.users)-1, " more users"))
 	}
 	//_, _ = term.Write([]byte(strings.Join(backlog, ""))) // print out backlog
-	mainroom.broadcast(devbot, u.name+green.Sprint(" has joined the chat"), true)
+	mainRoom.broadcast(devbot, u.name+green.Sprint(" has joined the chat"), true)
 	return u
 }
 
 func (u *user) close(msg string) {
 	u.closeOnce.Do(func() {
 		u.room.usersMutex.Lock()
-		mainroom.users = remove(mainroom.users, u)
+		mainRoom.users = remove(mainRoom.users, u)
 		go sendCurrentUsersTwitterMessage()
-		mainroom.usersMutex.Unlock()
+		mainRoom.usersMutex.Unlock()
 		u.room.broadcast(devbot, msg, true)
 		if time.Since(u.joinTime) > time.Minute/2 {
-			mainroom.broadcast(devbot, u.name+" stayed on for "+printPrettyDuration(time.Since(u.joinTime)), true)
+			mainRoom.broadcast(devbot, u.name+" stayed on for "+printPrettyDuration(time.Since(u.joinTime)), true)
 		}
 		u.session.Close()
 	})
@@ -563,7 +563,7 @@ func runCommands(line string, u *user, isSlack bool) {
 	}
 
 	if u == nil {
-		devbotChat(u.room, line, toSlack)
+		devbotChat(mainRoom, line, toSlack)
 	} else {
 		devbotChat(u.room, line, toSlack)
 	}
@@ -609,8 +609,8 @@ func runCommands(line string, u *user, isSlack bool) {
 	}
 
 	if line == "/users" {
-		names := make([]string, 0, len(mainroom.users))
-		for _, us := range mainroom.users {
+		names := make([]string, 0, len(mainRoom.users))
+		for _, us := range mainRoom.users {
 			names = append(names, us.name)
 		}
 		b("", fmt.Sprint(names))
@@ -1009,8 +1009,8 @@ func mdRender(a string, beforeMessageLen int, lineWidth int) string {
 
 // Returns true if the username is taken, false otherwise
 func userDuplicate(a string) bool {
-	for i := range mainroom.users {
-		if stripansi.Strip(mainroom.users[i].name) == stripansi.Strip(a) {
+	for i := range mainRoom.users {
+		if stripansi.Strip(mainRoom.users[i].name) == stripansi.Strip(a) {
 			return true
 		}
 	}
@@ -1074,7 +1074,7 @@ func getMsgsFromSlack() {
 			if !strings.HasPrefix(msg.Text, "hide") {
 				h := sha1.Sum([]byte(u.ID))
 				i, _ := strconv.ParseInt(hex.EncodeToString(h[:1]), 16, 0)
-				mainroom.broadcast(color.HiYellowString("HC ")+(*colorArr[int(i)%len(colorArr)]).Sprint(strings.Fields(u.RealName)[0]), msg.Text, false)
+				mainRoom.broadcast(color.HiYellowString("HC ")+(*colorArr[int(i)%len(colorArr)]).Sprint(strings.Fields(u.RealName)[0]), msg.Text, false)
 				runCommands(msg.Text, nil, true)
 			}
 		case *slack.ConnectedEvent:
