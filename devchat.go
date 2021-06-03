@@ -562,7 +562,11 @@ func runCommands(line string, u *user, isSlack bool) {
 		b(u.name, line)
 	}
 
-	devbotChat(u.room, line, toSlack)
+	if u == nil {
+		devbotChat(u.room, line, toSlack)
+	} else {
+		devbotChat(u.room, line, toSlack)
+	}
 
 	if strings.HasPrefix(line, "/tic") {
 		rest := strings.TrimSpace(strings.TrimPrefix(line, "/tic"))
