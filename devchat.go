@@ -427,7 +427,7 @@ func (u *user) rWriteln(msg string) {
 func (u *user) pickUsername(possibleName string) {
 	possibleName = cleanName(possibleName)
 	var err error
-	for userDuplicate(possibleName) || possibleName == "" || possibleName == "devbot" {
+	for userDuplicate(u.room, possibleName) || possibleName == "" || possibleName == "devbot" {
 		u.writeln("", "Pick a different username")
 		u.term.SetPrompt("> ")
 		possibleName, err = u.term.ReadLine()
@@ -454,9 +454,12 @@ func (u *user) changeColor(color color.Color) {
 func (u *user) changeRoom(r *room) {
 	u.room.users = remove(u.room.users, u)
 	u.room = r
+	if userDuplicate(u.room, u.name) {
+		u.pickUsername("")
+	}
 	u.room.users = append(u.room.users, u)
 	u.writeln("", "Joining "+blue.Sprint(r.name))
-	u.room.broadcast(devbot, u.name+" has joined "+u.room.name, true)
+	u.room.broadcast(devbot, u.name+" has joined "+blue.Sprint(u.room.name), true)
 }
 
 func (u *user) repl() {
@@ -1049,8 +1052,8 @@ func mdRender(a string, beforeMessageLen int, lineWidth int) string {
 }
 
 // Returns true if the username is taken, false otherwise
-func userDuplicate(a string) bool {
-	for i := range mainRoom.users {
+func userDuplicate(r *room, a string) bool {
+	for i := range r.users {
 		if stripansi.Strip(mainRoom.users[i].name) == stripansi.Strip(a) {
 			return true
 		}
