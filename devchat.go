@@ -60,9 +60,10 @@ var (
 	devbot      = "" // initialized in main
 	startupTime = time.Now()
 
-	mainRoom = &room{"main", make([]*user, 0, 10), sync.Mutex{}}
+	mainRoom = &room{"#main", make([]*user, 0, 10), sync.Mutex{}}
+	rooms    = map[string]*room{mainRoom.name: mainRoom}
 
-	allUsers      = make(map[string]string, 100) //map format is u.id => u.name
+	allUsers      = make(map[string]string, 400) //map format is u.id => u.name
 	allUsersMutex = sync.Mutex{}
 
 	backlog      = make([]backlogMessage, 0, scrollback)
@@ -148,18 +149,12 @@ func (r *room) broadcast(senderName, msg string, toSlack bool) {
 	if msg == "" {
 		return
 	}
-	backlogMutex.Lock()
-	backlog = append(backlog, backlogMessage{time.Now(), senderName, msg + "\n"})
-	backlogMutex.Unlock()
 	if toSlack {
 		if senderName != "" {
-			slackChan <- "[#" + r.name + "] " + senderName + ": " + msg
+			slackChan <- "[" + r.name + "] " + senderName + ": " + msg
 		} else {
-			slackChan <- "[#" + r.name + "] " + msg
+			slackChan <- "[" + r.name + "] " + msg
 		}
-	}
-	for len(backlog) > scrollback { // for instead of if just in case
-		backlog = backlog[1:]
 	}
 	msg = strings.ReplaceAll(msg, "@everyone", green.Sprint("everyone\a"))
 	for i := range r.users {
@@ -168,6 +163,14 @@ func (r *room) broadcast(senderName, msg string, toSlack bool) {
 	}
 	for i := range r.users {
 		r.users[i].writeln(senderName, msg)
+	}
+	if r.name == "#main" {
+		backlogMutex.Lock()
+		backlog = append(backlog, backlogMessage{time.Now(), senderName, msg + "\n"})
+		backlogMutex.Unlock()
+		for len(backlog) > scrollback { // for instead of if just in case
+			backlog = backlog[1:]
+		}
 	}
 }
 
@@ -350,12 +353,12 @@ func newUser(s ssh.Session) *user {
 func (u *user) close(msg string) {
 	u.closeOnce.Do(func() {
 		u.room.usersMutex.Lock()
-		mainRoom.users = remove(mainRoom.users, u)
+		u.room.users = remove(u.room.users, u)
+		u.room.usersMutex.Unlock()
 		go sendCurrentUsersTwitterMessage()
-		mainRoom.usersMutex.Unlock()
 		u.room.broadcast(devbot, msg, true)
 		if time.Since(u.joinTime) > time.Minute/2 {
-			mainRoom.broadcast(devbot, u.name+" stayed on for "+printPrettyDuration(time.Since(u.joinTime)), true)
+			u.room.broadcast(devbot, u.name+" stayed on for "+printPrettyDuration(time.Since(u.joinTime)), true)
 		}
 		u.session.Close()
 	})
@@ -446,6 +449,14 @@ func (u *user) changeColor(color color.Color) {
 	allUsers[u.id] = u.name
 	allUsersMutex.Unlock()
 	saveBansAndUsers()
+}
+
+func (u *user) changeRoom(r *room) {
+	u.room.users = remove(u.room.users, u)
+	u.room = r
+	u.room.users = append(u.room.users, u)
+	u.writeln("", "Joining "+blue.Sprint(r.name))
+	u.room.broadcast(devbot, u.name+" has joined "+u.room.name, true)
 }
 
 func (u *user) repl() {
@@ -609,8 +620,8 @@ func runCommands(line string, u *user, isSlack bool) {
 	}
 
 	if line == "/users" {
-		names := make([]string, 0, len(mainRoom.users))
-		for _, us := range mainRoom.users {
+		names := make([]string, 0, len(u.room.users))
+		for _, us := range u.room.users {
 			names = append(names, us.name)
 		}
 		b("", fmt.Sprint(names))
@@ -646,6 +657,36 @@ func runCommands(line string, u *user, isSlack bool) {
 			b("", fmt.Sprint("bell off"))
 		}
 		return
+	}
+	if strings.HasPrefix(line, "/room") && !isSlack {
+		rest := strings.TrimSpace(strings.TrimPrefix(line, "/room"))
+		if rest == "" || rest == "s" { // s so "/rooms" works too
+			type kv struct {
+				roomName   string
+				numOfUsers int
+			}
+			var ss []kv
+			for k, v := range rooms {
+				ss = append(ss, kv{k, len(v.users)})
+			}
+			sort.Slice(ss, func(i, j int) bool {
+				return ss[i].numOfUsers > ss[j].numOfUsers
+			})
+			roomsInfo := ""
+			for _, kv := range ss {
+				roomsInfo += fmt.Sprintf("%s: %d  \n", blue.Sprint(kv.roomName), kv.numOfUsers)
+			}
+			b("", "Rooms and users  \n"+strings.TrimSpace(roomsInfo))
+		}
+		if strings.HasPrefix(rest, "#") {
+			//rest = strings.TrimSpace(strings.TrimPrefix(line, "#"))
+			if v, ok := rooms[rest]; ok {
+				u.changeRoom(v)
+			} else {
+				rooms[rest] = &room{rest, make([]*user, 0, 10), sync.Mutex{}}
+				u.changeRoom(rooms[rest])
+			}
+		}
 	}
 	if strings.HasPrefix(line, "/tz") && !isSlack {
 		var err error
@@ -1114,13 +1155,14 @@ func findUserByName(r *room, name string) (*user, bool) {
 func remove(s []*user, a *user) []*user {
 	//l.Println("remove user was called")
 	//l.Println(string(debug.Stack()))
-	var i int
-	for i = range s {
-		if s[i] == a {
-			break // i is now where it is
+	i := -1
+	for j := range s {
+		if s[j] == a {
+			i = j
+			break
 		}
 	}
-	if i == 0 {
+	if i == -1 {
 		return make([]*user, 0)
 	}
 	return append(s[:i], s[i+1:]...)
