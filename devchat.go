@@ -35,16 +35,14 @@ import (
 )
 
 var (
-	//go:embed slackAPI.txt
-	slackAPI []byte
 	//go:embed art.txt
 	artBytes   []byte
 	port       = 22
 	scrollback = 16
 
 	slackChan = getSendToSlackChan()
-	api       = slack.New(string(slackAPI))
-	rtm       = api.NewRTM()
+	api       *slack.Client
+	rtm       *slack.RTM
 	client    = loadTwitterClient()
 
 	red      = color.New(color.FgHiRed)
@@ -53,7 +51,7 @@ var (
 	magenta  = color.New(color.FgHiMagenta)
 	yellow   = color.New(color.FgHiYellow)
 	blue     = color.New(color.FgHiBlue)
-	black    = color.New(color.FgHiBlack)
+	black    = color.New(color.FgBlack)
 	white    = color.New(color.FgHiWhite)
 	colorArr = []*color.Color{yellow, cyan, magenta, green, white, blue, red}
 
@@ -1132,6 +1130,13 @@ func getMsgsFromSlack() {
 }
 
 func getSendToSlackChan() chan string {
+	slackAPI, err := ioutil.ReadFile("slackAPI.txt")
+	if err != nil {
+		panic(err)
+	}
+	api = slack.New(string(slackAPI))
+	rtm = api.NewRTM()
+	//slackChan = getSendToSlackChan(rtm)
 	msgs := make(chan string, 100)
 	go func() {
 		for msg := range msgs {
