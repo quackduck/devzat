@@ -217,6 +217,7 @@ type Credentials struct {
 }
 
 func sendCurrentUsersTwitterMessage() {
+	// TODO: count all users in all rooms
 	if len(mainRoom.users) == 0 {
 		return
 	}
@@ -576,7 +577,7 @@ func runCommands(line string, u *user, isSlack bool) {
 		b(u.name, line)
 	}
 
-	if u == nil {
+	if u == nil { // is slack
 		devbotChat(mainRoom, line, toSlack)
 	} else {
 		devbotChat(u.room, line, toSlack)
@@ -1054,7 +1055,7 @@ func mdRender(a string, beforeMessageLen int, lineWidth int) string {
 // Returns true if the username is taken, false otherwise
 func userDuplicate(r *room, a string) bool {
 	for i := range r.users {
-		if stripansi.Strip(mainRoom.users[i].name) == stripansi.Strip(a) {
+		if stripansi.Strip(r.users[i].name) == stripansi.Strip(a) {
 			return true
 		}
 	}
