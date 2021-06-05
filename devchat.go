@@ -837,6 +837,7 @@ Because there's SSH apps on all platforms, even on mobile, you can join from any
 
 Interesting features:
 * Many, many commands. Run /commands.
+* Rooms! Run /room to see all rooms and use /room #foo to join a new room.
 * Markdown support! Tables, headers, italics and everything. Just use \\n in place of newlines.
 * Code syntax highlighting. Use Markdown fences to send code. Run /example-code to see an example.
 * Direct messages! Send a DM using =user <msg>.
@@ -1162,17 +1163,10 @@ func findUserByName(r *room, name string) (*user, bool) {
 }
 
 func remove(s []*user, a *user) []*user {
-	//l.Println("remove user was called")
-	//l.Println(string(debug.Stack()))
-	i := -1
 	for j := range s {
 		if s[j] == a {
-			i = j
-			break
+			return append(s[:j], s[j+1:]...)
 		}
 	}
-	if i == -1 {
-		return make([]*user, 0)
-	}
-	return append(s[:i], s[i+1:]...)
+	return s
 }
