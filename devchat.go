@@ -86,7 +86,8 @@ var (
 		"f5c7f9826b6e143f6e9c3920767680f503f259570f121138b2465bb2b052a85d", // Ella Xu
 		"6056734cc4d9fce31569167735e4808382004629a2d7fe6cb486e663714452fc", // Tommy Pujol
 		"e9d47bb4522345d019086d0ed48da8ce491a491923a44c59fd6bfffe6ea73317", // Arav Narula
-		"1eab2de20e41abed903ab2f22e7ff56dc059666dbe2ebbce07a8afeece8d0424"} // Shok
+		"1eab2de20e41abed903ab2f22e7ff56dc059666dbe2ebbce07a8afeece8d0424", // Shok
+		"12a9f108e7420460864de3d46610f722e69c80b2ac2fb1e2ada34aa952bbd73e"} // jmw: github.com/ciearius
 )
 
 // TODO: email people on ping word idea
@@ -450,15 +451,18 @@ func (u *user) changeColor(color color.Color) {
 	saveBansAndUsers()
 }
 
-func (u *user) changeRoom(r *room) {
+func (u *user) changeRoom(r *room, toSlack bool) {
+	u.room.broadcast("", u.name+" is joining "+blue.Sprint(r.name), toSlack)
 	u.room.users = remove(u.room.users, u)
+	if u.room != mainRoom && len(u.room.users) == 0 {
+		delete(rooms, u.room.name)
+	}
 	u.room = r
 	if userDuplicate(u.room, u.name) {
 		u.pickUsername("")
 	}
 	u.room.users = append(u.room.users, u)
-	u.writeln("", "Joining "+blue.Sprint(r.name))
-	u.room.broadcast(devbot, u.name+" has joined "+blue.Sprint(u.room.name), true)
+	u.room.broadcast(devbot, u.name+" has joined "+blue.Sprint(u.room.name), toSlack)
 }
 
 func (u *user) repl() {
@@ -683,10 +687,10 @@ func runCommands(line string, u *user, isSlack bool) {
 		if strings.HasPrefix(rest, "#") {
 			//rest = strings.TrimSpace(strings.TrimPrefix(line, "#"))
 			if v, ok := rooms[rest]; ok {
-				u.changeRoom(v)
+				u.changeRoom(v, toSlack)
 			} else {
 				rooms[rest] = &room{rest, make([]*user, 0, 10), sync.Mutex{}}
-				u.changeRoom(rooms[rest])
+				u.changeRoom(rooms[rest], toSlack)
 			}
 		}
 	}
@@ -805,7 +809,8 @@ Caleb Denio, Safin Singh, Eleeza A
 Jubril, Sarthak Mohanty, Anghe,  
 Tommy Pujol, Sam Poder, Rishi Kothari,  
 Amogh Chaubey, Ella Xu, Hugo Hu,  
-Robert Goll  
+Robert Goll, Tanishq Soni, Arash Nur Iman,  
+Temi
 _Possibly more people_
 
 
@@ -1000,9 +1005,9 @@ func tttPrint(cells [9]ttt.State) string {
 	return strings.ReplaceAll(strings.ReplaceAll(
 		fmt.Sprintf(` %v │ %v │ %v 
 ───┼───┼───
-%v  │ %v │ %v 
+ %v │ %v │ %v 
 ───┼───┼───
-%v  │ %v │ %v `, cells[0], cells[1], cells[2],
+ %v │ %v │ %v `, cells[0], cells[1], cells[2],
 			cells[3], cells[4], cells[5],
 			cells[6], cells[7], cells[8]),
 
