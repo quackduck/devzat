@@ -1000,9 +1000,9 @@ func tttPrint(cells [9]ttt.State) string {
 	return strings.ReplaceAll(strings.ReplaceAll(
 		fmt.Sprintf(` %v │ %v │ %v 
 ───┼───┼───
-%v  │ %v  │ %v 
+%v  │ %v │ %v 
 ───┼───┼───
-%v  │ %v  │ %v `, cells[0], cells[1], cells[2],
+%v  │ %v │ %v `, cells[0], cells[1], cells[2],
 			cells[3], cells[4], cells[5],
 			cells[6], cells[7], cells[8]),
 
