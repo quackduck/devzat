@@ -7,8 +7,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/dghubble/go-twitter/twitter"
-	"github.com/dghubble/oauth1"
 	"io"
 	"io/ioutil"
 	"log"
@@ -24,6 +22,9 @@ import (
 	"syscall"
 	"time"
 	"unicode"
+
+	"github.com/dghubble/go-twitter/twitter"
+	"github.com/dghubble/oauth1"
 
 	"github.com/acarl005/stripansi"
 	"github.com/fatih/color"
@@ -45,16 +46,16 @@ var (
 	rtm       *slack.RTM
 	client    = loadTwitterClient()
 
-	red      = color.New(color.FgHiRed)
-	green    = color.New(color.FgHiGreen)
-	cyan     = color.New(color.FgHiCyan)
-	magenta  = color.New(color.FgHiMagenta)
-	yellow   = color.New(color.FgHiYellow)
-	blue     = color.New(color.FgHiBlue)
-	black    = color.New(color.FgBlack)
-	white    = color.New(color.FgHiWhite)
-	colorArr = []*color.Color{yellow, cyan, magenta, green, white, blue, red}
-
+	red         = color.New(color.FgHiRed)
+	green       = color.New(color.FgHiGreen)
+	cyan        = color.New(color.FgHiCyan)
+	magenta     = color.New(color.FgHiMagenta)
+	yellow      = color.New(color.FgHiYellow)
+	blue        = color.New(color.FgHiBlue)
+	black       = color.New(color.FgBlack)
+	white       = color.New(color.FgHiWhite)
+	colorArr    = []*color.Color{yellow, cyan, magenta, green, white, blue, red}
+	colorNames  = []string{"yellow", "cyan", "magenta", "green", "white", "blue", "red"}
 	devbot      = "" // initialized in main
 	startupTime = time.Now()
 
@@ -183,7 +184,7 @@ type user struct {
 	session       ssh.Session
 	term          *terminal.Terminal
 	bell          bool
-	color         color.Color
+	color         string
 	id            string
 	addr          string
 	win           ssh.Window
@@ -283,7 +284,7 @@ func newUser(s ssh.Session) *user {
 	}
 	hash := sha256.New()
 	hash.Write([]byte(host))
-	u := &user{s.User(), s, term, true, color.Color{}, hex.EncodeToString(hash.Sum(nil)), host, w, sync.Once{}, time.Now(), time.Now(), nil, mainRoom}
+	u := &user{s.User(), s, term, true, "", hex.EncodeToString(hash.Sum(nil)), host, w, sync.Once{}, time.Now(), time.Now(), nil, mainRoom}
 	go func() {
 		for u.win = range winChan {
 		}
@@ -437,12 +438,52 @@ func (u *user) pickUsername(possibleName string) {
 		possibleName = cleanName(possibleName)
 	}
 	u.name = possibleName
-	u.changeColor(*colorArr[rand.Intn(len(colorArr))]) // also sets prompt
+	var colorIndex = rand.Intn(len(colorArr))
+	u.changeColor(colorNames[colorIndex], *colorArr[colorIndex]) // also sets prompt
 }
 
-func (u *user) changeColor(color color.Color) {
+func (u *user) changeColor(colorName string, color color.Color) {
 	u.name = color.Sprint(stripansi.Strip(u.name))
-	u.color = color
+	u.color = colorName
+	u.term.SetPrompt(u.name + ": ")
+	allUsersMutex.Lock()
+	allUsers[u.id] = u.name
+	allUsersMutex.Unlock()
+	saveBansAndUsers()
+}
+
+func (u *user) getColor() *color.Color {
+	for i := 0; i < len(colorNames); i++ {
+		if colorNames[i] == u.color {
+			return colorArr[i]
+		}
+	}
+	return colorArr[0]
+}
+
+func (u *user) rainbowColor() {
+	var rainbow = [...]color.Color{
+		*green,
+		*cyan,
+		*blue,
+		*red,
+		*magenta,
+		*yellow,
+		*white,
+	}
+
+	var stripped = stripansi.Strip(u.name)
+	var buf = ""
+	colorOffset := rand.Intn(len(rainbow) - 1)
+
+	for i, s := range stripped {
+		colorIndex := (colorOffset + i) % len(rainbow)
+		buf += rainbow[colorIndex].Sprint(string(rune(s)))
+		println(colorIndex, string(rune(s)))
+	}
+
+	u.name = buf
+	u.color = "rainbow"
 	u.term.SetPrompt(u.name + ": ")
 	allUsersMutex.Lock()
 	allUsers[u.id] = u.name
@@ -764,32 +805,34 @@ func runCommands(line string, u *user, isSlack bool) {
 		colorMsg := "Which color? Choose from green, cyan, blue, red/orange, magenta/purple/pink, yellow/beige, white/cream and black/gray/grey.  \nThere's also a few secret colors :)"
 		switch strings.TrimSpace(strings.TrimPrefix(line, "/color")) {
 		case "green":
-			u.changeColor(*green)
+			u.changeColor("green", *green)
 		case "cyan":
-			u.changeColor(*cyan)
+			u.changeColor("green", *cyan)
 		case "blue":
-			u.changeColor(*blue)
+			u.changeColor("blue", *blue)
 		case "red", "orange":
-			u.changeColor(*red)
+			u.changeColor("red", *red)
 		case "magenta", "purple", "pink":
-			u.changeColor(*magenta)
+			u.changeColor("magenta", *magenta)
 		case "yellow", "beige":
-			u.changeColor(*yellow)
+			u.changeColor("yellow", *yellow)
 		case "white", "cream":
-			u.changeColor(*white)
+			u.changeColor("white", *white)
 		case "black", "gray", "grey":
-			u.changeColor(*black)
+			u.changeColor("black", *black)
 			// secret colors
 		case "easter":
-			u.changeColor(*color.New(color.BgMagenta, color.FgHiYellow))
+			u.changeColor("easter", *color.New(color.BgMagenta, color.FgHiYellow))
 		case "baby":
-			u.changeColor(*color.New(color.BgBlue, color.FgHiMagenta))
+			u.changeColor("baby", *color.New(color.BgBlue, color.FgHiMagenta))
 		case "l33t":
-			u.changeColor(*u.color.Add(color.BgHiBlack))
+			u.changeColor("l33t", *u.getColor().Add(color.BgHiBlack))
 		case "whiten":
-			u.changeColor(*u.color.Add(color.BgWhite))
+			u.changeColor("whiten", *u.getColor().Add(color.BgWhite))
 		case "hacker":
-			u.changeColor(*color.New(color.FgHiGreen, color.BgBlack))
+			u.changeColor("hacker", *color.New(color.FgHiGreen, color.BgBlack))
+		case "rainbow":
+			u.rainbowColor()
 		default:
 			b(devbot, colorMsg)
 		}
