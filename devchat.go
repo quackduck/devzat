@@ -479,7 +479,6 @@ func (u *user) rainbowColor() {
 	for i, s := range stripped {
 		colorIndex := (colorOffset + i) % len(rainbow)
 		buf += rainbow[colorIndex].Sprint(string(rune(s)))
-		println(colorIndex, string(rune(s)))
 	}
 
 	u.name = buf
