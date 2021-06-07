@@ -864,6 +864,9 @@ Thanks to Caleb Denio for lending his server!`)
 		b("", string(artBytes))
 		return
 	}
+	if line == "/shrug" {
+		b("", `¯\\_(ツ)_/¯`)
+	}
 	if line == "/emojis" {
 		b(devbot, "Check out github.com/ikatyang/emoji-cheat-sheet")
 		return
@@ -897,6 +900,8 @@ Thanks to Caleb Denio for lending his server!`)
    /ascii-art              _Show some panda art_  
    /example-code           _Example syntax-highlighted code_  
    /banIP  <IP/ID>         _Ban by IP or ID (admin)_`)
+		
+		return
 	}
 }
 
