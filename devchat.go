@@ -897,6 +897,8 @@ Thanks to Caleb Denio for lending his server!`)
    /ascii-art              _Show some panda art_  
    /example-code           _Example syntax-highlighted code_  
    /banIP  <IP/ID>         _Ban by IP or ID (admin)_`)
+		
+		return
 	}
 	
 	if line == "/shrug" {
