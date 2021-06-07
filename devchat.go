@@ -902,7 +902,7 @@ Thanks to Caleb Denio for lending his server!`)
 	}
 	
 	if line == "/shrug" {
-	b("", `¯\_(ツ)_/¯`)
+	b("", `¯\\_(ツ)_/¯`)
 	}
 }
 
