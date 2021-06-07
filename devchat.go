@@ -898,7 +898,12 @@ Thanks to Caleb Denio for lending his server!`)
    /example-code           _Example syntax-highlighted code_  
    /banIP  <IP/ID>         _Ban by IP or ID (admin)_`)
 	}
+	
+	if line == "/shrug" {
+	b("", `¯\_(ツ)_/¯`)
+	}
 }
+
 
 func devbotChat(room *room, line string, toSlack bool) {
 	if strings.Contains(line, "devbot") {
