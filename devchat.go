@@ -90,7 +90,7 @@ var (
 		"12a9f108e7420460864de3d46610f722e69c80b2ac2fb1e2ada34aa952bbd73e"} // jmw: github.com/ciearius
 )
 
-// TODO: email people on ping word idea
+// TODO: have a web dashboard that shows logs
 func main() {
 	color.NoColor = false
 	devbot = green.Sprint("devbot")
@@ -156,6 +156,7 @@ func (r *room) broadcast(senderName, msg string, toSlack bool) {
 		}
 	}
 	msg = strings.ReplaceAll(msg, "@everyone", green.Sprint("everyone\a"))
+	r.usersMutex.Lock()
 	for i := range r.users {
 		msg = strings.ReplaceAll(msg, "@"+stripansi.Strip(r.users[i].name), r.users[i].name)
 		msg = strings.ReplaceAll(msg, `\`+r.users[i].name, "@"+stripansi.Strip(r.users[i].name)) // allow escaping
@@ -163,6 +164,7 @@ func (r *room) broadcast(senderName, msg string, toSlack bool) {
 	for i := range r.users {
 		r.users[i].writeln(senderName, msg)
 	}
+	r.usersMutex.Unlock()
 	if r.name == "#main" {
 		backlogMutex.Lock()
 		backlog = append(backlog, backlogMessage{time.Now(), senderName, msg + "\n"})
@@ -484,24 +486,28 @@ func (u *user) repl() {
 	}
 }
 
+// runCommands parses a line of raw input from a user and sends a message as
+// required, running any commands the user may have called.
+// It also accepts a boolean indicating if the line of input is from slack, in
+// which case some commands will not be run (such as /tz and /exit)
 func runCommands(line string, u *user, isSlack bool) {
 	if line == "" {
 		return
 	}
 
-	toSlack := true
+	sendToSlack := true
 	b := func(senderName, msg string) {
 		u.room.broadcast(senderName, msg, true)
 	}
 
 	if strings.HasPrefix(line, "/hide") && !isSlack {
-		toSlack = false
+		sendToSlack = false
 		b = func(senderName, msg string) {
 			u.room.broadcast(senderName, msg, false)
 		}
 	}
 	if strings.HasPrefix(line, "=") && !isSlack {
-		toSlack = false
+		sendToSlack = false
 		b = func(senderName, msg string) {
 			u.room.broadcast(senderName, msg, false)
 		}
@@ -579,11 +585,11 @@ func runCommands(line string, u *user, isSlack bool) {
 		b(u.name, line)
 	}
 
-	if u == nil { // is slack
-		devbotChat(mainRoom, line, toSlack)
-	} else {
-		devbotChat(u.room, line, toSlack)
-	}
+	//if u == nil { // is slack
+	//	devbotChat(mainRoom, line, sendToSlack)
+	//} else {
+	devbotChat(u.room, line, sendToSlack)
+	//}
 
 	if strings.HasPrefix(line, "/tic") {
 		rest := strings.TrimSpace(strings.TrimPrefix(line, "/tic"))
@@ -687,10 +693,10 @@ func runCommands(line string, u *user, isSlack bool) {
 		if strings.HasPrefix(rest, "#") {
 			//rest = strings.TrimSpace(strings.TrimPrefix(line, "#"))
 			if v, ok := rooms[rest]; ok {
-				u.changeRoom(v, toSlack)
+				u.changeRoom(v, sendToSlack)
 			} else {
 				rooms[rest] = &room{rest, make([]*user, 0, 10), sync.Mutex{}}
-				u.changeRoom(rooms[rest], toSlack)
+				u.changeRoom(rooms[rest], sendToSlack)
 			}
 		}
 	}
@@ -898,9 +904,9 @@ Thanks to Caleb Denio for lending his server!`)
    /ban    <user>          _Ban <user> (admin)_  
    /kick   <user>          _Kick <user> (admin)_  
    /ascii-art              _Show some panda art_  
+   /shrug                  _¯\\_(ツ)_/¯_  
    /example-code           _Example syntax-highlighted code_  
    /banIP  <IP/ID>         _Ban by IP or ID (admin)_`)
-		
 		return
 	}
 }
@@ -1118,6 +1124,8 @@ func readBansAndUsers() {
 
 func getMsgsFromSlack() {
 	go rtm.ManageConnection()
+	uslack := new(user)
+	uslack.room = mainRoom
 	for msg := range rtm.IncomingEvents {
 		switch ev := msg.Data.(type) {
 		case *slack.MessageEvent:
@@ -1130,7 +1138,7 @@ func getMsgsFromSlack() {
 				h := sha1.Sum([]byte(u.ID))
 				i, _ := strconv.ParseInt(hex.EncodeToString(h[:1]), 16, 0)
 				mainRoom.broadcast(color.HiYellowString("HC ")+(*colorArr[int(i)%len(colorArr)]).Sprint(strings.Fields(u.RealName)[0]), msg.Text, false)
-				runCommands(msg.Text, nil, true)
+				runCommands(msg.Text, uslack, true)
 			}
 		case *slack.ConnectedEvent:
 			l.Println("Connected to Slack")
