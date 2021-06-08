@@ -462,14 +462,14 @@ func (u *user) getColor() *color.Color {
 }
 
 func (u *user) rainbowColor() {
-	var rainbow = [...]color.Color{
-		*green,
-		*cyan,
-		*blue,
-		*red,
-		*magenta,
-		*yellow,
-		*white,
+	var rainbow = []color.Color{
+		*color.New(color.FgHiRed),
+		*color.New(color.FgHiGreen),
+		*color.New(color.FgHiCyan),
+		*color.New(color.FgHiMagenta),
+		*color.New(color.FgHiYellow),
+		*color.New(color.FgHiBlue),
+		*color.New(color.FgHiWhite),
 	}
 
 	var stripped = stripansi.Strip(u.name)
