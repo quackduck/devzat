@@ -54,10 +54,57 @@ var (
 	blue        = color.New(color.FgHiBlue)
 	black       = color.New(color.FgBlack)
 	white       = color.New(color.FgHiWhite)
-	colorArr    = []*color.Color{yellow, cyan, magenta, green, white, blue, red}
-	colorNames  = []string{"yellow", "cyan", "magenta", "green", "white", "blue", "red"}
 	devbot      = "" // initialized in main
 	startupTime = time.Now()
+
+	colorstyles = []colorstyle{
+		{"white", buildStyleApplicator(*white)},
+		{"red", buildStyleApplicator(*red)},
+		{"green", buildStyleApplicator(*green)},
+		{"cyan", buildStyleApplicator(*cyan)},
+		{"magenta", buildStyleApplicator(*magenta)},
+		{"yellow", buildStyleApplicator(*yellow)},
+		{"blue", buildStyleApplicator(*blue)},
+		{"black", buildStyleApplicator(*black)},
+		{"easter", buildStyleApplicator(*color.New(color.BgMagenta, color.FgHiYellow))},
+		{"baby", buildStyleApplicator(*color.New(color.BgBlue, color.FgHiMagenta))},
+		{"hacker", buildStyleApplicator(*color.New(color.FgHiGreen, color.BgBlack))},
+		//TODO: find a way to support special colors which rely on the user object
+		// {
+		// 	"l33t",
+		// 	func(a string, u user) string {
+		//		// TODO: this will lead to catastrophic failure with other special colors!
+		// 		c := *u.getColor().Add(color.BgHiBlack)
+		// 		return c.Sprint(stripansi.Strip(a))
+		// 	},
+		// },
+		// Same with "whiten", *u.getColor().Add(color.BgWhite)
+		{
+			"rainbow",
+			func(a string) string {
+				var rainbow = []*color.Color{
+					red,
+					magenta,
+					blue,
+					cyan,
+					yellow,
+					green,
+					white,
+				}
+
+				var stripped = stripansi.Strip(a)
+				var buf = ""
+				colorOffset := rand.Intn(len(rainbow) - 1)
+
+				for i, s := range stripped {
+					colorIndex := (colorOffset + i) % len(rainbow)
+					buf += rainbow[colorIndex].Sprint(string(rune(s)))
+				}
+
+				return buf
+			},
+		},
+	}
 
 	mainRoom = &room{"#main", make([]*user, 0, 10), sync.Mutex{}}
 	rooms    = map[string]*room{mainRoom.name: mainRoom}
@@ -89,6 +136,12 @@ var (
 		"e9d47bb4522345d019086d0ed48da8ce491a491923a44c59fd6bfffe6ea73317", // Arav Narula
 		"1eab2de20e41abed903ab2f22e7ff56dc059666dbe2ebbce07a8afeece8d0424"} // Shok
 )
+
+func buildStyleApplicator(c color.Color) styleApplication {
+	return func(s string) string {
+		return c.Sprint(stripansi.Strip(s))
+	}
+}
 
 // TODO: email people on ping word idea
 func main() {
@@ -438,13 +491,20 @@ func (u *user) pickUsername(possibleName string) {
 		possibleName = cleanName(possibleName)
 	}
 	u.name = possibleName
-	var colorIndex = rand.Intn(len(colorArr))
-	u.changeColor(colorNames[colorIndex], *colorArr[colorIndex]) // also sets prompt
+	var colorIndex = rand.Intn(len(colorstyles))
+	u.changeColor(colorstyles[colorIndex].name) // also sets prompt
 }
 
-func (u *user) changeColor(colorName string, color color.Color) {
-	u.name = color.Sprint(stripansi.Strip(u.name))
-	u.color = colorName
+// Applies color from name
+func (u *user) changeColor(colorName string) {
+	color := getColor(colorName)
+	u.changeColorstyle(color)
+}
+
+// Applies color from colorstyle
+func (u *user) changeColorstyle(color colorstyle) {
+	u.color = color.name
+	u.name = color.apply(u.name)
 	u.term.SetPrompt(u.name + ": ")
 	allUsersMutex.Lock()
 	allUsers[u.id] = u.name
@@ -452,42 +512,14 @@ func (u *user) changeColor(colorName string, color color.Color) {
 	saveBansAndUsers()
 }
 
-func (u *user) getColor() *color.Color {
-	for i := 0; i < len(colorNames); i++ {
-		if colorNames[i] == u.color {
-			return colorArr[i]
+// Turns name into an applyable color (defaults to white)
+func getColor(name string) colorstyle {
+	for i := 0; i < len(colorstyles); i++ {
+		if colorstyles[i].name == name {
+			return colorstyles[i]
 		}
 	}
-	return colorArr[0]
-}
-
-func (u *user) rainbowColor() {
-	var rainbow = []color.Color{
-		*color.New(color.FgHiRed),
-		*color.New(color.FgHiGreen),
-		*color.New(color.FgHiCyan),
-		*color.New(color.FgHiMagenta),
-		*color.New(color.FgHiYellow),
-		*color.New(color.FgHiBlue),
-		*color.New(color.FgHiWhite),
-	}
-
-	var stripped = stripansi.Strip(u.name)
-	var buf = ""
-	colorOffset := rand.Intn(len(rainbow) - 1)
-
-	for i, s := range stripped {
-		colorIndex := (colorOffset + i) % len(rainbow)
-		buf += rainbow[colorIndex].Sprint(string(rune(s)))
-	}
-
-	u.name = buf
-	u.color = "rainbow"
-	u.term.SetPrompt(u.name + ": ")
-	allUsersMutex.Lock()
-	allUsers[u.id] = u.name
-	allUsersMutex.Unlock()
-	saveBansAndUsers()
+	return colorstyles[0]
 }
 
 func (u *user) changeRoom(r *room) {
@@ -804,34 +836,34 @@ func runCommands(line string, u *user, isSlack bool) {
 		colorMsg := "Which color? Choose from green, cyan, blue, red/orange, magenta/purple/pink, yellow/beige, white/cream and black/gray/grey.  \nThere's also a few secret colors :)"
 		switch strings.TrimSpace(strings.TrimPrefix(line, "/color")) {
 		case "green":
-			u.changeColor("green", *green)
+			u.changeColor("green")
 		case "cyan":
-			u.changeColor("green", *cyan)
+			u.changeColor("green")
 		case "blue":
-			u.changeColor("blue", *blue)
+			u.changeColor("blue")
 		case "red", "orange":
-			u.changeColor("red", *red)
+			u.changeColor("red")
 		case "magenta", "purple", "pink":
-			u.changeColor("magenta", *magenta)
+			u.changeColor("magenta")
 		case "yellow", "beige":
-			u.changeColor("yellow", *yellow)
+			u.changeColor("yellow")
 		case "white", "cream":
-			u.changeColor("white", *white)
+			u.changeColor("white")
 		case "black", "gray", "grey":
-			u.changeColor("black", *black)
+			u.changeColor("black")
 			// secret colors
 		case "easter":
-			u.changeColor("easter", *color.New(color.BgMagenta, color.FgHiYellow))
+			u.changeColor("easter")
 		case "baby":
-			u.changeColor("baby", *color.New(color.BgBlue, color.FgHiMagenta))
+			u.changeColor("baby")
 		case "l33t":
-			u.changeColor("l33t", *u.getColor().Add(color.BgHiBlack))
+			u.changeColor("l33t")
 		case "whiten":
-			u.changeColor("whiten", *u.getColor().Add(color.BgWhite))
+			u.changeColor("whiten")
 		case "hacker":
-			u.changeColor("hacker", *color.New(color.FgHiGreen, color.BgBlack))
+			u.changeColor("hacker")
 		case "rainbow":
-			u.rainbowColor()
+			u.changeColor("rainbow")
 		default:
 			b(devbot, colorMsg)
 		}
@@ -1161,7 +1193,7 @@ func getMsgsFromSlack() {
 			if !strings.HasPrefix(msg.Text, "hide") {
 				h := sha1.Sum([]byte(u.ID))
 				i, _ := strconv.ParseInt(hex.EncodeToString(h[:1]), 16, 0)
-				mainRoom.broadcast(color.HiYellowString("HC ")+(*colorArr[int(i)%len(colorArr)]).Sprint(strings.Fields(u.RealName)[0]), msg.Text, false)
+				mainRoom.broadcast(color.HiYellowString("HC ")+(colorstyles[int(i)%len(colorstyles)]).apply(strings.Fields(u.RealName)[0]), msg.Text, false)
 				runCommands(msg.Text, nil, true)
 			}
 		case *slack.ConnectedEvent:
@@ -1212,4 +1244,11 @@ func remove(s []*user, a *user) []*user {
 		}
 	}
 	return s
+}
+
+type styleApplication func(string) string
+
+type colorstyle struct {
+	name  string
+	apply styleApplication
 }
