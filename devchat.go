@@ -7,8 +7,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/dghubble/go-twitter/twitter"
-	"github.com/dghubble/oauth1"
 	"io"
 	"io/ioutil"
 	"log"
@@ -24,6 +22,9 @@ import (
 	"syscall"
 	"time"
 	"unicode"
+
+	"github.com/dghubble/go-twitter/twitter"
+	"github.com/dghubble/oauth1"
 
 	"github.com/acarl005/stripansi"
 	"github.com/fatih/color"
@@ -45,18 +46,44 @@ var (
 	rtm       *slack.RTM
 	client    = loadTwitterClient()
 
-	red      = color.New(color.FgHiRed)
-	green    = color.New(color.FgHiGreen)
-	cyan     = color.New(color.FgHiCyan)
-	magenta  = color.New(color.FgHiMagenta)
-	yellow   = color.New(color.FgHiYellow)
-	blue     = color.New(color.FgHiBlue)
-	black    = color.New(color.FgBlack)
-	white    = color.New(color.FgHiWhite)
-	colorArr = []*color.Color{yellow, cyan, magenta, green, white, blue, red}
-
+	red         = color.New(color.FgHiRed)
+	green       = color.New(color.FgHiGreen)
+	cyan        = color.New(color.FgHiCyan)
+	magenta     = color.New(color.FgHiMagenta)
+	yellow      = color.New(color.FgHiYellow)
+	blue        = color.New(color.FgHiBlue)
+	black       = color.New(color.FgBlack)
+	white       = color.New(color.FgHiWhite)
 	devbot      = "" // initialized in main
 	startupTime = time.Now()
+
+	colorstyles = []*colorstyle{
+		{"white", buildStyleApplicator(white)},
+		{"red", buildStyleApplicator(red)},
+		{"green", buildStyleApplicator(green)},
+		{"cyan", buildStyleApplicator(cyan)},
+		{"magenta", buildStyleApplicator(magenta)},
+		{"yellow", buildStyleApplicator(yellow)},
+		{"blue", buildStyleApplicator(blue)},
+		{"black", buildStyleApplicator(black)},
+	}
+	secretColorStyles = []*colorstyle{
+		{"easter", buildStyleApplicator(color.New(color.BgMagenta, color.FgHiYellow))},
+		{"baby", buildStyleApplicator(color.New(color.BgBlue, color.FgHiMagenta))},
+		{"hacker", buildStyleApplicator(color.New(color.FgHiGreen, color.BgBlack))},
+		{"l33t", func(s string) string { return color.New(color.BgHiBlack).Sprint(s) }},
+		{"whiten", func(s string) string { return color.New(color.BgWhite).Sprint(s) }}, // TODO: remove extra reset ANSI code at the end
+		{"rainbow", func(a string) string {
+			var rainbow = []*color.Color{red, magenta, blue, cyan, yellow, green, white}
+			a = stripansi.Strip(a)
+			var buf = ""
+			colorOffset := rand.Intn(len(rainbow))
+			for i := range []rune(a) {
+				colorIndex := (colorOffset + i) % len(rainbow)
+				buf += rainbow[colorIndex].Sprint(string(a[i]))
+			}
+			return buf
+		}}}
 
 	mainRoom = &room{"#main", make([]*user, 0, 10), sync.Mutex{}}
 	rooms    = map[string]*room{mainRoom.name: mainRoom}
@@ -79,8 +106,7 @@ var (
 
 	tttGame       = new(ttt.Board)
 	currentPlayer = ttt.X
-	// hasStartedGame = false
-	hangGame = new(hangman)
+	hangGame      = new(hangman)
 
 	admins = []string{"d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82", // Ishan Goel
 		"f5c7f9826b6e143f6e9c3920767680f503f259570f121138b2465bb2b052a85d", // Ella Xu
@@ -89,6 +115,12 @@ var (
 		"1eab2de20e41abed903ab2f22e7ff56dc059666dbe2ebbce07a8afeece8d0424", // Shok
 		"12a9f108e7420460864de3d46610f722e69c80b2ac2fb1e2ada34aa952bbd73e"} // jmw: github.com/ciearius
 )
+
+func buildStyleApplicator(c *color.Color) func(string) string {
+	return func(s string) string {
+		return c.Sprint(stripansi.Strip(s))
+	}
+}
 
 // TODO: have a web dashboard that shows logs
 func main() {
@@ -124,7 +156,7 @@ func main() {
 		}
 	}
 
-	fmt.Println(fmt.Sprintf("Starting chat server on port %d", port))
+	fmt.Printf("Starting chat server on port %d\n", port)
 	go getMsgsFromSlack()
 	go func() {
 		if port == 22 {
@@ -186,7 +218,7 @@ type user struct {
 	session       ssh.Session
 	term          *terminal.Terminal
 	bell          bool
-	color         color.Color
+	color         string
 	id            string
 	addr          string
 	win           ssh.Window
@@ -286,7 +318,7 @@ func newUser(s ssh.Session) *user {
 	}
 	hash := sha256.New()
 	hash.Write([]byte(host))
-	u := &user{s.User(), s, term, true, color.Color{}, hex.EncodeToString(hash.Sum(nil)), host, w, sync.Once{}, time.Now(), time.Now(), nil, mainRoom}
+	u := &user{s.User(), s, term, true, "", hex.EncodeToString(hash.Sum(nil)), host, w, sync.Once{}, time.Now(), time.Now(), nil, mainRoom}
 	go func() {
 		for u.win = range winChan {
 		}
@@ -440,17 +472,38 @@ func (u *user) pickUsername(possibleName string) {
 		possibleName = cleanName(possibleName)
 	}
 	u.name = possibleName
-	u.changeColor(*colorArr[rand.Intn(len(colorArr))]) // also sets prompt
+	var colorIndex = rand.Intn(len(colorstyles))
+	u.changeColor(colorstyles[colorIndex].name) // also sets prompt
 }
 
-func (u *user) changeColor(color color.Color) {
-	u.name = color.Sprint(stripansi.Strip(u.name))
-	u.color = color
+// Applies color from name
+func (u *user) changeColor(colorName string) {
+	color := getColor(colorName)
+	if color == nil {
+		return
+	}
+	u.color = color.name
+	u.name = color.apply(u.name)
 	u.term.SetPrompt(u.name + ": ")
 	allUsersMutex.Lock()
 	allUsers[u.id] = u.name
 	allUsersMutex.Unlock()
 	saveBansAndUsers()
+}
+
+// Turns name into an applyable color (defaults to white)
+func getColor(name string) *colorstyle {
+	for i := range colorstyles {
+		if colorstyles[i].name == name {
+			return colorstyles[i]
+		}
+	}
+	for i := range secretColorStyles {
+		if secretColorStyles[i].name == name {
+			return secretColorStyles[i]
+		}
+	}
+	return nil
 }
 
 func (u *user) changeRoom(r *room, toSlack bool) {
@@ -774,32 +827,34 @@ func runCommands(line string, u *user, isSlack bool) {
 		colorMsg := "Which color? Choose from green, cyan, blue, red/orange, magenta/purple/pink, yellow/beige, white/cream and black/gray/grey.  \nThere's also a few secret colors :)"
 		switch strings.TrimSpace(strings.TrimPrefix(line, "/color")) {
 		case "green":
-			u.changeColor(*green)
+			u.changeColor("green")
 		case "cyan":
-			u.changeColor(*cyan)
+			u.changeColor("green")
 		case "blue":
-			u.changeColor(*blue)
+			u.changeColor("blue")
 		case "red", "orange":
-			u.changeColor(*red)
+			u.changeColor("red")
 		case "magenta", "purple", "pink":
-			u.changeColor(*magenta)
+			u.changeColor("magenta")
 		case "yellow", "beige":
-			u.changeColor(*yellow)
+			u.changeColor("yellow")
 		case "white", "cream":
-			u.changeColor(*white)
+			u.changeColor("white")
 		case "black", "gray", "grey":
-			u.changeColor(*black)
+			u.changeColor("black")
 			// secret colors
 		case "easter":
-			u.changeColor(*color.New(color.BgMagenta, color.FgHiYellow))
+			u.changeColor("easter")
 		case "baby":
-			u.changeColor(*color.New(color.BgBlue, color.FgHiMagenta))
+			u.changeColor("baby")
 		case "l33t":
-			u.changeColor(*u.color.Add(color.BgHiBlack))
+			u.changeColor("l33t")
 		case "whiten":
-			u.changeColor(*u.color.Add(color.BgWhite))
+			u.changeColor("whiten")
 		case "hacker":
-			u.changeColor(*color.New(color.FgHiGreen, color.BgBlack))
+			u.changeColor("hacker")
+		case "rainbow":
+			u.changeColor("rainbow")
 		default:
 			b(devbot, colorMsg)
 		}
@@ -1137,7 +1192,7 @@ func getMsgsFromSlack() {
 			if !strings.HasPrefix(msg.Text, "hide") {
 				h := sha1.Sum([]byte(u.ID))
 				i, _ := strconv.ParseInt(hex.EncodeToString(h[:1]), 16, 0)
-				mainRoom.broadcast(color.HiYellowString("HC ")+(*colorArr[int(i)%len(colorArr)]).Sprint(strings.Fields(u.RealName)[0]), msg.Text, false)
+				mainRoom.broadcast(color.HiYellowString("HC ")+(colorstyles[int(i)%len(colorstyles)]).apply(strings.Fields(u.RealName)[0]), msg.Text, false)
 				runCommands(msg.Text, uslack, true)
 			}
 		case *slack.ConnectedEvent:
@@ -1188,4 +1243,9 @@ func remove(s []*user, a *user) []*user {
 		}
 	}
 	return s
+}
+
+type colorstyle struct {
+	name  string
+	apply func(string) string
 }
