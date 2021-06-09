@@ -94,11 +94,11 @@ Amrit [@astro_shenava](https://twitter.com/astro_shenava): _"Super cool man"_
 Mudrank [@mudrankgupta](https://twitter.com/mudrankgupta): "🔥🚀🚀"
 
 From Hack Club:  
-**Caleb Denio, Safin Singh, Eleeza A    
-Jubril, Sarthak Mohanty, Anghe    
-Tommy Pujol, Sam Poder, Rishi Kothari    
-Amogh Chaubey, Ella Xu, Hugo Hu  
-Matthew Stanciu**
+**[Caleb Denio](https://calebden.io), [Safin Singh](https://safin.dev), [Eleeza](https://github.com/E-Lee-Za)   
+[Jubril](https://github.com/s1ntaxe770r), [Sarthak Mohanty](https://sarthakmohanty.me)    
+[Tommy Pujol](https://itstommy.xyz/), [Sam Poder](http://sampoder.com), [Rishi Kothari](http://rishi.cx)    
+[Amogh Chaubey](https://amogh.sh), [Ella Xu](https://timeline.ella.cx/), [Hugo Hu](https://github.com/Hugoyhu)
+[Matthew Stanciu](https://matthewstanciu.me/), [Tanishq Soni](https://tanishqsoni.me)**
 
 Huge thanks to the amazing [Caleb Denio](https://github.com/cjdenio) for lending me the original Devzat server 💖
 
