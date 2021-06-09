@@ -109,6 +109,7 @@ var (
 	tttGame       = new(ttt.Board)
 	currentPlayer = ttt.X
 	hangGame      = new(hangman)
+	hangGameStarted = false
 
 	admins = []string{"d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82", // Ishan Goel
 		"f5c7f9826b6e143f6e9c3920767680f503f259570f121138b2465bb2b052a85d", // Ella Xu
@@ -591,27 +592,32 @@ func runCommands(line string, u *user, isSlack bool) {
 		return
 	}
 	if strings.HasPrefix(line, "/hang") {
-		rest := strings.TrimSpace(strings.TrimPrefix(line, "/hang"))
-		if len(rest) > 1 {
-			u.writeln(u.name, line)
-			hangGame = &hangman{rest, 15, " "} // default value of guesses so empty space is given away
+		if !hangGameStarted {
+			word, err := u.term.ReadPassword("Word (Won't be displayed): ")
+			if err != nil {
+				fmt.Println(u.name, err)
+			}
+			hangGame = &hangman{word, 15, " "}
 			b(devbot, u.name+" has started a new game of Hangman! Guess letters with /hang <letter>")
 			b(devbot, "```\n"+hangPrint(hangGame)+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```")
-			return
-		} else { // allow message to show to everyone
-			if !isSlack {
-				b(u.name, line)
-			}
+			hangGameStarted = true
+		}
+
+		rest := strings.TrimSpace(strings.TrimPrefix(line, "/hang"))
+		if !isSlack {
+			b(u.name, line)
 		}
 		if strings.Trim(hangGame.word, hangGame.guesses) == "" {
-			b(devbot, "The game has ended. Start a new game with /hang <word>")
+			hangGameStarted = false
+			b(devbot, "The game has ended. Start a new game with /hang")
 			return
 		}
 		if len(rest) == 0 {
-			b(devbot, "Start a new game with /hang <word> or guess with /hang <letter>")
+			b(devbot, "Start a new game with /hang or guess with /hang <letter>")
 			return
 		}
 		if hangGame.triesLeft == 0 {
+			hangGameStarted = false
 			b(devbot, "No more tries! The word was "+hangGame.word)
 			return
 		}
@@ -629,8 +635,10 @@ func runCommands(line string, u *user, isSlack bool) {
 		b(devbot, "```\n"+display+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```")
 
 		if strings.Trim(hangGame.word, hangGame.guesses) == "" {
+			hangGameStarted = false
 			b(devbot, "You got it! The word was "+hangGame.word)
 		} else if hangGame.triesLeft == 0 {
+			hangGameStarted = false
 			b(devbot, "No more tries! The word was "+hangGame.word)
 		}
 		return
