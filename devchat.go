@@ -46,6 +46,7 @@ var (
 	rtm       *slack.RTM
 	client    = loadTwitterClient()
 
+	// TODO: migrate to github.com/jwalton/gchalk
 	red         = color.New(color.FgHiRed)
 	green       = color.New(color.FgHiGreen)
 	cyan        = color.New(color.FgHiCyan)
@@ -74,9 +75,10 @@ var (
 		{"l33t", func(s string) string { return color.New(color.BgHiBlack).Sprint(s) }},
 		{"whiten", func(s string) string { return color.New(color.BgWhite).Sprint(s) }}, // TODO: remove extra reset ANSI code at the end
 		{"rainbow", func(a string) string {
-			var rainbow = []*color.Color{red, magenta, blue, cyan, yellow, green, white}
+			//var rainbow = []*color.Color{magenta, blue, cyan, yellow, green, red}
+			rainbow := []*color.Color{red, yellow, green, cyan, blue, magenta}
 			a = stripansi.Strip(a)
-			var buf = ""
+			buf := ""
 			colorOffset := rand.Intn(len(rainbow))
 			for i := range []rune(a) {
 				colorIndex := (colorOffset + i) % len(rainbow)

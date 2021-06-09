@@ -40,12 +40,14 @@ Welcome to Devzat! Devzat is chat over SSH: github.com/quackduck/devzat
 Because there's SSH apps on all platforms, even on mobile, you can join from anywhere.
 
 Interesting features:
-• Many, many commands. Check em out by using /commands.
-• Built in Tic Tac Toe and Hangman! Run /tic or /hang <word>
-• Markdown support! Tables, headers, italics and everything. Just use "\n" in place of newlines.
-  You can even send ascii art with code fences. Run /ascii-art to see an example.
-• Emoji replacements 🔥 ! :rocket: => 🚀  (like on Slack and Discord)
+• Many, many commands. Run /commands.
+• Rooms! Run /room to see all rooms and use /room #foo to join a new room.
+• Markdown support! Tables, headers, italics and everything. Just use \n in place of newlines.
 • Code syntax highlighting. Use Markdown fences to send code. Run /example-code to see an example.
+• Direct messages! Send a DM using =user <msg>.
+• Timezone support, use /tz Continent/City to set your timezone.
+• Built in Tic Tac Toe and Hangman! Run /tic or /hang <word> to start new games.
+• Emoji replacements! :rocket: => 🚀  (like on Slack and Discord)
 
 For replacing newlines, I often use bulkseotools.com/add-remove-line-breaks.php.
 
@@ -55,24 +57,33 @@ Thanks to Caleb Denio for lending his server!
 ### Commands
 ```text
 Available commands
-   #<user> <msg>           Privately message people
+   =<user> <msg>           DM <user> with <msg>
    /users                  List users
    /nick   <name>          Change your name
-   /tz     <zone>          Change timezone as per IANA (eg: /tz Asia/Dubai)
-   /color  <color>         Change your name color
-   /tic    <move>          Play Tic Tac Toe!
-   /hang   <letter/word>   Play Hangman!
-   /all                    Get a list of all unique users ever
-   /emojis                 See a list of emojis
+   /room   #<room>         Join a room or use /room to see all rooms
+   /tic    <cell num>      Play Tic Tac Toe!
+   /hang   <char/word>     Play Hangman!
    /people                 See info about nice people who joined
+   /tz     <zone>          Change IANA timezone (eg: /tz Asia/Dubai)
+   /color  <color>         Change your name's color
+   /all                    Get a list of all users ever
+   /emojis                 See a list of emojis
    /exit                   Leave the chat
-   /hide                   Hide messages from HC Slack
-   /bell                   Toggle the ansi bell
-   /id     <user>          Get a unique identifier for a user
-   /ban    <user>          Ban a user, requires an admin pass
-   /kick   <user>          Kick a user, requires an admin pass
    /help                   Show help
    /commands               Show this message
+   /commands-rest          Uncommon commands list
+```
+```
+/commands-rest:
+   /hide                   Hide messages from HC Slack
+   /bell                   Toggle the ANSI bell used in pings
+   /id     <user>          Get a unique ID for a user (hashed IP)
+   /ban    <user>          Ban <user> (admin)
+   /kick   <user>          Kick <user> (admin)
+   /ascii-art              Show some panda art
+   /shrug                  ¯\_(ツ)/¯_
+   /example-code           Example syntax-highlighted code
+   /banIP  <IP/ID>         Ban by IP or ID (admin)
 ```
 
 ## People
