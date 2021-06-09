@@ -69,41 +69,19 @@ var (
 		{"easter", buildStyleApplicator(color.New(color.BgMagenta, color.FgHiYellow))},
 		{"baby", buildStyleApplicator(color.New(color.BgBlue, color.FgHiMagenta))},
 		{"hacker", buildStyleApplicator(color.New(color.FgHiGreen, color.BgBlack))},
-		//TODO: find a way to support special colors which rely on the user object
-		// {
-		// 	"l33t",
-		// 	func(a string, u user) string {
-		//		// TODO: this will lead to catastrophic failure with other special colors!
-		// 		c := *u.getColor().Add(color.BgHiBlack)
-		// 		return c.Sprint(stripansi.Strip(a))
-		// 	},
-		// },
-		// Same with "whiten", *u.getColor().Add(color.BgWhite)
-		{
-			"rainbow",
-			func(a string) string {
-				var rainbow = []*color.Color{
-					red,
-					magenta,
-					blue,
-					cyan,
-					yellow,
-					green,
-					white,
-				}
-
-				var stripped = stripansi.Strip(a)
-				var buf = ""
-				colorOffset := rand.Intn(len(rainbow))
-
-				for i, s := range stripped {
-					colorIndex := (colorOffset + i) % len(rainbow)
-					buf += rainbow[colorIndex].Sprint(string(rune(s)))
-				}
-
-				return buf
-			},
-		},
+		{"l33t", func(s string) string { return color.New(color.BgHiBlack).Sprint(s) }},
+		{"whiten", func(s string) string { return color.New(color.BgWhite).Sprint(s) }}, // TODO: remove extra reset ANSI code at the end
+		{"rainbow", func(a string) string {
+			var rainbow = []*color.Color{red, magenta, blue, cyan, yellow, green, white}
+			a = stripansi.Strip(a)
+			var buf = ""
+			colorOffset := rand.Intn(len(rainbow))
+			for i := range []rune(a) {
+				colorIndex := (colorOffset + i) % len(rainbow)
+				buf += rainbow[colorIndex].Sprint(string(a[i]))
+			}
+			return buf
+		}},
 	}
 
 	mainRoom = &room{"#main", make([]*user, 0, 10), sync.Mutex{}}
@@ -178,7 +156,7 @@ func main() {
 		}
 	}
 
-	fmt.Println(fmt.Sprintf("Starting chat server on port %d", port))
+	fmt.Printf("Starting chat server on port %d\n", port)
 	go getMsgsFromSlack()
 	go func() {
 		if port == 22 {
@@ -501,11 +479,9 @@ func (u *user) pickUsername(possibleName string) {
 // Applies color from name
 func (u *user) changeColor(colorName string) {
 	color := getColor(colorName)
-	u.changeColorstyle(color)
-}
-
-// Applies color from colorstyle
-func (u *user) changeColorstyle(color *colorstyle) {
+	if color == nil {
+		return
+	}
 	u.color = color.name
 	u.name = color.apply(u.name)
 	u.term.SetPrompt(u.name + ": ")
@@ -522,7 +498,7 @@ func getColor(name string) *colorstyle {
 			return colorstyles[i]
 		}
 	}
-	return colorstyles[0]
+	return nil
 }
 
 func (u *user) changeRoom(r *room, toSlack bool) {
