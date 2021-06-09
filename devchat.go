@@ -57,18 +57,18 @@ var (
 	devbot      = "" // initialized in main
 	startupTime = time.Now()
 
-	colorstyles = []colorstyle{
-		{"white", buildStyleApplicator(*white)},
-		{"red", buildStyleApplicator(*red)},
-		{"green", buildStyleApplicator(*green)},
-		{"cyan", buildStyleApplicator(*cyan)},
-		{"magenta", buildStyleApplicator(*magenta)},
-		{"yellow", buildStyleApplicator(*yellow)},
-		{"blue", buildStyleApplicator(*blue)},
-		{"black", buildStyleApplicator(*black)},
-		{"easter", buildStyleApplicator(*color.New(color.BgMagenta, color.FgHiYellow))},
-		{"baby", buildStyleApplicator(*color.New(color.BgBlue, color.FgHiMagenta))},
-		{"hacker", buildStyleApplicator(*color.New(color.FgHiGreen, color.BgBlack))},
+	colorstyles = []*colorstyle{
+		{"white", buildStyleApplicator(white)},
+		{"red", buildStyleApplicator(red)},
+		{"green", buildStyleApplicator(green)},
+		{"cyan", buildStyleApplicator(cyan)},
+		{"magenta", buildStyleApplicator(magenta)},
+		{"yellow", buildStyleApplicator(yellow)},
+		{"blue", buildStyleApplicator(blue)},
+		{"black", buildStyleApplicator(black)},
+		{"easter", buildStyleApplicator(color.New(color.BgMagenta, color.FgHiYellow))},
+		{"baby", buildStyleApplicator(color.New(color.BgBlue, color.FgHiMagenta))},
+		{"hacker", buildStyleApplicator(color.New(color.FgHiGreen, color.BgBlack))},
 		//TODO: find a way to support special colors which rely on the user object
 		// {
 		// 	"l33t",
@@ -94,7 +94,7 @@ var (
 
 				var stripped = stripansi.Strip(a)
 				var buf = ""
-				colorOffset := rand.Intn(len(rainbow) - 1)
+				colorOffset := rand.Intn(len(rainbow))
 
 				for i, s := range stripped {
 					colorIndex := (colorOffset + i) % len(rainbow)
@@ -138,10 +138,10 @@ var (
 		"12a9f108e7420460864de3d46610f722e69c80b2ac2fb1e2ada34aa952bbd73e"} // jmw: github.com/ciearius
 )
 
-func buildStyleApplicator(c color.Color) styleApplication {
-	return func(s string) string {
+func buildStyleApplicator(c *color.Color) *(func(string) string) {
+	return &(func(s string) string {
 		return c.Sprint(stripansi.Strip(s))
-	}
+	})
 }
 
 // TODO: have a web dashboard that shows logs
@@ -516,8 +516,8 @@ func (u *user) changeColorstyle(color colorstyle) {
 }
 
 // Turns name into an applyable color (defaults to white)
-func getColor(name string) colorstyle {
-	for i := 0; i < len(colorstyles); i++ {
+func getColor(name string) *colorstyle {
+	for i := range colorstyles {
 		if colorstyles[i].name == name {
 			return colorstyles[i]
 		}
@@ -1264,9 +1264,7 @@ func remove(s []*user, a *user) []*user {
 	return s
 }
 
-type styleApplication func(string) string
-
 type colorstyle struct {
 	name  string
-	apply styleApplication
+	apply *(func(string) string)
 }
