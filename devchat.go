@@ -138,10 +138,10 @@ var (
 		"12a9f108e7420460864de3d46610f722e69c80b2ac2fb1e2ada34aa952bbd73e"} // jmw: github.com/ciearius
 )
 
-func buildStyleApplicator(c *color.Color) *(func(string) string) {
-	return &(func(s string) string {
+func buildStyleApplicator(c *color.Color) func(string) string {
+	return func(s string) string {
 		return c.Sprint(stripansi.Strip(s))
-	})
+	}
 }
 
 // TODO: have a web dashboard that shows logs
@@ -505,7 +505,7 @@ func (u *user) changeColor(colorName string) {
 }
 
 // Applies color from colorstyle
-func (u *user) changeColorstyle(color colorstyle) {
+func (u *user) changeColorstyle(color *colorstyle) {
 	u.color = color.name
 	u.name = color.apply(u.name)
 	u.term.SetPrompt(u.name + ": ")
@@ -1266,5 +1266,5 @@ func remove(s []*user, a *user) []*user {
 
 type colorstyle struct {
 	name  string
-	apply *(func(string) string)
+	apply func(string) string
 }
