@@ -66,6 +66,8 @@ var (
 		{"yellow", buildStyleApplicator(yellow)},
 		{"blue", buildStyleApplicator(blue)},
 		{"black", buildStyleApplicator(black)},
+	}
+	secretColorStyles = []*colorstyle{
 		{"easter", buildStyleApplicator(color.New(color.BgMagenta, color.FgHiYellow))},
 		{"baby", buildStyleApplicator(color.New(color.BgBlue, color.FgHiMagenta))},
 		{"hacker", buildStyleApplicator(color.New(color.FgHiGreen, color.BgBlack))},
@@ -81,8 +83,7 @@ var (
 				buf += rainbow[colorIndex].Sprint(string(a[i]))
 			}
 			return buf
-		}},
-	}
+		}}}
 
 	mainRoom = &room{"#main", make([]*user, 0, 10), sync.Mutex{}}
 	rooms    = map[string]*room{mainRoom.name: mainRoom}
@@ -105,8 +106,7 @@ var (
 
 	tttGame       = new(ttt.Board)
 	currentPlayer = ttt.X
-	// hasStartedGame = false
-	hangGame = new(hangman)
+	hangGame      = new(hangman)
 
 	admins = []string{"d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82", // Ishan Goel
 		"f5c7f9826b6e143f6e9c3920767680f503f259570f121138b2465bb2b052a85d", // Ella Xu
@@ -496,6 +496,11 @@ func getColor(name string) *colorstyle {
 	for i := range colorstyles {
 		if colorstyles[i].name == name {
 			return colorstyles[i]
+		}
+	}
+	for i := range secretColorStyles {
+		if secretColorStyles[i].name == name {
+			return secretColorStyles[i]
 		}
 	}
 	return nil
