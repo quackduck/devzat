@@ -1181,16 +1181,16 @@ func getMsgsFromSlack() {
 		switch ev := msg.Data.(type) {
 		case *slack.MessageEvent:
 			msg := ev.Msg
-			msg.Text = strings.TrimSpace(msg.Text)
+			text := strings.TrimSpace(msg.Text)
 			if msg.SubType != "" {
 				break // We're only handling normal messages.
 			}
 			u, _ := api.GetUserInfo(msg.User)
-			if !strings.HasPrefix(msg.Text, "/hide") {
+			if !strings.HasPrefix(text, "/hide") {
 				h := sha1.Sum([]byte(u.ID))
 				i, _ := strconv.ParseInt(hex.EncodeToString(h[:1]), 16, 0)
-				mainRoom.broadcast(color.HiYellowString("HC ")+(styles[int(i)%len(styles)]).apply(strings.Fields(u.RealName)[0]), msg.Text, false)
-				runCommands(msg.Text, uslack, true)
+				mainRoom.broadcast(color.HiYellowString("HC ")+(styles[int(i)%len(styles)]).apply(strings.Fields(u.RealName)[0]), text, false)
+				runCommands(text, uslack, true)
 			}
 		case *slack.ConnectedEvent:
 			l.Println("Connected to Slack")
