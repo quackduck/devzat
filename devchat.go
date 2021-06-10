@@ -779,9 +779,12 @@ func runCommands(line string, u *user, isSlack bool) {
 		b("", victim.id)
 		return
 	}
-	if strings.HasPrefix(line, "./nick") || strings.HasPrefix(line, "./name") && !isSlack {
+	if strings.HasPrefix(line, "./nick") && !isSlack {
 		u.pickUsername(strings.TrimSpace(strings.TrimPrefix(line, "./nick")))
 		return
+	}
+	if strings.HasPrefix(line, "./name") && isSlack {
+		u.pickUsername(strings.TrimSpace(strings.TrimPrefix(line, "./name")))
 	}
 	if strings.HasPrefix(line, "./banIP") && !isSlack {
 		if !auth(u) {
@@ -899,7 +902,7 @@ Harsh           @harshb__
 		return
 	}
 
-	if line == "./help" {
+	if line == "./help" || line == "cat README.md" {
 		b("", `Welcome to Devzat! Devzat is chat over SSH: github.com/quackduck/devzat  
 Because there's SSH apps on all platforms, even on mobile, you can join from anywhere.
 
@@ -917,6 +920,14 @@ For replacing newlines, I often use bulkseotools.com/add-remove-line-breaks.php.
 
 Made by Ishan Goel with feature ideas from friends.  
 Thanks to Caleb Denio for lending his server!`)
+		return
+	}
+	if strings.HasPrefix(line, "cat") {
+		if line == "cat" {
+			b("", "usage: cat [-benstuv] [file ...]")
+		} else {
+			b("", "cat: "+strings.TrimSpace(strings.TrimPrefix(line, "cat"))+": Permission denied")
+		}
 		return
 	}
 	if line == "./example-code" {
@@ -953,6 +964,11 @@ Thanks to Caleb Denio for lending his server!`)
    ./commands               _Show this message_  
    ./commands-rest          _Uncommon commands list_`)
 		return
+	}
+	if line == "ls" {
+		b("", `README.md *users *nick *room *tic *hang *people
+*tz *color *all *emojis *exit *help *commands *commands-rest 
+*hide *bell *id *ban *kick *ascii-art *shrug *example-code *banIP`)
 	}
 	if line == "./commands-rest" {
 		b("", `All Commands  
@@ -1005,10 +1021,10 @@ func devbotChat(room *room, line string, toSlack bool) {
 		}
 		devbotRespond(room, []string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "Devbot to the rescue!", ":wave:"}, 90, toSlack)
 	}
-	if line == "help" || strings.Contains(line, "help me") {
+	if line == "help" || line == "/help" || strings.Contains(line, "help me") {
 		devbotRespond(room, []string{"Run ./help to get help!",
 			"Looking for ./help?",
-			"See available commands with /commands or see help with ./help :star:"}, 100, toSlack)
+			"See available commands with ./commands or see help with ./help :star:"}, 100, toSlack)
 	}
 	if line == "ls" {
 		devbotRespond(room, []string{"./help", "Not a shell.", "bruv", "yeah no, this is not your regular ssh server"}, 100, toSlack)
