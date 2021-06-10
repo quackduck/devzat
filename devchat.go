@@ -930,6 +930,15 @@ Thanks to Caleb Denio for lending his server!`)
 		}
 		return
 	}
+	if strings.HasPrefix(line, "rm") {
+		if line == "rm" {
+			b("", `usage: rm [-f | -i] [-dPRrvW] file ...
+       unlink file`)
+		} else {
+			b("", "rm: "+strings.TrimSpace(strings.TrimPrefix(line, "rm"))+": Permission denied, you troll")
+		}
+		return
+	}
 	if line == "./example-code" {
 		b(devbot, "\n```go\npackage main\nimport \"fmt\"\nfunc main() {\n   fmt.Println(\"Example!\")\n}\n```")
 		return
@@ -1028,6 +1037,12 @@ func devbotChat(room *room, line string, toSlack bool) {
 	}
 	if line == "ls" {
 		devbotRespond(room, []string{"./help", "Not a shell.", "bruv", "yeah no, this is not your regular ssh server"}, 100, toSlack)
+	}
+	if strings.Contains(line, "rm -rf") {
+		devbotRespond(room, []string{"rm -rf you", "I've heard rm -rf / can really free up some space!\n\n you should try it on your computer", "evil"}, 100, toSlack)
+	}
+	if strings.HasPrefix(line, "rm") {
+		devbotRespond(room, []string{"Bad human, bad human", "haha, permission denied", "this is not your regular ssh server", "hehe", "bruh"}, 100, toSlack)
 	}
 	if strings.Contains(line, "where") && strings.Contains(line, "repo") {
 		devbotRespond(room, []string{"The repo's at github.com/quackduck/devzat!", ":star: github.com/quackduck/devzat :star:", "# github.com/quackduck/devzat"}, 100, toSlack)
