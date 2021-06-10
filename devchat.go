@@ -58,20 +58,20 @@ var (
 	devbot      = "" // initialized in main
 	startupTime = time.Now()
 
-	colorstyles = []*colorstyle{
-		{"white", buildStyleApplicator(white)},
-		{"red", buildStyleApplicator(red)},
-		{"green", buildStyleApplicator(green)},
-		{"cyan", buildStyleApplicator(cyan)},
-		{"magenta", buildStyleApplicator(magenta)},
-		{"yellow", buildStyleApplicator(yellow)},
-		{"blue", buildStyleApplicator(blue)},
-		{"black", buildStyleApplicator(black)},
+	styles = []*style{
+		{"white", buildStyle(white)},
+		{"red", buildStyle(red)},
+		{"green", buildStyle(green)},
+		{"cyan", buildStyle(cyan)},
+		{"magenta", buildStyle(magenta)},
+		{"yellow", buildStyle(yellow)},
+		{"blue", buildStyle(blue)},
+		{"black", buildStyle(black)},
 	}
-	secretColorStyles = []*colorstyle{
-		{"easter", buildStyleApplicator(color.New(color.BgMagenta, color.FgHiYellow))},
-		{"baby", buildStyleApplicator(color.New(color.BgBlue, color.FgHiMagenta))},
-		{"hacker", buildStyleApplicator(color.New(color.FgHiGreen, color.BgBlack))},
+	secretStyles = []*style{
+		{"easter", buildStyle(color.New(color.BgMagenta, color.FgHiYellow))},
+		{"baby", buildStyle(color.New(color.BgBlue, color.FgHiMagenta))},
+		{"hacker", buildStyle(color.New(color.FgHiGreen, color.BgBlack))},
 		{"l33t", func(s string) string { return color.New(color.BgHiBlack).Sprint(s) }},
 		{"whiten", func(s string) string { return color.New(color.BgWhite).Sprint(s) }}, // TODO: remove extra reset ANSI code at the end
 		{"rainbow", func(a string) string {
@@ -82,7 +82,7 @@ var (
 			colorOffset := rand.Intn(len(rainbow))
 			for i := range []rune(a) {
 				colorIndex := (colorOffset + i) % len(rainbow)
-				buf += rainbow[colorIndex].Sprint(string(a[i]))
+				buf += rainbow[colorIndex].Sprint(string(a[i])) // TODO: remove multiple extra rest ansi codes at the end
 			}
 			return buf
 		}}}
@@ -118,7 +118,7 @@ var (
 		"12a9f108e7420460864de3d46610f722e69c80b2ac2fb1e2ada34aa952bbd73e"} // jmw: github.com/ciearius
 )
 
-func buildStyleApplicator(c *color.Color) func(string) string {
+func buildStyle(c *color.Color) func(string) string {
 	return func(s string) string {
 		return c.Sprint(stripansi.Strip(s))
 	}
@@ -474,8 +474,8 @@ func (u *user) pickUsername(possibleName string) {
 		possibleName = cleanName(possibleName)
 	}
 	u.name = possibleName
-	var colorIndex = rand.Intn(len(colorstyles))
-	u.changeColor(colorstyles[colorIndex].name) // also sets prompt
+	var colorIndex = rand.Intn(len(styles))
+	u.changeColor(styles[colorIndex].name) // also sets prompt
 }
 
 // Applies color from name
@@ -494,15 +494,15 @@ func (u *user) changeColor(colorName string) {
 }
 
 // Turns name into an applyable color (defaults to white)
-func getColor(name string) *colorstyle {
-	for i := range colorstyles {
-		if colorstyles[i].name == name {
-			return colorstyles[i]
+func getColor(name string) *style {
+	for i := range styles {
+		if styles[i].name == name {
+			return styles[i]
 		}
 	}
-	for i := range secretColorStyles {
-		if secretColorStyles[i].name == name {
-			return secretColorStyles[i]
+	for i := range secretStyles {
+		if secretStyles[i].name == name {
+			return secretStyles[i]
 		}
 	}
 	return nil
@@ -1004,21 +1004,17 @@ func devbotChat(room *room, line string, toSlack bool) {
 		}
 		devbotRespond(room, []string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "Devbot to the rescue!", ":wave:"}, 90, toSlack)
 	}
-
 	if line == "help" || strings.Contains(line, "help me") {
 		devbotRespond(room, []string{"Run /help to get help!",
 			"Looking for /help?",
 			"See available commands with /commands or see help with /help :star:"}, 100, toSlack)
 	}
-
 	if line == "ls" {
 		devbotRespond(room, []string{"/help", "Not a shell.", "bruv", "yeah no, this is not your regular ssh server"}, 100, toSlack)
 	}
-
 	if strings.Contains(line, "where") && strings.Contains(line, "repo") {
 		devbotRespond(room, []string{"The repo's at github.com/quackduck/devzat!", ":star: github.com/quackduck/devzat :star:", "# github.com/quackduck/devzat"}, 100, toSlack)
 	}
-
 	if strings.Contains(line, "rocket") || strings.Contains(line, "spacex") || strings.Contains(line, "tesla") {
 		devbotRespond(room, []string{"Doge to the mooooon :rocket:",
 			"I should have bought ETH before it :rocket:ed to the :moon:",
@@ -1027,14 +1023,12 @@ func devbotChat(room *room, line string, toSlack bool) {
 			"SpaceX",
 			"Elon Musk OP"}, 80, toSlack)
 	}
-
 	if strings.Contains(line, "elon") {
 		devbotRespond(room, []string{"When something is important enough, you do it even if the odds are not in your favor. - Elon",
 			"I do think there is a lot of potential if you have a compelling product - Elon",
 			"If you're trying to create a company, it's like baking a cake. You have to have all the ingredients in the right proportion. - Elon",
 			"Patience is a virtue, and I'm learning patience. It's a tough lesson. - Elon"}, 75, toSlack)
 	}
-
 	if !strings.Contains(line, "start") && strings.Contains(line, "star") {
 		devbotRespond(room, []string{"Someone say :star:?",
 			"If you like Devzat, give it a star at github.com/quackduck/devzat!",
@@ -1187,14 +1181,15 @@ func getMsgsFromSlack() {
 		switch ev := msg.Data.(type) {
 		case *slack.MessageEvent:
 			msg := ev.Msg
+			msg.Text = strings.TrimSpace(msg.Text)
 			if msg.SubType != "" {
 				break // We're only handling normal messages.
 			}
 			u, _ := api.GetUserInfo(msg.User)
-			if !strings.HasPrefix(msg.Text, "hide") {
+			if !strings.HasPrefix(msg.Text, "/hide") {
 				h := sha1.Sum([]byte(u.ID))
 				i, _ := strconv.ParseInt(hex.EncodeToString(h[:1]), 16, 0)
-				mainRoom.broadcast(color.HiYellowString("HC ")+(colorstyles[int(i)%len(colorstyles)]).apply(strings.Fields(u.RealName)[0]), msg.Text, false)
+				mainRoom.broadcast(color.HiYellowString("HC ")+(styles[int(i)%len(styles)]).apply(strings.Fields(u.RealName)[0]), msg.Text, false)
 				runCommands(msg.Text, uslack, true)
 			}
 		case *slack.ConnectedEvent:
@@ -1247,7 +1242,7 @@ func remove(s []*user, a *user) []*user {
 	return s
 }
 
-type colorstyle struct {
+type style struct {
 	name  string
 	apply func(string) string
 }
