@@ -367,7 +367,7 @@ func newUser(s ssh.Session) *user {
 
 	u.pickUsername(s.User())
 	if _, ok := allUsers[u.id]; !ok {
-		mainRoom.broadcast(devbot, "You seem to be new here "+u.name+". Welcome to Devzat! Run /help to see what you can do.", true)
+		mainRoom.broadcast(devbot, "You seem to be new here "+u.name+". Welcome to Devzat! Run ./help to see what you can do.", true)
 	}
 	mainRoom.usersMutex.Lock()
 	mainRoom.users = append(mainRoom.users, u)
@@ -493,7 +493,7 @@ func (u *user) changeColor(colorName string) {
 	saveBansAndUsers()
 }
 
-// Turns name into an applyable color (defaults to white)
+// Turns name into a style (defaults to nil)
 func getColor(name string) *style {
 	for i := range styles {
 		if styles[i].name == name {
@@ -509,8 +509,8 @@ func getColor(name string) *style {
 }
 
 func (u *user) changeRoom(r *room, toSlack bool) {
-	u.room.broadcast("", u.name+" is joining "+blue.Sprint(r.name), toSlack)
 	u.room.users = remove(u.room.users, u)
+	u.room.broadcast("", u.name+" is joining "+blue.Sprint(r.name), toSlack) // tell the old room
 	if u.room != mainRoom && len(u.room.users) == 0 {
 		delete(rooms, u.room.name)
 	}
@@ -555,7 +555,7 @@ func runCommands(line string, u *user, isSlack bool) {
 		u.room.broadcast(senderName, msg, true)
 	}
 
-	if strings.HasPrefix(line, "/hide") && !isSlack {
+	if strings.HasPrefix(line, "./hide") && !isSlack {
 		sendToSlack = false
 		b = func(senderName, msg string) {
 			u.room.broadcast(senderName, msg, false)
@@ -590,12 +590,12 @@ func runCommands(line string, u *user, isSlack bool) {
 		//peer.writeln(u.name+" -> "+peer.name, msg)
 		return
 	}
-	if strings.HasPrefix(line, "/hang") {
-		rest := strings.TrimSpace(strings.TrimPrefix(line, "/hang"))
+	if strings.HasPrefix(line, "./hang") {
+		rest := strings.TrimSpace(strings.TrimPrefix(line, "./hang"))
 		if len(rest) > 1 {
 			u.writeln(u.name, line)
 			hangGame = &hangman{rest, 15, " "} // default value of guesses so empty space is given away
-			b(devbot, u.name+" has started a new game of Hangman! Guess letters with /hang <letter>")
+			b(devbot, u.name+" has started a new game of Hangman! Guess letters with ./hang <letter>")
 			b(devbot, "```\n"+hangPrint(hangGame)+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```")
 			return
 		} else { // allow message to show to everyone
@@ -608,7 +608,7 @@ func runCommands(line string, u *user, isSlack bool) {
 			return
 		}
 		if len(rest) == 0 {
-			b(devbot, "Start a new game with /hang <word> or guess with /hang <letter>")
+			b(devbot, "Start a new game with ./hang <word> or guess with /hang <letter>")
 			return
 		}
 		if hangGame.triesLeft == 0 {
@@ -646,8 +646,8 @@ func runCommands(line string, u *user, isSlack bool) {
 	devbotChat(u.room, line, sendToSlack)
 	//}
 
-	if strings.HasPrefix(line, "/tic") {
-		rest := strings.TrimSpace(strings.TrimPrefix(line, "/tic"))
+	if strings.HasPrefix(line, "./tic") {
+		rest := strings.TrimSpace(strings.TrimPrefix(line, "./tic"))
 		if rest == "" {
 			b(devbot, "Starting a new game of Tic Tac Toe! The first player is always X.")
 			b(devbot, "Play using /tic <cell num>")
@@ -686,7 +686,7 @@ func runCommands(line string, u *user, isSlack bool) {
 		return
 	}
 
-	if line == "/users" {
+	if line == "./users" {
 		names := make([]string, 0, len(u.room.users))
 		for _, us := range u.room.users {
 			names = append(names, us.name)
@@ -694,7 +694,7 @@ func runCommands(line string, u *user, isSlack bool) {
 		b("", fmt.Sprint(names))
 		return
 	}
-	if line == "/all" {
+	if line == "./all" {
 		names := make([]string, 0, len(allUsers))
 		for _, name := range allUsers {
 			names = append(names, name)
@@ -712,11 +712,11 @@ func runCommands(line string, u *user, isSlack bool) {
 		}()
 		return
 	}
-	if line == "/exit" && !isSlack {
+	if line == "./exit" && !isSlack {
 		u.close(u.name + red.Sprint(" has left the chat"))
 		return
 	}
-	if line == "/bell" && !isSlack {
+	if line == "./bell" && !isSlack {
 		u.bell = !u.bell
 		if u.bell {
 			b("", fmt.Sprint("bell on"))
@@ -725,9 +725,9 @@ func runCommands(line string, u *user, isSlack bool) {
 		}
 		return
 	}
-	if strings.HasPrefix(line, "/room") && !isSlack {
-		rest := strings.TrimSpace(strings.TrimPrefix(line, "/room"))
-		if rest == "" || rest == "s" { // s so "/rooms" works too
+	if strings.HasPrefix(line, "./room") && !isSlack {
+		rest := strings.TrimSpace(strings.TrimPrefix(line, "./room"))
+		if rest == "" || rest == "s" { // s so "./rooms" works too
 			type kv struct {
 				roomName   string
 				numOfUsers int
@@ -755,9 +755,9 @@ func runCommands(line string, u *user, isSlack bool) {
 			}
 		}
 	}
-	if strings.HasPrefix(line, "/tz") && !isSlack {
+	if strings.HasPrefix(line, "./tz") && !isSlack {
 		var err error
-		tz := strings.TrimSpace(strings.TrimPrefix(line, "/tz"))
+		tz := strings.TrimSpace(strings.TrimPrefix(line, "./tz"))
 		if tz == "" {
 			u.timezone = nil
 			return
@@ -770,8 +770,8 @@ func runCommands(line string, u *user, isSlack bool) {
 		b(devbot, "Done!")
 		return
 	}
-	if strings.HasPrefix(line, "/id") {
-		victim, ok := findUserByName(u.room, strings.TrimSpace(strings.TrimPrefix(line, "/id")))
+	if strings.HasPrefix(line, "./id") {
+		victim, ok := findUserByName(u.room, strings.TrimSpace(strings.TrimPrefix(line, "./id")))
 		if !ok {
 			b("", "User not found")
 			return
@@ -779,24 +779,24 @@ func runCommands(line string, u *user, isSlack bool) {
 		b("", victim.id)
 		return
 	}
-	if strings.HasPrefix(line, "/nick") && !isSlack {
-		u.pickUsername(strings.TrimSpace(strings.TrimPrefix(line, "/nick")))
+	if strings.HasPrefix(line, "./nick") && !isSlack {
+		u.pickUsername(strings.TrimSpace(strings.TrimPrefix(line, "./nick")))
 		return
 	}
-	if strings.HasPrefix(line, "/banIP") && !isSlack {
+	if strings.HasPrefix(line, "./banIP") && !isSlack {
 		if !auth(u) {
 			b(devbot, "Not authorized")
 			return
 		}
 		bansMutex.Lock()
-		bans = append(bans, strings.TrimSpace(strings.TrimPrefix(line, "/banIP")))
+		bans = append(bans, strings.TrimSpace(strings.TrimPrefix(line, "./banIP")))
 		bansMutex.Unlock()
 		saveBansAndUsers()
 		return
 	}
 
-	if strings.HasPrefix(line, "/ban") && !isSlack {
-		victim, ok := findUserByName(u.room, strings.TrimSpace(strings.TrimPrefix(line, "/ban")))
+	if strings.HasPrefix(line, "./ban") && !isSlack {
+		victim, ok := findUserByName(u.room, strings.TrimSpace(strings.TrimPrefix(line, "./ban")))
 		if !ok {
 			b("", "User not found")
 			return
@@ -812,8 +812,8 @@ func runCommands(line string, u *user, isSlack bool) {
 		victim.close(victim.name + " has been banned by " + u.name)
 		return
 	}
-	if strings.HasPrefix(line, "/kick") && !isSlack {
-		victim, ok := findUserByName(u.room, strings.TrimSpace(strings.TrimPrefix(line, "/kick")))
+	if strings.HasPrefix(line, "./kick") && !isSlack {
+		victim, ok := findUserByName(u.room, strings.TrimSpace(strings.TrimPrefix(line, "./kick")))
 		if !ok {
 			b("", "User not found")
 			return
@@ -825,9 +825,9 @@ func runCommands(line string, u *user, isSlack bool) {
 		victim.close(victim.name + red.Sprint(" has been kicked by ") + u.name)
 		return
 	}
-	if strings.HasPrefix(line, "/color") && !isSlack {
+	if strings.HasPrefix(line, "./color") && !isSlack {
 		colorMsg := "Which color? Choose from green, cyan, blue, red/orange, magenta/purple/pink, yellow/beige, white/cream and black/gray/grey.  \nThere's also a few secret colors :)"
-		switch strings.TrimSpace(strings.TrimPrefix(line, "/color")) {
+		switch strings.TrimSpace(strings.TrimPrefix(line, "./color")) {
 		case "green":
 			u.changeColor("green")
 		case "cyan":
@@ -862,7 +862,7 @@ func runCommands(line string, u *user, isSlack bool) {
 		}
 		return
 	}
-	if line == "/people" {
+	if line == "./people" {
 		b("", `
 **Hack Club members**  
 Zach Latta     - Founder of Hack Club  
@@ -899,18 +899,18 @@ Harsh           @harshb__
 		return
 	}
 
-	if line == "/help" {
+	if line == "./help" {
 		b("", `Welcome to Devzat! Devzat is chat over SSH: github.com/quackduck/devzat  
 Because there's SSH apps on all platforms, even on mobile, you can join from anywhere.
 
 Interesting features:
-* Many, many commands. Run /commands.
-* Rooms! Run /room to see all rooms and use /room #foo to join a new room.
+* Many, many commands. Run ./commands.
+* Rooms! Run ./room to see all rooms and use ./room #foo to join a new room.
 * Markdown support! Tables, headers, italics and everything. Just use \\n in place of newlines.
 * Code syntax highlighting. Use Markdown fences to send code. Run /example-code to see an example.
 * Direct messages! Send a DM using =user <msg>.
-* Timezone support, use /tz Continent/City to set your timezone.
-* Built in Tic Tac Toe and Hangman! Run /tic or /hang <word> to start new games.
+* Timezone support, use ./tz Continent/City to set your timezone.
+* Built in Tic Tac Toe and Hangman! Run ./tic or ./hang <word> to start new games.
 * Emoji replacements! \:rocket\: => :rocket: (like on Slack and Discord)
 
 For replacing newlines, I often use bulkseotools.com/add-remove-line-breaks.php.
@@ -919,51 +919,51 @@ Made by Ishan Goel with feature ideas from friends.
 Thanks to Caleb Denio for lending his server!`)
 		return
 	}
-	if line == "/example-code" {
+	if line == "./example-code" {
 		b(devbot, "\n```go\npackage main\nimport \"fmt\"\nfunc main() {\n   fmt.Println(\"Example!\")\n}\n```")
 		return
 	}
-	if line == "/ascii-art" {
+	if line == "./ascii-art" {
 		b("", string(artBytes))
 		return
 	}
-	if line == "/shrug" {
+	if line == "./shrug" {
 		b("", `¯\\_(ツ)_/¯`)
 	}
-	if line == "/emojis" {
+	if line == "./emojis" {
 		b(devbot, "Check out github.com/ikatyang/emoji-cheat-sheet")
 		return
 	}
-	if line == "/commands" {
+	if line == "./commands" {
 		b("", `Available commands  
    =<user> <msg>           _DM <user> with <msg>_  
-   /users                  _List users_  
-   /nick   <name>          _Change your name_  
-   /room   #<room>         _Join a room or use /room to see all rooms_  
-   /tic    <cell num>      _Play Tic Tac Toe!_  
-   /hang   <char/word>     _Play Hangman!_  
-   /people                 _See info about nice people who joined_  
-   /tz     <zone>          _Change IANA timezone (eg: /tz Asia/Dubai)_  
-   /color  <color>         _Change your name's color_  
-   /all                    _Get a list of all users ever_  
-   /emojis                 _See a list of emojis_  
-   /exit                   _Leave the chat_  
-   /help                   _Show help_  
-   /commands               _Show this message_  
-   /commands-rest          _Uncommon commands list_`)
+   ./users                  _List users_  
+   ./nick   <name>          _Change your name_  
+   ./room   #<room>         _Join a room or use /room to see all rooms_  
+   ./tic    <cell num>      _Play Tic Tac Toe!_  
+   ./hang   <char/word>     _Play Hangman!_  
+   ./people                 _See info about nice people who joined_  
+   ./tz     <zone>          _Change IANA timezone (eg: /tz Asia/Dubai)_  
+   ./color  <color>         _Change your name's color_  
+   ./all                    _Get a list of all users ever_  
+   ./emojis                 _See a list of emojis_  
+   ./exit                   _Leave the chat_  
+   ./help                   _Show help_  
+   ./commands               _Show this message_  
+   ./commands-rest          _Uncommon commands list_`)
 		return
 	}
-	if line == "/commands-rest" {
+	if line == "./commands-rest" {
 		b("", `All Commands  
-   /hide                   _Hide messages from HC Slack_  
-   /bell                   _Toggle the ANSI bell used in pings_  
-   /id     <user>          _Get a unique ID for a user (hashed IP)_  
-   /ban    <user>          _Ban <user> (admin)_  
-   /kick   <user>          _Kick <user> (admin)_  
-   /ascii-art              _Show some panda art_  
-   /shrug                  _¯\\_(ツ)_/¯_  
-   /example-code           _Example syntax-highlighted code_  
-   /banIP  <IP/ID>         _Ban by IP or ID (admin)_`)
+   ./hide                   _Hide messages from HC Slack_  
+   ./bell                   _Toggle the ANSI bell used in pings_  
+   ./id     <user>          _Get a unique ID for a user (hashed IP)_  
+   ./ban    <user>          _Ban <user> (admin)_  
+   ./kick   <user>          _Kick <user> (admin)_  
+   ./ascii-art              _Show some panda art_  
+   ./shrug                  _¯\\_(ツ)_/¯_  
+   ./example-code           _Example syntax-highlighted code_  
+   ./banIP  <IP/ID>         _Ban by IP or ID (admin)_`)
 		return
 	}
 }
@@ -995,7 +995,7 @@ func devbotChat(room *room, line string, toSlack bool) {
 			return
 		}
 		if strings.Contains(line, "bad") || strings.Contains(line, "idiot") || strings.Contains(line, "stupid") {
-			devbotRespond(room, []string{"what an idiot, bullying a bot", ":(", ":angry:", ":anger:", ":cry:", "I'm in the middle of something okay", "shut up", "Run /help, you need it."}, 60, toSlack)
+			devbotRespond(room, []string{"what an idiot, bullying a bot", ":(", ":angry:", ":anger:", ":cry:", "I'm in the middle of something okay", "shut up", "Run ./help, you need it."}, 60, toSlack)
 			return
 		}
 		if strings.Contains(line, "shut up") {
@@ -1005,12 +1005,12 @@ func devbotChat(room *room, line string, toSlack bool) {
 		devbotRespond(room, []string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "Devbot to the rescue!", ":wave:"}, 90, toSlack)
 	}
 	if line == "help" || strings.Contains(line, "help me") {
-		devbotRespond(room, []string{"Run /help to get help!",
-			"Looking for /help?",
-			"See available commands with /commands or see help with /help :star:"}, 100, toSlack)
+		devbotRespond(room, []string{"Run ./help to get help!",
+			"Looking for ./help?",
+			"See available commands with /commands or see help with ./help :star:"}, 100, toSlack)
 	}
 	if line == "ls" {
-		devbotRespond(room, []string{"/help", "Not a shell.", "bruv", "yeah no, this is not your regular ssh server"}, 100, toSlack)
+		devbotRespond(room, []string{"./help", "Not a shell.", "bruv", "yeah no, this is not your regular ssh server"}, 100, toSlack)
 	}
 	if strings.Contains(line, "where") && strings.Contains(line, "repo") {
 		devbotRespond(room, []string{"The repo's at github.com/quackduck/devzat!", ":star: github.com/quackduck/devzat :star:", "# github.com/quackduck/devzat"}, 100, toSlack)
@@ -1088,18 +1088,20 @@ func auth(u *user) bool {
 }
 
 func cleanName(name string) string {
-	var s string
-	s = ""
-	name = strings.TrimSpace(name)
-	name = strings.Split(name, "\n")[0] // use only one line
+	s := ""
+	name = strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(
+		strings.TrimSpace(strings.Split(name, "\n")[0]), // use one trimmed line
+		"<-", ""),
+		"->", ""),
+		" ", "-")
+	if len(name) > 27 {
+		name = name[:27]
+	}
 	for _, r := range name {
-		if unicode.IsGraphic(r) {
+		if unicode.IsPrint(r) {
 			s += string(r)
 		}
 	}
-	s = strings.ReplaceAll(s, "<-", "")
-	s = strings.ReplaceAll(s, "->", "")
-	s = strings.ReplaceAll(s, " ", "-")
 	return s
 }
 
@@ -1186,7 +1188,7 @@ func getMsgsFromSlack() {
 				break // We're only handling normal messages.
 			}
 			u, _ := api.GetUserInfo(msg.User)
-			if !strings.HasPrefix(text, "/hide") {
+			if !strings.HasPrefix(text, "./hide") {
 				h := sha1.Sum([]byte(u.ID))
 				i, _ := strconv.ParseInt(hex.EncodeToString(h[:1]), 16, 0)
 				mainRoom.broadcast(color.HiYellowString("HC ")+(styles[int(i)%len(styles)]).apply(strings.Fields(u.RealName)[0]), text, false)
