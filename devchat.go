@@ -779,7 +779,7 @@ func runCommands(line string, u *user, isSlack bool) {
 		b("", victim.id)
 		return
 	}
-	if strings.HasPrefix(line, "./nick") && !isSlack {
+	if strings.HasPrefix(line, "./nick") || strings.HasPrefix(line, "./name") && !isSlack {
 		u.pickUsername(strings.TrimSpace(strings.TrimPrefix(line, "./nick")))
 		return
 	}
@@ -939,6 +939,7 @@ Thanks to Caleb Denio for lending his server!`)
    =<user> <msg>           _DM <user> with <msg>_  
    ./users                  _List users_  
    ./nick   <name>          _Change your name_  
+   ./name   <name>  
    ./room   #<room>         _Join a room or use /room to see all rooms_  
    ./tic    <cell num>      _Play Tic Tac Toe!_  
    ./hang   <char/word>     _Play Hangman!_  
