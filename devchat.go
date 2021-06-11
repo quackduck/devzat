@@ -31,7 +31,7 @@ import (
 	//"github.com/fatih/color"
 	"github.com/gliderlabs/ssh"
 	// TODO: migrate to github.com/jwalton/gchalk
-	chalk "github.com/jwalton/gchalk"
+	gchalk "github.com/jwalton/gchalk"
 	markdown "github.com/quackduck/go-term-markdown"
 	ttt "github.com/shurcooL/tictactoe"
 	"github.com/slack-go/slack"
@@ -49,7 +49,8 @@ var (
 	rtm       *slack.RTM
 	client    = loadTwitterClient()
 
-	red = chalk.WithRGB(255, 40, 40)
+	chalk = gchalk.New(gchalk.ForceLevel(gchalk.LevelAnsi256))
+	red   = chalk.WithRGB(255, 40, 40)
 	//red         = color.New(color.FgHiRed)
 	green = chalk.WithRGB(40, 255, 40)
 	//green       = color.New(color.FgHiGreen)
@@ -87,7 +88,7 @@ var (
 		{"l33t", func(s string) string { return chalk.BgBrightBlack(s) }},
 		{"whiten", func(s string) string { return chalk.BgWhite(s) }},
 		{"rainbow", func(a string) string {
-			rainbow := []*chalk.Builder{red, yellow, green, cyan, blue, magenta}
+			rainbow := []*gchalk.Builder{red, yellow, green, cyan, blue, magenta}
 			a = stripansi.Strip(a)
 			buf := ""
 			colorOffset := rand.Intn(len(rainbow))
@@ -128,7 +129,7 @@ var (
 		"12a9f108e7420460864de3d46610f722e69c80b2ac2fb1e2ada34aa952bbd73e"} // jmw: github.com/ciearius
 )
 
-func buildStyle(c *chalk.Builder) func(string) string {
+func buildStyle(c *gchalk.Builder) func(string) string {
 	return func(s string) string {
 		return c.Paint(stripansi.Strip(s))
 	}
@@ -137,7 +138,6 @@ func buildStyle(c *chalk.Builder) func(string) string {
 // TODO: have a web dashboard that shows logs
 func main() {
 	//color.NoColor = false
-	chalk.ForceLevel(chalk.LevelAnsi256)
 	devbot = green.Paint("devbot")
 	var err error
 	rand.Seed(time.Now().Unix())
