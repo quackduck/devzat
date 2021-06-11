@@ -603,6 +603,7 @@ func runCommands(line string, u *user, isSlack bool) {
 		rest := strings.TrimSpace(strings.TrimPrefix(line, "./hang"))
 		if len(rest) > 1 {
 			u.writeln(u.name, line)
+			u.writeln(devbot, "(that word won't show dw)"))
 			hangGame = &hangman{rest, 15, " "} // default value of guesses so empty space is given away
 			b(devbot, u.name+" has started a new game of Hangman! Guess letters with ./hang <letter>")
 			b(devbot, "```\n"+hangPrint(hangGame)+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```")
