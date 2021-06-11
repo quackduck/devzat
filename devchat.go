@@ -29,6 +29,8 @@ import (
 	"github.com/acarl005/stripansi"
 	"github.com/fatih/color"
 	"github.com/gliderlabs/ssh"
+	// TODO: migrate to github.com/jwalton/gchalk
+	chalk "github.com/jwalton/gchalk"
 	markdown "github.com/quackduck/go-term-markdown"
 	ttt "github.com/shurcooL/tictactoe"
 	"github.com/slack-go/slack"
@@ -46,16 +48,24 @@ var (
 	rtm       *slack.RTM
 	client    = loadTwitterClient()
 
-	// TODO: migrate to github.com/jwalton/gchalk
-	red         = color.New(color.FgHiRed)
-	green       = color.New(color.FgHiGreen)
-	cyan        = color.New(color.FgHiCyan)
-	magenta     = color.New(color.FgHiMagenta)
-	yellow      = color.New(color.FgHiYellow)
-	blue        = color.New(color.FgHiBlue)
-	black       = color.New(color.FgBlack)
-	white       = color.New(color.FgHiWhite)
-	devbot      = "" // initialized in main
+	red = chalk.WithRGB(255, 40, 40)
+	//red         = color.New(color.FgHiRed)
+	green = chalk.WithRGB(40, 255, 40)
+	//green       = color.New(color.FgHiGreen)
+	cyan = chalk.WithRGB(40, 255, 255)
+	//cyan        = color.New(color.FgHiCyan)
+	magenta = chalk.WithRGB(255, 20, 255)
+	//magenta     = color.New(color.FgHiMagenta)
+	yellow = chalk.WithRGB(255, 255, 20)
+	//yellow      = color.New(color.FgHiYellow)
+	blue = chalk.WithRGB(0, 170, 255)
+	//blue        = color.New(color.FgHiBlue)
+	black = chalk.WithRGB(0, 0, 0)
+	//black       = color.New(color.FgBlack)
+	white = chalk.WithRGB(220, 220, 220)
+	//white       = color.New(color.FgHiWhite)
+	devbot = "" // initialized in main
+
 	startupTime = time.Now()
 
 	styles = []*style{
@@ -69,20 +79,19 @@ var (
 		{"black", buildStyle(black)},
 	}
 	secretStyles = []*style{
-		{"easter", buildStyle(color.New(color.BgMagenta, color.FgHiYellow))},
-		{"baby", buildStyle(color.New(color.BgBlue, color.FgHiMagenta))},
-		{"hacker", buildStyle(color.New(color.FgHiGreen, color.BgBlack))},
-		{"l33t", func(s string) string { return color.New(color.BgHiBlack).Sprint(s) }},
-		{"whiten", func(s string) string { return color.New(color.BgWhite).Sprint(s) }}, // TODO: remove extra reset ANSI code at the end
+		{"easter", buildStyle(chalk.WithRGB(255, 40, 255).WithBgRGB(255, 255, 0))},
+		// color.New(color.BgBlue, color.FgHiMagenta)
+		{"baby", buildStyle(chalk.WithRGB(255, 40, 255).WithBgRGB(120, 120, 255))},
+		{"hacker", buildStyle(chalk.WithRGB(0, 255, 0).WithBgRGB(0, 0, 0))},
+		{"l33t", func(s string) string { return chalk.BgBrightBlack(s) }},
+		{"whiten", func(s string) string { return chalk.BgWhite(s) }},
 		{"rainbow", func(a string) string {
-			//var rainbow = []*color.Color{magenta, blue, cyan, yellow, green, red}
-			rainbow := []*color.Color{red, yellow, green, cyan, blue, magenta}
+			rainbow := []*chalk.Builder{red, yellow, green, cyan, blue, magenta}
 			a = stripansi.Strip(a)
 			buf := ""
 			colorOffset := rand.Intn(len(rainbow))
 			for i := range []rune(a) {
-				colorIndex := (colorOffset + i) % len(rainbow)
-				buf += rainbow[colorIndex].Sprint(string(a[i])) // TODO: remove multiple extra rest ansi codes at the end
+				buf += rainbow[(colorOffset+i)%len(rainbow)].Paint(string(a[i]))
 			}
 			return buf
 		}}}
@@ -118,16 +127,16 @@ var (
 		"12a9f108e7420460864de3d46610f722e69c80b2ac2fb1e2ada34aa952bbd73e"} // jmw: github.com/ciearius
 )
 
-func buildStyle(c *color.Color) func(string) string {
+func buildStyle(c *chalk.Builder) func(string) string {
 	return func(s string) string {
-		return c.Sprint(stripansi.Strip(s))
+		return c.Paint(stripansi.Strip(s))
 	}
 }
 
 // TODO: have a web dashboard that shows logs
 func main() {
 	color.NoColor = false
-	devbot = green.Sprint("devbot")
+	devbot = green.Paint("devbot")
 	var err error
 	rand.Seed(time.Now().Unix())
 	readBansAndUsers()
@@ -189,7 +198,7 @@ func (r *room) broadcast(senderName, msg string, toSlack bool) {
 			slackChan <- "[" + r.name + "] " + msg
 		}
 	}
-	msg = strings.ReplaceAll(msg, "@everyone", green.Sprint("everyone\a"))
+	msg = strings.ReplaceAll(msg, "@everyone", green.Paint("everyone\a"))
 	r.usersMutex.Lock()
 	for i := range r.users {
 		msg = strings.ReplaceAll(msg, "@"+stripansi.Strip(r.users[i].name), r.users[i].name)
@@ -375,14 +384,14 @@ func newUser(s ssh.Session) *user {
 	mainRoom.usersMutex.Unlock()
 	switch len(mainRoom.users) - 1 {
 	case 0:
-		u.writeln("", blue.Sprint("Welcome to the chat. There are no more users"))
+		u.writeln("", blue.Paint("Welcome to the chat. There are no more users"))
 	case 1:
-		u.writeln("", yellow.Sprint("Welcome to the chat. There is one more user"))
+		u.writeln("", yellow.Paint("Welcome to the chat. There is one more user"))
 	default:
-		u.writeln("", green.Sprint("Welcome to the chat. There are ", len(mainRoom.users)-1, " more users"))
+		u.writeln("", green.Paint("Welcome to the chat. There are ", strconv.Itoa(len(mainRoom.users)-1), " more users"))
 	}
 	//_, _ = term.Write([]byte(strings.Join(backlog, ""))) // print out backlog
-	mainRoom.broadcast(devbot, u.name+green.Sprint(" has joined the chat"), true)
+	mainRoom.broadcast(devbot, u.name+green.Paint(" has joined the chat"), true)
 	return u
 }
 
@@ -510,7 +519,7 @@ func getColor(name string) *style {
 
 func (u *user) changeRoom(r *room, toSlack bool) {
 	u.room.users = remove(u.room.users, u)
-	u.room.broadcast("", u.name+" is joining "+blue.Sprint(r.name), toSlack) // tell the old room
+	u.room.broadcast("", u.name+" is joining "+blue.Paint(r.name), toSlack) // tell the old room
 	if u.room != mainRoom && len(u.room.users) == 0 {
 		delete(rooms, u.room.name)
 	}
@@ -519,7 +528,7 @@ func (u *user) changeRoom(r *room, toSlack bool) {
 		u.pickUsername("")
 	}
 	u.room.users = append(u.room.users, u)
-	u.room.broadcast(devbot, u.name+" has joined "+blue.Sprint(u.room.name), toSlack)
+	u.room.broadcast(devbot, u.name+" has joined "+blue.Paint(u.room.name), toSlack)
 }
 
 func (u *user) repl() {
@@ -528,7 +537,7 @@ func (u *user) repl() {
 		line = strings.TrimSpace(line)
 
 		if err == io.EOF {
-			u.close(u.name + red.Sprint(" has left the chat"))
+			u.close(u.name + red.Paint(" has left the chat"))
 			return
 		}
 		if err != nil {
@@ -713,7 +722,7 @@ func runCommands(line string, u *user, isSlack bool) {
 		return
 	}
 	if line == "./exit" && !isSlack {
-		u.close(u.name + red.Sprint(" has left the chat"))
+		u.close(u.name + red.Paint(" has left the chat"))
 		return
 	}
 	if line == "./bell" && !isSlack {
@@ -741,7 +750,7 @@ func runCommands(line string, u *user, isSlack bool) {
 			})
 			roomsInfo := ""
 			for _, kv := range ss {
-				roomsInfo += fmt.Sprintf("%s: %d  \n", blue.Sprint(kv.roomName), kv.numOfUsers)
+				roomsInfo += fmt.Sprintf("%s: %d  \n", blue.Paint(kv.roomName), kv.numOfUsers)
 			}
 			b("", "Rooms and users  \n"+strings.TrimSpace(roomsInfo))
 		}
@@ -825,7 +834,7 @@ func runCommands(line string, u *user, isSlack bool) {
 			b(devbot, "Not authorized")
 			return
 		}
-		victim.close(victim.name + red.Sprint(" has been kicked by ") + u.name)
+		victim.close(victim.name + red.Paint(" has been kicked by ") + u.name)
 		return
 	}
 	if strings.HasPrefix(line, "./color") && !isSlack {
@@ -1040,6 +1049,7 @@ func devbotChat(room *room, line string, toSlack bool) {
 	}
 	if strings.Contains(line, "rm -rf") {
 		devbotRespond(room, []string{"rm -rf you", "I've heard rm -rf / can really free up some space!\n\n you should try it on your computer", "evil"}, 100, toSlack)
+		return
 	}
 	if strings.HasPrefix(line, "rm") {
 		devbotRespond(room, []string{"Bad human, bad human", "haha, permission denied", "this is not your regular ssh server", "hehe", "bruh"}, 100, toSlack)

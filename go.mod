@@ -11,6 +11,7 @@ require (
 	github.com/fatih/color v1.12.0
 	github.com/gliderlabs/ssh v0.3.2
 	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/jwalton/gchalk v1.0.3
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
