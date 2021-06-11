@@ -28,10 +28,8 @@ import (
 	"github.com/dghubble/oauth1"
 
 	"github.com/acarl005/stripansi"
-	//"github.com/fatih/color"
 	"github.com/gliderlabs/ssh"
-	// TODO: migrate to github.com/jwalton/gchalk
-	gchalk "github.com/jwalton/gchalk"
+	"github.com/jwalton/gchalk"
 	markdown "github.com/quackduck/go-term-markdown"
 	ttt "github.com/shurcooL/tictactoe"
 	"github.com/slack-go/slack"
@@ -1240,7 +1238,7 @@ func getMsgsFromSlack() {
 			if !strings.HasPrefix(text, "./hide") {
 				h := sha1.Sum([]byte(u.ID))
 				i, _ := strconv.ParseInt(hex.EncodeToString(h[:1]), 16, 0)
-				mainRoom.broadcast(color.HiYellowString("HC ")+(styles[int(i)%len(styles)]).apply(strings.Fields(u.RealName)[0]), text, false)
+				mainRoom.broadcast(yellow.Paint("HC ")+(styles[int(i)%len(styles)]).apply(strings.Fields(u.RealName)[0]), text, false)
 				runCommands(text, uslack, true)
 			}
 		case *slack.ConnectedEvent:
