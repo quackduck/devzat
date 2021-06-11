@@ -489,12 +489,12 @@ func (u *user) pickUsername(possibleName string) {
 
 // Applies color from name
 func (u *user) changeColor(colorName string) {
-	color := getColor(colorName)
-	if color == nil {
+	style := getStyle(colorName)
+	if style == nil {
 		return
 	}
-	u.color = color.name
-	u.name = color.apply(u.name)
+	u.color = style.name
+	u.name = style.apply(u.name)
 	u.term.SetPrompt(u.name + ": ")
 	allUsersMutex.Lock()
 	allUsers[u.id] = u.name
@@ -503,7 +503,7 @@ func (u *user) changeColor(colorName string) {
 }
 
 // Turns name into a style (defaults to nil)
-func getColor(name string) *style {
+func getStyle(name string) *style {
 	for i := range styles {
 		if styles[i].name == name {
 			return styles[i]
@@ -599,11 +599,11 @@ func runCommands(line string, u *user, isSlack bool) {
 		//peer.writeln(u.name+" -> "+peer.name, msg)
 		return
 	}
-	if strings.HasPrefix(line, "./hang") {
-		rest := strings.TrimSpace(strings.TrimPrefix(line, "./hang"))
+	if strings.HasPrefix(line, "/hang") {
+		rest := strings.TrimSpace(strings.TrimPrefix(line, "/hang"))
 		if len(rest) > 1 {
 			u.writeln(u.name, line)
-			u.writeln(devbot, "(that word won't show dw)"))
+			u.writeln(devbot, "(that word won't show dw)")
 			hangGame = &hangman{rest, 15, " "} // default value of guesses so empty space is given away
 			b(devbot, u.name+" has started a new game of Hangman! Guess letters with ./hang <letter>")
 			b(devbot, "```\n"+hangPrint(hangGame)+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```")
@@ -619,6 +619,10 @@ func runCommands(line string, u *user, isSlack bool) {
 		}
 		if len(rest) == 0 {
 			b(devbot, "Start a new game with ./hang <word> or guess with /hang <letter>")
+			return
+		}
+		if len(rest) == 0 {
+			b(devbot, "Start a new game with /hang <word> or guess with /hang <letter>")
 			return
 		}
 		if hangGame.triesLeft == 0 {
