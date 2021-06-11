@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/fatih/color"
 	"io"
 	"io/ioutil"
 	"log"
@@ -27,7 +28,7 @@ import (
 	"github.com/dghubble/oauth1"
 
 	"github.com/acarl005/stripansi"
-	"github.com/fatih/color"
+	//"github.com/fatih/color"
 	"github.com/gliderlabs/ssh"
 	// TODO: migrate to github.com/jwalton/gchalk
 	chalk "github.com/jwalton/gchalk"
@@ -135,7 +136,8 @@ func buildStyle(c *chalk.Builder) func(string) string {
 
 // TODO: have a web dashboard that shows logs
 func main() {
-	color.NoColor = false
+	//color.NoColor = false
+	chalk.ForceLevel(chalk.LevelAnsi256)
 	devbot = green.Paint("devbot")
 	var err error
 	rand.Seed(time.Now().Unix())
