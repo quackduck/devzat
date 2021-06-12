@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/fatih/color"
 	"io"
 	"io/ioutil"
 	"log"
@@ -47,24 +46,17 @@ var (
 	rtm       *slack.RTM
 	client    = loadTwitterClient()
 
-	chalk = gchalk.New(gchalk.ForceLevel(gchalk.LevelAnsi256))
-	red   = ansi256(5, 1, 1)
-	//red         = color.New(color.FgHiRed)
-	green = ansi256(1, 5, 1)
-	//green       = color.New(color.FgHiGreen)
-	cyan = ansi256(1, 5, 5)
-	//cyan        = color.New(color.FgHiCyan)
+	chalk   = gchalk.New(gchalk.ForceLevel(gchalk.LevelAnsi256))
+	red     = ansi256(5, 1, 1)
+	green   = ansi256(1, 5, 1)
+	cyan    = ansi256(1, 5, 5)
 	magenta = ansi256(5, 1, 3)
-	//magenta     = color.New(color.FgHiMagenta)
-	yellow = ansi256(5, 5, 1)
-	//yellow      = color.New(color.FgHiYellow)
-	blue = ansi256(1, 2, 5)
-	//blue        = color.New(color.FgHiBlue)
-	black = ansi256(0, 0, 0)
-	//black       = color.New(color.FgBlack)
-	white = ansi256(5, 5, 5)
-	//white       = color.New(color.FgHiWhite)
-	devbot = "" // initialized in main
+	yellow  = ansi256(5, 5, 1)
+	orange  = ansi256(5, 3, 0)
+	blue    = ansi256(0, 3, 5)
+	black   = ansi256(0, 0, 0)
+	white   = ansi256(5, 5, 5)
+	devbot  = "" // initialized in main
 
 	startupTime = time.Now()
 
@@ -75,6 +67,7 @@ var (
 		{"cyan", buildStyle(cyan)},
 		{"magenta", buildStyle(magenta)},
 		{"yellow", buildStyle(yellow)},
+		{"orange", buildStyle(orange)},
 		{"blue", buildStyle(blue)},
 		{"black", buildStyle(black)},
 	}
@@ -85,7 +78,7 @@ var (
 		{"l33t", func(s string) string { return chalk.BgBrightBlack(s) }},
 		{"whiten", func(s string) string { return chalk.BgWhite(s) }},
 		{"rainbow", func(a string) string {
-			rainbow := []*gchalk.Builder{red, yellow, green, cyan, blue, magenta}
+			rainbow := []*gchalk.Builder{red, orange, yellow, green, cyan, blue, magenta}
 			a = stripansi.Strip(a)
 			buf := ""
 			colorOffset := rand.Intn(len(rainbow))
@@ -139,7 +132,6 @@ func ansi256(r, g, b uint8) *gchalk.Builder {
 
 // TODO: have a web dashboard that shows logs
 func main() {
-	//color.NoColor = false
 	devbot = green.Paint("devbot")
 	var err error
 	rand.Seed(time.Now().Unix())
@@ -1144,8 +1136,8 @@ func tttPrint(cells [9]ttt.State) string {
 			cells[3], cells[4], cells[5],
 			cells[6], cells[7], cells[8]),
 
-		ttt.X.String(), color.HiYellowString(ttt.X.String())),
-		ttt.O.String(), color.HiGreenString(ttt.O.String()))
+		ttt.X.String(), chalk.BrightYellow(ttt.X.String())),
+		ttt.O.String(), chalk.BrightGreen(ttt.O.String()))
 }
 
 func auth(u *user) bool {
