@@ -48,21 +48,21 @@ var (
 	client    = loadTwitterClient()
 
 	chalk = gchalk.New(gchalk.ForceLevel(gchalk.LevelAnsi256))
-	red   = chalk.WithRGB(255, 40, 40)
+	red   = ansi256(5, 1, 1)
 	//red         = color.New(color.FgHiRed)
-	green = chalk.WithRGB(40, 255, 40)
+	green = ansi256(1, 5, 1)
 	//green       = color.New(color.FgHiGreen)
-	cyan = chalk.WithRGB(40, 255, 255)
+	cyan = ansi256(1, 5, 5)
 	//cyan        = color.New(color.FgHiCyan)
-	magenta = chalk.WithRGB(255, 20, 255)
+	magenta = ansi256(5, 1, 3)
 	//magenta     = color.New(color.FgHiMagenta)
-	yellow = chalk.WithRGB(255, 255, 20)
+	yellow = ansi256(5, 5, 1)
 	//yellow      = color.New(color.FgHiYellow)
-	blue = chalk.WithRGB(0, 170, 255)
+	blue = ansi256(1, 2, 5)
 	//blue        = color.New(color.FgHiBlue)
-	black = chalk.WithRGB(0, 0, 0)
+	black = ansi256(0, 0, 0)
 	//black       = color.New(color.FgBlack)
-	white = chalk.WithRGB(220, 220, 220)
+	white = ansi256(5, 5, 5)
 	//white       = color.New(color.FgHiWhite)
 	devbot = "" // initialized in main
 
@@ -79,9 +79,8 @@ var (
 		{"black", buildStyle(black)},
 	}
 	secretStyles = []*style{
-		{"easter", buildStyle(chalk.WithRGB(255, 40, 255).WithBgRGB(255, 255, 0))},
-		// color.New(color.BgBlue, color.FgHiMagenta)
-		{"baby", buildStyle(chalk.WithRGB(255, 40, 255).WithBgRGB(120, 120, 255))},
+		{"easter", buildStyle(chalk.WithRGB(255, 51, 255).WithBgRGB(255, 255, 0))},
+		{"baby", buildStyle(chalk.WithRGB(255, 51, 255).WithBgRGB(102, 102, 255))},
 		{"hacker", buildStyle(chalk.WithRGB(0, 255, 0).WithBgRGB(0, 0, 0))},
 		{"l33t", func(s string) string { return chalk.BgBrightBlack(s) }},
 		{"whiten", func(s string) string { return chalk.BgWhite(s) }},
@@ -131,6 +130,11 @@ func buildStyle(c *gchalk.Builder) func(string) string {
 	return func(s string) string {
 		return c.Paint(stripansi.Strip(s))
 	}
+}
+
+// with r, g and b values from 0 to 5
+func ansi256(r, g, b uint8) *gchalk.Builder {
+	return chalk.WithRGB(255/5*r, 255/5*g, 255/5*b)
 }
 
 // TODO: have a web dashboard that shows logs
@@ -514,6 +518,15 @@ func getStyle(name string) *style {
 			return secretStyles[i]
 		}
 	}
+	if a, err := strconv.Atoi(name); err == nil {
+		r := (a / 100) % 10
+		g := (a / 10) % 10
+		b := a % 10
+		if r > 5 || g > 5 || b > 5 || r < 0 || g < 0 || b < 0 {
+			return nil
+		}
+		return &style{name, buildStyle(ansi256(uint8(r), uint8(g), uint8(b)))}
+	}
 	return nil
 }
 
@@ -843,12 +856,12 @@ func runCommands(line string, u *user, isSlack bool) {
 		return
 	}
 	if strings.HasPrefix(line, "./color") && !isSlack {
-		colorMsg := "Which color? Choose from green, cyan, blue, red/orange, magenta/purple/pink, yellow/beige, white/cream and black/gray/grey.  \nThere's also a few secret colors :)"
-		switch strings.TrimSpace(strings.TrimPrefix(line, "./color")) {
+		colorMsg := "Which color? Choose from green, cyan, blue, red/orange, magenta/purple/pink, yellow/beige, white/cream and black/gray/grey.  \nMake your own colors using RGB values from 0 to 5 (for example, ./color 530, a pretty nice orange)  \nThere's also a few secret colors :)"
+		switch rest := strings.TrimSpace(strings.TrimPrefix(line, "./color")); rest {
 		case "green":
 			u.changeColor("green")
 		case "cyan":
-			u.changeColor("green")
+			u.changeColor("cyan")
 		case "blue":
 			u.changeColor("blue")
 		case "red", "orange":
@@ -875,6 +888,17 @@ func runCommands(line string, u *user, isSlack bool) {
 		case "rainbow":
 			u.changeColor("rainbow")
 		default:
+			if a, err := strconv.Atoi(rest); err == nil {
+				r := (a / 100) % 10
+				g := (a % 10) % 10
+				bl := a % 10
+				if r > 5 || g > 5 || bl > 5 || r < 0 || g < 0 || bl < 0 {
+					b(devbot, "custom colors have values from 0 to 5 smh")
+					return
+				}
+				u.changeColor(rest)
+				return
+			}
 			b(devbot, colorMsg)
 		}
 		return
