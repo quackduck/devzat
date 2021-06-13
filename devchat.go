@@ -81,8 +81,8 @@ var (
 		{"easter", buildStyle(chalk.WithRGB(255, 51, 255).WithBgRGB(255, 255, 0))},
 		{"baby", buildStyle(chalk.WithRGB(255, 51, 255).WithBgRGB(102, 102, 255))},
 		{"hacker", buildStyle(chalk.WithRGB(0, 255, 0).WithBgRGB(0, 0, 0))},
-		{"l33t", func(s string) string { return chalk.BgBrightBlack(s) }},
-		{"whiten", func(s string) string { return chalk.BgWhite(s) }},
+		{"l33t", buildStyleNoStrip(chalk.WithBgBrightBlack())},
+		{"whiten", buildStyleNoStrip(chalk.WithBgWhite())},
 		{"rainbow", func(a string) string {
 			rainbow := []*gchalk.Builder{red, orange, yellow, green, cyan, blue, magenta}
 			a = stripansi.Strip(a)
@@ -128,6 +128,12 @@ var (
 func buildStyle(c *gchalk.Builder) func(string) string {
 	return func(s string) string {
 		return c.Paint(stripansi.Strip(s))
+	}
+}
+
+func buildStyleNoStrip(c *gchalk.Builder) func(string) string {
+	return func(s string) string {
+		return c.Paint(s)
 	}
 }
 
@@ -534,7 +540,7 @@ func getStyle(name string) (*style, error) {
 				return nil, errors.New("custom colors have values from 0 to 5 smh")
 			}
 			if strings.HasPrefix(name, "bg") {
-				return &style{name, buildStyle(bgAnsi256(uint8(r), uint8(g), uint8(b)))}, nil
+				return &style{name, buildStyleNoStrip(bgAnsi256(uint8(r), uint8(g), uint8(b)))}, nil
 			} else {
 				return &style{name, buildStyle(ansi256(uint8(r), uint8(g), uint8(b)))}, nil
 			}
