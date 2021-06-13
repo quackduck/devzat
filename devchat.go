@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -133,6 +134,10 @@ func buildStyle(c *gchalk.Builder) func(string) string {
 // with r, g and b values from 0 to 5
 func ansi256(r, g, b uint8) *gchalk.Builder {
 	return chalk.WithRGB(255/5*r, 255/5*g, 255/5*b)
+}
+
+func bgAnsi256(r, g, b uint8) *gchalk.Builder {
+	return chalk.WithBgRGB(255/5*r, 255/5*g, 255/5*b)
 }
 
 // TODO: have a web dashboard that shows logs
@@ -488,10 +493,10 @@ func (u *user) pickUsername(possibleName string) {
 }
 
 // Applies color from name
-func (u *user) changeColor(colorName string) bool {
-	style := getStyle(colorName)
-	if style == nil {
-		return false
+func (u *user) changeColor(colorName string) error {
+	style, err := getStyle(colorName)
+	if err != nil {
+		return err
 	}
 	u.color = style.name
 	u.name = style.apply(u.name)
@@ -500,31 +505,48 @@ func (u *user) changeColor(colorName string) bool {
 	allUsers[u.id] = u.name
 	allUsersMutex.Unlock()
 	saveBansAndUsers()
-	return true
+	return nil
 }
 
 // Turns name into a style (defaults to nil)
-func getStyle(name string) *style {
+func getStyle(name string) (*style, error) {
 	for i := range styles {
 		if styles[i].name == name {
-			return styles[i]
+			return styles[i], nil
 		}
 	}
 	for i := range secretStyles {
 		if secretStyles[i].name == name {
-			return secretStyles[i]
+			return secretStyles[i], nil
 		}
 	}
-	if a, err := strconv.Atoi(name); err == nil {
-		r := (a / 100) % 10
-		g := (a / 10) % 10
-		b := a % 10
-		if r > 5 || g > 5 || b > 5 || r < 0 || g < 0 || b < 0 {
-			return nil
+	if len(name) == 3 || len(name) == 5 {
+		rgbCode := name
+		if strings.HasPrefix(name, "bg") {
+			rgbCode = strings.TrimPrefix(rgbCode, "bg")
 		}
-		return &style{name, buildStyle(ansi256(uint8(r), uint8(g), uint8(b)))}
+		a, err := strconv.Atoi(rgbCode)
+		if err == nil {
+			r := (a / 100) % 10
+			g := (a % 10) % 10
+			b := a % 10
+			if r > 5 || g > 5 || b > 5 || r < 0 || g < 0 || b < 0 {
+				return nil, errors.New("custom colors have values from 0 to 5 smh")
+			}
+			if strings.HasPrefix(name, "bg") {
+				return &style{name, buildStyle(bgAnsi256(uint8(r), uint8(g), uint8(b)))}, nil
+			} else {
+				return &style{name, buildStyle(ansi256(uint8(r), uint8(g), uint8(b)))}, nil
+			}
+		}
 	}
-	return nil
+	return nil, errors.New("Which color? Choose from random, " + strings.Join(func() []string {
+		colors := make([]string, 0, len(styles))
+		for i := range styles {
+			colors = append(colors, styles[i].name)
+		}
+		return colors
+	}(), ", ") + "  \nMake your own colors using RGB values from 0 to 5 (for example, ./color 530, a pretty nice orange)  \nThere's also a few secret colors :)")
 }
 
 func (u *user) changeRoom(r *room, toSlack bool) {
@@ -618,11 +640,11 @@ func runCommands(line string, u *user, isSlack bool) {
 			b(devbot, u.name+" has started a new game of Hangman! Guess letters with ./hang <letter>")
 			b(devbot, "```\n"+hangPrint(hangGame)+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```")
 			return
-		} else { // allow message to show to everyone
-			if !isSlack {
-				b(u.name, line)
-			}
 		}
+		if !isSlack {
+			b(u.name, line)
+		}
+
 		if strings.Trim(hangGame.word, hangGame.guesses) == "" {
 			b(devbot, "The game has ended. Start a new game with /hang <word>")
 			return
@@ -642,9 +664,9 @@ func runCommands(line string, u *user, isSlack bool) {
 		if strings.Contains(hangGame.guesses, rest) {
 			b(devbot, "You already guessed "+rest)
 			return
-		} else {
-			hangGame.guesses += rest
 		}
+		hangGame.guesses += rest
+
 		if !(strings.Contains(hangGame.word, rest)) {
 			hangGame.triesLeft--
 		}
@@ -853,33 +875,13 @@ func runCommands(line string, u *user, isSlack bool) {
 		return
 	}
 	if strings.HasPrefix(line, "./color") && !isSlack {
-		colorMsg := "Which color? Choose from random, " + strings.Join(func() []string {
-			colors := make([]string, 0, len(styles))
-			for i := range styles {
-				colors = append(colors, styles[i].name)
-			}
-			return colors
-		}(), ", ") + "  \nMake your own colors using RGB values from 0 to 5 (for example, ./color 530, a pretty nice orange)  \nThere's also a few secret colors :)"
 		rest := strings.TrimSpace(strings.TrimPrefix(line, "./color"))
 		if rest == "random" {
 			u.changeColor(styles[rand.Intn(len(styles))].name)
 			return
 		}
-		if a, err := strconv.Atoi(rest); err == nil {
-			r := (a / 100) % 10
-			g := (a % 10) % 10
-			bl := a % 10
-			if r > 5 || g > 5 || bl > 5 || r < 0 || g < 0 || bl < 0 {
-				b(devbot, "custom colors have values from 0 to 5 smh")
-				return
-			}
-			if !u.changeColor(rest) {
-				b(devbot, colorMsg)
-			}
-			return
-		}
-		if !u.changeColor(rest) {
-			b(devbot, colorMsg)
+		if err := u.changeColor(rest); err != nil {
+			b(devbot, err.Error())
 		}
 		return
 	}
