@@ -66,10 +66,15 @@ var (
 		{"green", buildStyle(green)},
 		{"cyan", buildStyle(cyan)},
 		{"magenta", buildStyle(magenta)},
+		{"pink", buildStyle(ansi256(5, 3, 4))},
+		{"rose", buildStyle(ansi256(5, 0, 2))},
+		{"fire", buildStyle(ansi256(5, 2, 0))},
+		{"pastel green", buildStyle(ansi256(0, 5, 3))},
+		{"olive", buildStyle(ansi256(4, 5, 1))},
 		{"yellow", buildStyle(yellow)},
 		{"orange", buildStyle(orange)},
 		{"blue", buildStyle(blue)},
-		{"black", buildStyle(black)},
+		//{"black", buildStyle(black)},
 	}
 	secretStyles = []*style{
 		{"easter", buildStyle(chalk.WithRGB(255, 51, 255).WithBgRGB(255, 255, 0))},
@@ -346,12 +351,12 @@ func newUser(s ssh.Session) *user {
 	idsIn20Mutex.Lock()
 	idsIn20ToTimes[u.id]++
 	idsIn20Mutex.Unlock()
-	time.AfterFunc(30*time.Second, func() {
+	time.AfterFunc(60*time.Second, func() {
 		idsIn20Mutex.Lock()
 		idsIn20ToTimes[u.id]--
 		idsIn20Mutex.Unlock()
 	})
-	if idsIn20ToTimes[u.id] > 3 { // 10 minute ban
+	if idsIn20ToTimes[u.id] > 6 {
 		bansMutex.Lock()
 		bans = append(bans, u.addr)
 		bansMutex.Unlock()
@@ -479,15 +484,14 @@ func (u *user) pickUsername(possibleName string) {
 		possibleName = cleanName(possibleName)
 	}
 	u.name = possibleName
-	var colorIndex = rand.Intn(len(styles))
-	u.changeColor(styles[colorIndex].name) // also sets prompt
+	u.changeColor(styles[rand.Intn(len(styles))].name) // also sets prompt
 }
 
 // Applies color from name
-func (u *user) changeColor(colorName string) {
+func (u *user) changeColor(colorName string) bool {
 	style := getStyle(colorName)
 	if style == nil {
-		return
+		return false
 	}
 	u.color = style.name
 	u.name = style.apply(u.name)
@@ -496,6 +500,7 @@ func (u *user) changeColor(colorName string) {
 	allUsers[u.id] = u.name
 	allUsersMutex.Unlock()
 	saveBansAndUsers()
+	return true
 }
 
 // Turns name into a style (defaults to nil)
@@ -848,49 +853,32 @@ func runCommands(line string, u *user, isSlack bool) {
 		return
 	}
 	if strings.HasPrefix(line, "./color") && !isSlack {
-		colorMsg := "Which color? Choose from green, cyan, blue, red/orange, magenta/purple/pink, yellow/beige, white/cream and black/gray/grey.  \nMake your own colors using RGB values from 0 to 5 (for example, ./color 530, a pretty nice orange)  \nThere's also a few secret colors :)"
-		switch rest := strings.TrimSpace(strings.TrimPrefix(line, "./color")); rest {
-		case "green":
-			u.changeColor("green")
-		case "cyan":
-			u.changeColor("cyan")
-		case "blue":
-			u.changeColor("blue")
-		case "red", "orange":
-			u.changeColor("red")
-		case "magenta", "purple", "pink":
-			u.changeColor("magenta")
-		case "yellow", "beige":
-			u.changeColor("yellow")
-		case "white", "cream":
-			u.changeColor("white")
-		case "black", "gray", "grey":
-			u.changeColor("black")
-			// secret colors
-		case "easter":
-			u.changeColor("easter")
-		case "baby":
-			u.changeColor("baby")
-		case "l33t":
-			u.changeColor("l33t")
-		case "whiten":
-			u.changeColor("whiten")
-		case "hacker":
-			u.changeColor("hacker")
-		case "rainbow":
-			u.changeColor("rainbow")
-		default:
-			if a, err := strconv.Atoi(rest); err == nil {
-				r := (a / 100) % 10
-				g := (a % 10) % 10
-				bl := a % 10
-				if r > 5 || g > 5 || bl > 5 || r < 0 || g < 0 || bl < 0 {
-					b(devbot, "custom colors have values from 0 to 5 smh")
-					return
-				}
-				u.changeColor(rest)
+		colorMsg := "Which color? Choose from random, " + strings.Join(func() []string {
+			colors := make([]string, 0, len(styles))
+			for i := range styles {
+				colors = append(colors, styles[i].name)
+			}
+			return colors
+		}(), ", ") + "  \nMake your own colors using RGB values from 0 to 5 (for example, ./color 530, a pretty nice orange)  \nThere's also a few secret colors :)"
+		rest := strings.TrimSpace(strings.TrimPrefix(line, "./color"))
+		if rest == "random" {
+			u.changeColor(styles[rand.Intn(len(styles))].name)
+			return
+		}
+		if a, err := strconv.Atoi(rest); err == nil {
+			r := (a / 100) % 10
+			g := (a % 10) % 10
+			bl := a % 10
+			if r > 5 || g > 5 || bl > 5 || r < 0 || g < 0 || bl < 0 {
+				b(devbot, "custom colors have values from 0 to 5 smh")
 				return
 			}
+			if !u.changeColor(rest) {
+				b(devbot, colorMsg)
+			}
+			return
+		}
+		if !u.changeColor(rest) {
 			b(devbot, colorMsg)
 		}
 		return
