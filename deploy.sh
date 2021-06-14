@@ -1,5 +1,5 @@
 echo Started
-scp -o StrictHostKeyChecking=no -P 4242 ./devchat.go go.sum go.mod ubuntu@150.136.142.44:~/devchat
+scp -o StrictHostKeyChecking=no -P 4242 *.go go.sum go.mod ubuntu@150.136.142.44:~/devchat
 echo Copied files
 ssh -o StrictHostKeyChecking=no -p 4242 ubuntu@150.136.142.44 <<EOL # Unquote so lines are expanded
 	cd ~/devchat
