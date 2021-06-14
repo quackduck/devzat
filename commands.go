@@ -305,10 +305,10 @@ func runCommands(line string, u *user, isSlack bool) {
 	}
 	if strings.HasPrefix(line, "./color") && !isSlack {
 		rest := strings.TrimSpace(strings.TrimPrefix(line, "./color"))
-		//if rest == "random" {
-		//	u.changeColor(styles[rand.Intn(len(styles))].name)
-		//	return
-		//}
+		if rest == "which" {
+			b(devbot, "you're using "+u.color)
+			return
+		}
 		if err := u.changeColor(rest); err != nil {
 			b(devbot, err.Error())
 		}

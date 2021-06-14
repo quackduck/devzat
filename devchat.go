@@ -23,9 +23,7 @@ import (
 )
 
 var (
-	//go:embed art.txt
-	artBytes []byte
-	port     = 22
+	port = 22
 
 	devbot = "" // initialized in main
 
@@ -48,6 +46,34 @@ var (
 	idsInMinToTimes = make(map[string]int, 10)
 	idsInMinMutex   = sync.Mutex{}
 )
+
+type room struct {
+	name       string
+	users      []*user
+	usersMutex sync.Mutex
+}
+
+type user struct {
+	name          string
+	session       ssh.Session
+	term          *terminal.Terminal
+	bell          bool
+	color         string
+	id            string
+	addr          string
+	win           ssh.Window
+	closeOnce     sync.Once
+	lastTimestamp time.Time
+	joinTime      time.Time
+	timezone      *time.Location
+	room          *room
+}
+
+type backlogMessage struct {
+	timestamp  time.Time
+	senderName string
+	text       string
+}
 
 // TODO: have a web dashboard that shows logs
 func main() {
@@ -133,34 +159,6 @@ func (r *room) broadcast(senderName, msg string, toSlack bool) {
 	}
 }
 
-type room struct {
-	name       string
-	users      []*user
-	usersMutex sync.Mutex
-}
-
-type user struct {
-	name          string
-	session       ssh.Session
-	term          *terminal.Terminal
-	bell          bool
-	color         string
-	id            string
-	addr          string
-	win           ssh.Window
-	closeOnce     sync.Once
-	lastTimestamp time.Time
-	joinTime      time.Time
-	timezone      *time.Location
-	room          *room
-}
-
-type backlogMessage struct {
-	timestamp  time.Time
-	senderName string
-	text       string
-}
-
 func newUser(s ssh.Session) *user {
 	term := terminal.NewTerminal(s, "> ")
 	_ = term.SetSize(10000, 10000) // disable any formatting done by term
@@ -187,7 +185,7 @@ func newUser(s ssh.Session) *user {
 				saveBansAndUsers()
 			}
 			l.Println("Rejected " + u.name + " [" + u.addr + "]")
-			u.writeln(devbot, "**You are banned**. If you feel this was done wrongly, please reach out at github.com/quackduck/devzat/issues. Please include the following information: [IP "+u.addr+"]")
+			u.writeln(devbot, "**You are banned**. If you feel this was done wrongly, please reach out at github.com/quackduck/devzat/issues. Please include the following information: [ID "+u.id+"]")
 			u.close("")
 			return nil
 		}
@@ -283,26 +281,6 @@ func (u *user) writeln(senderName string, msg string) {
 		u.lastTimestamp = time.Now()
 	}
 	u.term.Write([]byte(msg + "\n"))
-}
-
-func printPrettyDuration(d time.Duration) string {
-	//return strings.TrimSuffix(mainroom.Round(time.Minute).String(), "0s")
-	s := strings.TrimSpace(strings.TrimSuffix(d.Round(time.Minute).String(), "0s"))
-	s = strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(s,
-		"h", " hours "),
-		"m", " minutes"),
-		" 1 minutes", " 1 minute"), // space to ensure it won't match "2 hours 51 minutes"
-		" 1 hours", " 1 hour")
-	if strings.HasPrefix(s, "1 hours") { // since we're using the space to detect if it isn't 51, it won't match if the string is only "1 minutes" so we check if it has that prefix.
-		s = strings.Replace(s, "1 hours", "1 hour", 1) // replace the first occurrence (because we confirmed it has the prefix, it'll only replace the prefix and nothing else)
-	}
-	if strings.HasPrefix(s, "1 minutes") {
-		s = strings.Replace(s, "1 minutes", "1 minute", 1)
-	}
-	if s == "" { // we cut off the seconds so if there's nothing in the string it means it was made of only seconds.
-		s = "Less than a minute"
-	}
-	return strings.TrimSpace(s)
 }
 
 // Write to the right of the user's window

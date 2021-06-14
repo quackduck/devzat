@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"encoding/json"
 	"github.com/acarl005/stripansi"
 	markdown "github.com/quackduck/go-term-markdown"
@@ -12,6 +13,8 @@ import (
 )
 
 var (
+	//go:embed art.txt
+	artBytes   []byte
 	scrollback = 16
 	admins     = []string{"d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82", // Ishan Goel
 		"f5c7f9826b6e143f6e9c3920767680f503f259570f121138b2465bb2b052a85d", // Ella Xu
@@ -48,6 +51,26 @@ func cleanName(name string) string {
 		}
 	}
 	return s
+}
+
+func printPrettyDuration(d time.Duration) string {
+	//return strings.TrimSuffix(mainroom.Round(time.Minute).String(), "0s")
+	s := strings.TrimSpace(strings.TrimSuffix(d.Round(time.Minute).String(), "0s"))
+	s = strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(s,
+		"h", " hours "),
+		"m", " minutes"),
+		" 1 minutes", " 1 minute"), // space to ensure it won't match "2 hours 51 minutes"
+		" 1 hours", " 1 hour")
+	if strings.HasPrefix(s, "1 hours") { // since we're using the space to detect if it isn't 51, it won't match if the string is only "1 minutes" so we check if it has that prefix.
+		s = strings.Replace(s, "1 hours", "1 hour", 1) // replace the first occurrence (because we confirmed it has the prefix, it'll only replace the prefix and nothing else)
+	}
+	if strings.HasPrefix(s, "1 minutes") {
+		s = strings.Replace(s, "1 minutes", "1 minute", 1)
+	}
+	if s == "" { // we cut off the seconds so if there's nothing in the string it means it was made of only seconds.
+		s = "Less than a minute"
+	}
+	return strings.TrimSpace(s)
 }
 
 func mdRender(a string, beforeMessageLen int, lineWidth int) string {

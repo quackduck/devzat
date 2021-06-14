@@ -109,9 +109,12 @@ func getStyle(name string) (*style, error) {
 		}
 	}
 	if name == "random" {
-		return &style{name, buildStyle(ansi256(uint8(rand.Intn(6)), uint8(rand.Intn(6)), uint8(rand.Intn(6))))}, nil
+		r := rand.Intn(6)
+		g := rand.Intn(6)
+		b := rand.Intn(6)
+		return &style{strconv.Itoa(r*100 + g*10 + b), buildStyle(ansi256(uint8(r), uint8(g), uint8(b)))}, nil
 	}
-	if len(name) == 7 && strings.HasPrefix(name, "#") {
+	if strings.HasPrefix(name, "#") {
 		return &style{name, buildStyle(chalk.WithHex(name))}, nil
 	}
 	if len(name) == 3 || len(name) == 5 {
