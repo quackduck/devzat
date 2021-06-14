@@ -65,7 +65,7 @@ func runCommands(line string, u *user, isSlack bool) {
 		u.term.Write([]byte("\033[H\033[2J"))
 		return
 	}
-	if strings.HasPrefix(line, "/hang") {
+	if strings.HasPrefix(line, "./hang") {
 		rest := strings.TrimSpace(strings.TrimPrefix(line, "/hang"))
 		if len(rest) > 1 {
 			u.writeln(u.name, line)
@@ -130,7 +130,7 @@ func runCommands(line string, u *user, isSlack bool) {
 		rest := strings.TrimSpace(strings.TrimPrefix(line, "./tic"))
 		if rest == "" {
 			b(devbot, "Starting a new game of Tic Tac Toe! The first player is always X.")
-			b(devbot, "Play using /tic <cell num>")
+			b(devbot, "Play using ./tic <cell num>")
 			currentPlayer = tictactoe.X
 			tttGame = new(tictactoe.Board)
 			b(devbot, "```\n"+" 1 │ 2 │ 3\n───┼───┼───\n 4 │ 5 │ 6\n───┼───┼───\n 7 │ 8 │ 9\n"+"\n```")
@@ -330,7 +330,7 @@ Jubril, Sarthak Mohanty, Anghe,
 Tommy Pujol, Sam Poder, Rishi Kothari,  
 Amogh Chaubey, Ella Xu, Hugo Hu,  
 Robert Goll, Tanishq Soni, Arash Nur Iman,  
-Temi
+Temi, Aiden Bai, Ivan Bowman, @epic  
 _Possibly more people_
 
 

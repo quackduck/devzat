@@ -23,6 +23,7 @@ var (
 	styles  = []*style{
 		{"white", buildStyle(white)},
 		{"red", buildStyle(red)},
+		{"coral", buildStyle(ansi256(5, 2, 2))},
 		{"green", buildStyle(green)},
 		{"cyan", buildStyle(cyan)},
 		{"magenta", buildStyle(magenta)},
@@ -132,9 +133,8 @@ func getStyle(name string) (*style, error) {
 			}
 			if strings.HasPrefix(name, "bg") {
 				return &style{name, buildStyleNoStrip(bgAnsi256(uint8(r), uint8(g), uint8(b)))}, nil
-			} else {
-				return &style{name, buildStyle(ansi256(uint8(r), uint8(g), uint8(b)))}, nil
 			}
+			return &style{name, buildStyle(ansi256(uint8(r), uint8(g), uint8(b)))}, nil
 		}
 	}
 	return nil, errors.New("Which color? Choose from random, " + strings.Join(func() []string {

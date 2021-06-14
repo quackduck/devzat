@@ -21,7 +21,8 @@ var (
 		"6056734cc4d9fce31569167735e4808382004629a2d7fe6cb486e663714452fc", // Tommy Pujol
 		"e9d47bb4522345d019086d0ed48da8ce491a491923a44c59fd6bfffe6ea73317", // Arav Narula
 		"1eab2de20e41abed903ab2f22e7ff56dc059666dbe2ebbce07a8afeece8d0424", // Shok
-		"12a9f108e7420460864de3d46610f722e69c80b2ac2fb1e2ada34aa952bbd73e"} // jmw: github.com/ciearius
+		"12a9f108e7420460864de3d46610f722e69c80b2ac2fb1e2ada34aa952bbd73e", // jmw: github.com/ciearius
+		"2433e7c03997d13f9117ded9e36cd2d23bddc4d588b8717c4619bedeb3b7e9ad"} //
 )
 
 // check if a user is an admin
