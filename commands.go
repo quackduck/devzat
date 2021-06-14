@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/acarl005/stripansi"
-	"github.com/shurcooL/tictactoe"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/acarl005/stripansi"
+	"github.com/shurcooL/tictactoe"
 )
 
 // runCommands parses a line of raw input from a user and sends a message as
@@ -56,8 +57,26 @@ func runCommands(line string, u *user, isSlack bool) {
 				"what an idiot"}, 30, false)
 			return
 		}
+		peer.lastDM = u
+		u.lastDM = peer
 		peer.writeln(u.name+" -> ", msg)
 		//peer.writeln(u.name+" -> "+peer.name, msg)
+		return
+	}
+	if strings.HasPrefix(line, "./reply") {
+		sendToSlack = false
+		message := strings.TrimSpace(strings.TrimPrefix(line, "./reply"))
+		if len(message) == 0 {
+			u.writeln("devbot", "You need to add a message.")
+			return
+		}
+		if u.lastDM == nil {
+			u.writeln("devbot", "There is no one to reply to.")
+			return
+		}
+		u.lastDM.lastDM = u
+		u.lastDM.writeln(u.name+" <- ", message)
+		u.writeln(u.name+" -> ", message)
 		return
 	}
 	if strings.HasPrefix(line, "/hang") {
