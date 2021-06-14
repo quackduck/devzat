@@ -77,6 +77,9 @@ func runCommands(line string, u *user, isSlack bool) {
 		u.lastDM.lastDM = u
 		u.lastDM.writeln(u.name+" -> ", message)
 		u.writeln(user.lastDM.name+" <- ", message)
+  }
+	if strings.HasPrefix(line, "./clear") {
+		u.term.Write([]byte("\033[H\033[2J"))
 		return
 	}
 	if strings.HasPrefix(line, "/hang") {
