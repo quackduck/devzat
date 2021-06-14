@@ -20,6 +20,11 @@ func runCommands(line string, u *user, isSlack bool) {
 	if line == "" {
 		return
 	}
+	if u.messaging != nil && !(strings.HasPrefix(line, "./") || strings.HasPrefix(line, "=")) {
+		u.writeln(u.messaging.name+" <- ", line)
+		u.messaging.writeln(u.name+" -> ", line)
+		return
+	}
 
 	sendToSlack := true
 	b := func(senderName, msg string) {
@@ -206,6 +211,11 @@ func runCommands(line string, u *user, isSlack bool) {
 		return
 	}
 	if strings.HasPrefix(line, "./room") && !isSlack {
+		if u.messaging != nil {
+			u.messaging = nil
+			u.writeln(devbot, fmt.Sprintf("Left private chat and put you back in %s", u.room.name))
+			return
+		}
 		rest := strings.TrimSpace(strings.TrimPrefix(line, "./room"))
 		if rest == "" || rest == "s" { // s so "./rooms" works too
 			type kv struct {
@@ -224,8 +234,7 @@ func runCommands(line string, u *user, isSlack bool) {
 				roomsInfo += fmt.Sprintf("%s: %d  \n", blue.Paint(kv.roomName), kv.numOfUsers)
 			}
 			b("", "Rooms and users  \n"+strings.TrimSpace(roomsInfo))
-		}
-		if strings.HasPrefix(rest, "#") {
+		} else if strings.HasPrefix(rest, "#") {
 			//rest = strings.TrimSpace(strings.TrimPrefix(line, "#"))
 			if v, ok := rooms[rest]; ok {
 				u.changeRoom(v, sendToSlack)
@@ -233,6 +242,19 @@ func runCommands(line string, u *user, isSlack bool) {
 				rooms[rest] = &room{rest, make([]*user, 0, 10), sync.Mutex{}}
 				u.changeRoom(rooms[rest], sendToSlack)
 			}
+		} else if strings.HasPrefix(rest, "@") {
+			restSplit := strings.Fields(strings.TrimPrefix(rest, "@"))
+			peer, ok := findUserByName(u.room, restSplit[0])
+			if !ok {
+				u.writeln(devbot, "No such person lol, who you wanna dm? (you might be in the wrong room)")
+				return
+			}
+			u.messaging = peer
+			u.writeln(devbot, fmt.Sprintf("Now messaging %s. To leave say \n>./room", peer.name))
+			return
+		} else {
+			u.writeln(devbot, "Rooms need to start with # (Public rooms) or @ (Direct message rooms)")
+			return
 		}
 	}
 	if strings.HasPrefix(line, "./tz") && !isSlack {

@@ -5,9 +5,6 @@ import (
 	_ "embed"
 	"encoding/hex"
 	"fmt"
-	"github.com/acarl005/stripansi"
-	"github.com/gliderlabs/ssh"
-	terminal "golang.org/x/term"
 	"io"
 	"log"
 	"math"
@@ -20,6 +17,10 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/acarl005/stripansi"
+	"github.com/gliderlabs/ssh"
+	terminal "golang.org/x/term"
 )
 
 var (
@@ -67,6 +68,7 @@ type user struct {
 	joinTime      time.Time
 	timezone      *time.Location
 	room          *room
+	messaging     *user
 }
 
 type backlogMessage struct {
@@ -172,7 +174,7 @@ func newUser(s ssh.Session) *user {
 	}
 	hash := sha256.New()
 	hash.Write([]byte(host))
-	u := &user{s.User(), s, term, true, "", hex.EncodeToString(hash.Sum(nil)), host, w, sync.Once{}, time.Now(), time.Now(), nil, mainRoom}
+	u := &user{s.User(), s, term, true, "", hex.EncodeToString(hash.Sum(nil)), host, w, sync.Once{}, time.Now(), time.Now(), nil, mainRoom, nil}
 	go func() {
 		for u.win = range winChan {
 		}
