@@ -526,6 +526,12 @@ func getStyle(name string) (*style, error) {
 			return secretStyles[i], nil
 		}
 	}
+	if name == "random" {
+		return &style{name, buildStyle(ansi256(uint8(rand.Intn(6)), uint8(rand.Intn(6)), uint8(rand.Intn(6))))}, nil
+	}
+	if len(name) == 7 && strings.HasPrefix(name, "#") {
+		return &style{name, buildStyle(chalk.WithHex(name))}, nil
+	}
 	if len(name) == 3 || len(name) == 5 {
 		rgbCode := name
 		if strings.HasPrefix(name, "bg") {
@@ -882,10 +888,10 @@ func runCommands(line string, u *user, isSlack bool) {
 	}
 	if strings.HasPrefix(line, "./color") && !isSlack {
 		rest := strings.TrimSpace(strings.TrimPrefix(line, "./color"))
-		if rest == "random" {
-			u.changeColor(styles[rand.Intn(len(styles))].name)
-			return
-		}
+		//if rest == "random" {
+		//	u.changeColor(styles[rand.Intn(len(styles))].name)
+		//	return
+		//}
 		if err := u.changeColor(rest); err != nil {
 			b(devbot, err.Error())
 		}
