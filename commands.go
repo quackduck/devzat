@@ -213,7 +213,7 @@ func runCommands(line string, u *user, isSlack bool) {
 	if strings.HasPrefix(line, "./room") && !isSlack {
 		if u.messaging != nil {
 			u.messaging = nil
-			u.writeln(devbot, fmt.Sprintf("Left private chat and put you back in %s", u.room.name))
+			u.writeln(devbot, "Left private chat")
 			return
 		}
 		rest := strings.TrimSpace(strings.TrimPrefix(line, "./room"))
