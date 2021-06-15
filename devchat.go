@@ -82,6 +82,7 @@ type backlogMessage struct {
 
 // TODO: have a web dashboard that shows logs
 func main() {
+	registerCommands()
 	devbot = green.Paint("devbot")
 	var err error
 	rand.Seed(time.Now().Unix())
@@ -362,6 +363,6 @@ func (u *user) repl() {
 			u.close(red.Paint(u.name + " has been banned for spamming"))
 			return
 		}
-		runCommands(line, u, false)
+		processMessage(u, line)
 	}
 }
