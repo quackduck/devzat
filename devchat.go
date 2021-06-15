@@ -256,6 +256,18 @@ func (u *user) close(msg string) {
 		u.session.Close()
 	})
 }
+func (u *user) system(message string) {
+	u.term.Write([]byte(red.Paint("[SYSTEM] ") + mdRender(message, 0, u.win.Width) + "\n"))
+}
+
+func (u *user) sendMessage(message string) {
+	if u.messaging != nil {
+		u.writeln(fmt.Sprintf("%s <- ", u.messaging.name), message)
+		u.messaging.writeln(fmt.Sprintf("%s -> ", u.name), message)
+		return
+	}
+	u.room.broadcast(u.name, message, true)
+}
 
 func (u *user) writeln(senderName string, msg string) {
 	if u.bell {

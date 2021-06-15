@@ -37,7 +37,7 @@ func processMessage(u *user, message string) {
 			if command.name == commandName {
 				// Command found!
 				if command.echo {
-					u.room.broadcast(u.name, message, true)
+					u.sendMessage(message)
 				} else {
 					u.writeln(u.name, message)
 				}
@@ -52,7 +52,7 @@ func processMessage(u *user, message string) {
 			}
 		}
 	}
-	u.room.broadcast(u.name, message, true)
+	u.sendMessage(message)
 }
 
 // runCommands parses a line of raw input from a user and sends a message as
