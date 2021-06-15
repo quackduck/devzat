@@ -234,7 +234,7 @@ func runCommands(line string, u *user, isSlack bool) {
 			})
 			roomsInfo := ""
 			for _, kv := range ss {
-				roomsInfo += fmt.Sprintf("%s: %d  \n", blue.Paint(kv.roomName), printUsersInRoom(rooms[kv.roomName]))
+				roomsInfo += blue.Paint(kv.roomName) + ": " + printUsersInRoom(rooms[kv.roomName]) + "  \n"
 			}
 			b("", "Rooms and users  \n"+strings.TrimSpace(roomsInfo))
 			return
