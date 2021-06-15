@@ -262,3 +262,12 @@ func devbotRespond(room *room, messages []string, chance int, toSlack bool) {
 		}()
 	}
 }
+
+func stringsContain(a []string, s string) bool {
+	for i, _ := range a {
+		if a[i] == s {
+			return true
+		}
+	}
+	return false
+}

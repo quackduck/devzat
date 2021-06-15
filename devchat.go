@@ -48,7 +48,7 @@ var (
 	idsInMinMutex   = sync.Mutex{}
 
 	antispamMessages = make(map[string]int)
-	antispamMutex    = sync.Mutex{}
+	//antispamMutex    = sync.Mutex{}
 )
 
 type room struct {
@@ -314,6 +314,9 @@ func (u *user) pickUsername(possibleName string) {
 }
 
 func (u *user) changeRoom(r *room, toSlack bool) {
+	if u.room == r {
+		return
+	}
 	u.room.users = remove(u.room.users, u)
 	u.room.broadcast("", u.name+" is joining "+blue.Paint(r.name), toSlack) // tell the old room
 	if u.room != mainRoom && len(u.room.users) == 0 {
@@ -342,18 +345,22 @@ func (u *user) repl() {
 		}
 		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(len([]rune(u.name+line))+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
 
-		antispamMutex.Lock()
+		//antispamMutex.Lock()
 		antispamMessages[u.id]++
-		antispamMutex.Unlock()
+		//antispamMutex.Unlock()
 		time.AfterFunc(5*time.Second, func() {
-			antispamMutex.Lock()
+			//antispamMutex.Lock()
 			antispamMessages[u.id]--
-			antispamMutex.Unlock()
+			//antispamMutex.Unlock()
 		})
 		if antispamMessages[u.id] >= 50 {
-			bans = append(bans, u.addr)
-			u.writeln(devbot, "Anti-Spam triggered")
+			if !stringsContain(bans, u.addr) {
+				bans = append(bans, u.addr)
+				saveBansAndUsers()
+			}
+			u.writeln(devbot, "anti-spam triggered")
 			u.close(red.Paint(u.name + " has been banned for spamming"))
+			return
 		}
 		runCommands(line, u, false)
 	}

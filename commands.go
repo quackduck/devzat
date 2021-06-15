@@ -44,12 +44,12 @@ func runCommands(line string, u *user, isSlack bool) {
 			u.room.broadcast(senderName, msg, false)
 		}
 	}
-	if strings.HasPrefix(line, "=") && !isSlack {
+	if strings.HasPrefix(line, "./@") && !isSlack {
 		sendToSlack = false
 		b = func(senderName, msg string) {
 			u.room.broadcast(senderName, msg, false)
 		}
-		rest := strings.TrimSpace(strings.TrimPrefix(line, "="))
+		rest := strings.TrimSpace(strings.TrimPrefix(line, "./@"))
 		restSplit := strings.Fields(rest)
 		if len(restSplit) < 2 {
 			u.writeln(devbot, "You gotta have a message mate")
@@ -260,7 +260,7 @@ func runCommands(line string, u *user, isSlack bool) {
 				return
 			}
 			u.messaging = peer
-			u.writeln(devbot, fmt.Sprintf("Now in DMs with %s. To leave use ./room", peer.name))
+			u.writeln(devbot, "Now in DMs with "+peer.name+". To leave use ./room")
 			return
 		}
 		u.writeln(devbot, "Rooms need to start with # (public rooms) or @ (dms)")
@@ -396,8 +396,8 @@ Interesting features:
 * Many, many commands. Run ./commands.
 * Rooms! Run ./room to see all rooms and use ./room #foo to join a new room.
 * Markdown support! Tables, headers, italics and everything. Just use \\n in place of newlines.
-* Code syntax highlighting. Use Markdown fences to send code. Run /example-code to see an example.
-* Direct messages! Send a DM using =user <msg>.
+* Code syntax highlighting. Use Markdown fences to send code. Run ./example-code to see an example.
+* Direct messages! Send a quick DM using ./@user <msg> or stay in DMs by running ./room @user.
 * Timezone support, use ./tz Continent/City to set your timezone.
 * Built in Tic Tac Toe and Hangman! Run ./tic or ./hang <word> to start new games.
 * Emoji replacements! \:rocket\: => :rocket: (like on Slack and Discord)
