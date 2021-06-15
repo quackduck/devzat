@@ -354,7 +354,7 @@ func (u *user) repl() {
 			bans = append(bans, u.addr)
 			u.writeln(devbot, "Anti-Spam triggered")
 			u.close(red.Paint(u.name + " has been banned for spamming"))
-			runCommands(line, u, false)
 		}
+		runCommands(line, u, false)
 	}
 }
