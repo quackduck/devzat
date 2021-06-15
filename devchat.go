@@ -342,7 +342,27 @@ func (u *user) changeRoom(r *room, toSlack bool) {
 	u.room.users = append(u.room.users, u)
 	u.room.broadcast(devbot, u.name+" has joined "+blue.Paint(u.room.name), toSlack)
 }
+func (u *user) ban(admin *user, reason string) {
+	if reason == "" {
+		reason = "Unknown"
+	}
+	bans = append(bans, u.addr)
+	adminUsername := "Unknown"
+	if admin != nil {
+		adminUsername = admin.name
+	}
+	u.system(fmt.Sprintf("You have been banned for %s by %s", reason, adminUsername))
+	u.close(red.Paint(fmt.Sprintf("%s has been banned by %s for %s", u.name, adminUsername, reason)))
 
+	for _, room := range rooms {
+		for _, user := range room.users {
+			if user.id == u.id {
+				user.system(fmt.Sprintf("You have been banned for %s by %s on an account on the same network.", reason, adminUsername))
+				user.close(red.Paint(fmt.Sprintf("%s has been banned by %s for %s", user.name, adminUsername, reason)))
+			}
+		}
+	}
+}
 func (u *user) repl() {
 	for {
 		line, err := u.term.ReadLine()
@@ -367,13 +387,7 @@ func (u *user) repl() {
 			//antispamMutex.Unlock()
 		})
 		if antispamMessages[u.id] >= 50 {
-			if !stringsContain(bans, u.addr) {
-				bans = append(bans, u.addr)
-				saveBansAndUsers()
-			}
-			u.writeln(devbot, "anti-spam triggered")
-			u.close(red.Paint(u.name + " has been banned for spamming"))
-			return
+			u.ban(nil, "Anti-Spam")
 		}
 		processMessage(u, line)
 	}

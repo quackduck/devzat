@@ -150,7 +150,7 @@ func kickCommand(u *user, args []string) {
 }
 
 func banCommand(u *user, args []string) {
-	if len(args) != 1 {
+	if len(args) == 0 {
 		u.system("Please provide a user to ban!")
 		return
 	}
@@ -159,12 +159,11 @@ func banCommand(u *user, args []string) {
 		u.system("User not found!")
 		return
 	}
-	bansMutex.Lock()
-	bans = append(bans, target.addr)
-	bansMutex.Unlock()
-	saveBansAndUsers()
-	target.system(fmt.Sprintf("You have been banned by %s", u.name))
-	target.close(fmt.Sprintf(red.Paint("%s was banned by %s"), target.name, u.name))
+	if len(args) > 1 {
+		target.ban(u, strings.Join(args[1:], " "))
+	} else {
+		target.ban(u, "")
+	}
 	u.system("Banned!")
 }
 
