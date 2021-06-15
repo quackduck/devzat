@@ -48,6 +48,7 @@ var (
 	idsInMinMutex   = sync.Mutex{}
 
 	antispamMessages = make(map[string]int)
+	antispamMutex    = sync.Mutex{}
 )
 
 type room struct {
@@ -94,12 +95,6 @@ func main() {
 		mainRoom.broadcast(devbot, "Server going down! This is probably because it is being updated. Try joining back immediately.  \n"+
 			"If you still can't join, try joining back in 2 minutes. If you _still_ can't join, make an issue at github.com/quackduck/devzat/issues", true)
 		os.Exit(0)
-	}()
-	go func() {
-		for {
-			time.Sleep(1 * time.Second)
-			antispamMessages = make(map[string]int)
-		}
 	}()
 	ssh.Handle(func(s ssh.Session) {
 		u := newUser(s)
@@ -346,27 +341,18 @@ func (u *user) repl() {
 		}
 		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(len([]rune(u.name+line))+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
 
-		// Anti spam check
-		currentMessages, exists := antispamMessages[u.id]
-		if !exists {
-			currentMessages = 0
+		antispamMutex.Lock()
+		antispamMessages[u.id]++
+		antispamMutex.Unlock()
+		time.AfterFunc(5*time.Second, func() {
+			antispamMutex.Lock()
+			antispamMessages[u.id]--
+			antispamMutex.Unlock()
 		}
-		currentMessages += 1
-		antispamMessages[u.id] = currentMessages
-		if currentMessages >= 10 {
+		if currentMessages >= 50 {
 			bans = append(bans, u.addr)
 			u.writeln(devbot, "Anti-Spam triggered")
-			u.close(red.Paint(u.name + " has been banned."))
-			for _, room := range rooms {
-				for _, user := range room.users {
-					if user.id == u.id {
-						user.writeln(devbot, "Anti-Spam triggered on another account.")
-						u.close(red.Paint(u.name + " has been banned."))
-					}
-				}
-			}
-		}
-
+			u.close(red.Paint(u.name + " has been banned for spamming"))
 		runCommands(line, u, false)
 	}
 }
