@@ -3,6 +3,7 @@ package main
 import (
 	_ "embed"
 	"encoding/json"
+	"fmt"
 	"github.com/acarl005/stripansi"
 	markdown "github.com/quackduck/go-term-markdown"
 	"math/rand"
@@ -24,6 +25,14 @@ var (
 		"12a9f108e7420460864de3d46610f722e69c80b2ac2fb1e2ada34aa952bbd73e", // jmw: github.com/ciearius
 		"2433e7c03997d13f9117ded9e36cd2d23bddc4d588b8717c4619bedeb3b7e9ad"} // @epic: github.com/TAG-Epic
 )
+
+func printUsersInRoom(r *room) string {
+	names := make([]string, 0, len(r.users))
+	for _, us := range r.users {
+		names = append(names, us.name)
+	}
+	return fmt.Sprint(names)
+}
 
 // check if a user is an admin
 func auth(u *user) bool {

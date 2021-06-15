@@ -179,11 +179,7 @@ func runCommands(line string, u *user, isSlack bool) {
 	}
 
 	if line == "./users" {
-		names := make([]string, 0, len(u.room.users))
-		for _, us := range u.room.users {
-			names = append(names, us.name)
-		}
-		b("", fmt.Sprint(names))
+		b("", printUsersInRoom(u.room))
 		return
 	}
 	if line == "./all" {
@@ -238,11 +234,12 @@ func runCommands(line string, u *user, isSlack bool) {
 			})
 			roomsInfo := ""
 			for _, kv := range ss {
-				roomsInfo += fmt.Sprintf("%s: %d  \n", blue.Paint(kv.roomName), kv.numOfUsers)
+				roomsInfo += fmt.Sprintf("%s: %d  \n", blue.Paint(kv.roomName), printUsersInRoom(rooms[kv.roomName]))
 			}
 			b("", "Rooms and users  \n"+strings.TrimSpace(roomsInfo))
-		} else if strings.HasPrefix(rest, "#") {
-			//rest = strings.TrimSpace(strings.TrimPrefix(line, "#"))
+			return
+		}
+		if strings.HasPrefix(rest, "#") {
 			if v, ok := rooms[rest]; ok {
 				u.changeRoom(v, sendToSlack)
 			} else {
