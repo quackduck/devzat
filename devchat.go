@@ -231,7 +231,7 @@ func newUser(s ssh.Session) *user {
 	case 1:
 		u.writeln("", yellow.Paint("Welcome to the chat. There is one more user"))
 	default:
-		u.writeln("", green.Paint("Welcome to the chat. There are ", strconv.Itoa(len(mainRoom.users)-1), " more users"))
+		u.writeln("", green.Paint("Welcome to the chat. There are", strconv.Itoa(len(mainRoom.users)-1), "more users"))
 	}
 	//_, _ = term.Write([]byte(strings.Join(backlog, ""))) // print out backlog
 	mainRoom.broadcast(devbot, u.name+green.Paint(" has joined the chat"), true)

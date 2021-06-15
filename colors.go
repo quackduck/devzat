@@ -25,6 +25,7 @@ var (
 		{"red", buildStyle(red)},
 		{"coral", buildStyle(ansi256(5, 2, 2))},
 		{"green", buildStyle(green)},
+		{"sky", buildStyle(ansi256(3, 5, 5))},
 		{"cyan", buildStyle(cyan)},
 		{"magenta", buildStyle(magenta)},
 		{"pink", buildStyle(ansi256(5, 3, 4))},
@@ -126,7 +127,7 @@ func getStyle(name string) (*style, error) {
 		a, err := strconv.Atoi(rgbCode)
 		if err == nil {
 			r := (a / 100) % 10
-			g := (a % 10) % 10
+			g := (a / 10) % 10
 			b := a % 10
 			if r > 5 || g > 5 || b > 5 || r < 0 || g < 0 || b < 0 {
 				return nil, errors.New("custom colors have values from 0 to 5 smh")
