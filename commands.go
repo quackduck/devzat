@@ -22,6 +22,13 @@ func runCommands(line string, u *user, isSlack bool) {
 	}
 	if u.messaging != nil && !strings.HasPrefix(line, "=") && !strings.HasPrefix(line, "./room") {
 		u.writeln(u.messaging.name+" <- ", line)
+		if u == u.messaging {
+			devbotRespond(u.room, []string{"You must be really lonely, DMing yourself.",
+				"Don't worry, I won't judge :wink:",
+				"srsly?",
+				"what an idiot"}, 30, false)
+			return
+		}
 		u.messaging.writeln(u.name+" -> ", line)
 		return
 	}
@@ -242,20 +249,26 @@ func runCommands(line string, u *user, isSlack bool) {
 				rooms[rest] = &room{rest, make([]*user, 0, 10), sync.Mutex{}}
 				u.changeRoom(rooms[rest], sendToSlack)
 			}
-		} else if strings.HasPrefix(rest, "@") {
+			return
+		}
+		if strings.HasPrefix(rest, "@") {
 			restSplit := strings.Fields(strings.TrimPrefix(rest, "@"))
+			if len(restSplit) == 0 {
+				u.writeln(devbot, "You think people have empty names?")
+				return
+			}
 			peer, ok := findUserByName(u.room, restSplit[0])
 			if !ok {
 				u.writeln(devbot, "No such person lol, who you wanna dm? (you might be in the wrong room)")
 				return
 			}
 			u.messaging = peer
-			u.writeln(devbot, fmt.Sprintf("Now messaging %s. To leave say \n>./room", peer.name))
-			return
-		} else {
-			u.writeln(devbot, "Rooms need to start with # (Public rooms) or @ (Direct message rooms)")
+			u.writeln(devbot, fmt.Sprintf("Now in DMs with %s. To leave use ./room", peer.name))
 			return
 		}
+		u.writeln(devbot, "Rooms need to start with # (public rooms) or @ (dms)")
+		return
+
 	}
 	if strings.HasPrefix(line, "./tz") && !isSlack {
 		var err error
