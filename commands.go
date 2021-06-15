@@ -20,6 +20,7 @@ func registerCommands() {
 	commands = append(commands, commandInfo{"kick", "Kicks a user", kickCommand, true, true})
 	commands = append(commands, commandInfo{"ban", "Bans a user", banCommand, true, true})
 	commands = append(commands, commandInfo{"id", "Gets the hashed IP of the user", idCommand, true, false})
+	commands = append(commands, commandInfo{"help", "Get a list of commands", helpCommand, false, false})
 }
 
 func clearCommand(u *user, _ []string) {
@@ -179,4 +180,17 @@ func idCommand(u *user, args []string) {
 		return
 	}
 	u.system(target.id)
+}
+
+func helpCommand(u *user, args []string) {
+	u.system("**Commands**")
+	for _, command := range commands {
+		if command.requiresAdmin {
+			if auth(u) {
+				u.system(fmt.Sprintf("%s - %s %s", green.Paint(command.name), command.description, red.Paint("(ADMIN ONLY)")))
+			}
+		} else {
+			u.system(fmt.Sprintf("%s - %s", green.Paint(command.name), command.description))
+		}
+	}
 }
