@@ -32,6 +32,10 @@ func processMessage(u *user, message string) {
 	}
 	splitted := strings.Split(message, " ")
 	if strings.HasPrefix(splitted[0], "./") {
+		if u.slack {
+			u.room.broadcast(devbot, "Slack users can't use commands", false)
+			return
+		}
 		commandName := strings.TrimPrefix(splitted[0], "./")
 		for _, command := range commands {
 			if command.name == commandName {

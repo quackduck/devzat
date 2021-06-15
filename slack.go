@@ -3,11 +3,12 @@ package main
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"github.com/acarl005/stripansi"
-	"github.com/slack-go/slack"
 	"io/ioutil"
 	"strconv"
 	"strings"
+
+	"github.com/acarl005/stripansi"
+	"github.com/slack-go/slack"
 )
 
 var (
@@ -20,6 +21,7 @@ func getMsgsFromSlack() {
 	go rtm.ManageConnection()
 	uslack := new(user)
 	uslack.room = mainRoom
+	uslack.slack = true
 	for msg := range rtm.IncomingEvents {
 		switch ev := msg.Data.(type) {
 		case *slack.MessageEvent:
@@ -33,7 +35,7 @@ func getMsgsFromSlack() {
 				h := sha1.Sum([]byte(u.ID))
 				i, _ := strconv.ParseInt(hex.EncodeToString(h[:1]), 16, 0)
 				mainRoom.broadcast(yellow.Paint("HC ")+(styles[int(i)%len(styles)]).apply(strings.Fields(u.RealName)[0]), text, false)
-				runCommands(text, uslack, true)
+				processMessage(uslack, message)
 			}
 		case *slack.ConnectedEvent:
 			l.Println("Connected to Slack")

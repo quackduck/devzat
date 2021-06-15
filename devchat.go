@@ -72,6 +72,7 @@ type user struct {
 	timezone      *time.Location
 	room          *room
 	messaging     *user
+	slack         bool
 }
 
 type backlogMessage struct {
@@ -177,7 +178,7 @@ func newUser(s ssh.Session) *user {
 	}
 	hash := sha256.New()
 	hash.Write([]byte(host))
-	u := &user{s.User(), s, term, true, "", hex.EncodeToString(hash.Sum(nil)), host, w, sync.Once{}, time.Now(), time.Now(), nil, mainRoom, nil}
+	u := &user{s.User(), s, term, true, "", hex.EncodeToString(hash.Sum(nil)), host, w, sync.Once{}, time.Now(), time.Now(), nil, mainRoom, nil, false}
 	go func() {
 		for u.win = range winChan {
 		}
