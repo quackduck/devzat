@@ -35,7 +35,7 @@ func getMsgsFromSlack() {
 				h := sha1.Sum([]byte(u.ID))
 				i, _ := strconv.ParseInt(hex.EncodeToString(h[:1]), 16, 0)
 				mainRoom.broadcast(yellow.Paint("HC ")+(styles[int(i)%len(styles)]).apply(strings.Fields(u.RealName)[0]), text, false)
-				processMessage(uslack, message)
+				processMessage(uslack, text)
 			}
 		case *slack.ConnectedEvent:
 			l.Println("Connected to Slack")
