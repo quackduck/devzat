@@ -349,11 +349,12 @@ func (u *user) repl() {
 			antispamMutex.Lock()
 			antispamMessages[u.id]--
 			antispamMutex.Unlock()
-		}
-		if currentMessages >= 50 {
+		})
+		if antispamMessages[u.id] >= 50 {
 			bans = append(bans, u.addr)
 			u.writeln(devbot, "Anti-Spam triggered")
 			u.close(red.Paint(u.name + " has been banned for spamming"))
-		runCommands(line, u, false)
+			runCommands(line, u, false)
+		}
 	}
 }

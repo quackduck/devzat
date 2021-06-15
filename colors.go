@@ -30,6 +30,7 @@ var (
 		{"magenta", buildStyle(magenta)},
 		{"pink", buildStyle(ansi256(5, 3, 4))},
 		{"rose", buildStyle(ansi256(5, 0, 2))},
+		{"lavender", buildStyle(ansi256(4, 2, 5))},
 		{"fire", buildStyle(ansi256(5, 2, 0))},
 		{"pastel green", buildStyle(ansi256(0, 5, 3))},
 		{"olive", buildStyle(ansi256(4, 5, 1))},
