@@ -5,9 +5,6 @@ import (
 	_ "embed"
 	"encoding/hex"
 	"fmt"
-	"github.com/acarl005/stripansi"
-	"github.com/gliderlabs/ssh"
-	terminal "golang.org/x/term"
 	"io"
 	"log"
 	"math"
@@ -20,6 +17,10 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/acarl005/stripansi"
+	"github.com/gliderlabs/ssh"
+	terminal "golang.org/x/term"
 )
 
 var (
@@ -45,6 +46,9 @@ var (
 	bansMutex       = sync.Mutex{}
 	idsInMinToTimes = make(map[string]int, 10)
 	idsInMinMutex   = sync.Mutex{}
+
+	antispamMessages = make(map[string]int)
+	antispamMutex    = sync.Mutex{}
 )
 
 type room struct {
@@ -92,7 +96,6 @@ func main() {
 			"If you still can't join, try joining back in 2 minutes. If you _still_ can't join, make an issue at github.com/quackduck/devzat/issues", true)
 		os.Exit(0)
 	}()
-
 	ssh.Handle(func(s ssh.Session) {
 		u := newUser(s)
 		if u == nil {
@@ -338,6 +341,18 @@ func (u *user) repl() {
 		}
 		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(len([]rune(u.name+line))+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
 
+		antispamMutex.Lock()
+		antispamMessages[u.id]++
+		antispamMutex.Unlock()
+		time.AfterFunc(5*time.Second, func() {
+			antispamMutex.Lock()
+			antispamMessages[u.id]--
+			antispamMutex.Unlock()
+		}
+		if currentMessages >= 50 {
+			bans = append(bans, u.addr)
+			u.writeln(devbot, "Anti-Spam triggered")
+			u.close(red.Paint(u.name + " has been banned for spamming"))
 		runCommands(line, u, false)
 	}
 }
