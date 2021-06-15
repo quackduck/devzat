@@ -17,6 +17,9 @@ func registerCommands() {
 	commands = append(commands, commandInfo{"exit", "Kicks you out of the chat incase your client was bugged", exitCommand, false, false})
 	commands = append(commands, commandInfo{"bell", "Toggles notifications when you get pinged", bellCommand, true, false})
 	commands = append(commands, commandInfo{"room", "Changes which room you are currently in", roomCommand, false, false})
+	commands = append(commands, commandInfo{"kick", "Kicks a user", kickCommand, true, true})
+	commands = append(commands, commandInfo{"ban", "Bans a user", banCommand, true, true})
+	commands = append(commands, commandInfo{"id", "Gets the hashed IP of the user", idCommand, true, false})
 }
 
 func clearCommand(u *user, _ []string) {
@@ -129,4 +132,52 @@ func roomCommand(u *user, args []string) {
 		return
 	}
 	u.system("Invalid usage. Valid usage: ./room leave|#room-name|@user-name")
+}
+
+func kickCommand(u *user, args []string) {
+	if len(args) != 1 {
+		u.system("Please provide a user to kick!")
+		return
+	}
+	target, ok := findUserByName(u.room, args[0])
+	if !ok {
+		u.system("User not found!")
+		return
+	}
+	target.system(fmt.Sprintf("You have been kicked by %s", u.name))
+	target.close(fmt.Sprintf(red.Paint("%s was kicked by %s"), target.name, u.name))
+	u.system("Kicked!")
+}
+
+func banCommand(u *user, args []string) {
+	if len(args) != 1 {
+		u.system("Please provide a user to ban!")
+		return
+	}
+	target, ok := findUserByName(u.room, args[0])
+	if !ok {
+		u.system("User not found!")
+		return
+	}
+	bansMutex.Lock()
+	bans = append(bans, target.addr)
+	bansMutex.Unlock()
+	saveBansAndUsers()
+	target.system(fmt.Sprintf("You have been banned by %s", u.name))
+	target.close(fmt.Sprintf(red.Paint("%s was banned by %s"), target.name, u.name))
+	u.system("Banned!")
+}
+
+func idCommand(u *user, args []string) {
+	if len(args) != 1 {
+		u.system(u.id)
+		return
+	}
+
+	target, ok := findUserByName(u.room, args[0])
+	if !ok {
+		u.system("User not found!")
+		return
+	}
+	u.system(target.id)
 }

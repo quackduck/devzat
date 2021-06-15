@@ -4,13 +4,14 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"github.com/acarl005/stripansi"
-	markdown "github.com/quackduck/go-term-markdown"
 	"math/rand"
 	"os"
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/acarl005/stripansi"
+	markdown "github.com/quackduck/go-term-markdown"
 )
 
 var (
@@ -23,7 +24,10 @@ var (
 		"e9d47bb4522345d019086d0ed48da8ce491a491923a44c59fd6bfffe6ea73317", // Arav Narula
 		"1eab2de20e41abed903ab2f22e7ff56dc059666dbe2ebbce07a8afeece8d0424", // Shok
 		"12a9f108e7420460864de3d46610f722e69c80b2ac2fb1e2ada34aa952bbd73e", // jmw: github.com/ciearius
-		"2433e7c03997d13f9117ded9e36cd2d23bddc4d588b8717c4619bedeb3b7e9ad"} // @epic: github.com/TAG-Epic
+		"2433e7c03997d13f9117ded9e36cd2d23bddc4d588b8717c4619bedeb3b7e9ad", // @epic: github.com/TAG-Epic
+		"eff8e7ca506627fe15dda5e0e512fcaad70b6d520f37cc76597fdb4f2d83a1a3", // Localhost ipv6
+
+	}
 )
 
 func printUsersInRoom(r *room) string {
