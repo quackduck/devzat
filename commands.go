@@ -20,7 +20,7 @@ func runCommands(line string, u *user, isSlack bool) {
 	if line == "" {
 		return
 	}
-	if u.messaging != nil && !(strings.HasPrefix(line, "./") || strings.HasPrefix(line, "=")) {
+	if u.messaging != nil && !strings.HasPrefix(line, "=") {
 		u.writeln(u.messaging.name+" <- ", line)
 		u.messaging.writeln(u.name+" -> ", line)
 		return
