@@ -202,4 +202,5 @@ func nickCommand(u *user, args []string) {
 	} else {
 		u.pickUsername("")
 	}
+	u.system(fmt.Sprintf("Nick changed to %s", u.name))
 }
