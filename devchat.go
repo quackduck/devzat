@@ -359,6 +359,8 @@ func (u *user) ban(admin *user, reason string) {
 	u.system(fmt.Sprintf("You have been banned for %s by %s", reason, adminUsername))
 	u.close(red.Paint(fmt.Sprintf("%s has been banned by %s for %s", u.name, adminUsername, reason)))
 
+	saveBansAndUsers()
+
 	for _, room := range rooms {
 		for _, user := range room.users {
 			if user.id == u.id {

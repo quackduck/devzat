@@ -26,6 +26,7 @@ func registerCommands() {
 	commands = append(commands, commandInfo{"color", "Change your display name color", colorCommand, false, false, nil})
 	commands = append(commands, commandInfo{"timezone", "Change how you view time", timezoneCommand, false, false, []string{"tz"}})
 	commands = append(commands, commandInfo{"emojis", "Get a list of emojis you can use", emojisCommand, false, false, nil})
+	commands = append(commands, commandInfo{"unban", "Unban a user", unbanCommand, false, true, nil})
 }
 
 func clearCommand(u *user, _ []string) {
@@ -248,4 +249,22 @@ func timezoneCommand(u *user, args []string) {
 
 func emojisCommand(u *user, _ []string) {
 	u.system("Check out github.com/ikatyang/emoji-cheat-sheet")
+}
+
+func unbanCommand(u *user, args []string) {
+	if len(args) == 0 {
+		u.system("Who should I unban?")
+		return
+	}
+
+	for banId, ban := range bans {
+		if ban == args[0] {
+			bans = append(bans[:banId], bans[banId+1:]...)
+			saveBansAndUsers()
+			u.system("User has been unbanned")
+			return
+		}
+	}
+	u.system("No user found!")
+
 }
