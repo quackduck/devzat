@@ -44,12 +44,12 @@ func runCommands(line string, u *user, isSlack bool) {
 			u.room.broadcast(senderName, msg, false)
 		}
 	}
-	if strings.HasPrefix(line, "./@") && !isSlack {
+	if strings.HasPrefix(line, "=") && !isSlack {
 		sendToSlack = false
 		b = func(senderName, msg string) {
 			u.room.broadcast(senderName, msg, false)
 		}
-		rest := strings.TrimSpace(strings.TrimPrefix(line, "./@"))
+		rest := strings.TrimSpace(strings.TrimPrefix(line, "="))
 		restSplit := strings.Fields(rest)
 		if len(restSplit) < 2 {
 			u.writeln(devbot, "You gotta have a message mate")
