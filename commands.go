@@ -198,7 +198,7 @@ func helpCommand(u *user, args []string) {
 
 func nickCommand(u *user, args []string) {
 	if len(args) > 0 {
-		u.pickUsername(strings.Join(args[1:], " "))
+		u.pickUsername(strings.Join(args, " "))
 	} else {
 		u.pickUsername("")
 	}
