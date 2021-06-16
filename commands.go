@@ -21,6 +21,7 @@ func registerCommands() {
 	commands = append(commands, commandInfo{"ban", "Bans a user", banCommand, true, true, nil})
 	commands = append(commands, commandInfo{"id", "Gets the hashed IP of the user", idCommand, true, false, nil})
 	commands = append(commands, commandInfo{"help", "Get a list of commands", helpCommand, false, false, []string{"commands"}})
+	commands = append(commands, commandInfo{"nick", "Change your display name", nickCommand, false, false, nil})
 }
 
 func clearCommand(u *user, _ []string) {
@@ -192,5 +193,13 @@ func helpCommand(u *user, args []string) {
 		} else {
 			u.system(fmt.Sprintf("%s - %s", green.Paint(command.name), command.description))
 		}
+	}
+}
+
+func nickCommand(u *user, args []string) {
+	if len(args) > 0 {
+		u.pickUsername(args[0])
+	} else {
+		u.pickUsername("")
 	}
 }
