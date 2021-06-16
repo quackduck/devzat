@@ -46,7 +46,7 @@ Interesting features:
 • Rooms! Run /room to see all rooms and use /room #foo to join a new room.
 • Markdown support! Tables, headers, italics and everything. Just use \n in place of newlines.
 • Code syntax highlighting. Use Markdown fences to send code. Run /example-code to see an example.
-• Direct messages! Send a DM using =user <msg>.
+• Direct messages! Send a quick DM using =user <msg> or stay in DMs by running ./room @user.
 • Timezone support, use /tz Continent/City to set your timezone.
 • Built in Tic Tac Toe and Hangman! Run /tic or /hang <word> to start new games.
 • Emoji replacements! :rocket: => 🚀  (like on Slack and Discord)

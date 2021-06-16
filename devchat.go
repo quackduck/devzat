@@ -228,9 +228,6 @@ func newUser(s ssh.Session) *user {
 	}
 
 	u.pickUsername(s.User())
-	if _, ok := allUsers[u.id]; !ok {
-		mainRoom.broadcast(devbot, "You seem to be new here "+u.name+". Welcome to Devzat! Run ./help to see what you can do.", true)
-	}
 	mainRoom.usersMutex.Lock()
 	mainRoom.users = append(mainRoom.users, u)
 	go sendCurrentUsersTwitterMessage()

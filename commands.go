@@ -52,6 +52,7 @@ func messageCommand(u *user, args []string) {
 	u.writeln(u.name+" <- ", message)
 }
 
+
 func usersCommand(u *user, _ []string) {
 	u.system(printUsersInRoom(u.room))
 }
@@ -198,6 +199,7 @@ func idCommand(u *user, args []string) {
 		u.system(u.id)
 		return
 	}
+
 
 	target, ok := findUserByName(u.room, args[0])
 	if !ok {

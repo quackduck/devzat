@@ -92,6 +92,9 @@ func (u *user) changeColor(colorName string) error {
 	u.color = style.name
 	u.name = style.apply(u.name)
 	u.term.SetPrompt(u.name + ": ")
+	if _, ok := allUsers[u.id]; !ok {
+		mainRoom.broadcast(devbot, "You seem to be new here "+u.name+". Welcome to Devzat! Run ./help to see what you can do.", true)
+	}
 	allUsersMutex.Lock()
 	allUsers[u.id] = u.name
 	allUsersMutex.Unlock()
