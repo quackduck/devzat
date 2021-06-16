@@ -190,10 +190,14 @@ func newUser(s ssh.Session) *user {
 				bans[i] = u.addr
 				saveBansAndUsers()
 			}
-			l.Println("Rejected " + u.name + " [" + u.addr + "]")
-			u.writeln(devbot, "**You are banned**. If you feel this was done wrongly, please reach out at github.com/quackduck/devzat/issues. Please include the following information: [ID "+u.id+"]")
-			u.close("")
-			return nil
+			if !auth(u) {
+				l.Println("Rejected " + u.name + " [" + u.addr + "]")
+				u.system("**You are banned**. If you feel this was done wrongly, please reach out at github.com/quackduck/devzat/issues. Please include the following information: [ID " + u.id + "]")
+				u.close("")
+				return nil
+			}
+			u.system("You have been banned, although you have admin perms.")
+			break
 		}
 	}
 	idsInMinMutex.Lock()
