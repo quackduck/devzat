@@ -25,6 +25,7 @@ func registerCommands() {
 	commands = append(commands, commandInfo{"nick", "Change your display name", nickCommand, false, false, nil})
 	commands = append(commands, commandInfo{"color", "Change your display name color", colorCommand, false, false, nil})
 	commands = append(commands, commandInfo{"timezone", "Change how you view time", timezoneCommand, false, false, []string{"tz"}})
+	commands = append(commands, commandInfo{"emojis", "Get a list of emojis you can use", emojisCommand, false, false, nil})
 }
 
 func clearCommand(u *user, _ []string) {
@@ -243,4 +244,8 @@ func timezoneCommand(u *user, args []string) {
 	}
 	u.timezone = tz
 	u.system("Timezone updated!")
+}
+
+func emojisCommand(u *user, _ []string) {
+	u.system("Check out github.com/ikatyang/emoji-cheat-sheet")
 }
