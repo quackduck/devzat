@@ -64,8 +64,15 @@ func processMessage(u *user, message string) {
 		u.sendMessage(message)
 	}
 }
+func handleCommandCrash(u *user) {
+	err := recover()
+	if err != nil {
+		u.system("Oh no, something borked! Please create a issue on github.com/quackduck/devzat/issues and include exactly what command you ran.")
+	}
 
+}
 func runCommand(u *user, command commandInfo, splitted []string, message string) {
+	defer handleCommandCrash(u)
 	if command.echo {
 		u.sendMessage(message)
 	} else {
