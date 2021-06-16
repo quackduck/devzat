@@ -22,6 +22,7 @@ func registerCommands() {
 	commands = append(commands, commandInfo{"id", "Gets the hashed IP of the user", idCommand, true, false, nil})
 	commands = append(commands, commandInfo{"help", "Get a list of commands", helpCommand, false, false, []string{"commands"}})
 	commands = append(commands, commandInfo{"nick", "Change your display name", nickCommand, false, false, nil})
+	commands = append(commands, commandInfo{"color", "Change your display name color", colorCommand, false, false, nil})
 }
 
 func clearCommand(u *user, _ []string) {
@@ -203,4 +204,21 @@ func nickCommand(u *user, args []string) {
 		u.pickUsername("")
 	}
 	u.system(fmt.Sprintf("Nick changed to %s", u.name))
+}
+
+func colorCommand(u *user, args []string) {
+	if len(args) == 0 {
+		u.system("Syntax: ./color <which>|#HEX|0-5,0-5,0-5")
+		return
+	}
+	if args[0] == "which" {
+		u.system(fmt.Sprintf("Your nickname color is %s", u.color))
+		return
+	}
+	err := u.changeColor(strings.Join(args, " "))
+	if err != nil {
+		u.system(err.Error())
+		return
+	}
+	u.system("Your display name color has been changed.")
 }
