@@ -59,7 +59,10 @@ func processMessage(u *user, message string) {
 		u.system("Command not found..? Check ./help for a list of commands")
 		return
 	}
-	u.sendMessage(message)
+	if !u.slack {
+		// Slack already sends their messages, this would cause 2 messages to be sent
+		u.sendMessage(message)
+	}
 }
 
 func runCommand(u *user, command commandInfo, splitted []string, message string) {
