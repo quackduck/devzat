@@ -30,16 +30,16 @@ func clearCommand(u *user, _ []string) {
 
 func messageCommand(u *user, args []string) {
 	if len(args) < 1 {
-		u.writeln(devbot, "Please provide a user to send a message to")
+		u.system("Please provide a user to send a message to")
 		return
 	}
 
 	if len(args) < 2 {
-		u.writeln(devbot, "Please provide a message to send")
+		u.system("Please provide a message to send")
 	}
 	peer, ok := findUserByName(u.room, args[0])
 	if !ok {
-		u.writeln(devbot, "The user was not found, maybe they are in another room?")
+		u.system("The user was not found, maybe they are in another room?")
 		return
 	}
 	message := strings.Join(append(args[:0], args[1:]...), " ")
@@ -48,7 +48,7 @@ func messageCommand(u *user, args []string) {
 }
 
 func usersCommand(u *user, _ []string) {
-	u.writeln(devbot, printUsersInRoom(u.room))
+	u.system(printUsersInRoom(u.room))
 }
 
 func allCommand(u *user, _ []string) {
@@ -59,7 +59,7 @@ func allCommand(u *user, _ []string) {
 	sort.Slice(names, func(i, j int) bool {
 		return strings.ToLower(stripansi.Strip(names[i])) < strings.ToLower(stripansi.Strip(names[j]))
 	})
-	u.writeln(devbot, fmt.Sprint(names))
+	u.system(fmt.Sprint(names))
 }
 
 func exitCommand(u *user, _ []string) {
@@ -69,18 +69,18 @@ func exitCommand(u *user, _ []string) {
 func bellCommand(u *user, _ []string) {
 	u.bell = !u.bell
 	if u.bell {
-		u.writeln(devbot, "Turned bell ON")
+		u.system("Turned bell ON")
 	} else {
-		u.writeln(devbot, "Turned bell OFF")
+		u.system("Turned bell OFF")
 	}
 }
 
 func roomCommand(u *user, args []string) {
 	if len(args) == 0 {
 		if u.messaging != nil {
-			u.writeln(devbot, fmt.Sprintf("You are currently private messaging %s, and in room %s", u.messaging.name, u.room.name))
+			u.system(fmt.Sprintf("You are currently private messaging %s, and in room %s", u.messaging.name, u.room.name))
 		} else {
-			u.writeln(devbot, fmt.Sprintf("You are currently in %s", u.room.name))
+			u.system(fmt.Sprintf("You are currently in %s", u.room.name))
 		}
 		return
 	}
@@ -88,15 +88,15 @@ func roomCommand(u *user, args []string) {
 		if u.messaging == nil {
 			if u.room != mainRoom {
 				u.changeRoom(mainRoom, true)
-				u.writeln(devbot, "You are now in the main room!")
+				u.system("You are now in the main room!")
 			} else {
-				u.writeln(devbot, "You are not messaging someone or in a room") // TODO: This should probably be more clear that they can leave the room that they are in if they are not in the mainroom or if they are messaging someone
+				u.system("You are not messaging someone or in a room") // TODO: This should probably be more clear that they can leave the room that they are in if they are not in the mainroom or if they are messaging someone
 			}
 			return
 		}
 		// They are messaging someone
 		u.messaging = nil
-		u.writeln(devbot, fmt.Sprintf("You are now in %s", u.room.name))
+		u.system(fmt.Sprintf("You are now in %s", u.room.name))
 
 		return
 	}
@@ -106,7 +106,7 @@ func roomCommand(u *user, args []string) {
 
 		roomName := strings.TrimPrefix(args[0], "#")
 		if len(roomName) == 0 {
-			u.writeln(devbot, "You need to give me a channel name to move you to!")
+			u.system("You need to give me a channel name to move you to!")
 			return
 		}
 		newRoom, exists := rooms[roomName]
@@ -115,18 +115,18 @@ func roomCommand(u *user, args []string) {
 			rooms[roomName] = newRoom
 		}
 		u.changeRoom(newRoom, true)
-		u.writeln(devbot, fmt.Sprintf("Moved you to %s", roomName))
+		u.system(fmt.Sprintf("Moved you to %s", roomName))
 		return
 	}
 	if strings.HasPrefix(args[0], "@") {
 		userName := strings.TrimPrefix(args[0], "@")
 		if len(userName) == 0 {
-			u.writeln(devbot, "You have to tell me who you want to message")
+			u.system("You have to tell me who you want to message")
 			return
 		}
 		peer, ok := findUserByName(u.room, userName)
 		if !ok {
-			u.writeln(devbot, "No person in your room found with that name")
+			u.system("No person in your room found with that name")
 			return
 		}
 		u.messaging = peer
@@ -198,7 +198,7 @@ func helpCommand(u *user, args []string) {
 
 func nickCommand(u *user, args []string) {
 	if len(args) > 0 {
-		u.pickUsername(args[0])
+		u.pickUsername(strings.Join(args[1:], " "))
 	} else {
 		u.pickUsername("")
 	}
