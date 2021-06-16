@@ -87,6 +87,25 @@ func roomCommand(u *user, args []string) {
 		} else {
 			u.system(fmt.Sprintf("You are currently in %s", u.room.name))
 		}
+
+		// Send a list of rooms and the rooms users.
+		type kv struct {
+			roomName   string
+			numOfUsers int
+		}
+		var ss []kv
+		for k, v := range rooms {
+			ss = append(ss, kv{k, len(v.users)})
+		}
+		sort.Slice(ss, func(i, j int) bool {
+			return ss[i].numOfUsers > ss[j].numOfUsers
+		})
+
+		u.system("Rooms and users")
+		for _, kv := range ss {
+			u.system(blue.Paint(kv.roomName) + ": " + printUsersInRoom(rooms[kv.roomName]))
+		}
+
 		return
 	}
 	if args[0] == "leave" {
