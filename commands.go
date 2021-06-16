@@ -78,7 +78,7 @@ func runCommands(line string, u *user, isSlack bool) {
 		return
 	}
 	if strings.HasPrefix(line, "./hang") {
-		rest := strings.TrimSpace(strings.TrimPrefix(line, "/hang"))
+		rest := strings.TrimSpace(strings.TrimPrefix(line, "./hang"))
 		if len(rest) > 1 {
 			u.writeln(u.name, line)
 			u.writeln(devbot, "(that word won't show dw)")
@@ -97,10 +97,6 @@ func runCommands(line string, u *user, isSlack bool) {
 		}
 		if len(rest) == 0 {
 			b(devbot, "Start a new game with ./hang <word> or guess with /hang <letter>")
-			return
-		}
-		if len(rest) == 0 {
-			b(devbot, "Start a new game with /hang <word> or guess with /hang <letter>")
 			return
 		}
 		if hangGame.triesLeft == 0 {
