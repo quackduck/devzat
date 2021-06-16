@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/acarl005/stripansi"
 )
@@ -23,6 +24,7 @@ func registerCommands() {
 	commands = append(commands, commandInfo{"help", "Get a list of commands", helpCommand, false, false, []string{"commands"}})
 	commands = append(commands, commandInfo{"nick", "Change your display name", nickCommand, false, false, nil})
 	commands = append(commands, commandInfo{"color", "Change your display name color", colorCommand, false, false, nil})
+	commands = append(commands, commandInfo{"timezone", "Change how you view time", timezoneCommand, false, false, []string{"tz"}})
 }
 
 func clearCommand(u *user, _ []string) {
@@ -221,4 +223,24 @@ func colorCommand(u *user, args []string) {
 		return
 	}
 	u.system("Your display name color has been changed.")
+}
+
+func timezoneCommand(u *user, args []string) {
+	if len(args) == 0 {
+		if u.timezone == nil {
+			u.system("You need to send a timezone!")
+			return
+		}
+		u.timezone = nil
+		u.system("Cleared your timezone! You will not only see relative timestamps (x minutes in)")
+		return
+	}
+
+	tz, err := time.LoadLocation(args[0])
+	if err != nil {
+		u.system("Weird timezone you have there, use Continent/City, EST, PST or see nodatime.org/TimeZones!")
+		return
+	}
+	u.timezone = tz
+	u.system("Timezone updated!")
 }
