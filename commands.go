@@ -10,17 +10,17 @@ import (
 )
 
 func registerCommands() {
-	commands = append(commands, commandInfo{"clear", "Clears your terminal", clearCommand, false, false})
-	commands = append(commands, commandInfo{"msg", "Sends a private message to someone", messageCommand, false, false})
-	commands = append(commands, commandInfo{"users", "Gets a list of the active users", usersCommand, true, false})
-	commands = append(commands, commandInfo{"all", "Gets a list of all users who has ever connected", allCommand, true, false})
-	commands = append(commands, commandInfo{"exit", "Kicks you out of the chat incase your client was bugged", exitCommand, false, false})
-	commands = append(commands, commandInfo{"bell", "Toggles notifications when you get pinged", bellCommand, true, false})
-	commands = append(commands, commandInfo{"room", "Changes which room you are currently in", roomCommand, false, false})
-	commands = append(commands, commandInfo{"kick", "Kicks a user", kickCommand, true, true})
-	commands = append(commands, commandInfo{"ban", "Bans a user", banCommand, true, true})
-	commands = append(commands, commandInfo{"id", "Gets the hashed IP of the user", idCommand, true, false})
-	commands = append(commands, commandInfo{"help", "Get a list of commands", helpCommand, false, false})
+	commands = append(commands, commandInfo{"clear", "Clears your terminal", clearCommand, false, false, nil})
+	commands = append(commands, commandInfo{"message", "Sends a private message to someone", messageCommand, false, false, []string{"msg", "="}})
+	commands = append(commands, commandInfo{"users", "Gets a list of the active users", usersCommand, true, false, nil})
+	commands = append(commands, commandInfo{"all", "Gets a list of all users who has ever connected", allCommand, true, false, nil})
+	commands = append(commands, commandInfo{"exit", "Kicks you out of the chat incase your client was bugged", exitCommand, false, false, nil})
+	commands = append(commands, commandInfo{"bell", "Toggles notifications when you get pinged", bellCommand, true, false, nil})
+	commands = append(commands, commandInfo{"room", "Changes which room you are currently in", roomCommand, false, false, nil})
+	commands = append(commands, commandInfo{"kick", "Kicks a user", kickCommand, true, true, nil})
+	commands = append(commands, commandInfo{"ban", "Bans a user", banCommand, true, true, nil})
+	commands = append(commands, commandInfo{"id", "Gets the hashed IP of the user", idCommand, true, false, nil})
+	commands = append(commands, commandInfo{"help", "Get a list of commands", helpCommand, false, false, []string{"commands"}})
 }
 
 func clearCommand(u *user, _ []string) {

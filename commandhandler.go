@@ -18,6 +18,7 @@ type commandInfo struct {
 	callable      func(user *user, args []string)
 	echo          bool
 	requiresAdmin bool
+	aliases       []string
 }
 
 var (
@@ -39,24 +40,41 @@ func processMessage(u *user, message string) {
 		commandName := strings.TrimPrefix(splitted[0], "./")
 		for _, command := range commands {
 			if command.name == commandName {
-				// Command found!
-				if command.echo {
-					u.sendMessage(message)
-				} else {
-					u.writeln(u.name, message)
-				}
-
-				if command.requiresAdmin && !auth(u) {
-					u.writeln(devbot, "This command can only be ran by admins")
-					return
-				}
-				commandArgs := append(splitted[:0], splitted[1:]...)
-				command.callable(u, commandArgs)
+				// Command found
+				runCommand(u, command, splitted, message)
 				return
 			}
+			if command.aliases != nil {
+				for _, alias := range command.aliases {
+					if alias == commandName {
+						// Command found by alias
+						runCommand(u, command, splitted, message)
+						return
+					}
+				}
+			}
+
 		}
+		u.writeln(u.name, message)
+		u.system("Command not found..? Check ./help for a list of commands")
+		return
 	}
 	u.sendMessage(message)
+}
+
+func runCommand(u *user, command commandInfo, splitted []string, message string) {
+	if command.echo {
+		u.sendMessage(message)
+	} else {
+		u.writeln(u.name, message)
+	}
+
+	if command.requiresAdmin && !auth(u) {
+		u.writeln(devbot, "This command can only be ran by admins")
+		return
+	}
+	commandArgs := append(splitted[:0], splitted[1:]...)
+	command.callable(u, commandArgs)
 }
 
 // runCommands parses a line of raw input from a user and sends a message as
