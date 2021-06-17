@@ -21,12 +21,13 @@ func registerCommands() {
 	commands = append(commands, commandInfo{"kick", "Kicks a user", kickCommand, true, true, nil})
 	commands = append(commands, commandInfo{"ban", "Bans a user", banCommand, true, true, nil})
 	commands = append(commands, commandInfo{"id", "Gets the hashed IP of the user", idCommand, true, false, nil})
-	commands = append(commands, commandInfo{"help", "Get a list of commands", helpCommand, false, false, []string{"commands"}})
+	commands = append(commands, commandInfo{"commands", "Get a list of commands", commandsCommand, false, false, []string{"commands"}})
 	commands = append(commands, commandInfo{"nick", "Change your display name", nickCommand, false, false, nil})
 	commands = append(commands, commandInfo{"color", "Change your display name color", colorCommand, false, false, nil})
 	commands = append(commands, commandInfo{"timezone", "Change how you view time", timezoneCommand, false, false, []string{"tz"}})
 	commands = append(commands, commandInfo{"emojis", "Get a list of emojis you can use", emojisCommand, false, false, nil})
 	commands = append(commands, commandInfo{"unban", "Unban a user", unbanCommand, false, true, nil})
+	commands = append(commands, commandInfo{"help", "Get generic info about the server", helpCommand, false, true, nil})
 }
 
 func clearCommand(u *user, _ []string) {
@@ -207,7 +208,7 @@ func idCommand(u *user, args []string) {
 	u.system(target.id)
 }
 
-func helpCommand(u *user, args []string) {
+func commandsCommand(u *user, args []string) {
 	u.system("**Commands**")
 	for _, command := range commands {
 		if command.requiresAdmin {
@@ -286,4 +287,24 @@ func unbanCommand(u *user, args []string) {
 	}
 	u.system("No user found!")
 
+}
+
+func helpCommand(u *user, _ []string) {
+	u.system("Welcome to Devzat! Devzat is chat over SSH: github.com/quackduck/devzat")
+	u.system("Because there's SSH apps on all platforms, even on mobile, you can join from anywhere.")
+	u.system("")
+	u.system("Interesting features:")
+	u.system("• Many, many commands. Run ./commands.")
+	u.system("• Rooms! Run ./room to see all rooms and use ./room #foo to join a new room.")
+	u.system("• Markdown support! Tables, headers, italics and everything. Just use \n in place of newlines.")
+	u.system("• Code syntax highlighting. Use Markdown fences to send code. Run ./example-code to see an example.")
+	u.system("• Direct messages! Send a quick DM using =user <msg> or stay in DMs by running ./room @user.")
+	u.system("• Timezone support, use ./tz Continent/City to set your timezone.")
+	u.system("• Built in Tic Tac Toe and Hangman! Run ./tic or ./hang <word> to start new games.")
+	u.system("• Emoji replacements! (like on Slack and Discord)")
+
+	u.system("For replacing newlines, I often use bulkseotools.com/add-remove-line-breaks.php.")
+
+	u.system("Made by Ishan Goel with feature ideas from friends.")
+	u.system("Thanks to Caleb Denio for lending his server!")
 }
