@@ -52,7 +52,6 @@ func messageCommand(u *user, args []string) {
 	u.writeln(u.name+" <- ", message)
 }
 
-
 func usersCommand(u *user, _ []string) {
 	u.system(printUsersInRoom(u.room))
 }
@@ -195,11 +194,10 @@ func banCommand(u *user, args []string) {
 }
 
 func idCommand(u *user, args []string) {
-	if len(args) != 1 {
+	if len(args) == 0 {
 		u.system(u.id)
 		return
 	}
-
 
 	target, ok := findUserByName(u.room, args[0])
 	if !ok {
