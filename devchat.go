@@ -330,6 +330,7 @@ func (u *user) pickUsername(possibleName string) {
 }
 
 func (u *user) changeRoom(r *room, toSlack bool) {
+	u.messaging = nil
 	if u.room == r {
 		return
 	}

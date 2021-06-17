@@ -128,7 +128,7 @@ func roomCommand(u *user, args []string) {
 		}
 		// They are messaging someone
 		u.messaging = nil
-		u.system(fmt.Sprintf("You are now in %s", u.room.name))
+		u.system(fmt.Sprintf("Left private chat, you will now message %s", u.room.name))
 
 		return
 	}
@@ -162,7 +162,7 @@ func roomCommand(u *user, args []string) {
 			return
 		}
 		u.messaging = peer
-		u.system(fmt.Sprintf("Now messaging %s. To leave use\n>./room leave", u.messaging.name))
+		u.system(fmt.Sprintf("Now messaging %s. To leave use ./room leave", u.messaging.name))
 		return
 	}
 	u.system("Invalid usage. Valid usage: ./room leave|#room-name|@user-name")
