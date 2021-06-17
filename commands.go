@@ -33,8 +33,10 @@ func registerCommands() {
 		help      = commandInfo{"help", "Get generic info about the server", helpCommand, false, false, nil}
 		tictactoe = commandInfo{"tictactoe", "Play tictactoe", tictactoeCommand, false, false, []string{"ttt", "tic"}}
 		hangman   = commandInfo{"hangman", "Play hangman", hangmanCommand, true, false, []string{"hang"}}
+		shrug     = commandInfo{"shrug", "Drops a shrug emoji", shrugCommand, false, false, nil}
+		asciiArt  = commandInfo{"ascii-art", "Bob ross with text", asciiArtCommand, false, false, nil}
 	)
-	commands = []commandInfo{clear, message, users, all, exit, bell, room, kick, ban, id, _commands, nick, color, timezone, emojis, unban, help, tictactoe, hangman}
+	commands = []commandInfo{clear, message, users, all, exit, bell, room, kick, ban, id, _commands, nick, color, timezone, emojis, unban, help, tictactoe, hangman, shrug, asciiArt}
 }
 
 func clearCommand(u *user, _ []string) {
@@ -401,4 +403,12 @@ func hangmanCommand(u *user, args []string) {
 	} else if hangGame.triesLeft == 0 {
 		broadcast(u, "No more tries! The word was "+hangGame.word)
 	}
+}
+
+func shrugCommand(u *user, args []string) {
+	u.room.broadcast(u.name, "¯\\(ツ)/¯", true)
+}
+
+func asciiArtCommand(u *user, _ []string) {
+	u.system(strings.Replace(string(artBytes), "\\n", "\n"))
 }
