@@ -359,6 +359,7 @@ Tommy Pujol, Sam Poder, Rishi Kothari,
 Amogh Chaubey, Ella Xu, Hugo Hu,  
 Robert Goll, Tanishq Soni, Arash Nur Iman,  
 Temi, Aiden Bai, Ivan Bowman, @epic  
+Belle See  
 _Possibly more people_
 
 
@@ -438,10 +439,9 @@ Thanks to Caleb Denio for lending his server!`)
 	}
 	if line == "./commands" {
 		b("", `Available commands  
-   =<user> <msg>           _DM <user> with <msg>_  
+   =<user> <msg>            _DM <user> with <msg>_  
    ./users                  _List users_  
-   ./nick   <name>          _Change your name_  
-   ./name   <name>  
+   ./nick   <name>          _Change your name_
    ./room   #<room>         _Join a room or use /room to see all rooms_  
    ./tic    <cell num>      _Play Tic Tac Toe!_  
    ./hang   <char/word>     _Play Hangman!_  
