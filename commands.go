@@ -32,8 +32,9 @@ func registerCommands() {
 		unban     = commandInfo{"unban", "Unban a user", unbanCommand, false, true, nil}
 		help      = commandInfo{"help", "Get generic info about the server", helpCommand, false, false, nil}
 		tictactoe = commandInfo{"tictactoe", "Play tictactoe", tictactoeCommand, false, false, []string{"ttt", "tic"}}
+		hangman   = commandInfo{"hangman", "Play hangman", hangmanCommand, true, false, []string{"hang"}}
 	)
-	commands = []commandInfo{clear, message, users, all, exit, bell, room, kick, ban, id, _commands, nick, color, timezone, emojis, unban, help, tictactoe}
+	commands = []commandInfo{clear, message, users, all, exit, bell, room, kick, ban, id, _commands, nick, color, timezone, emojis, unban, help, tictactoe, hangman}
 }
 
 func clearCommand(u *user, _ []string) {
@@ -350,5 +351,55 @@ func tictactoeCommand(u *user, args []string) {
 		currentPlayer = tictactoe.X
 		tttGame = new(tictactoe.Board)
 		// hasStartedGame = false
+	}
+}
+
+func hangmanCommand(u *user, args []string) {
+	if len(args) == 0 {
+		u.system("You need to guess or start a game.")
+		return
+	}
+	args[0] = strings.ToLower(args[0])
+	if len(args[0]) > 1 {
+		if !(hangGame.triesLeft == 0 || strings.Trim(hangGame.word, hangGame.guesses) == "") {
+			u.system("There is already a game running")
+			return
+		}
+		u.system(args[0])
+		hangGame = &hangman{args[0], 15, " "} // default value of guesses so empty space is given away
+		broadcast(u, u.name+" has started a new game of Hangman! Guess letters with ./hang <letter>")
+		broadcast(u, "```\n"+hangPrint(hangGame)+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```")
+		return
+	}
+
+	if strings.Trim(hangGame.word, hangGame.guesses) == "" {
+		broadcast(u, "The game has ended. Start a new game with /hang <word>")
+		return
+	}
+	if len(args[0]) == 0 {
+		broadcast(u, "Start a new game with ./hang <word> or guess with /hang <letter>")
+		return
+	}
+	if hangGame.triesLeft == 0 {
+		broadcast(u, "No more tries! The word was "+hangGame.word)
+		return
+	}
+	if strings.Contains(hangGame.guesses, args[0]) {
+		broadcast(u, "You already guessed "+args[0])
+		return
+	}
+	hangGame.guesses += args[0]
+
+	if !(strings.Contains(hangGame.word, args[0])) {
+		hangGame.triesLeft--
+	}
+
+	display := hangPrint(hangGame)
+	broadcast(u, "```\n"+display+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```")
+
+	if strings.Trim(hangGame.word, hangGame.guesses) == "" {
+		broadcast(u, "You got it! The word was "+hangGame.word)
+	} else if hangGame.triesLeft == 0 {
+		broadcast(u, "No more tries! The word was "+hangGame.word)
 	}
 }
