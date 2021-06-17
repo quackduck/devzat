@@ -258,6 +258,7 @@ func timezoneCommand(u *user, args []string) {
 		}
 		u.timezone = nil
 		u.system("Cleared your timezone! You will now see relative timestamps (x minutes in)")
+
 		return
 	}
 
