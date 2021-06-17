@@ -11,24 +11,25 @@ import (
 )
 
 func registerCommands() {
-	clear := commandInfo{"clear", "Clears your terminal", clearCommand, false, false, nil}
-	message := commandInfo{"message", "Sends a private message to someone", messageCommand, false, false, []string{"msg", "="}}
-	users := commandInfo{"users", "Gets a list of the active users", usersCommand, true, false, nil}
-	all := commandInfo{"all", "Gets a list of all users who has ever connected", allCommand, true, false, nil}
-	exit := commandInfo{"exit", "Kicks you out of the chat incase your client was bugged", exitCommand, false, false, nil}
-	bell := commandInfo{"bell", "Toggles notifications when you get pinged", bellCommand, true, false, nil}
-	room := commandInfo{"room", "Changes which room you are currently in", roomCommand, false, false, nil}
-	kick := commandInfo{"kick", "Kicks a user", kickCommand, true, true, nil}
-	ban := commandInfo{"ban", "Bans a user", banCommand, true, true, nil}
-	id := commandInfo{"id", "Gets the hashed IP of the user", idCommand, true, false, nil}
-	_commands := commandInfo{"commands", "Get a list of commands", commandsCommand, false, false, []string{"commands"}}
-	nick := commandInfo{"nick", "Change your display name", nickCommand, false, false, nil}
-	color := commandInfo{"color", "Change your display name color", colorCommand, false, false, nil}
-	timezone := commandInfo{"timezone", "Change how you view time", timezoneCommand, false, false, []string{"tz"}}
-	emojis := commandInfo{"emojis", "Get a list of emojis you can use", emojisCommand, false, false, nil}
-	unban := commandInfo{"unban", "Unban a user", unbanCommand, false, true, nil}
-	help := commandInfo{"help", "Get generic info about the server", helpCommand, false, true, nil}
-
+	var (
+		clear     = commandInfo{"clear", "Clears your terminal", clearCommand, false, false, nil}
+		message   = commandInfo{"message", "Sends a private message to someone", messageCommand, false, false, []string{"msg", "="}}
+		users     = commandInfo{"users", "Gets a list of the active users", usersCommand, true, false, nil}
+		all       = commandInfo{"all", "Gets a list of all users who has ever connected", allCommand, true, false, nil}
+		exit      = commandInfo{"exit", "Kicks you out of the chat incase your client was bugged", exitCommand, false, false, nil}
+		bell      = commandInfo{"bell", "Toggles notifications when you get pinged", bellCommand, true, false, nil}
+		room      = commandInfo{"room", "Changes which room you are currently in", roomCommand, false, false, nil}
+		kick      = commandInfo{"kick", "Kicks a user", kickCommand, true, true, nil}
+		ban       = commandInfo{"ban", "Bans a user", banCommand, true, true, nil}
+		id        = commandInfo{"id", "Gets the hashed IP of the user", idCommand, true, false, nil}
+		_commands = commandInfo{"commands", "Get a list of commands", commandsCommand, false, false, []string{"commands"}}
+		nick      = commandInfo{"nick", "Change your display name", nickCommand, false, false, nil}
+		color     = commandInfo{"color", "Change your display name color", colorCommand, false, false, nil}
+		timezone  = commandInfo{"timezone", "Change how you view time", timezoneCommand, false, false, []string{"tz"}}
+		emojis    = commandInfo{"emojis", "Get a list of emojis you can use", emojisCommand, false, false, nil}
+		unban     = commandInfo{"unban", "Unban a user", unbanCommand, false, true, nil}
+		help      = commandInfo{"help", "Get generic info about the server", helpCommand, false, true, nil}
+	)
 	commands = []commandInfo{clear, message, users, all, exit, bell, room, kick, ban, id, _commands, nick, color, timezone, emojis, unban, help}
 }
 
