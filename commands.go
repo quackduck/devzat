@@ -441,7 +441,7 @@ Thanks to Caleb Denio for lending his server!`)
 		b("", `Available commands  
    =<user> <msg>            _DM <user> with <msg>_  
    ./users                  _List users_  
-   ./nick   <name>          _Change your name_
+   ./nick   <name>          _Change your name_  
    ./room   #<room>         _Join a room or use /room to see all rooms_  
    ./tic    <cell num>      _Play Tic Tac Toe!_  
    ./hang   <char/word>     _Play Hangman!_  
