@@ -410,5 +410,5 @@ func shrugCommand(u *user, args []string) {
 }
 
 func asciiArtCommand(u *user, _ []string) {
-	u.system(strings.Replace(string(artBytes), "\\n", "\n"))
+	u.system(strings.ReplaceAll("​\n"+string(artBytes), "\\n", "\n"))
 }
