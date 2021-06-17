@@ -259,8 +259,7 @@ func (u *user) close(msg string) {
 	})
 }
 func (u *user) system(message string) {
-	// u.term.Write([]byte(red.Paint("[SYSTEM] ") + mdRender(message, 0, u.win.Width) + "\n"))
-	u.writeln(" -> ", message)
+	u.term.Write([]byte(red.Paint("[SYSTEM] ") + mdRender(message, 0, u.win.Width) + "\n"))
 }
 
 func (u *user) sendMessage(message string) {
