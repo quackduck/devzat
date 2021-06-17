@@ -9,7 +9,7 @@ type commandInfo struct {
 	name          string
 	description   string
 	callable      func(user *user, args []string)
-	echo          bool
+	echoLevel     int
 	requiresAdmin bool
 	aliases       []string
 }
@@ -68,10 +68,11 @@ func handleCommandCrash(u *user) {
 }
 func runCommand(u *user, command commandInfo, splitted []string, message string) {
 	defer handleCommandCrash(u)
-	if command.echo {
-		u.sendMessage(message)
-	} else {
+	if command.echoLevel == 1 {
 		u.writeln(u.name, message)
+	}
+	if command.echoLevel == 2 {
+		u.sendMessage(message)
 	}
 
 	if command.requiresAdmin && !auth(u) {
