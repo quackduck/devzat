@@ -20,7 +20,7 @@ type hangman struct {
 
 func hangPrint(hangGame *hangman) string {
 	display := ""
-	for _, c := range []rune(hangGame.word) {
+	for _, c := range hangGame.word {
 		if strings.ContainsRune(hangGame.guesses, c) {
 			display += string(c)
 		} else {

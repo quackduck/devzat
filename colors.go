@@ -18,7 +18,7 @@ var (
 	yellow  = ansi256(5, 5, 1)
 	orange  = ansi256(5, 3, 0)
 	blue    = ansi256(0, 3, 5)
-	black   = ansi256(0, 0, 0)
+	// black   = ansi256(0, 0, 0)
 	white   = ansi256(5, 5, 5)
 	styles  = []*style{
 		{"white", buildStyle(white)},

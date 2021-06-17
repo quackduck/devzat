@@ -89,7 +89,7 @@ func main() {
 	rand.Seed(time.Now().Unix())
 	readBansAndUsers()
 	c := make(chan os.Signal)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGKILL)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 	go func() {
 		<-c
 		fmt.Println("Shutting down...")
@@ -259,7 +259,8 @@ func (u *user) close(msg string) {
 	})
 }
 func (u *user) system(message string) {
-	u.term.Write([]byte(red.Paint("[SYSTEM] ") + mdRender(message, 0, u.win.Width) + "\n"))
+	// u.term.Write([]byte(red.Paint("[SYSTEM] ") + mdRender(message, 0, u.win.Width) + "\n"))
+	u.writeln(" -> ", message)
 }
 
 func (u *user) sendMessage(message string) {
