@@ -68,6 +68,7 @@ func handleCommandCrash(u *user) {
 	err := recover()
 	if err != nil {
 		u.system("Oh no, something borked! Please create a issue on github.com/quackduck/devzat/issues and include exactly what command you ran.")
+		fmt.Print(err)
 	}
 
 }
