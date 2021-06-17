@@ -57,7 +57,7 @@ func sendCurrentUsersTwitterMessage() {
 			mainRoom.broadcast(devbot, "err: "+err.Error(), true)
 			return
 		}
-		mainRoom.broadcast(devbot, "https://twitter.com/"+t.User.ScreenName+"/status/"+t.IDStr, true)
+		mainRoom.broadcast(devbot, "https\://twitter.com/"+t.User.ScreenName+"/status/"+t.IDStr, true)
 	}()
 	//broadcast(devbot, tweet.Entities.Urls)
 }
