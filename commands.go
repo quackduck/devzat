@@ -3,11 +3,13 @@ package main
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/acarl005/stripansi"
+	"github.com/shurcooL/tictactoe"
 )
 
 func registerCommands() {
@@ -28,9 +30,10 @@ func registerCommands() {
 		timezone  = commandInfo{"timezone", "Change how you view time", timezoneCommand, false, false, []string{"tz"}}
 		emojis    = commandInfo{"emojis", "Get a list of emojis you can use", emojisCommand, false, false, nil}
 		unban     = commandInfo{"unban", "Unban a user", unbanCommand, false, true, nil}
-		help      = commandInfo{"help", "Get generic info about the server", helpCommand, false, true, nil}
+		help      = commandInfo{"help", "Get generic info about the server", helpCommand, false, false, nil}
+		tictactoe = commandInfo{"tictactoe", "Play tictactoe", tictactoeCommand, false, false, []string{"ttt", "tic"}}
 	)
-	commands = []commandInfo{clear, message, users, all, exit, bell, room, kick, ban, id, _commands, nick, color, timezone, emojis, unban, help}
+	commands = []commandInfo{clear, message, users, all, exit, bell, room, kick, ban, id, _commands, nick, color, timezone, emojis, unban, help, tictactoe}
 }
 
 func clearCommand(u *user, _ []string) {
@@ -311,4 +314,41 @@ func helpCommand(u *user, _ []string) {
 
 	u.system("Made by Ishan Goel with feature ideas from friends.")
 	u.system("Thanks to Caleb Denio for lending his server!")
+}
+
+func tictactoeCommand(u *user, args []string) {
+	if len(args) == 0 {
+		broadcast(u, "Starting a new game of Tic Tac Toe! The first player is always X.")
+		broadcast(u, "Play using ./tic <cell num>")
+		currentPlayer = tictactoe.X
+		tttGame = new(tictactoe.Board)
+		broadcast(u, "```\n"+" 1 │ 2 │ 3\n───┼───┼───\n 4 │ 5 │ 6\n───┼───┼───\n 7 │ 8 │ 9\n"+"\n```")
+		return
+	}
+
+	m, err := strconv.Atoi(args[0])
+	if err != nil {
+		u.system("Make sure you're using a number")
+		return
+	}
+	if m < 1 || m > 9 {
+		u.system("Moves are numbers between 1 and 9!")
+		return
+	}
+	err = tttGame.Apply(tictactoe.Move(m-1), currentPlayer)
+	if err != nil {
+		panic(err)
+	}
+	broadcast(u, "```\n"+tttPrint(tttGame.Cells)+"\n```")
+	if currentPlayer == tictactoe.X {
+		currentPlayer = tictactoe.O
+	} else {
+		currentPlayer = tictactoe.X
+	}
+	if !(tttGame.Condition() == tictactoe.NotEnd) {
+		broadcast(u, tttGame.Condition().String())
+		currentPlayer = tictactoe.X
+		tttGame = new(tictactoe.Board)
+		// hasStartedGame = false
+	}
 }
