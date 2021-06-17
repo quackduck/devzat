@@ -32,7 +32,7 @@ func registerCommands() {
 		unban     = commandInfo{"unban", "Unban a user", unbanCommand, false, true, nil}
 		help      = commandInfo{"help", "Get generic info about the server", helpCommand, false, false, nil}
 		tictactoe = commandInfo{"tictactoe", "Play tictactoe", tictactoeCommand, false, false, []string{"ttt", "tic"}}
-		hangman   = commandInfo{"hangman", "Play hangman", hangmanCommand, true, false, []string{"hang"}}
+		hangman   = commandInfo{"hangman", "Play hangman", hangmanCommand, false, false, []string{"hang"}}
 		shrug     = commandInfo{"shrug", "Drops a shrug emoji", shrugCommand, false, false, nil}
 		asciiArt  = commandInfo{"ascii-art", "Bob ross with text", asciiArtCommand, false, false, nil}
 	)
@@ -394,7 +394,7 @@ func hangmanCommand(u *user, args []string) {
 	if !(strings.Contains(hangGame.word, args[0])) {
 		hangGame.triesLeft--
 	}
-
+	u.sendMessage("./hang " + args[0])
 	display := hangPrint(hangGame)
 	broadcast(u, "```\n"+display+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```")
 
