@@ -30,6 +30,9 @@ var (
 	}
 )
 
+func broadcast(u *user, message string) {
+	u.room.broadcast(devbot, message, true)
+}
 func printUsersInRoom(r *room) string {
 	names := make([]string, 0, len(r.users))
 	for _, us := range r.users {
