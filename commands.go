@@ -317,6 +317,9 @@ func helpCommand(u *user, _ []string) {
 	u.system("")
 	u.system("Made by Ishan Goel with feature ideas from friends.")
 	u.system("Thanks to Caleb Denio for lending his server!")
+	u.system("")
+	u.system("**For a list of commands run**")
+	u.system(">./commands")
 }
 
 func tictactoeCommand(u *user, args []string) {
