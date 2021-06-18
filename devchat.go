@@ -100,6 +100,7 @@ func main() {
 	ssh.Handle(func(s ssh.Session) {
 		u := newUser(s)
 		if u == nil {
+			s.Close()
 			return
 		}
 		u.repl()
@@ -153,7 +154,7 @@ func (r *room) broadcast(senderName, msg string, toSlack bool) {
 		r.users[i].writeln(senderName, msg)
 	}
 	r.usersMutex.Unlock()
-	if r.name == "#main" {
+	if r == mainRoom {
 		backlogMutex.Lock()
 		backlog = append(backlog, backlogMessage{time.Now(), senderName, msg + "\n"})
 		backlogMutex.Unlock()
@@ -168,12 +169,7 @@ func newUser(s ssh.Session) *user {
 	_ = term.SetSize(10000, 10000) // disable any formatting done by term
 	pty, winChan, _ := s.Pty()
 	w := pty.Window
-	host, _, err := net.SplitHostPort(s.RemoteAddr().String()) // definitely should not give an err
-	if err != nil {
-		term.Write([]byte(err.Error() + "\n"))
-		s.Close()
-		return nil
-	}
+	host, _, _ := net.SplitHostPort(s.RemoteAddr().String()) // definitely should not give an err
 	hash := sha256.New()
 	hash.Write([]byte(host))
 	u := &user{s.User(), s, term, true, "", hex.EncodeToString(hash.Sum(nil)), host, w, sync.Once{}, time.Now(), time.Now(), nil, mainRoom, nil}
@@ -221,7 +217,10 @@ func newUser(s ssh.Session) *user {
 		}
 	}
 
-	u.pickUsername(s.User())
+	if !u.pickUsername(s.User()) { // user exited / had err
+		s.Close()
+		return nil
+	}
 	mainRoom.usersMutex.Lock()
 	mainRoom.users = append(mainRoom.users, u)
 	go sendCurrentUsersTwitterMessage()
@@ -293,7 +292,7 @@ func (u *user) rWriteln(msg string) {
 	}
 }
 
-func (u *user) pickUsername(possibleName string) {
+func (u *user) pickUsername(possibleName string) bool {
 	possibleName = cleanName(possibleName)
 	var err error
 	for userDuplicate(u.room, possibleName) || possibleName == "" || possibleName == "devbot" {
@@ -302,12 +301,13 @@ func (u *user) pickUsername(possibleName string) {
 		possibleName, err = u.term.ReadLine()
 		if err != nil {
 			l.Println(err)
-			return
+			return true
 		}
 		possibleName = cleanName(possibleName)
 	}
 	u.name = possibleName
 	u.changeColor(styles[rand.Intn(len(styles))].name) // also sets prompt
+	return false
 }
 
 func (u *user) changeRoom(r *room, toSlack bool) {
