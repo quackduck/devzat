@@ -26,7 +26,7 @@ func triggerEasterEggs(u *user, message string) {
 		helpCommand(u, nil)
 		return
 	}
-	if strings.Contains("cat ") {
+	if strings.Contains(message, "cat ") {
 		broadcast(u, fmt.Sprintf("cat: Permission denied"))
 		return
 	}

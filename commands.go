@@ -14,29 +14,30 @@ import (
 
 func registerCommands() {
 	var (
-		clear     = commandInfo{"clear", "Clears your terminal", clearCommand, 1, false, nil}
-		message   = commandInfo{"message", "Sends a private message to someone", messageCommand, 1, false, []string{"msg", "="}}
-		users     = commandInfo{"users", "Gets a list of the active users", usersCommand, 1, false, nil}
-		all       = commandInfo{"all", "Gets a list of all users who has ever connected", allCommand, 1, false, nil}
-		exit      = commandInfo{"exit", "Kicks you out of the chat incase your client was bugged", exitCommand, 1, false, nil}
-		bell      = commandInfo{"bell", "Toggles notifications when you get pinged", bellCommand, 1, false, nil}
-		room      = commandInfo{"room", "Changes which room you are currently in", roomCommand, 1, false, nil}
-		kick      = commandInfo{"kick", "Kicks a user", kickCommand, 2, true, nil}
-		ban       = commandInfo{"ban", "Bans a user", banCommand, 1, true, nil}
-		id        = commandInfo{"id", "Gets the hashed IP of the user", idCommand, 1, false, nil}
-		_commands = commandInfo{"commands", "Get a list of commands", commandsCommand, 1, false, []string{"commands"}}
-		nick      = commandInfo{"nick", "Change your display name", nickCommand, 1, false, nil}
-		color     = commandInfo{"color", "Change your display name color", colorCommand, 1, false, nil}
-		timezone  = commandInfo{"timezone", "Change how you view time", timezoneCommand, 1, false, []string{"tz"}}
-		emojis    = commandInfo{"emojis", "Get a list of emojis you can use", emojisCommand, 1, false, nil}
-		unban     = commandInfo{"unban", "Unban a user", unbanCommand, 1, true, nil}
-		help      = commandInfo{"help", "Get generic info about the server", helpCommand, 1, false, nil}
-		tictactoe = commandInfo{"tictactoe", "Play tictactoe", tictactoeCommand, 1, false, []string{"ttt", "tic"}}
-		hangman   = commandInfo{"hangman", "Play hangman", hangmanCommand, 0, false, []string{"hang"}}
-		shrug     = commandInfo{"shrug", "Drops a shrug emoji", shrugCommand, 1, false, nil}
-		asciiArt  = commandInfo{"ascii-art", "Bob ross with text", asciiArtCommand, 1, false, nil}
+		clear       = commandInfo{"clear", "Clears your terminal", clearCommand, 1, false, nil}
+		message     = commandInfo{"message", "Sends a private message to someone", messageCommand, 1, false, []string{"msg", "="}}
+		users       = commandInfo{"users", "Gets a list of the active users", usersCommand, 1, false, nil}
+		all         = commandInfo{"all", "Gets a list of all users who has ever connected", allCommand, 1, false, nil}
+		exit        = commandInfo{"exit", "Kicks you out of the chat incase your client was bugged", exitCommand, 1, false, nil}
+		bell        = commandInfo{"bell", "Toggles notifications when you get pinged", bellCommand, 1, false, nil}
+		room        = commandInfo{"room", "Changes which room you are currently in", roomCommand, 1, false, nil}
+		kick        = commandInfo{"kick", "Kicks a user", kickCommand, 2, true, nil}
+		ban         = commandInfo{"ban", "Bans a user", banCommand, 1, true, nil}
+		id          = commandInfo{"id", "Gets the hashed IP of the user", idCommand, 1, false, nil}
+		_commands   = commandInfo{"commands", "Get a list of commands", commandsCommand, 1, false, []string{"commands"}}
+		nick        = commandInfo{"nick", "Change your display name", nickCommand, 1, false, nil}
+		color       = commandInfo{"color", "Change your display name color", colorCommand, 1, false, nil}
+		timezone    = commandInfo{"timezone", "Change how you view time", timezoneCommand, 1, false, []string{"tz"}}
+		emojis      = commandInfo{"emojis", "Get a list of emojis you can use", emojisCommand, 1, false, nil}
+		unban       = commandInfo{"unban", "Unban a user", unbanCommand, 1, true, nil}
+		help        = commandInfo{"help", "Get generic info about the server", helpCommand, 1, false, nil}
+		tictactoe   = commandInfo{"tictactoe", "Play tictactoe", tictactoeCommand, 1, false, []string{"ttt", "tic"}}
+		hangman     = commandInfo{"hangman", "Play hangman", hangmanCommand, 0, false, []string{"hang"}}
+		shrug       = commandInfo{"shrug", "Drops a shrug emoji", shrugCommand, 1, false, nil}
+		asciiArt    = commandInfo{"ascii-art", "Bob ross with text", asciiArtCommand, 1, false, nil}
+		exampleCode = commandInfo{"example-code", "Hello world!", exampleCodeCommand, 1, false, nil}
 	)
-	commands = []commandInfo{clear, message, users, all, exit, bell, room, kick, ban, id, _commands, nick, color, timezone, emojis, unban, help, tictactoe, hangman, shrug, asciiArt}
+	commands = []commandInfo{clear, message, users, all, exit, bell, room, kick, ban, id, _commands, nick, color, timezone, emojis, unban, help, tictactoe, hangman, shrug, asciiArt, exampleCode}
 }
 
 func clearCommand(u *user, _ []string) {
@@ -415,4 +416,8 @@ func shrugCommand(u *user, args []string) {
 
 func asciiArtCommand(u *user, _ []string) {
 	u.system(strings.ReplaceAll("​\n"+string(artBytes), "\\n", "\n"))
+}
+
+func exampleCodeCommand(u *user, _ []string) {
+	u.system("\n```go\npackage main\nimport \"fmt\"\nfunc main() {\n   fmt.Println(\"Example!\")\n}\n```")
 }
