@@ -292,7 +292,7 @@ func (u *user) rWriteln(msg string) {
 	}
 }
 
-func (u *user) pickUsername(possibleName string) bool {
+func (u *user) pickUsername(possibleName string) (ok bool) {
 	possibleName = cleanName(possibleName)
 	var err error
 	for userDuplicate(u.room, possibleName) || possibleName == "" || possibleName == "devbot" {
@@ -301,13 +301,13 @@ func (u *user) pickUsername(possibleName string) bool {
 		possibleName, err = u.term.ReadLine()
 		if err != nil {
 			l.Println(err)
-			return true
+			return false
 		}
 		possibleName = cleanName(possibleName)
 	}
 	u.name = possibleName
 	u.changeColor(styles[rand.Intn(len(styles))].name) // also sets prompt
-	return false
+	return true
 }
 
 func (u *user) changeRoom(r *room) {
