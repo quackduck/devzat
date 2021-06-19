@@ -10,6 +10,8 @@ import (
 	"math"
 	"math/rand"
 	"net"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"strconv"
@@ -24,7 +26,8 @@ import (
 )
 
 var (
-	port = 22
+	port        = 22
+	profilePort = 5000
 
 	devbot = "" // initialized in main
 
@@ -82,8 +85,10 @@ type backlogMessage struct {
 
 // TODO: have a web dashboard that shows logs
 func main() {
+	go func() {
+		http.ListenAndServe(fmt.Sprintf(":%d", profilePort), nil)
+	}()
 	devbot = green.Paint("devbot")
-	var err error
 	rand.Seed(time.Now().Unix())
 	readBansAndUsers()
 	c := make(chan os.Signal, 2)
@@ -103,8 +108,14 @@ func main() {
 			s.Close()
 			return
 		}
+		defer func() { // crash protection
+			if i := recover(); i != nil {
+				mainRoom.broadcast(devbot, "Slap the developers in the face for me, the server almost crashed, also tell them this: "+fmt.Sprint(i))
+			}
+		}()
 		u.repl()
 	})
+	var err error
 	if os.Getenv("PORT") != "" {
 		port, err = strconv.Atoi(os.Getenv("PORT"))
 		if err != nil {
@@ -113,21 +124,18 @@ func main() {
 		}
 	}
 
-	fmt.Printf("Starting chat server on port %d\n", port)
+	fmt.Printf("Starting chat server on port %d and profiling on port %d\n", port, profilePort)
 	go getMsgsFromSlack()
 	go func() {
 		if port == 22 {
 			fmt.Println("Also starting chat server on port 443")
-			err = ssh.ListenAndServe(
-				":443",
-				nil,
-				ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"))
+			err = ssh.ListenAndServe(":443", nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"))
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 	}()
-	err = ssh.ListenAndServe(
-		fmt.Sprintf(":%d", port),
-		nil,
-		ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"))
+	err = ssh.ListenAndServe(fmt.Sprintf(":%d", port), nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"))
 	if err != nil {
 		fmt.Println(err)
 	}

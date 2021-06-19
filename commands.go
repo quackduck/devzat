@@ -17,6 +17,11 @@ import (
 // It also accepts a boolean indicating if the line of input is from slack, in
 // which case some commands will not be run (such as /tz and /exit)
 func runCommands(line string, u *user, isUserSlack bool) {
+	defer func() { // crash protection
+		if i := recover(); i != nil {
+			mainRoom.broadcast(devbot, "Slap the developers in the face for me, the server almost crashed, also tell them this: "+fmt.Sprint(i))
+		}
+	}()
 	if line == "" {
 		return
 	}
