@@ -34,7 +34,7 @@ func runCommands(line string, u *user, isSlack bool) {
 	}
 
 	if !isSlack { // actually sends the message
-		u.room.broadcast(u.name, line)
+		u.room.broadcastNoSlack(u.name, line)
 	}
 
 	devbotChat(u.room, line)

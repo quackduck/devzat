@@ -143,7 +143,13 @@ func (r *room) broadcast(senderName, msg string) {
 	} else {
 		slackChan <- "[" + r.name + "] " + msg
 	}
-	//}
+	r.broadcastNoSlack(senderName, msg)
+}
+
+func (r *room) broadcastNoSlack(senderName, msg string) {
+	if msg == "" {
+		return
+	}
 	msg = strings.ReplaceAll(msg, "@everyone", green.Paint("everyone\a"))
 	r.usersMutex.Lock()
 	for i := range r.users {
@@ -338,7 +344,8 @@ func (u *user) repl() {
 		}
 		if err != nil {
 			l.Println(u.name, err)
-			continue
+			u.close(u.name + red.Paint(" has left the chat due to an error"))
+			return
 		}
 		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(len([]rune(u.name+line))+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
 
