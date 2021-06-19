@@ -36,9 +36,7 @@ var (
 		{"olive", buildStyle(ansi256(4, 5, 1))},
 		{"yellow", buildStyle(yellow)},
 		{"orange", buildStyle(orange)},
-		{"blue", buildStyle(blue)},
-		//{"black", buildStyle(black)},
-	}
+		{"blue", buildStyle(blue)}}
 	secretStyles = []*style{
 		{"easter", buildStyle(chalk.WithRGB(255, 51, 255).WithBgRGB(255, 255, 0))},
 		{"baby", buildStyle(chalk.WithRGB(255, 51, 255).WithBgRGB(102, 102, 255))},
@@ -104,6 +102,12 @@ func (u *user) changeColor(colorName string) error {
 
 // Turns name into a style (defaults to nil)
 func getStyle(name string) (*style, error) {
+	if name == "random" {
+		r := rand.Intn(6)
+		g := rand.Intn(6)
+		b := rand.Intn(6)
+		return &style{strconv.Itoa(r*100 + g*10 + b), buildStyle(ansi256(uint8(r), uint8(g), uint8(b)))}, nil
+	}
 	for i := range styles {
 		if styles[i].name == name {
 			return styles[i], nil
@@ -113,12 +117,6 @@ func getStyle(name string) (*style, error) {
 		if secretStyles[i].name == name {
 			return secretStyles[i], nil
 		}
-	}
-	if name == "random" {
-		r := rand.Intn(6)
-		g := rand.Intn(6)
-		b := rand.Intn(6)
-		return &style{strconv.Itoa(r*100 + g*10 + b), buildStyle(ansi256(uint8(r), uint8(g), uint8(b)))}, nil
 	}
 	if strings.HasPrefix(name, "#") {
 		return &style{name, buildStyle(chalk.WithHex(name))}, nil
@@ -148,5 +146,5 @@ func getStyle(name string) (*style, error) {
 			colors = append(colors, styles[i].name)
 		}
 		return colors
-	}(), ", ") + "  \nMake your own colors using RGB values from 0 to 5 (for example, ./color 530, a pretty nice orange)  \nThere's also a few secret colors :)")
+	}(), ", ") + "  \nMake your own colors using hex (#A0FFFF, etc) or RGB values from 0 to 5 (for example, ./color 530, a pretty nice orange). Set bg color like this: ./color bg530.  \nThere's also a few secret colors :)")
 }

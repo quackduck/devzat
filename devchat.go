@@ -312,7 +312,12 @@ func (u *user) pickUsername(possibleName string) (ok bool) {
 		possibleName = cleanName(possibleName)
 	}
 	u.name = possibleName
-	u.changeColor(styles[rand.Intn(len(styles))].name) // also sets prompt
+	idx := rand.Intn(len(styles) + 1)
+	if idx == len(styles) { // allow the possibility of having a completely random RGB color
+		u.changeColor("random")
+		return
+	}
+	u.changeColor(styles[idx].name) // also sets prompt
 	return true
 }
 
