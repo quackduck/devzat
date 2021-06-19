@@ -16,7 +16,7 @@ import (
 // required, running any commands the user may have called.
 // It also accepts a boolean indicating if the line of input is from slack, in
 // which case some commands will not be run (such as /tz and /exit)
-func runCommands(line string, u *user, isSlack bool) {
+func runCommands(line string, u *user, isUserSlack bool) {
 	if line == "" {
 		return
 	}
@@ -24,17 +24,19 @@ func runCommands(line string, u *user, isSlack bool) {
 		dmRoomCMD(line, u)
 		return
 	}
-	if strings.HasPrefix(line, "=") && !isSlack {
+	if strings.HasPrefix(line, "=") && !isUserSlack {
 		dmCMD(strings.TrimSpace(strings.TrimPrefix(line, "=")), u)
 		return
 	}
 	if strings.HasPrefix(line, "./hang") { // handles whether or not to print line too
-		hangCMD(strings.TrimSpace(strings.TrimPrefix(line, "./hang")), u, isSlack)
+		hangCMD(strings.TrimSpace(strings.TrimPrefix(line, "./hang")), u, isUserSlack)
 		return
 	}
 
-	if !isSlack { // actually sends the message
+	if isUserSlack {
 		u.room.broadcastNoSlack(u.name, line)
+	} else {
+		u.room.broadcast(u.name, line)
 	}
 
 	devbotChat(u.room, line)
@@ -54,11 +56,11 @@ func runCommands(line string, u *user, isSlack bool) {
 		easterCMD(u)
 		return
 	}
-	if line == "./exit" && !isSlack {
+	if line == "./exit" && !isUserSlack {
 		exitCMD(u)
 		return
 	}
-	if line == "./bell" && !isSlack {
+	if line == "./bell" && !isUserSlack {
 		bellCMD(u)
 		return
 	}
@@ -102,11 +104,11 @@ func runCommands(line string, u *user, isSlack bool) {
 		ticCMD(strings.TrimSpace(strings.TrimPrefix(line, "./tic")), u)
 		return
 	}
-	if strings.HasPrefix(line, "./room") && !isSlack {
+	if strings.HasPrefix(line, "./room") && !isUserSlack {
 		roomCMD(strings.TrimSpace(strings.TrimPrefix(line, "./room")), u)
 		return
 	}
-	if strings.HasPrefix(line, "./tz") && !isSlack {
+	if strings.HasPrefix(line, "./tz") && !isUserSlack {
 		tzCMD(strings.TrimSpace(strings.TrimPrefix(line, "./tz")), u)
 		return
 	}
@@ -114,23 +116,23 @@ func runCommands(line string, u *user, isSlack bool) {
 		idCMD(strings.TrimSpace(strings.TrimPrefix(line, "./id")), u)
 		return
 	}
-	if strings.HasPrefix(line, "./nick") && !isSlack {
+	if strings.HasPrefix(line, "./nick") && !isUserSlack {
 		nickCMD(strings.TrimSpace(strings.TrimPrefix(line, "./nick")), u)
 		return
 	}
-	if strings.HasPrefix(line, "./banIP") && !isSlack {
+	if strings.HasPrefix(line, "./banIP") && !isUserSlack {
 		banIPCMD(strings.TrimSpace(strings.TrimPrefix(line, "./banIP")), u)
 		return
 	}
-	if strings.HasPrefix(line, "./ban") && !isSlack {
+	if strings.HasPrefix(line, "./ban") && !isUserSlack {
 		banCMD(strings.TrimSpace(strings.TrimPrefix(line, "./ban")), u)
 		return
 	}
-	if strings.HasPrefix(line, "./kick") && !isSlack {
+	if strings.HasPrefix(line, "./kick") && !isUserSlack {
 		kickCMD(strings.TrimSpace(strings.TrimPrefix(line, "./kick")), u)
 		return
 	}
-	if strings.HasPrefix(line, "./color") && !isSlack {
+	if strings.HasPrefix(line, "./color") && !isUserSlack {
 		colorCMD(strings.TrimSpace(strings.TrimPrefix(line, "./color")), u)
 		return
 	}

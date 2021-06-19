@@ -137,7 +137,6 @@ func (r *room) broadcast(senderName, msg string) {
 	if msg == "" {
 		return
 	}
-	//if toSlack {
 	if senderName != "" {
 		slackChan <- "[" + r.name + "] " + senderName + ": " + msg
 	} else {

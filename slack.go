@@ -32,7 +32,8 @@ func getMsgsFromSlack() {
 			if !strings.HasPrefix(text, "./hide") {
 				h := sha1.Sum([]byte(u.ID))
 				i, _ := strconv.ParseInt(hex.EncodeToString(h[:1]), 16, 0)
-				mainRoom.broadcast(yellow.Paint("HC ")+(styles[int(i)%len(styles)]).apply(strings.Fields(u.RealName)[0]), text)
+				uslack.name = yellow.Paint("HC ") + (styles[int(i)%len(styles)]).apply(strings.Fields(u.RealName)[0])
+				//mainRoom.broadcast(yellow.Paint("HC ")+(styles[int(i)%len(styles)]).apply(strings.Fields(u.RealName)[0]), text)
 				runCommands(text, uslack, true)
 			}
 		case *slack.ConnectedEvent:
