@@ -54,10 +54,10 @@ func sendCurrentUsersTwitterMessage() {
 		t, _, err := client.Statuses.Update("People on Devzat rn: "+stripansi.Strip(fmt.Sprint(names))+"\nJoin em with \"ssh devzat.hackclub.com\"\nUptime: "+printPrettyDuration(time.Since(startupTime)), nil)
 		if err != nil && err.Error() != "twitter: 187 Status is a duplicate." {
 			l.Println("Got twitter err", err)
-			mainRoom.broadcast(devbot, "err: "+err.Error(), true)
+			mainRoom.broadcast(devbot, "err: "+err.Error())
 			return
 		}
-		mainRoom.broadcast(devbot, "https\\://twitter.com/"+t.User.ScreenName+"/status/"+t.IDStr, true)
+		mainRoom.broadcast(devbot, "https\\://twitter.com/"+t.User.ScreenName+"/status/"+t.IDStr)
 	}()
 	//broadcast(devbot, tweet.Entities.Urls)
 }

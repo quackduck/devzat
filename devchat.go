@@ -94,7 +94,7 @@ func main() {
 		saveBansAndUsers()
 		logfile.Close()
 		mainRoom.broadcast(devbot, "Server going down! This is probably because it is being updated. Try joining back immediately.  \n"+
-			"If you still can't join, try joining back in 2 minutes. If you _still_ can't join, make an issue at github.com/quackduck/devzat/issues", true)
+			"If you still can't join, try joining back in 2 minutes. If you _still_ can't join, make an issue at github.com/quackduck/devzat/issues")
 		os.Exit(0)
 	}()
 	ssh.Handle(func(s ssh.Session) {
@@ -133,17 +133,17 @@ func main() {
 	}
 }
 
-func (r *room) broadcast(senderName, msg string, toSlack bool) {
+func (r *room) broadcast(senderName, msg string) {
 	if msg == "" {
 		return
 	}
-	if toSlack {
-		if senderName != "" {
-			slackChan <- "[" + r.name + "] " + senderName + ": " + msg
-		} else {
-			slackChan <- "[" + r.name + "] " + msg
-		}
+	//if toSlack {
+	if senderName != "" {
+		slackChan <- "[" + r.name + "] " + senderName + ": " + msg
+	} else {
+		slackChan <- "[" + r.name + "] " + msg
 	}
+	//}
 	msg = strings.ReplaceAll(msg, "@everyone", green.Paint("everyone\a"))
 	r.usersMutex.Lock()
 	for i := range r.users {
@@ -202,7 +202,7 @@ func newUser(s ssh.Session) *user {
 		bansMutex.Lock()
 		bans = append(bans, u.addr)
 		bansMutex.Unlock()
-		mainRoom.broadcast(devbot, u.name+" has been banned automatically. IP: "+u.addr, true)
+		mainRoom.broadcast(devbot, u.name+" has been banned automatically. IP: "+u.addr)
 		return nil
 	}
 	if len(backlog) > 0 {
@@ -234,7 +234,7 @@ func newUser(s ssh.Session) *user {
 		u.writeln("", green.Paint("Welcome to the chat. There are", strconv.Itoa(len(mainRoom.users)-1), "more users"))
 	}
 	//_, _ = term.Write([]byte(strings.Join(backlog, ""))) // print out backlog
-	mainRoom.broadcast(devbot, u.name+green.Paint(" has joined the chat"), true)
+	mainRoom.broadcast(devbot, u.name+green.Paint(" has joined the chat"))
 	return u
 }
 
@@ -244,9 +244,9 @@ func (u *user) close(msg string) {
 		u.room.users = remove(u.room.users, u)
 		u.room.usersMutex.Unlock()
 		go sendCurrentUsersTwitterMessage()
-		u.room.broadcast(devbot, msg, true)
+		u.room.broadcast(devbot, msg)
 		if time.Since(u.joinTime) > time.Minute/2 {
-			u.room.broadcast(devbot, u.name+" stayed on for "+printPrettyDuration(time.Since(u.joinTime)), true)
+			u.room.broadcast(devbot, u.name+" stayed on for "+printPrettyDuration(time.Since(u.joinTime)))
 		}
 		u.session.Close()
 	})
@@ -310,12 +310,12 @@ func (u *user) pickUsername(possibleName string) bool {
 	return false
 }
 
-func (u *user) changeRoom(r *room, toSlack bool) {
+func (u *user) changeRoom(r *room) {
 	if u.room == r {
 		return
 	}
 	u.room.users = remove(u.room.users, u)
-	u.room.broadcast("", u.name+" is joining "+blue.Paint(r.name), toSlack) // tell the old room
+	u.room.broadcast("", u.name+" is joining "+blue.Paint(r.name)) // tell the old room
 	if u.room != mainRoom && len(u.room.users) == 0 {
 		delete(rooms, u.room.name)
 	}
@@ -324,7 +324,7 @@ func (u *user) changeRoom(r *room, toSlack bool) {
 		u.pickUsername("")
 	}
 	u.room.users = append(u.room.users, u)
-	u.room.broadcast(devbot, u.name+" has joined "+blue.Paint(u.room.name), toSlack)
+	u.room.broadcast(devbot, u.name+" has joined "+blue.Paint(u.room.name))
 }
 
 func (u *user) repl() {

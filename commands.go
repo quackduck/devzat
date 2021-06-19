@@ -26,28 +26,28 @@ func runCommands(line string, u *user, isSlack bool) {
 			devbotRespond(u.room, []string{"You must be really lonely, DMing yourself.",
 				"Don't worry, I won't judge :wink:",
 				"srsly?",
-				"what an idiot"}, 30, false)
+				"what an idiot"}, 30)
 			return
 		}
 		u.messaging.writeln(u.name+" -> ", line)
 		return
 	}
 
-	sendToSlack := true
+	//sendToSlack := true
 	b := func(senderName, msg string) {
-		u.room.broadcast(senderName, msg, true)
+		u.room.broadcast(senderName, msg)
 	}
 
-	if strings.HasPrefix(line, "./hide") && !isSlack {
-		sendToSlack = false
-		b = func(senderName, msg string) {
-			u.room.broadcast(senderName, msg, false)
-		}
-	}
+	//if strings.HasPrefix(line, "./hide") && !isSlack {
+	//	sendToSlack = false
+	//	b = func(senderName, msg string) {
+	//		u.room.broadcast(senderName, msg, false)
+	//	}
+	//}
 	if strings.HasPrefix(line, "=") && !isSlack {
-		sendToSlack = false
+		//sendToSlack = false
 		b = func(senderName, msg string) {
-			u.room.broadcast(senderName, msg, false)
+			u.room.broadcast(senderName, msg)
 		}
 		rest := strings.TrimSpace(strings.TrimPrefix(line, "="))
 		restSplit := strings.Fields(rest)
@@ -66,7 +66,7 @@ func runCommands(line string, u *user, isSlack bool) {
 			devbotRespond(u.room, []string{"You must be really lonely, DMing yourself.",
 				"Don't worry, I won't judge :wink:",
 				"srsly?",
-				"what an idiot"}, 30, false)
+				"what an idiot"}, 30)
 			return
 		}
 		peer.writeln(u.name+" -> ", msg)
@@ -131,7 +131,7 @@ func runCommands(line string, u *user, isSlack bool) {
 	//if u == nil { // is slack
 	//	devbotChat(mainRoom, line, sendToSlack)
 	//} else {
-	devbotChat(u.room, line, sendToSlack)
+	devbotChat(u.room, line)
 	//}
 
 	if strings.HasPrefix(line, "./tic") {
@@ -237,10 +237,10 @@ func runCommands(line string, u *user, isSlack bool) {
 		}
 		if strings.HasPrefix(rest, "#") {
 			if v, ok := rooms[rest]; ok {
-				u.changeRoom(v, sendToSlack)
+				u.changeRoom(v)
 			} else {
 				rooms[rest] = &room{rest, make([]*user, 0, 10), sync.Mutex{}}
-				u.changeRoom(rooms[rest], sendToSlack)
+				u.changeRoom(rooms[rest])
 			}
 			return
 		}
@@ -462,8 +462,7 @@ Thanks to Caleb Denio for lending his server!`)
 *hide *bell *id *ban *kick *ascii-art *shrug *example-code *banIP`)
 	}
 	if line == "./commands-rest" {
-		b("", `All Commands  
-   ./hide                   _Hide messages from HC Slack_  
+		b("", `All Commands
    ./bell                   _Toggle the ANSI bell used in pings_  
    ./id     <user>          _Get a unique ID for a user (hashed IP)_  
    ./ban    <user>          _Ban <user> (admin)_  

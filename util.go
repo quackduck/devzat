@@ -173,7 +173,7 @@ func remove(s []*user, a *user) []*user {
 	return s
 }
 
-func devbotChat(room *room, line string, toSlack bool) {
+func devbotChat(room *room, line string) {
 	if strings.Contains(line, "devbot") {
 		if strings.Contains(line, "how are you") || strings.Contains(line, "how you") {
 			devbotRespond(room, []string{"How are _you_",
@@ -182,7 +182,7 @@ func devbotChat(room *room, line string, toSlack bool) {
 				"Howdy?",
 				"Thinking about intergalactic cows",
 				"Could maths be different in other universes?",
-				""}, 99, toSlack)
+				""}, 99)
 			return
 		}
 		if strings.Contains(line, "thank") {
@@ -192,40 +192,40 @@ func devbotChat(room *room, line string, toSlack bool) {
 				":smile:",
 				"no worries",
 				"you're welcome man!",
-				"lol"}, 93, toSlack)
+				"lol"}, 93)
 			return
 		}
 		if strings.Contains(line, "good") || strings.Contains(line, "cool") || strings.Contains(line, "awesome") || strings.Contains(line, "amazing") {
-			devbotRespond(room, []string{"Thanks haha", ":sunglasses:", ":smile:", "lol", "haha", "Thanks lol", "yeeeeeeeee"}, 93, toSlack)
+			devbotRespond(room, []string{"Thanks haha", ":sunglasses:", ":smile:", "lol", "haha", "Thanks lol", "yeeeeeeeee"}, 93)
 			return
 		}
 		if strings.Contains(line, "bad") || strings.Contains(line, "idiot") || strings.Contains(line, "stupid") {
-			devbotRespond(room, []string{"what an idiot, bullying a bot", ":(", ":angry:", ":anger:", ":cry:", "I'm in the middle of something okay", "shut up", "Run ./help, you need it."}, 60, toSlack)
+			devbotRespond(room, []string{"what an idiot, bullying a bot", ":(", ":angry:", ":anger:", ":cry:", "I'm in the middle of something okay", "shut up", "Run ./help, you need it."}, 60)
 			return
 		}
 		if strings.Contains(line, "shut up") {
-			devbotRespond(room, []string{"NO YOU", "You shut up", "what an idiot, bullying a bot"}, 90, toSlack)
+			devbotRespond(room, []string{"NO YOU", "You shut up", "what an idiot, bullying a bot"}, 90)
 			return
 		}
-		devbotRespond(room, []string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "Devbot to the rescue!", ":wave:"}, 90, toSlack)
+		devbotRespond(room, []string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "Devbot to the rescue!", ":wave:"}, 90)
 	}
 	if line == "help" || line == "/help" || strings.Contains(line, "help me") {
 		devbotRespond(room, []string{"Run ./help to get help!",
 			"Looking for ./help?",
-			"See available commands with ./commands or see help with ./help :star:"}, 100, toSlack)
+			"See available commands with ./commands or see help with ./help :star:"}, 100)
 	}
 	if line == "ls" {
-		devbotRespond(room, []string{"./help", "Not a shell.", "bruv", "yeah no, this is not your regular ssh server"}, 100, toSlack)
+		devbotRespond(room, []string{"./help", "Not a shell.", "bruv", "yeah no, this is not your regular ssh server"}, 100)
 	}
 	if strings.Contains(line, "rm -rf") {
-		devbotRespond(room, []string{"rm -rf you", "I've heard rm -rf / can really free up some space!\n\n you should try it on your computer", "evil"}, 100, toSlack)
+		devbotRespond(room, []string{"rm -rf you", "I've heard rm -rf / can really free up some space!\n\n you should try it on your computer", "evil"}, 100)
 		return
 	}
 	if strings.HasPrefix(line, "rm") {
-		devbotRespond(room, []string{"Bad human, bad human", "haha, permission denied", "this is not your regular ssh server", "hehe", "bruh"}, 100, toSlack)
+		devbotRespond(room, []string{"Bad human, bad human", "haha, permission denied", "this is not your regular ssh server", "hehe", "bruh"}, 100)
 	}
 	if strings.Contains(line, "where") && strings.Contains(line, "repo") {
-		devbotRespond(room, []string{"The repo's at github.com/quackduck/devzat!", ":star: github.com/quackduck/devzat :star:", "# github.com/quackduck/devzat"}, 100, toSlack)
+		devbotRespond(room, []string{"The repo's at github.com/quackduck/devzat!", ":star: github.com/quackduck/devzat :star:", "# github.com/quackduck/devzat"}, 100)
 	}
 	if strings.Contains(line, "rocket") || strings.Contains(line, "spacex") || strings.Contains(line, "tesla") {
 		devbotRespond(room, []string{"Doge to the mooooon :rocket:",
@@ -233,32 +233,32 @@ func devbotChat(room *room, line string, toSlack bool) {
 			":rocket:",
 			"I like rockets",
 			"SpaceX",
-			"Elon Musk OP"}, 80, toSlack)
+			"Elon Musk OP"}, 80)
 	}
 	if strings.Contains(line, "elon") {
 		devbotRespond(room, []string{"When something is important enough, you do it even if the odds are not in your favor. - Elon",
 			"I do think there is a lot of potential if you have a compelling product - Elon",
 			"If you're trying to create a company, it's like baking a cake. You have to have all the ingredients in the right proportion. - Elon",
-			"Patience is a virtue, and I'm learning patience. It's a tough lesson. - Elon"}, 75, toSlack)
+			"Patience is a virtue, and I'm learning patience. It's a tough lesson. - Elon"}, 75)
 	}
 	if !strings.Contains(line, "start") && strings.Contains(line, "star") {
 		devbotRespond(room, []string{"Someone say :star:?",
 			"If you like Devzat, give it a star at github.com/quackduck/devzat!",
-			":star: github.com/quackduck/devzat", ":star:"}, 90, toSlack)
+			":star: github.com/quackduck/devzat", ":star:"}, 90)
 	}
 	if strings.Contains(line, "cool project") || strings.Contains(line, "this is cool") || strings.Contains(line, "this is so cool") {
 		devbotRespond(room, []string{"Thank you :slight_smile:!",
 			" If you like Devzat, do give it a star at github.com/quackduck/devzat!",
-			"Star Devzat here: github.com/quackduck/devzat"}, 90, toSlack)
+			"Star Devzat here: github.com/quackduck/devzat"}, 90)
 	}
 }
 
-func devbotRespond(room *room, messages []string, chance int, toSlack bool) {
+func devbotRespond(room *room, messages []string, chance int) {
 	if chance == 100 || chance > rand.Intn(100) {
 		go func() {
 			time.Sleep(time.Second / 2)
 			pick := messages[rand.Intn(len(messages))]
-			room.broadcast(devbot, pick, toSlack)
+			room.broadcast(devbot, pick)
 		}()
 	}
 }
