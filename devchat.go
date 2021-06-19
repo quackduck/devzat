@@ -27,7 +27,7 @@ import (
 
 var (
 	port        = 22
-	profilePort = 5000
+	profilePort = 5555
 
 	devbot = "" // initialized in main
 
