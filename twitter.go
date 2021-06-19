@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"strings"
 	"time"
 
 	"github.com/acarl005/stripansi"
@@ -52,7 +53,7 @@ func sendCurrentUsersTwitterMessage() {
 			names = append(names, us.name)
 		}
 		t, _, err := client.Statuses.Update("People on Devzat rn: "+stripansi.Strip(fmt.Sprint(names))+"\nJoin em with \"ssh devzat.hackclub.com\"\nUptime: "+printPrettyDuration(time.Since(startupTime)), nil)
-		if err != nil && err.Error() != "twitter: 187 Status is a duplicate." {
+		if err != nil && !strings.Contains(err.Error(), "twitter: 187 Status is a duplicate.") {
 			l.Println("Got twitter err", err)
 			mainRoom.broadcast(devbot, "err: "+err.Error())
 			return

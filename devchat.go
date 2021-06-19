@@ -86,8 +86,8 @@ func main() {
 	var err error
 	rand.Seed(time.Now().Unix())
 	readBansAndUsers()
-	c := make(chan os.Signal)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGKILL)
+	c := make(chan os.Signal, 2)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 	go func() {
 		<-c
 		fmt.Println("Shutting down...")

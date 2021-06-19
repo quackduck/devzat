@@ -66,21 +66,10 @@ func cleanName(name string) string {
 func printPrettyDuration(d time.Duration) string {
 	//return strings.TrimSuffix(mainroom.Round(time.Minute).String(), "0s")
 	s := strings.TrimSpace(strings.TrimSuffix(d.Round(time.Minute).String(), "0s"))
-	s = strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(s,
-		"h", " hours "),
-		"m", " minutes"),
-		" 1 minutes", " 1 minute"), // space to ensure it won't match "2 hours 51 minutes"
-		" 1 hours", " 1 hour")
-	if strings.HasPrefix(s, "1 hours") { // since we're using the space to detect if it isn't 51, it won't match if the string is only "1 minutes" so we check if it has that prefix.
-		s = strings.Replace(s, "1 hours", "1 hour", 1) // replace the first occurrence (because we confirmed it has the prefix, it'll only replace the prefix and nothing else)
-	}
-	if strings.HasPrefix(s, "1 minutes") {
-		s = strings.Replace(s, "1 minutes", "1 minute", 1)
-	}
 	if s == "" { // we cut off the seconds so if there's nothing in the string it means it was made of only seconds.
-		s = "Less than a minute"
+		s = "< 1m"
 	}
-	return strings.TrimSpace(s)
+	return s
 }
 
 func mdRender(a string, beforeMessageLen int, lineWidth int) string {
@@ -264,7 +253,7 @@ func devbotRespond(room *room, messages []string, chance int) {
 }
 
 func stringsContain(a []string, s string) bool {
-	for i, _ := range a {
+	for i := range a {
 		if a[i] == s {
 			return true
 		}
