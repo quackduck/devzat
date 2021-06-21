@@ -4,13 +4,14 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"github.com/acarl005/stripansi"
-	markdown "github.com/quackduck/go-term-markdown"
 	"math/rand"
 	"os"
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/acarl005/stripansi"
+	markdown "github.com/quackduck/go-term-markdown"
 )
 
 var (

@@ -8,7 +8,7 @@ require (
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/dghubble/go-twitter v0.0.0-20210609183100-2fdbf421508e
 	github.com/dghubble/oauth1 v0.7.0
-	github.com/fatih/color v1.12.0
+	github.com/fatih/color v1.12.0 // indirect
 	github.com/gliderlabs/ssh v0.3.2
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/jwalton/gchalk v1.0.3

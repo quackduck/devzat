@@ -2,11 +2,12 @@ package main
 
 import (
 	"errors"
-	"github.com/acarl005/stripansi"
-	"github.com/jwalton/gchalk"
 	"math/rand"
 	"strconv"
 	"strings"
+
+	"github.com/acarl005/stripansi"
+	"github.com/jwalton/gchalk"
 )
 
 var (

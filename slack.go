@@ -3,11 +3,12 @@ package main
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"github.com/acarl005/stripansi"
-	"github.com/slack-go/slack"
 	"io/ioutil"
 	"strconv"
 	"strings"
+
+	"github.com/acarl005/stripansi"
+	"github.com/slack-go/slack"
 )
 
 var (

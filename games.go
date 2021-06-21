@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/shurcooL/tictactoe"
 	"strings"
+
+	"github.com/shurcooL/tictactoe"
 )
 
 var tttGame = new(tictactoe.Board)
