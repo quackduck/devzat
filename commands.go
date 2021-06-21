@@ -12,10 +12,45 @@ import (
 	"github.com/shurcooL/tictactoe"
 )
 
+type cmd struct {
+	name string
+	run  func(line string, u *user, isSlack bool)
+}
+
+var cmds = []cmd{
+	{"./users", usersCMD},
+	{"./all", allCMD},
+	{"./color", colorCMD},
+	{"./exit", exitCMD},
+	{"./bell", bellCMD},
+	{"./people", peopleCMD},
+	{"./help", helpCMD},
+	{"./example-code", exampleCodeCMD},
+	{"./ascii-art", asciiArtCMD},
+	//{"./shrug", shrugCMD},
+	{"./emojis", emojisCMD},
+	{"./commands", commandsCMD},
+	{"./commands-rest", commandsRestCMD},
+	{"./clear", clearCMD},
+	{"./tic", ticCMD},
+	{"./room", roomCMD},
+	{"./tz", tzCMD},
+	{"./id", idCMD},
+	{"./nick", nickCMD},
+	{"./banIP", banIPCMD},
+	{"./ban", banCMD},
+	{"./kick", kickCMD},
+	{"ls", lsCMD},
+	{"cat README.md", helpCMD},
+	{"cat", catCMD},
+	{"rm", rmCMD},
+	{"easter", easterCMD},
+}
+
 // runCommands parses a line of raw input from a user and sends a message as
 // required, running any commands the user may have called.
 // It also accepts a boolean indicating if the line of input is from slack, in
-// which case some commands will not be run (such as /tz and /exit)
+// which case some commands will not be run (such as ./tz and ./exit)
 func runCommands(line string, u *user, isUserSlack bool) {
 	defer func() { // crash protection
 		if i := recover(); i != nil {
@@ -25,133 +60,41 @@ func runCommands(line string, u *user, isUserSlack bool) {
 	if line == "" {
 		return
 	}
+	currCmd := strings.Fields(line)[0]
 	if u.messaging != nil && !strings.HasPrefix(line, "=") && !strings.HasPrefix(line, "./room") { // the commands allowed in a private dm room
-		dmRoomCMD(line, u)
+		dmRoomCMD(line, u, isUserSlack)
 		return
 	}
 	if strings.HasPrefix(line, "=") && !isUserSlack {
-		dmCMD(strings.TrimSpace(strings.TrimPrefix(line, "=")), u)
+		dmCMD(strings.TrimSpace(strings.TrimPrefix(line, "=")), u, isUserSlack)
 		return
 	}
 	if strings.HasPrefix(line, "./hang") { // handles whether or not to print line too
 		hangCMD(strings.TrimSpace(strings.TrimPrefix(line, "./hang")), u, isUserSlack)
 		return
 	}
-
+	if currCmd == "./shrug" {
+		shrugCMD(strings.TrimSpace(strings.TrimPrefix(line, "./shrug")), u, isUserSlack)
+		return
+	}
 	if isUserSlack {
 		u.room.broadcastNoSlack(u.name, line)
 	} else {
 		u.room.broadcast(u.name, line)
 	}
-
 	devbotChat(u.room, line)
-	if line == "./users" {
-		usersCMD(u)
-		return
+	for _, c := range cmds {
+		if c.name == currCmd {
+			c.run(strings.TrimSpace(strings.TrimPrefix(line, c.name)), u, isUserSlack)
+			return
+		}
 	}
-	if line == "./clear" {
-		clearCMD(u)
-		return
-	}
-	if line == "./all" {
-		allCMD(u)
-		return
-	}
-	if line == "easter" {
-		easterCMD(u)
-		return
-	}
-	if line == "./exit" && !isUserSlack {
-		exitCMD(u)
-		return
-	}
-	if line == "./bell" && !isUserSlack {
-		bellCMD(u)
-		return
-	}
-	if line == "./people" {
-		peopleCMD(u)
-		return
-	}
-	if line == "./help" || line == "cat README.md" {
-		helpCMD(u)
-		return
-	}
-	if line == "./example-code" {
-		exampleCodeCMD(u)
-		return
-	}
-	if line == "./ascii-art" {
-		asciiArtCMD(u)
-		return
-	}
-	if line == "./shrug" {
-		shrugCMD(u)
-		return
-	}
-	if line == "./emojis" {
-		emojisCMD(u)
-		return
-	}
-	if line == "./commands" {
-		commandsCMD(u)
-		return
-	}
-	if line == "ls" {
-		lsCMD(u)
-	}
-	if line == "./commands-rest" {
-		commandsRestCMD(u)
-		return
-	}
-
-	if strings.HasPrefix(line, "./tic") {
-		ticCMD(strings.TrimSpace(strings.TrimPrefix(line, "./tic")), u)
-		return
-	}
-	if strings.HasPrefix(line, "./room") && !isUserSlack {
-		roomCMD(strings.TrimSpace(strings.TrimPrefix(line, "./room")), u)
-		return
-	}
-	if strings.HasPrefix(line, "./tz") && !isUserSlack {
-		tzCMD(strings.TrimSpace(strings.TrimPrefix(line, "./tz")), u)
-		return
-	}
-	if strings.HasPrefix(line, "./id") {
-		idCMD(strings.TrimSpace(strings.TrimPrefix(line, "./id")), u)
-		return
-	}
-	if strings.HasPrefix(line, "./nick") && !isUserSlack {
-		nickCMD(strings.TrimSpace(strings.TrimPrefix(line, "./nick")), u)
-		return
-	}
-	if strings.HasPrefix(line, "./banIP") && !isUserSlack {
-		banIPCMD(strings.TrimSpace(strings.TrimPrefix(line, "./banIP")), u)
-		return
-	}
-	if strings.HasPrefix(line, "./ban") && !isUserSlack {
-		banCMD(strings.TrimSpace(strings.TrimPrefix(line, "./ban")), u)
-		return
-	}
-	if strings.HasPrefix(line, "./kick") && !isUserSlack {
-		kickCMD(strings.TrimSpace(strings.TrimPrefix(line, "./kick")), u)
-		return
-	}
-	if strings.HasPrefix(line, "./color") && !isUserSlack {
-		colorCMD(strings.TrimSpace(strings.TrimPrefix(line, "./color")), u)
-		return
-	}
-	if strings.HasPrefix(line, "cat") {
-		catCMD(strings.TrimSpace(strings.TrimPrefix(line, "cat")), u)
-		return
-	}
-	if strings.HasPrefix(line, "rm") {
-		rmCMD(strings.TrimSpace(strings.TrimPrefix(line, "rm")), u)
-		return
+	if strings.HasPrefix(currCmd, "./") {
+		u.room.broadcast(devbot, "wrong command, what's \""+currCmd+"\"")
 	}
 }
 
-func dmCMD(rest string, u *user) {
+func dmCMD(rest string, u *user, _ bool) {
 	restSplit := strings.Fields(rest)
 	if len(restSplit) < 2 {
 		u.writeln(devbot, "You gotta have a message mate")
@@ -219,15 +162,15 @@ func hangCMD(rest string, u *user, isSlack bool) {
 	}
 }
 
-func clearCMD(u *user) {
+func clearCMD(_ string, u *user, _ bool) {
 	u.term.Write([]byte("\033[H\033[2J"))
 }
 
-func usersCMD(u *user) {
+func usersCMD(_ string, u *user, _ bool) {
 	u.room.broadcast("", printUsersInRoom(u.room))
 }
 
-func dmRoomCMD(line string, u *user) {
+func dmRoomCMD(line string, u *user, _ bool) {
 	u.writeln(u.messaging.name+" <- ", line)
 	if u == u.messaging {
 		devbotRespond(u.room, []string{"You must be really lonely, DMing yourself.",
@@ -239,7 +182,7 @@ func dmRoomCMD(line string, u *user) {
 	u.messaging.writeln(u.name+" -> ", line)
 }
 
-func ticCMD(rest string, u *user) {
+func ticCMD(rest string, u *user, _ bool) {
 	if rest == "" {
 		u.room.broadcast(devbot, "Starting a new game of Tic Tac Toe! The first player is always X.")
 		u.room.broadcast(devbot, "Play using ./tic <cell num>")
@@ -276,7 +219,7 @@ func ticCMD(rest string, u *user) {
 	}
 }
 
-func allCMD(u *user) {
+func allCMD(_ string, u *user, _ bool) {
 	names := make([]string, 0, len(allUsers))
 	for _, name := range allUsers {
 		names = append(names, name)
@@ -287,18 +230,18 @@ func allCMD(u *user) {
 	u.room.broadcast("", fmt.Sprint(names))
 }
 
-func easterCMD(u *user) {
+func easterCMD(_ string, u *user, _ bool) {
 	go func() {
 		time.Sleep(time.Second)
 		u.room.broadcast(devbot, "eggs?")
 	}()
 }
 
-func exitCMD(u *user) {
+func exitCMD(_ string, u *user, _ bool) {
 	u.close(u.name + red.Paint(" has left the chat"))
 }
 
-func bellCMD(u *user) {
+func bellCMD(_ string, u *user, _ bool) {
 	u.bell = !u.bell
 	if u.bell {
 		u.room.broadcast("", "bell on")
@@ -307,7 +250,7 @@ func bellCMD(u *user) {
 	}
 }
 
-func roomCMD(rest string, u *user) {
+func roomCMD(rest string, u *user, _ bool) {
 	if u.messaging != nil {
 		u.messaging = nil
 		u.writeln(devbot, "Left private chat")
@@ -359,7 +302,7 @@ func roomCMD(rest string, u *user) {
 	u.writeln(devbot, "Rooms need to start with # (public rooms) or @ (dms)")
 }
 
-func tzCMD(tz string, u *user) {
+func tzCMD(tz string, u *user, _ bool) {
 	var err error
 	if tz == "" {
 		u.timezone = nil
@@ -373,7 +316,7 @@ func tzCMD(tz string, u *user) {
 	u.room.broadcast(devbot, "Done!")
 }
 
-func idCMD(line string, u *user) {
+func idCMD(line string, u *user, _ bool) {
 	victim, ok := findUserByName(u.room, line)
 	if !ok {
 		u.room.broadcast("", "User not found")
@@ -382,11 +325,12 @@ func idCMD(line string, u *user) {
 	u.room.broadcast("", victim.id)
 }
 
-func nickCMD(line string, u *user) bool {
-	return u.pickUsername(line)
+func nickCMD(line string, u *user, _ bool) {
+	u.pickUsername(line)
+	return
 }
 
-func banIPCMD(line string, u *user) {
+func banIPCMD(line string, u *user, _ bool) {
 	if !auth(u) {
 		u.room.broadcast(devbot, "Not authorized")
 		return
@@ -397,7 +341,7 @@ func banIPCMD(line string, u *user) {
 	saveBansAndUsers()
 }
 
-func banCMD(line string, u *user) {
+func banCMD(line string, u *user, _ bool) {
 	victim, ok := findUserByName(u.room, line)
 	if !ok {
 		u.room.broadcast("", "User not found")
@@ -414,7 +358,7 @@ func banCMD(line string, u *user) {
 	victim.close(victim.name + " has been banned by " + u.name)
 }
 
-func kickCMD(line string, u *user) {
+func kickCMD(line string, u *user, _ bool) {
 	victim, ok := findUserByName(u.room, line)
 	if !ok {
 		u.room.broadcast("", "User not found")
@@ -427,7 +371,7 @@ func kickCMD(line string, u *user) {
 	victim.close(victim.name + red.Paint(" has been kicked by ") + u.name)
 }
 
-func colorCMD(rest string, u *user) {
+func colorCMD(rest string, u *user, _ bool) {
 	if rest == "which" {
 		u.room.broadcast(devbot, "you're using "+u.color)
 	} else if err := u.changeColor(rest); err != nil {
@@ -435,7 +379,7 @@ func colorCMD(rest string, u *user) {
 	}
 }
 
-func peopleCMD(u *user) {
+func peopleCMD(_ string, u *user, _ bool) {
 	u.room.broadcast("", `
 **Hack Club members**  
 Zach Latta     - Founder of Hack Club  
@@ -472,7 +416,7 @@ Harsh           @harshb__
 **And many more have joined!**`)
 }
 
-func helpCMD(u *user) {
+func helpCMD(_ string, u *user, _ bool) {
 	u.room.broadcast("", `Welcome to Devzat! Devzat is chat over SSH: github.com/quackduck/devzat  
 Because there's SSH apps on all platforms, even on mobile, you can join from anywhere.
 
@@ -492,7 +436,7 @@ Made by Ishan Goel with feature ideas from friends.
 Thanks to Caleb Denio for lending his server!`)
 }
 
-func catCMD(line string, u *user) {
+func catCMD(line string, u *user, _ bool) {
 	if line == "" {
 		u.room.broadcast("", "usage: cat [-benstuv] [file ...]")
 	} else {
@@ -500,7 +444,7 @@ func catCMD(line string, u *user) {
 	}
 }
 
-func rmCMD(line string, u *user) {
+func rmCMD(line string, u *user, _ bool) {
 	if line == "" {
 		u.room.broadcast("", `usage: rm [-f | -i] [-dPRrvW] file ...
        unlink file`)
@@ -509,23 +453,23 @@ func rmCMD(line string, u *user) {
 	}
 }
 
-func exampleCodeCMD(u *user) {
+func exampleCodeCMD(_ string, u *user, _ bool) {
 	u.room.broadcast(devbot, "\n```go\npackage main\nimport \"fmt\"\nfunc main() {\n   fmt.Println(\"Example!\")\n}\n```")
 }
 
-func asciiArtCMD(u *user) {
+func asciiArtCMD(_ string, u *user, _ bool) {
 	u.room.broadcast("", string(artBytes))
 }
 
-func shrugCMD(u *user) {
-	u.room.broadcast("", `¯\\_(ツ)_/¯`)
+func shrugCMD(line string, u *user, _ bool) {
+	u.room.broadcast(u.name, line+` ¯\\_(ツ)_/¯`)
 }
 
-func emojisCMD(u *user) {
+func emojisCMD(_ string, u *user, _ bool) {
 	u.room.broadcast(devbot, "Check out github.com/ikatyang/emoji-cheat-sheet")
 }
 
-func commandsRestCMD(u *user) {
+func commandsRestCMD(_ string, u *user, _ bool) {
 	u.room.broadcast("", `All Commands
    ./bell                   _Toggle the ANSI bell used in pings_  
    ./id     <user>          _Get a unique ID for a user (hashed IP)_  
@@ -537,13 +481,13 @@ func commandsRestCMD(u *user) {
    ./banIP  <IP/ID>         _Ban by IP or ID (admin)_`)
 }
 
-func lsCMD(u *user) {
+func lsCMD(_ string, u *user, _ bool) {
 	u.room.broadcast("", `README.md *users *nick *room *tic *hang *people
 *tz *color *all *emojis *exit *help *commands *commands-rest 
 *hide *bell *id *ban *kick *ascii-art *shrug *example-code *banIP`)
 }
 
-func commandsCMD(u *user) {
+func commandsCMD(_ string, u *user, _ bool) {
 	u.room.broadcast("", `Available commands  
    =<user> <msg>            _DM <user> with <msg>_  
    ./users                  _List users_  
