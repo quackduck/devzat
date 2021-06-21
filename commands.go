@@ -13,37 +13,80 @@ import (
 )
 
 type cmd struct {
-	name string
-	run  func(line string, u *user, isSlack bool)
+	name     string
+	run      func(line string, u *user, isSlack bool)
+	argsInfo string
+	info     string
 }
 
-var cmds = []cmd{
-	{"./users", usersCMD},
-	{"./all", allCMD},
-	{"./color", colorCMD},
-	{"./exit", exitCMD},
-	{"./bell", bellCMD},
-	{"./people", peopleCMD},
-	{"./help", helpCMD},
-	{"./example-code", exampleCodeCMD},
-	{"./ascii-art", asciiArtCMD},
-	{"./emojis", emojisCMD},
-	{"./commands", commandsCMD},
-	{"./commands-rest", commandsRestCMD},
-	{"./clear", clearCMD},
-	{"./tic", ticCMD},
-	{"./room", roomCMD},
-	{"./tz", tzCMD},
-	{"./id", idCMD},
-	{"./nick", nickCMD},
-	{"./banIP", banIPCMD},
-	{"./ban", banCMD},
-	{"./kick", kickCMD},
-	{"ls", lsCMD},
-	{"cat README.md", helpCMD},
-	{"cat", catCMD},
-	{"rm", rmCMD},
-	{"easter", easterCMD}}
+//u.room.broadcast("", `Available commands
+//=<user>  <msg>           _DM <user> with <msg>_
+//./users                  _List users_
+//./nick   <name>          _Change your name_
+//./room   #<room>         _Join a room or use /room to see all rooms_
+//./tic    <cell num>      _Play Tic Tac Toe!_
+//./hang   <char/word>     _Play Hangman!_
+//./people                 _See info about nice people who joined_
+//./tz     <zone>          _Change IANA timezone (eg: /tz Asia/Dubai)_
+//./color  <color>         _Change your name's color_
+//./all                    _Get a list of all users ever_
+//./emojis                 _See a list of emojis_
+//./exit                   _Leave the chat_
+//./help                   _Show help_
+//./commands               _Show this message_
+//./commands-rest          _Uncommon commands list_`)
+
+/*
+All Commands
+   ./bell                   _Toggle the ANSI bell used in pings_
+   ./id     <user>          _Get a unique ID for a user (hashed IP)_
+   ./ban    <user>          _Ban <user> (admin)_
+   ./kick   <user>          _Kick <user> (admin)_
+   ./ascii-art              _Show some panda art_
+   ./shrug                  _¯\\_(ツ)_/¯_
+   ./example-code           _Example syntax-highlighted code_
+   ./banIP  <IP/ID>         _Ban by IP or ID (admin)_`
+*/
+
+var (
+	allcmds = make([]cmd, 30)
+	cmds    = []cmd{
+		{"=<user>", dmCMD, "<msg>", "DM <user> with <msg>"},
+		{"./users", usersCMD, "", "List users"},
+		{"./all", allCMD, "", "Get a list of all users ever"},
+		{"./color", colorCMD, "<color>", "Change your name's color"},
+		{"./exit", exitCMD, "", "Leave the chat"},
+		{"./help", helpCMD, "", "Show help"},
+		{"./emojis", emojisCMD, "", "See a list of emojis"},
+		{"./clear", clearCMD, "", "Clear the screen"},
+		{"./hang", hangCMD, "<char/word>", "Play hangman"},
+		{"./tic", ticCMD, "<cell num>", "Play tic tac toe!"},
+		{"./room", roomCMD, "#room/@user", "Join #room, DM @user or run ./room to see a list"},
+		{"./tz", tzCMD, "<zone>", "Set your IANA timezone (like ./tz Asia/Dubai)"},
+		{"./nick", nickCMD, "<name>", "Change your username"},
+		{"./rest", commandsRestCMD, "", "Uncommon commands list"}}
+	cmdsRest = []cmd{
+		{"./bell", bellCMD, "", "Toggle the ANSI bell used in pings"},
+		{"./people", peopleCMD, "", "See info about nice people who joined"},
+		{"./id", idCMD, "<user>", "Get a unique ID for a user (hashed IP)"},
+		{"./eg-code", exampleCodeCMD, "", "Example syntax-highlighted code"},
+		{"./banIP", banIPCMD, "<IP>", "Ban an IP (admin)"},
+		{"./ban", banCMD, "<user>", "Ban <user> (admin)"},
+		{"./kick", kickCMD, "<user>", "Kick <user> (admin)"},
+		{"./ascii-art", asciiArtCMD, "", "Show some panda art"}}
+	secretCMDs = []cmd{
+		{"ls", lsCMD, "", ""},
+		{"cat README.md", helpCMD, "", ""},
+		{"cat", catCMD, "", ""},
+		{"rm", rmCMD, "", ""},
+		{"easter", easterCMD, "", ""}}
+)
+
+func init() {
+	cmds = append(cmds, cmd{"./commands", commandsCMD, "", "Show this message"}) // avoid initialization loop
+	allcmds = append(append(append(allcmds,
+		cmds...), cmdsRest...), secretCMDs...)
+}
 
 // runCommands parses a line of raw input from a user and sends a message as
 // required, running any commands the user may have called.
@@ -81,7 +124,7 @@ func runCommands(line string, u *user, isUserSlack bool) {
 		u.room.broadcast(u.name, line)
 	}
 	devbotChat(u.room, line)
-	for _, c := range cmds {
+	for _, c := range allcmds {
 		if c.name == currCmd {
 			c.run(strings.TrimSpace(strings.TrimPrefix(line, c.name)), u, isUserSlack)
 			return
@@ -464,15 +507,18 @@ func emojisCMD(_ string, u *user, _ bool) {
 }
 
 func commandsRestCMD(_ string, u *user, _ bool) {
-	u.room.broadcast("", `All Commands  
-   ./bell                   _Toggle the ANSI bell used in pings_  
-   ./id     <user>          _Get a unique ID for a user (hashed IP)_  
-   ./ban    <user>          _Ban <user> (admin)_  
-   ./kick   <user>          _Kick <user> (admin)_  
-   ./ascii-art              _Show some panda art_  
-   ./shrug                  _¯\\_(ツ)_/¯_  
-   ./example-code           _Example syntax-highlighted code_  
-   ./banIP  <IP/ID>         _Ban by IP or ID (admin)_`)
+	u.room.broadcast("", "Commands  \n"+autogenCommands(cmdsRest))
+	/*
+			u.room.broadcast("", `All Commands
+		   ./bell                   _Toggle the ANSI bell used in pings_
+		   ./id     <user>          _Get a unique ID for a user (hashed IP)_
+		   ./ban    <user>          _Ban <user> (admin)_
+		   ./kick   <user>          _Kick <user> (admin)_
+		   ./ascii-art              _Show some panda art_
+		   ./shrug                  _¯\\_(ツ)_/¯_
+		   ./example-code           _Example syntax-highlighted code_
+		   ./banIP  <IP/ID>         _Ban by IP or ID (admin)_`)
+	*/
 }
 
 func lsCMD(_ string, u *user, _ bool) {
@@ -482,20 +528,23 @@ func lsCMD(_ string, u *user, _ bool) {
 }
 
 func commandsCMD(_ string, u *user, _ bool) {
-	u.room.broadcast("", `Available commands  
-   =<user> <msg>            _DM <user> with <msg>_  
-   ./users                  _List users_  
-   ./nick   <name>          _Change your name_  
-   ./room   #<room>         _Join a room or use /room to see all rooms_  
-   ./tic    <cell num>      _Play Tic Tac Toe!_  
-   ./hang   <char/word>     _Play Hangman!_  
-   ./people                 _See info about nice people who joined_  
-   ./tz     <zone>          _Change IANA timezone (eg: /tz Asia/Dubai)_  
-   ./color  <color>         _Change your name's color_  
-   ./all                    _Get a list of all users ever_  
-   ./emojis                 _See a list of emojis_  
-   ./exit                   _Leave the chat_  
-   ./help                   _Show help_  
-   ./commands               _Show this message_  
-   ./commands-rest          _Uncommon commands list_`)
+	u.room.broadcast("", "Commands  \n"+autogenCommands(cmds))
+	/*
+			u.room.broadcast("", `Available commands
+		   =<user> <msg>            _DM <user> with <msg>_
+		   ./users                  _List users_
+		   ./nick   <name>          _Change your name_
+		   ./room   #<room>         _Join a room or use /room to see all rooms_
+		   ./tic    <cell num>      _Play Tic Tac Toe!_
+		   ./hang   <char/word>     _Play Hangman!_
+		   ./people                 _See info about nice people who joined_
+		   ./tz     <zone>          _Change IANA timezone (eg: /tz Asia/Dubai)_
+		   ./color  <color>         _Change your name's color_
+		   ./all                    _Get a list of all users ever_
+		   ./emojis                 _See a list of emojis_
+		   ./exit                   _Leave the chat_
+		   ./help                   _Show help_
+		   ./commands               _Show this message_
+		   ./commands-rest          _Uncommon commands list_`)
+	*/
 }

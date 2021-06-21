@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bytes"
 	_ "embed"
 	"encoding/json"
 	"fmt"
 	"math/rand"
 	"os"
 	"strings"
+	"text/tabwriter"
 	"time"
 	"unicode"
 
@@ -33,6 +35,16 @@ func printUsersInRoom(r *room) string {
 		names = append(names, us.name)
 	}
 	return fmt.Sprint(names)
+}
+
+func autogenCommands(cmds []cmd) string {
+	b := new(bytes.Buffer)
+	w := tabwriter.NewWriter(b, 0, 0, 1, ' ', 0)
+	for _, cmd := range cmds {
+		w.Write([]byte("   " + cmd.name + "\t" + cmd.argsInfo + "\t_" + cmd.info + "_  \n"))
+	}
+	w.Flush()
+	return b.String()
 }
 
 // check if a user is an admin
