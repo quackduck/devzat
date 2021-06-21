@@ -39,7 +39,7 @@ func printUsersInRoom(r *room) string {
 
 func autogenCommands(cmds []cmd) string {
 	b := new(bytes.Buffer)
-	w := tabwriter.NewWriter(b, 0, 0, 1, ' ', 0)
+	w := tabwriter.NewWriter(b, 0, 0, 2, ' ', 0)
 	for _, cmd := range cmds {
 		w.Write([]byte("   " + cmd.name + "\t" + cmd.argsInfo + "\t_" + cmd.info + "_  \n"))
 	}

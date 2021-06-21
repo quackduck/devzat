@@ -73,7 +73,7 @@ var (
 		{"./banIP", banIPCMD, "<IP>", "Ban an IP (admin)"},
 		{"./ban", banCMD, "<user>", "Ban <user> (admin)"},
 		{"./kick", kickCMD, "<user>", "Kick <user> (admin)"},
-		{"./ascii-art", asciiArtCMD, "", "Show some panda art"}}
+		{"./art", asciiArtCMD, "", "Show some panda art"}}
 	secretCMDs = []cmd{
 		{"ls", lsCMD, "", ""},
 		{"cat README.md", helpCMD, "", ""},
@@ -83,7 +83,7 @@ var (
 )
 
 func init() {
-	cmds = append(cmds, cmd{"./commands", commandsCMD, "", "Show this message"}) // avoid initialization loop
+	cmds = append(cmds, cmd{"./cmds", commandsCMD, "", "Show this message"}) // avoid initialization loop
 	allcmds = append(append(append(allcmds,
 		cmds...), cmdsRest...), secretCMDs...)
 }
@@ -458,10 +458,10 @@ func helpCMD(_ string, u *user, _ bool) {
 Because there's SSH apps on all platforms, even on mobile, you can join from anywhere.
 
 Interesting features:
-* Many, many commands. Run ./commands.
+* Many, many commands. Run ./cmds.
 * Rooms! Run ./room to see all rooms and use ./room #foo to join a new room.
 * Markdown support! Tables, headers, italics and everything. Just use \\n in place of newlines.
-* Code syntax highlighting. Use Markdown fences to send code. Run ./example-code to see an example.
+* Code syntax highlighting. Use Markdown fences to send code. Run ./eg-code to see an example.
 * Direct messages! Send a quick DM using =user <msg> or stay in DMs by running ./room @user.
 * Timezone support, use ./tz Continent/City to set your timezone.
 * Built in Tic Tac Toe and Hangman! Run ./tic or ./hang <word> to start new games.
@@ -507,18 +507,7 @@ func emojisCMD(_ string, u *user, _ bool) {
 }
 
 func commandsRestCMD(_ string, u *user, _ bool) {
-	u.room.broadcast("", "Commands  \n"+autogenCommands(cmdsRest))
-	/*
-			u.room.broadcast("", `All Commands
-		   ./bell                   _Toggle the ANSI bell used in pings_
-		   ./id     <user>          _Get a unique ID for a user (hashed IP)_
-		   ./ban    <user>          _Ban <user> (admin)_
-		   ./kick   <user>          _Kick <user> (admin)_
-		   ./ascii-art              _Show some panda art_
-		   ./shrug                  _¯\\_(ツ)_/¯_
-		   ./example-code           _Example syntax-highlighted code_
-		   ./banIP  <IP/ID>         _Ban by IP or ID (admin)_`)
-	*/
+	u.room.broadcast("", "The rest  \n"+autogenCommands(cmdsRest))
 }
 
 func lsCMD(_ string, u *user, _ bool) {
@@ -529,22 +518,4 @@ func lsCMD(_ string, u *user, _ bool) {
 
 func commandsCMD(_ string, u *user, _ bool) {
 	u.room.broadcast("", "Commands  \n"+autogenCommands(cmds))
-	/*
-			u.room.broadcast("", `Available commands
-		   =<user> <msg>            _DM <user> with <msg>_
-		   ./users                  _List users_
-		   ./nick   <name>          _Change your name_
-		   ./room   #<room>         _Join a room or use /room to see all rooms_
-		   ./tic    <cell num>      _Play Tic Tac Toe!_
-		   ./hang   <char/word>     _Play Hangman!_
-		   ./people                 _See info about nice people who joined_
-		   ./tz     <zone>          _Change IANA timezone (eg: /tz Asia/Dubai)_
-		   ./color  <color>         _Change your name's color_
-		   ./all                    _Get a list of all users ever_
-		   ./emojis                 _See a list of emojis_
-		   ./exit                   _Leave the chat_
-		   ./help                   _Show help_
-		   ./commands               _Show this message_
-		   ./commands-rest          _Uncommon commands list_`)
-	*/
 }
