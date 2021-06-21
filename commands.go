@@ -27,7 +27,6 @@ var cmds = []cmd{
 	{"./help", helpCMD},
 	{"./example-code", exampleCodeCMD},
 	{"./ascii-art", asciiArtCMD},
-	//{"./shrug", shrugCMD},
 	{"./emojis", emojisCMD},
 	{"./commands", commandsCMD},
 	{"./commands-rest", commandsRestCMD},
@@ -44,8 +43,7 @@ var cmds = []cmd{
 	{"cat README.md", helpCMD},
 	{"cat", catCMD},
 	{"rm", rmCMD},
-	{"easter", easterCMD},
-}
+	{"easter", easterCMD}}
 
 // runCommands parses a line of raw input from a user and sends a message as
 // required, running any commands the user may have called.
@@ -61,7 +59,7 @@ func runCommands(line string, u *user, isUserSlack bool) {
 		return
 	}
 	currCmd := strings.Fields(line)[0]
-	if u.messaging != nil && !strings.HasPrefix(line, "=") && !strings.HasPrefix(line, "./room") { // the commands allowed in a private dm room
+	if u.messaging != nil && currCmd != "=" && currCmd != "./room" { // the commands allowed in a private dm room
 		dmRoomCMD(line, u, isUserSlack)
 		return
 	}
@@ -129,7 +127,6 @@ func hangCMD(rest string, u *user, isSlack bool) {
 	if !isSlack {
 		u.room.broadcast(u.name, "./hang "+rest)
 	}
-
 	if strings.Trim(hangGame.word, hangGame.guesses) == "" {
 		u.room.broadcast(devbot, "The game has ended. Start a new game with /hang <word>")
 		return
@@ -147,14 +144,11 @@ func hangCMD(rest string, u *user, isSlack bool) {
 		return
 	}
 	hangGame.guesses += rest
-
 	if !(strings.Contains(hangGame.word, rest)) {
 		hangGame.triesLeft--
 	}
-
 	display := hangPrint(hangGame)
 	u.room.broadcast(devbot, "```\n"+display+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```")
-
 	if strings.Trim(hangGame.word, hangGame.guesses) == "" {
 		u.room.broadcast(devbot, "You got it! The word was "+hangGame.word)
 	} else if hangGame.triesLeft == 0 {
@@ -470,7 +464,7 @@ func emojisCMD(_ string, u *user, _ bool) {
 }
 
 func commandsRestCMD(_ string, u *user, _ bool) {
-	u.room.broadcast("", `All Commands
+	u.room.broadcast("", `All Commands  
    ./bell                   _Toggle the ANSI bell used in pings_  
    ./id     <user>          _Get a unique ID for a user (hashed IP)_  
    ./ban    <user>          _Ban <user> (admin)_  

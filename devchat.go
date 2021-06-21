@@ -98,7 +98,10 @@ func main() {
 		fmt.Println("Shutting down...")
 		saveBansAndUsers()
 		logfile.Close()
-		mainRoom.broadcast(devbot, "Server going down! This is probably because it is being updated. Try joining back immediately.  \n"+
+		time.AfterFunc(1000, func() {
+			os.Exit(4) // early exit (could not properly broadcast to everyone)
+		})
+		universeBroadcast(devbot, "Server going down! This is probably because it is being updated. Try joining back immediately.  \n"+
 			"If you still can't join, try joining back in 2 minutes. If you _still_ can't join, make an issue at github.com/quackduck/devzat/issues")
 		os.Exit(0)
 	}()
@@ -123,7 +126,6 @@ func main() {
 			return
 		}
 	}
-
 	fmt.Printf("Starting chat server on port %d and profiling on port %d\n", port, profilePort)
 	go getMsgsFromSlack()
 	go func() {
@@ -138,6 +140,12 @@ func main() {
 	err = ssh.ListenAndServe(fmt.Sprintf(":%d", port), nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"))
 	if err != nil {
 		fmt.Println(err)
+	}
+}
+
+func universeBroadcast(senderName, msg string) {
+	for _, r := range rooms {
+		r.broadcast(senderName, msg)
 	}
 }
 
