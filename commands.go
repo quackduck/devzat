@@ -457,8 +457,9 @@ func helpCMD(_ string, u *user, _ bool) {
 	u.room.broadcast("", `Welcome to Devzat! Devzat is chat over SSH: github.com/quackduck/devzat  
 Because there's SSH apps on all platforms, even on mobile, you can join from anywhere.
 
+Run ./cmds to see a list of commands.
+
 Interesting features:
-* Many, many commands. Run ./cmds.
 * Rooms! Run ./room to see all rooms and use ./room #foo to join a new room.
 * Markdown support! Tables, headers, italics and everything. Just use \\n in place of newlines.
 * Code syntax highlighting. Use Markdown fences to send code. Run ./eg-code to see an example.
