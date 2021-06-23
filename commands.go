@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/acarl005/stripansi"
 	"github.com/shurcooL/tictactoe"
 )
 
@@ -51,15 +50,15 @@ All Commands
 var (
 	allcmds = make([]cmd, 30)
 	cmds    = []cmd{
-		{"=<user>", dmCMD, "<msg>", "DM <user> with <msg>"},
+		{"=<user>", dmCMD, "<msg>", "DM <user> with <msg>"}, // won't actually run, here just to show in docs
 		{"./users", usersCMD, "", "List users"},
-		{"./all", allCMD, "", "Get a list of all users ever"},
+		//{"./all", allCMD, "", "Get a list of all users ever"},
 		{"./color", colorCMD, "<color>", "Change your name's color"},
 		{"./exit", exitCMD, "", "Leave the chat"},
 		{"./help", helpCMD, "", "Show help"},
 		{"./emojis", emojisCMD, "", "See a list of emojis"},
 		{"./clear", clearCMD, "", "Clear the screen"},
-		{"./hang", hangCMD, "<char/word>", "Play hangman"},
+		{"./hang", hangCMD, "<char/word>", "Play hangman"}, // won't actually run, here just to show in docs
 		{"./tic", ticCMD, "<cell num>", "Play tic tac toe!"},
 		{"./room", roomCMD, "#room/@user", "Join #room, DM @user or run ./room to see a list"},
 		{"./tz", tzCMD, "<zone>", "Set your IANA timezone (like ./tz Asia/Dubai)"},
@@ -73,7 +72,8 @@ var (
 		{"./banIP", banIPCMD, "<IP>", "Ban an IP (admin)"},
 		{"./ban", banCMD, "<user>", "Ban <user> (admin)"},
 		{"./kick", kickCMD, "<user>", "Kick <user> (admin)"},
-		{"./art", asciiArtCMD, "", "Show some panda art"}}
+		{"./art", asciiArtCMD, "", "Show some panda art"},
+		{"./shrug", shrugCMD, "", `¯\\_(ツ)_/¯`}} // won't actually run, here just to show in docs
 	secretCMDs = []cmd{
 		{"ls", lsCMD, "", ""},
 		{"cat README.md", helpCMD, "", ""},
@@ -110,7 +110,7 @@ func runCommands(line string, u *user, isUserSlack bool) {
 		dmCMD(strings.TrimSpace(strings.TrimPrefix(line, "=")), u, isUserSlack)
 		return
 	}
-	if strings.HasPrefix(line, "./hang") { // handles whether or not to print line too
+	if currCmd == "./hang" { // handles whether or not to print line too
 		hangCMD(strings.TrimSpace(strings.TrimPrefix(line, "./hang")), u, isUserSlack)
 		return
 	}
@@ -118,12 +118,15 @@ func runCommands(line string, u *user, isUserSlack bool) {
 		shrugCMD(strings.TrimSpace(strings.TrimPrefix(line, "./shrug")), u, isUserSlack)
 		return
 	}
+
 	if isUserSlack {
 		u.room.broadcastNoSlack(u.name, line)
 	} else {
 		u.room.broadcast(u.name, line)
 	}
+
 	devbotChat(u.room, line)
+
 	for _, c := range allcmds {
 		if c.name == currCmd {
 			c.run(strings.TrimSpace(strings.TrimPrefix(line, c.name)), u, isUserSlack)
@@ -252,19 +255,7 @@ func ticCMD(rest string, u *user, _ bool) {
 		u.room.broadcast(devbot, tttGame.Condition().String())
 		currentPlayer = tictactoe.X
 		tttGame = new(tictactoe.Board)
-		// hasStartedGame = false
 	}
-}
-
-func allCMD(_ string, u *user, _ bool) {
-	names := make([]string, 0, len(allUsers))
-	for _, name := range allUsers {
-		names = append(names, name)
-	}
-	sort.Slice(names, func(i, j int) bool {
-		return strings.ToLower(stripansi.Strip(names[i])) < strings.ToLower(stripansi.Strip(names[j]))
-	})
-	u.room.broadcast("", fmt.Sprint(names))
 }
 
 func easterCMD(_ string, u *user, _ bool) {
@@ -375,7 +366,7 @@ func banIPCMD(line string, u *user, _ bool) {
 	bansMutex.Lock()
 	bans = append(bans, line)
 	bansMutex.Unlock()
-	saveBansAndUsers()
+	saveBans()
 }
 
 func banCMD(line string, u *user, _ bool) {
@@ -391,7 +382,7 @@ func banCMD(line string, u *user, _ bool) {
 	bansMutex.Lock()
 	bans = append(bans, victim.addr)
 	bansMutex.Unlock()
-	saveBansAndUsers()
+	saveBans()
 	victim.close(victim.name + " has been banned by " + u.name)
 }
 

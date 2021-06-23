@@ -111,40 +111,20 @@ func userDuplicate(r *room, a string) bool {
 	return false
 }
 
-func saveBansAndUsers() {
-	f, err := os.Create("allusers.json")
+func saveBans() {
+	f, err := os.Create("bans.json")
 	if err != nil {
 		l.Println(err)
 		return
 	}
 	j := json.NewEncoder(f)
 	j.SetIndent("", "   ")
-	j.Encode(allUsers)
-	f.Close()
-
-	f, err = os.Create("bans.json")
-	if err != nil {
-		l.Println(err)
-		return
-	}
-	j = json.NewEncoder(f)
-	j.SetIndent("", "   ")
 	j.Encode(bans)
 	f.Close()
 }
 
-func readBansAndUsers() {
-	f, err := os.Open("allusers.json")
-	if err != nil {
-		l.Println(err)
-		return
-	}
-	allUsersMutex.Lock()
-	json.NewDecoder(f).Decode(&allUsers)
-	allUsersMutex.Unlock()
-	f.Close()
-
-	f, err = os.Open("bans.json")
+func readBans() {
+	f, err := os.Open("bans.json")
 	if err != nil {
 		l.Println(err)
 		return

@@ -36,9 +36,6 @@ var (
 	mainRoom = &room{"#main", make([]*user, 0, 10), sync.Mutex{}}
 	rooms    = map[string]*room{mainRoom.name: mainRoom}
 
-	allUsers      = make(map[string]string, 400) //map format is u.id => u.name
-	allUsersMutex = sync.Mutex{}
-
 	backlog      = make([]backlogMessage, 0, scrollback)
 	backlogMutex = sync.Mutex{}
 
@@ -90,13 +87,13 @@ func main() {
 	}()
 	devbot = green.Paint("devbot")
 	rand.Seed(time.Now().Unix())
-	readBansAndUsers()
+	readBans()
 	c := make(chan os.Signal, 2)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 	go func() {
 		<-c
 		fmt.Println("Shutting down...")
-		saveBansAndUsers()
+		saveBans()
 		logfile.Close()
 		time.AfterFunc(1000, func() {
 			os.Exit(4) // early exit (could not properly broadcast to everyone)
@@ -203,7 +200,7 @@ func newUser(s ssh.Session) *user {
 		if u.addr == bans[i] || u.id == bans[i] { // allow banning by ID
 			if u.id == bans[i] { // then replace the ID in the ban with the actual IP
 				bans[i] = u.addr
-				saveBansAndUsers()
+				saveBans()
 			}
 			l.Println("Rejected " + u.name + " [" + u.addr + "]")
 			u.writeln(devbot, "**You are banned**. If you feel this was done wrongly, please reach out at github.com/quackduck/devzat/issues. Please include the following information: [ID "+u.id+"]")
@@ -380,7 +377,7 @@ func (u *user) repl() {
 		if antispamMessages[u.id] >= 50 {
 			if !stringsContain(bans, u.addr) {
 				bans = append(bans, u.addr)
-				saveBansAndUsers()
+				saveBans()
 			}
 			u.writeln(devbot, "anti-spam triggered")
 			u.close(red.Paint(u.name + " has been banned for spamming"))
