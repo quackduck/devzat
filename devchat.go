@@ -36,16 +36,16 @@ var (
 	mainRoom = &room{"#main", make([]*user, 0, 10), sync.Mutex{}}
 	rooms    = map[string]*room{mainRoom.name: mainRoom}
 
-	backlog      = make([]backlogMessage, 0, scrollback)
-	backlogMutex = sync.Mutex{}
+	backlog = make([]backlogMessage, 0, scrollback)
+	//backlogMutex = sync.Mutex{}
 
 	logfile, _ = os.OpenFile("log.txt", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0666)
 	l          = log.New(io.MultiWriter(logfile, os.Stdout), "", log.Ldate|log.Ltime|log.Lshortfile)
 
-	bans            = make([]string, 0, 10)
-	bansMutex       = sync.Mutex{}
+	bans = make([]string, 0, 10)
+	//bansMutex       = sync.Mutex{}
 	idsInMinToTimes = make(map[string]int, 10)
-	idsInMinMutex   = sync.Mutex{}
+	//idsInMinMutex   = sync.Mutex{}
 
 	antispamMessages = make(map[string]int)
 	//antispamMutex    = sync.Mutex{}
@@ -173,9 +173,9 @@ func (r *room) broadcastNoSlack(senderName, msg string) {
 	}
 	r.usersMutex.Unlock()
 	if r == mainRoom {
-		backlogMutex.Lock()
+		//backlogMutex.Lock()
 		backlog = append(backlog, backlogMessage{time.Now(), senderName, msg + "\n"})
-		backlogMutex.Unlock()
+		//backlogMutex.Unlock()
 		for len(backlog) > scrollback { // for instead of if just in case
 			backlog = backlog[1:]
 		}
@@ -208,18 +208,18 @@ func newUser(s ssh.Session) *user {
 			return nil
 		}
 	}
-	idsInMinMutex.Lock()
+	//idsInMinMutex.Lock()
 	idsInMinToTimes[u.id]++
-	idsInMinMutex.Unlock()
+	//idsInMinMutex.Unlock()
 	time.AfterFunc(60*time.Second, func() {
-		idsInMinMutex.Lock()
+		//idsInMinMutex.Lock()
 		idsInMinToTimes[u.id]--
-		idsInMinMutex.Unlock()
+		//idsInMinMutex.Unlock()
 	})
 	if idsInMinToTimes[u.id] > 6 {
-		bansMutex.Lock()
+		//bansMutex.Lock()
 		bans = append(bans, u.addr)
-		bansMutex.Unlock()
+		//bansMutex.Unlock()
 		mainRoom.broadcast(devbot, u.name+" has been banned automatically. IP: "+u.addr)
 		return nil
 	}

@@ -129,9 +129,9 @@ func readBans() {
 		l.Println(err)
 		return
 	}
-	bansMutex.Lock()
+	//bansMutex.Lock()
 	json.NewDecoder(f).Decode(&bans)
-	bansMutex.Unlock()
+	//bansMutex.Unlock()
 	f.Close()
 }
 

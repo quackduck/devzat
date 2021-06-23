@@ -363,9 +363,9 @@ func banIPCMD(line string, u *user, _ bool) {
 		u.room.broadcast(devbot, "Not authorized")
 		return
 	}
-	bansMutex.Lock()
+	//bansMutex.Lock()
 	bans = append(bans, line)
-	bansMutex.Unlock()
+	//bansMutex.Unlock()
 	saveBans()
 }
 
@@ -379,9 +379,9 @@ func banCMD(line string, u *user, _ bool) {
 		u.room.broadcast(devbot, "Not authorized")
 		return
 	}
-	bansMutex.Lock()
+	//bansMutex.Lock()
 	bans = append(bans, victim.addr)
-	bansMutex.Unlock()
+	//bansMutex.Unlock()
 	saveBans()
 	victim.close(victim.name + " has been banned by " + u.name)
 }
