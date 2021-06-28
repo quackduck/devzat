@@ -47,7 +47,6 @@ var (
 		{"./shrug", shrugCMD, "", `¯\\_(ツ)_/¯`}} // won't actually run, here just to show in docs
 	secretCMDs = []cmd{
 		{"ls", lsCMD, "", ""},
-		{"cat README.md", helpCMD, "", ""},
 		{"cat", catCMD, "", ""},
 		{"rm", rmCMD, "", ""},
 		{"easter", easterCMD, "", ""}}
@@ -441,6 +440,8 @@ Thanks to Caleb Denio for lending his server!`)
 func catCMD(line string, u *user, _ bool) {
 	if line == "" {
 		u.room.broadcast("", "usage: cat [-benstuv] [file ...]")
+	} else if line == "README.md" {
+		helpCMD("", u, _)
 	} else {
 		u.room.broadcast("", "cat: "+line+": Permission denied")
 	}
