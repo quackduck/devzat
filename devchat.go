@@ -95,8 +95,9 @@ func main() {
 		fmt.Println("Shutting down...")
 		saveBans()
 		logfile.Close()
-		time.AfterFunc(1000, func() {
-			os.Exit(4) // early exit (could not properly broadcast to everyone)
+		time.AfterFunc(time.Second, func() {
+			l.Println("Broadcast taking too long, exiting server early.")
+			os.Exit(4)
 		})
 		universeBroadcast(devbot, "Server going down! This is probably because it is being updated. Try joining back immediately.  \n"+
 			"If you still can't join, try joining back in 2 minutes. If you _still_ can't join, make an issue at github.com/quackduck/devzat/issues")
