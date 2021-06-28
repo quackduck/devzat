@@ -437,11 +437,11 @@ Made by Ishan Goel with feature ideas from friends.
 Thanks to Caleb Denio for lending his server!`)
 }
 
-func catCMD(line string, u *user, _ bool) {
+func catCMD(line string, u *user, isSlack bool) {
 	if line == "" {
 		u.room.broadcast("", "usage: cat [-benstuv] [file ...]")
 	} else if line == "README.md" {
-		helpCMD("", u, _)
+		helpCMD(line, u, isSlack)
 	} else {
 		u.room.broadcast("", "cat: "+line+": Permission denied")
 	}
