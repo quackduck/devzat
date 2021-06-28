@@ -208,18 +208,12 @@ func newUser(s ssh.Session) *user {
 			return nil
 		}
 	}
-	//idsInMinMutex.Lock()
 	idsInMinToTimes[u.id]++
-	//idsInMinMutex.Unlock()
 	time.AfterFunc(60*time.Second, func() {
-		//idsInMinMutex.Lock()
 		idsInMinToTimes[u.id]--
-		//idsInMinMutex.Unlock()
 	})
 	if idsInMinToTimes[u.id] > 6 {
-		//bansMutex.Lock()
 		bans = append(bans, u.addr)
-		//bansMutex.Unlock()
 		mainRoom.broadcast(devbot, u.name+" has been banned automatically. IP: "+u.addr)
 		return nil
 	}
@@ -251,7 +245,6 @@ func newUser(s ssh.Session) *user {
 	default:
 		u.writeln("", green.Paint("Welcome to the chat. There are", strconv.Itoa(len(mainRoom.users)-1), "more users"))
 	}
-	//_, _ = term.Write([]byte(strings.Join(backlog, ""))) // print out backlog
 	mainRoom.broadcast(devbot, u.name+green.Paint(" has joined the chat"))
 	return u
 }
@@ -271,16 +264,13 @@ func (u *user) close(msg string) {
 }
 
 func (u *user) writeln(senderName string, msg string) {
-	if u.bell {
-		if strings.Contains(msg, u.name) { // is a ping
-			msg += "\a"
-		}
+	if strings.Contains(msg, u.name) { // is a ping
+		msg += "\a"
 	}
 	msg = strings.ReplaceAll(msg, `\n`, "\n")
 	msg = strings.ReplaceAll(msg, `\`+"\n", `\n`) // let people escape newlines
 	if senderName != "" {
-		//msg = strings.TrimSpace(mdRender(msg, len(stripansi.Strip(senderName))+2, u.win.Width))
-		if strings.HasSuffix(senderName, " <- ") || strings.HasSuffix(senderName, " -> ") { // kinda hacky
+		if strings.HasSuffix(senderName, " <- ") || strings.HasSuffix(senderName, " -> ") { // kinda hacky DM detection
 			msg = strings.TrimSpace(mdRender(msg, len(stripansi.Strip(senderName)), u.win.Width))
 			msg = senderName + msg + "\a"
 		} else {
@@ -297,6 +287,9 @@ func (u *user) writeln(senderName string, msg string) {
 			u.rWriteln(time.Now().In(u.timezone).Format("3:04 pm"))
 		}
 		u.lastTimestamp = time.Now()
+	}
+	if !u.bell {
+		msg = strings.ReplaceAll(msg, "\a", "")
 	}
 	u.term.Write([]byte(msg + "\n"))
 }
@@ -366,13 +359,9 @@ func (u *user) repl() {
 		}
 		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(len([]rune(u.name+line))+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
 
-		//antispamMutex.Lock()
 		antispamMessages[u.id]++
-		//antispamMutex.Unlock()
 		time.AfterFunc(5*time.Second, func() {
-			//antispamMutex.Lock()
 			antispamMessages[u.id]--
-			//antispamMutex.Unlock()
 		})
 		if antispamMessages[u.id] >= 50 {
 			if !stringsContain(bans, u.addr) {

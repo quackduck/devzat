@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"runtime/debug"
 	"sort"
 	"strconv"
 	"strings"
@@ -18,41 +19,11 @@ type cmd struct {
 	info     string
 }
 
-//u.room.broadcast("", `Available commands
-//=<user>  <msg>           _DM <user> with <msg>_
-//./users                  _List users_
-//./nick   <name>          _Change your name_
-//./room   #<room>         _Join a room or use /room to see all rooms_
-//./tic    <cell num>      _Play Tic Tac Toe!_
-//./hang   <char/word>     _Play Hangman!_
-//./people                 _See info about nice people who joined_
-//./tz     <zone>          _Change IANA timezone (eg: /tz Asia/Dubai)_
-//./color  <color>         _Change your name's color_
-//./all                    _Get a list of all users ever_
-//./emojis                 _See a list of emojis_
-//./exit                   _Leave the chat_
-//./help                   _Show help_
-//./commands               _Show this message_
-//./commands-rest          _Uncommon commands list_`)
-
-/*
-All Commands
-   ./bell                   _Toggle the ANSI bell used in pings_
-   ./id     <user>          _Get a unique ID for a user (hashed IP)_
-   ./ban    <user>          _Ban <user> (admin)_
-   ./kick   <user>          _Kick <user> (admin)_
-   ./ascii-art              _Show some panda art_
-   ./shrug                  _¯\\_(ツ)_/¯_
-   ./example-code           _Example syntax-highlighted code_
-   ./banIP  <IP/ID>         _Ban by IP or ID (admin)_`
-*/
-
 var (
 	allcmds = make([]cmd, 30)
 	cmds    = []cmd{
 		{"=<user>", dmCMD, "<msg>", "DM <user> with <msg>"}, // won't actually run, here just to show in docs
 		{"./users", usersCMD, "", "List users"},
-		//{"./all", allCMD, "", "Get a list of all users ever"},
 		{"./color", colorCMD, "<color>", "Change your name's color"},
 		{"./exit", exitCMD, "", "Leave the chat"},
 		{"./help", helpCMD, "", "Show help"},
@@ -95,7 +66,7 @@ func init() {
 func runCommands(line string, u *user, isUserSlack bool) {
 	defer func() { // crash protection
 		if i := recover(); i != nil {
-			mainRoom.broadcast(devbot, "Slap the developers in the face for me, the server almost crashed, also tell them this: "+fmt.Sprint(i))
+			mainRoom.broadcast(devbot, "Slap the developers in the face for me, the server almost crashed, also tell them this: "+fmt.Sprint(i, "\n"+string(debug.Stack())))
 		}
 	}()
 	if line == "" {
@@ -163,8 +134,10 @@ func dmCMD(rest string, u *user, _ bool) {
 
 func hangCMD(rest string, u *user, isSlack bool) {
 	if len(rest) > 1 {
-		u.writeln(u.name, "./hang "+rest)
-		u.writeln(devbot, "(that word won't show dw)")
+		if !isSlack {
+			u.writeln(u.name, "./hang "+rest)
+			u.writeln(devbot, "(that word won't show dw)")
+		}
 		hangGame = &hangman{rest, 15, " "} // default value of guesses so empty space is given away
 		u.room.broadcast(devbot, u.name+" has started a new game of Hangman! Guess letters with ./hang <letter>")
 		u.room.broadcast(devbot, "```\n"+hangPrint(hangGame)+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```")
