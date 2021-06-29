@@ -51,7 +51,6 @@ type room struct {
 
 type user struct {
 	name          string
-	raw_name      string
 	session       ssh.Session
 	term          *terminal.Terminal
 	bell          bool
@@ -184,7 +183,7 @@ func newUser(s ssh.Session) *user {
 	host, _, _ := net.SplitHostPort(s.RemoteAddr().String()) // definitely should not give an err
 	hash := sha256.New()
 	hash.Write([]byte(host))
-	u := &user{s.User(), s.User(), s, term, true, "", hex.EncodeToString(hash.Sum(nil)), host, w, sync.Once{}, time.Now(), time.Now(), nil, mainRoom, nil}
+	u := &user{s.User(), s, term, true, "", hex.EncodeToString(hash.Sum(nil)), host, w, sync.Once{}, time.Now(), time.Now(), nil, mainRoom, nil}
 	go func() {
 		for u.win = range winChan {
 		}
@@ -311,7 +310,6 @@ func (u *user) pickUsername(possibleName string) (ok bool) {
 		possibleName = cleanName(possibleName)
 	}
 	u.name = possibleName
-	u.raw_name = possibleName
 	idx := rand.Intn(len(styles) + 1)
 	if idx == len(styles) { // allow the possibility of having a completely random RGB color
 		u.changeColor("random")
@@ -352,7 +350,7 @@ func (u *user) repl() {
 			u.close(u.name + red.Paint(" has left the chat due to an error"))
 			return
 		}
-		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(len([]rune(u.raw_name+line))+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
+		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(len([]rune(stripansi.Strip(u.name+line)))+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
 
 		antispamMessages[u.id]++
 		time.AfterFunc(5*time.Second, func() {
