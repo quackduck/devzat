@@ -350,7 +350,7 @@ func (u *user) repl() {
 			u.close(u.name + red.Paint(" has left the chat due to an error"))
 			return
 		}
-		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(len([]rune(u.name+line))+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
+		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(len([]rune(stripansi.Strip(u.name+line)))+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
 
 		antispamMessages[u.id]++
 		time.AfterFunc(5*time.Second, func() {
