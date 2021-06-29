@@ -15,11 +15,10 @@ var (
 	green   = ansi256(1, 5, 1)
 	red     = ansi256(5, 1, 1)
 	cyan    = ansi256(1, 5, 5)
-	magenta = ansi256(5, 1, 3)
+	magenta = ansi256(5, 1, 5)
 	yellow  = ansi256(5, 5, 1)
 	orange  = ansi256(5, 3, 0)
 	blue    = ansi256(0, 3, 5)
-	black   = ansi256(0, 0, 0)
 	white   = ansi256(5, 5, 5)
 	styles  = []*style{
 		{"white", buildStyle(white)},
@@ -45,7 +44,7 @@ var (
 		{"l33t", buildStyleNoStrip(chalk.WithBgBrightBlack())},
 		{"whiten", buildStyleNoStrip(chalk.WithBgWhite())},
 		{"rainbow", func(a string) string {
-			rainbow := []*gchalk.Builder{red, orange, yellow, green, cyan, blue, magenta}
+			rainbow := []*gchalk.Builder{red, orange, yellow, green, cyan, blue, ansi256(2, 2, 5), magenta}
 			a = stripansi.Strip(a)
 			buf := ""
 			colorOffset := rand.Intn(len(rainbow))

@@ -27,28 +27,20 @@ import (
 
 var (
 	port        = 22
+	scrollback  = 16
 	profilePort = 5555
 
-	devbot = "" // initialized in main
-
-	startupTime = time.Now()
-
-	mainRoom = &room{"#main", make([]*user, 0, 10), sync.Mutex{}}
-	rooms    = map[string]*room{mainRoom.name: mainRoom}
-
-	backlog = make([]backlogMessage, 0, scrollback)
-	//backlogMutex = sync.Mutex{}
-
-	logfile, _ = os.OpenFile("log.txt", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0666)
-	l          = log.New(io.MultiWriter(logfile, os.Stdout), "", log.Ldate|log.Ltime|log.Lshortfile)
-
-	bans = make([]string, 0, 10)
-	//bansMutex       = sync.Mutex{}
-	idsInMinToTimes = make(map[string]int, 10)
-	//idsInMinMutex   = sync.Mutex{}
-
+	mainRoom         = &room{"#main", make([]*user, 0, 10), sync.Mutex{}}
+	rooms            = map[string]*room{mainRoom.name: mainRoom}
+	backlog          = make([]backlogMessage, 0, scrollback)
+	bans             = make([]string, 0, 10)
+	idsInMinToTimes  = make(map[string]int, 10)
 	antispamMessages = make(map[string]int)
-	//antispamMutex    = sync.Mutex{}
+
+	logfile, _  = os.OpenFile("log.txt", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0666)
+	l           = log.New(io.MultiWriter(logfile, os.Stdout), "", log.Ldate|log.Ltime|log.Lshortfile)
+	devbot      = "" // initialized in main
+	startupTime = time.Now()
 )
 
 type room struct {

@@ -18,9 +18,8 @@ import (
 
 var (
 	//go:embed art.txt
-	artBytes   []byte
-	scrollback = 16
-	admins     = []string{"d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82", // Ishan Goel
+	artBytes []byte
+	admins   = []string{"d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82", // Ishan Goel
 		"f5c7f9826b6e143f6e9c3920767680f503f259570f121138b2465bb2b052a85d", // Ella Xu
 		"6056734cc4d9fce31569167735e4808382004629a2d7fe6cb486e663714452fc", // Tommy Pujol
 		"e9d47bb4522345d019086d0ed48da8ce491a491923a44c59fd6bfffe6ea73317", // Arav Narula

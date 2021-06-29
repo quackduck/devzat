@@ -7,11 +7,11 @@ import (
 	"github.com/shurcooL/tictactoe"
 )
 
-var tttGame = new(tictactoe.Board)
-
-var currentPlayer = tictactoe.X
-
-var hangGame = new(hangman)
+var (
+	tttGame       = new(tictactoe.Board)
+	currentPlayer = tictactoe.X
+	hangGame      = new(hangman)
+)
 
 type hangman struct {
 	word      string
