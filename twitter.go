@@ -29,7 +29,7 @@ func sendCurrentUsersTwitterMessage() {
 	if len(mainRoom.users) == 0 {
 		return
 	}
-	usersSnapshot := mainRoom.users
+	usersSnapshot := append(make([]*user, 0, len(mainRoom.users)), mainRoom.users...)
 	areUsersEqual := func(a []*user, b []*user) bool {
 		if len(a) != len(b) {
 			return false
@@ -42,7 +42,7 @@ func sendCurrentUsersTwitterMessage() {
 		return true
 	}
 	go func() {
-		time.Sleep(time.Second * 30)
+		time.Sleep(time.Second * 60)
 		if !areUsersEqual(mainRoom.users, usersSnapshot) {
 			return
 		}

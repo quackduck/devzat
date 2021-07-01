@@ -64,8 +64,8 @@ func cleanName(name string) string {
 		"<-", ""),
 		"->", ""),
 		" ", "-")
-	if len(name) > 27 {
-		name = name[:27]
+	if len([]rune(name)) > 27 {
+		name = string([]rune(name)[:27])
 	}
 	for _, r := range name {
 		if unicode.IsPrint(r) {
