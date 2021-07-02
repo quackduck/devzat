@@ -12,9 +12,10 @@ import (
 )
 
 var (
-	slackChan = getSendToSlackChan()
-	api       *slack.Client
-	rtm       *slack.RTM
+	slackChan      = getSendToSlackChan()
+	slackChannelID = "C01T5J557AA"
+	api            *slack.Client
+	rtm            *slack.RTM
 )
 
 func getMsgsFromSlack() {
@@ -49,24 +50,23 @@ func getMsgsFromSlack() {
 }
 
 func getSendToSlackChan() chan string {
-	if offline {
-		return nil
-	}
 	slackAPI, err := ioutil.ReadFile("slackAPI.txt")
 	if err != nil {
 		panic(err)
 	}
 	api = slack.New(string(slackAPI))
 	rtm = api.NewRTM()
-	//slackChan = getSendToSlackChan(rtm)
 	msgs := make(chan string, 100)
 	go func() {
 		for msg := range msgs {
+			if !offline {
+				continue
+			}
 			msg = strings.ReplaceAll(stripansi.Strip(msg), `\n`, "\n")
 			if strings.HasPrefix(msg, "sshchat: ") { // just in case
 				continue
 			}
-			rtm.SendMessage(rtm.NewOutgoingMessage(msg, "C01T5J557AA"))
+			rtm.SendMessage(rtm.NewOutgoingMessage(msg, slackChannelID))
 		}
 	}()
 	return msgs

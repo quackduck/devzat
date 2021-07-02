@@ -145,12 +145,10 @@ func (r *room) broadcast(senderName, msg string) {
 	if msg == "" {
 		return
 	}
-	if !offline {
-		if senderName != "" {
-			slackChan <- "[" + r.name + "] " + senderName + ": " + msg
-		} else {
-			slackChan <- "[" + r.name + "] " + msg
-		}
+	if senderName != "" {
+		slackChan <- "[" + r.name + "] " + senderName + ": " + msg
+	} else {
+		slackChan <- "[" + r.name + "] " + msg
 	}
 	r.broadcastNoSlack(senderName, msg)
 }

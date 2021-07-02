@@ -132,13 +132,11 @@ func saveBans() {
 
 func readBans() {
 	f, err := os.Open("bans.json")
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) { // if there is an error and it is not a "file does not exist" error
 		l.Println(err)
 		return
 	}
-	//bansMutex.Lock()
 	json.NewDecoder(f).Decode(&bans)
-	//bansMutex.Unlock()
 	f.Close()
 }
 
