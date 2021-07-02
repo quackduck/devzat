@@ -461,7 +461,7 @@ func exampleCodeCMD(_ string, u *user, _ bool) {
 }
 
 func asciiArtCMD(_ string, u *user, _ bool) {
-	u.room.broadcast("", string(artBytes))
+	u.room.broadcast("", art)
 }
 
 func shrugCMD(line string, u *user, _ bool) {

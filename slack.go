@@ -18,6 +18,9 @@ var (
 )
 
 func getMsgsFromSlack() {
+	if offline {
+		return
+	}
 	go rtm.ManageConnection()
 	uslack := new(user)
 	uslack.room = mainRoom
@@ -34,7 +37,6 @@ func getMsgsFromSlack() {
 				h := sha1.Sum([]byte(u.ID))
 				i, _ := strconv.ParseInt(hex.EncodeToString(h[:1]), 16, 0)
 				uslack.name = yellow.Paint("HC ") + (styles[int(i)%len(styles)]).apply(strings.Fields(u.RealName)[0])
-				//mainRoom.broadcast(yellow.Paint("HC ")+(styles[int(i)%len(styles)]).apply(strings.Fields(u.RealName)[0]), text)
 				runCommands(text, uslack, true)
 			}
 		case *slack.ConnectedEvent:
@@ -47,6 +49,9 @@ func getMsgsFromSlack() {
 }
 
 func getSendToSlackChan() chan string {
+	if offline {
+		return nil
+	}
 	slackAPI, err := ioutil.ReadFile("slackAPI.txt")
 	if err != nil {
 		panic(err)

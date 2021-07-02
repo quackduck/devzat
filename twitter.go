@@ -25,6 +25,9 @@ type Credentials struct {
 }
 
 func sendCurrentUsersTwitterMessage() {
+	if offline {
+		return
+	}
 	// TODO: count all users in all rooms
 	if len(mainRoom.users) == 0 {
 		return
@@ -47,7 +50,6 @@ func sendCurrentUsersTwitterMessage() {
 			return
 		}
 		l.Println("Sending twitter update")
-		//broadcast(devbot, "sending twitter update", true)
 		names := make([]string, 0, len(mainRoom.users))
 		for _, us := range mainRoom.users {
 			names = append(names, us.name)
@@ -62,10 +64,12 @@ func sendCurrentUsersTwitterMessage() {
 		}
 		mainRoom.broadcast(devbot, "https\\://twitter.com/"+t.User.ScreenName+"/status/"+t.IDStr)
 	}()
-	//broadcast(devbot, tweet.Entities.Urls)
 }
 
 func loadTwitterClient() *twitter.Client {
+	if offline {
+		return nil
+	}
 	d, err := ioutil.ReadFile("twitter-creds.json")
 	if err != nil {
 		panic(err)

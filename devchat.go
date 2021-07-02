@@ -29,6 +29,8 @@ var (
 	port        = 22
 	scrollback  = 16
 	profilePort = 5555
+	// should this instance run offline?
+	offline = os.Getenv("DEVZAT_OFFLINE") != ""
 
 	mainRoom         = &room{"#main", make([]*user, 0, 10), sync.Mutex{}}
 	rooms            = map[string]*room{mainRoom.name: mainRoom}
@@ -143,10 +145,12 @@ func (r *room) broadcast(senderName, msg string) {
 	if msg == "" {
 		return
 	}
-	if senderName != "" {
-		slackChan <- "[" + r.name + "] " + senderName + ": " + msg
-	} else {
-		slackChan <- "[" + r.name + "] " + msg
+	if !offline {
+		if senderName != "" {
+			slackChan <- "[" + r.name + "] " + senderName + ": " + msg
+		} else {
+			slackChan <- "[" + r.name + "] " + msg
+		}
 	}
 	r.broadcastNoSlack(senderName, msg)
 }
@@ -166,11 +170,9 @@ func (r *room) broadcastNoSlack(senderName, msg string) {
 	}
 	r.usersMutex.Unlock()
 	if r == mainRoom {
-		//backlogMutex.Lock()
 		backlog = append(backlog, backlogMessage{time.Now(), senderName, msg + "\n"})
-		//backlogMutex.Unlock()
-		for len(backlog) > scrollback { // for instead of if just in case
-			backlog = backlog[1:]
+		if len(backlog) > scrollback {
+			backlog = backlog[len(backlog)-scrollback:]
 		}
 	}
 }
@@ -310,10 +312,10 @@ func (u *user) pickUsername(possibleName string) (ok bool) {
 		possibleName = cleanName(possibleName)
 	}
 	u.name = possibleName
-	idx := rand.Intn(len(styles) + 1)
-	if idx == len(styles) { // allow the possibility of having a completely random RGB color
+	idx := rand.Intn(len(styles) * 120 / 100) // 20 percent chance of a random color
+	if idx >= len(styles) {                   // allow the possibility of having a completely random RGB color
 		u.changeColor("random")
-		return
+		return true
 	}
 	u.changeColor(styles[idx].name) // also sets prompt
 	return true

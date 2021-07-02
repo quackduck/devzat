@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"os"
 	"strings"
@@ -17,9 +18,8 @@ import (
 )
 
 var (
-	//go:embed art.txt
-	artBytes []byte
-	admins   = []string{"d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82", // Ishan Goel
+	art    = getASCIIArt()
+	admins = []string{"d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82", // Ishan Goel
 		"f5c7f9826b6e143f6e9c3920767680f503f259570f121138b2465bb2b052a85d", // Ella Xu
 		"6056734cc4d9fce31569167735e4808382004629a2d7fe6cb486e663714452fc", // Tommy Pujol
 		"e9d47bb4522345d019086d0ed48da8ce491a491923a44c59fd6bfffe6ea73317", // Arav Narula
@@ -27,6 +27,14 @@ var (
 		"12a9f108e7420460864de3d46610f722e69c80b2ac2fb1e2ada34aa952bbd73e", // jmw: github.com/ciearius
 		"2433e7c03997d13f9117ded9e36cd2d23bddc4d588b8717c4619bedeb3b7e9ad"} // @epic: github.com/TAG-Epic
 )
+
+func getASCIIArt() string {
+	b, _ := ioutil.ReadFile("art.txt")
+	if b == nil {
+		return "sowwy, no art was found, please slap your developer"
+	}
+	return string(b)
+}
 
 func printUsersInRoom(r *room) string {
 	names := make([]string, 0, len(r.users))
