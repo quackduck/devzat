@@ -59,7 +59,7 @@ func getSendToSlackChan() chan string {
 	msgs := make(chan string, 100)
 	go func() {
 		for msg := range msgs {
-			if !offline {
+			if offline {
 				continue
 			}
 			msg = strings.ReplaceAll(stripansi.Strip(msg), `\n`, "\n")
