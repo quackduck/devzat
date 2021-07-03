@@ -31,7 +31,7 @@ var (
 		{"clear", clearCMD, "", "Clear the screen"},
 		{"hang", hangCMD, "<char/word>", "Play hangman"}, // won't actually run, here just to show in docs
 		{"tic", ticCMD, "<cell num>", "Play tic tac toe!"},
-		{"cd", roomCMD, "#room/@user", "Join #room, DM @user or run cd to see a list"},
+		{"cd", roomCMD, "#room/@user", "Join #room, DM @user or run cd to see a list"}, // won't actually run, here just to show in docs
 		{"tz", tzCMD, "<zone>", "Set your IANA timezone (like tz Asia/Dubai)"},
 		{"nick", nickCMD, "<name>", "Change your username"},
 		{"./rest", commandsRestCMD, "", "Uncommon commands list"}}
@@ -49,8 +49,7 @@ var (
 		{"ls", lsCMD, "", ""},
 		{"cd", roomCMD, "#room/@user", "Join #room, DM @user or run room to see a list"},
 		{"cat", catCMD, "", ""},
-		{"rm", rmCMD, "", ""},
-		{"easter", easterCMD, "", ""}}
+		{"rm", rmCMD, "", ""}}
 )
 
 func init() {
@@ -64,14 +63,14 @@ func init() {
 // It also accepts a boolean indicating if the line of input is from slack, in
 // which case some commands will not be run (such as ./tz and ./exit)
 func runCommands(line string, u *user, isUserSlack bool) {
+	if line == "" {
+		return
+	}
 	defer func() { // crash protection
 		if i := recover(); i != nil {
 			mainRoom.broadcast(devbot, "Slap the developers in the face for me, the server almost crashed, also tell them this: "+fmt.Sprint(i, "\n"+string(debug.Stack())))
 		}
 	}()
-	if line == "" {
-		return
-	}
 	currCmd := strings.Fields(line)[0]
 	if u.messaging != nil && currCmd != "=" && currCmd != "room" { // the commands allowed in a private dm room
 		dmRoomCMD(line, u, isUserSlack)
@@ -81,13 +80,14 @@ func runCommands(line string, u *user, isUserSlack bool) {
 		dmCMD(strings.TrimSpace(strings.TrimPrefix(line, "=")), u, isUserSlack)
 		return
 	}
-	if currCmd == "hang" { // handles whether or not to print line too
+
+	switch currCmd {
+	case "hang":
 		hangCMD(strings.TrimSpace(strings.TrimPrefix(line, "hang")), u, isUserSlack)
-		return
-	}
-	if currCmd == "shrug" {
+	case "cd":
+		roomCMD(strings.TrimSpace(strings.TrimPrefix(line, "cd")), u, isUserSlack)
+	case "shrug":
 		shrugCMD(strings.TrimSpace(strings.TrimPrefix(line, "shrug")), u, isUserSlack)
-		return
 	}
 
 	if isUserSlack {
@@ -228,13 +228,6 @@ func ticCMD(rest string, u *user, _ bool) {
 	}
 }
 
-func easterCMD(_ string, u *user, _ bool) {
-	go func() {
-		time.Sleep(time.Second)
-		u.room.broadcast(devbot, "eggs?")
-	}()
-}
-
 func exitCMD(_ string, u *user, _ bool) {
 	u.close(u.name + red.Paint(" has left the chat"))
 }
@@ -252,8 +245,23 @@ func roomCMD(rest string, u *user, _ bool) {
 	if u.messaging != nil {
 		u.messaging = nil
 		u.writeln(devbot, "Left private chat")
+	}
+	if strings.HasPrefix(rest, "@") {
+		restSplit := strings.Fields(strings.TrimPrefix(rest, "@"))
+		if len(restSplit) == 0 {
+			u.writeln(devbot, "You think people have empty names?")
+			return
+		}
+		peer, ok := findUserByName(u.room, restSplit[0])
+		if !ok {
+			u.writeln(devbot, "No such person lol, who you wanna dm? (you might be in the wrong room)")
+			return
+		}
+		u.messaging = peer
+		u.writeln(devbot, "Now in DMs with "+peer.name+". To leave use cd")
 		return
 	}
+	u.writeln(u.name, "cd "+rest)
 	if rest == "" {
 		type kv struct {
 			roomName   string
@@ -280,21 +288,6 @@ func roomCMD(rest string, u *user, _ bool) {
 			rooms[rest] = &room{rest, make([]*user, 0, 10), sync.Mutex{}}
 			u.changeRoom(rooms[rest])
 		}
-		return
-	}
-	if strings.HasPrefix(rest, "@") {
-		restSplit := strings.Fields(strings.TrimPrefix(rest, "@"))
-		if len(restSplit) == 0 {
-			u.writeln(devbot, "You think people have empty names?")
-			return
-		}
-		peer, ok := findUserByName(u.room, restSplit[0])
-		if !ok {
-			u.writeln(devbot, "No such person lol, who you wanna dm? (you might be in the wrong room)")
-			return
-		}
-		u.messaging = peer
-		u.writeln(devbot, "Now in DMs with "+peer.name+". To leave use ./room")
 		return
 	}
 	u.writeln(devbot, "Rooms need to start with # (public rooms) or @ (dms)")

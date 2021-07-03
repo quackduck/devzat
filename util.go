@@ -194,10 +194,13 @@ func devbotChat(room *room, line string) {
 		}
 		devbotRespond(room, []string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "Devbot to the rescue!", ":wave:"}, 90)
 	}
-	if line == "help" || line == "/help" || strings.Contains(line, "help me") {
-		devbotRespond(room, []string{"Run ./help to get help!",
-			"Looking for ./help?",
-			"See available commands with ./commands or see help with ./help :star:"}, 100)
+	if line == "./help" || line == "/help" || strings.Contains(line, "help me") {
+		devbotRespond(room, []string{"Run help to get help!",
+			"Looking for help?",
+			"See available commands with cmds or see help with help :star:"}, 100)
+	}
+	if line == "easter" {
+		devbotRespond(room, []string{"eggs?", "bunny?"}, 100)
 	}
 	if strings.Contains(line, "rm -rf") {
 		devbotRespond(room, []string{"rm -rf you", "I've heard rm -rf / can really free up some space!\n\n you should try it on your computer", "evil"}, 100)
