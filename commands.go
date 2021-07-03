@@ -47,6 +47,7 @@ var (
 		{"./shrug", shrugCMD, "", `¯\\_(ツ)_/¯`}} // won't actually run, here just to show in docs
 	secretCMDs = []cmd{
 		{"ls", lsCMD, "", ""},
+		{"cd", roomCMD, "#room/@user", "Join #room, DM @user or run ./room to see a list"},
 		{"cat", catCMD, "", ""},
 		{"rm", rmCMD, "", ""},
 		{"easter", easterCMD, "", ""}}
