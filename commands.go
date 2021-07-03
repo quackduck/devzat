@@ -23,38 +23,38 @@ var (
 	allcmds = make([]cmd, 30)
 	cmds    = []cmd{
 		{"=<user>", dmCMD, "<msg>", "DM <user> with <msg>"}, // won't actually run, here just to show in docs
-		{"./users", usersCMD, "", "List users"},
-		{"./color", colorCMD, "<color>", "Change your name's color"},
-		{"./exit", exitCMD, "", "Leave the chat"},
-		{"./help", helpCMD, "", "Show help"},
-		{"./emojis", emojisCMD, "", "See a list of emojis"},
-		{"./clear", clearCMD, "", "Clear the screen"},
-		{"./hang", hangCMD, "<char/word>", "Play hangman"}, // won't actually run, here just to show in docs
-		{"./tic", ticCMD, "<cell num>", "Play tic tac toe!"},
-		{"./room", roomCMD, "#room/@user", "Join #room, DM @user or run ./room to see a list"},
-		{"./tz", tzCMD, "<zone>", "Set your IANA timezone (like ./tz Asia/Dubai)"},
-		{"./nick", nickCMD, "<name>", "Change your username"},
+		{"users", usersCMD, "", "List users"},
+		{"color", colorCMD, "<color>", "Change your name's color"},
+		{"exit", exitCMD, "", "Leave the chat"},
+		{"help", helpCMD, "", "Show help"},
+		{"emojis", emojisCMD, "", "See a list of emojis"},
+		{"clear", clearCMD, "", "Clear the screen"},
+		{"hang", hangCMD, "<char/word>", "Play hangman"}, // won't actually run, here just to show in docs
+		{"tic", ticCMD, "<cell num>", "Play tic tac toe!"},
+		{"cd", roomCMD, "#room/@user", "Join #room, DM @user or run cd to see a list"},
+		{"tz", tzCMD, "<zone>", "Set your IANA timezone (like tz Asia/Dubai)"},
+		{"nick", nickCMD, "<name>", "Change your username"},
 		{"./rest", commandsRestCMD, "", "Uncommon commands list"}}
 	cmdsRest = []cmd{
 		{"./bell", bellCMD, "", "Toggle the ANSI bell used in pings"},
 		{"./people", peopleCMD, "", "See info about nice people who joined"},
-		{"./id", idCMD, "<user>", "Get a unique ID for a user (hashed IP)"},
-		{"./eg-code", exampleCodeCMD, "", "Example syntax-highlighted code"},
+		{"id", idCMD, "<user>", "Get a unique ID for a user (hashed IP)"},
+		{"eg-code", exampleCodeCMD, "", "Example syntax-highlighted code"},
 		{"./banIP", banIPCMD, "<IP>", "Ban an IP (admin)"},
 		{"./ban", banCMD, "<user>", "Ban <user> (admin)"},
 		{"./kick", kickCMD, "<user>", "Kick <user> (admin)"},
 		{"./art", asciiArtCMD, "", "Show some panda art"},
-		{"./shrug", shrugCMD, "", `¯\\_(ツ)_/¯`}} // won't actually run, here just to show in docs
+		{"shrug", shrugCMD, "", `¯\\_(ツ)_/¯`}} // won't actually run, here just to show in docs
 	secretCMDs = []cmd{
 		{"ls", lsCMD, "", ""},
-		{"cd", roomCMD, "#room/@user", "Join #room, DM @user or run ./room to see a list"},
+		{"cd", roomCMD, "#room/@user", "Join #room, DM @user or run room to see a list"},
 		{"cat", catCMD, "", ""},
 		{"rm", rmCMD, "", ""},
 		{"easter", easterCMD, "", ""}}
 )
 
 func init() {
-	cmds = append(cmds, cmd{"./cmds", commandsCMD, "", "Show this message"}) // avoid initialization loop
+	cmds = append(cmds, cmd{"cmds", commandsCMD, "", "Show this message"}) // avoid initialization loop
 	allcmds = append(append(append(allcmds,
 		cmds...), cmdsRest...), secretCMDs...)
 }
@@ -73,7 +73,7 @@ func runCommands(line string, u *user, isUserSlack bool) {
 		return
 	}
 	currCmd := strings.Fields(line)[0]
-	if u.messaging != nil && currCmd != "=" && currCmd != "./room" { // the commands allowed in a private dm room
+	if u.messaging != nil && currCmd != "=" && currCmd != "room" { // the commands allowed in a private dm room
 		dmRoomCMD(line, u, isUserSlack)
 		return
 	}
@@ -81,12 +81,12 @@ func runCommands(line string, u *user, isUserSlack bool) {
 		dmCMD(strings.TrimSpace(strings.TrimPrefix(line, "=")), u, isUserSlack)
 		return
 	}
-	if currCmd == "./hang" { // handles whether or not to print line too
-		hangCMD(strings.TrimSpace(strings.TrimPrefix(line, "./hang")), u, isUserSlack)
+	if currCmd == "hang" { // handles whether or not to print line too
+		hangCMD(strings.TrimSpace(strings.TrimPrefix(line, "hang")), u, isUserSlack)
 		return
 	}
-	if currCmd == "./shrug" {
-		shrugCMD(strings.TrimSpace(strings.TrimPrefix(line, "./shrug")), u, isUserSlack)
+	if currCmd == "shrug" {
+		shrugCMD(strings.TrimSpace(strings.TrimPrefix(line, "shrug")), u, isUserSlack)
 		return
 	}
 
@@ -103,9 +103,6 @@ func runCommands(line string, u *user, isUserSlack bool) {
 			c.run(strings.TrimSpace(strings.TrimPrefix(line, c.name)), u, isUserSlack)
 			return
 		}
-	}
-	if strings.HasPrefix(currCmd, "./") {
-		u.room.broadcast(devbot, "wrong command, what's \""+currCmd+"\"")
 	}
 }
 
@@ -135,23 +132,23 @@ func dmCMD(rest string, u *user, _ bool) {
 func hangCMD(rest string, u *user, isSlack bool) {
 	if len(rest) > 1 {
 		if !isSlack {
-			u.writeln(u.name, "./hang "+rest)
+			u.writeln(u.name, "hang "+rest)
 			u.writeln(devbot, "(that word won't show dw)")
 		}
 		hangGame = &hangman{rest, 15, " "} // default value of guesses so empty space is given away
-		u.room.broadcast(devbot, u.name+" has started a new game of Hangman! Guess letters with ./hang <letter>")
+		u.room.broadcast(devbot, u.name+" has started a new game of Hangman! Guess letters with hang <letter>")
 		u.room.broadcast(devbot, "```\n"+hangPrint(hangGame)+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```")
 		return
 	}
 	if !isSlack {
-		u.room.broadcast(u.name, "./hang "+rest)
+		u.room.broadcast(u.name, "hang "+rest)
 	}
 	if strings.Trim(hangGame.word, hangGame.guesses) == "" {
-		u.room.broadcast(devbot, "The game has ended. Start a new game with /hang <word>")
+		u.room.broadcast(devbot, "The game has ended. Start a new game with hang <word>")
 		return
 	}
 	if len(rest) == 0 {
-		u.room.broadcast(devbot, "Start a new game with ./hang <word> or guess with /hang <letter>")
+		u.room.broadcast(devbot, "Start a new game with hang <word> or guess with hang <letter>")
 		return
 	}
 	if hangGame.triesLeft == 0 {
@@ -198,7 +195,7 @@ func dmRoomCMD(line string, u *user, _ bool) {
 func ticCMD(rest string, u *user, _ bool) {
 	if rest == "" {
 		u.room.broadcast(devbot, "Starting a new game of Tic Tac Toe! The first player is always X.")
-		u.room.broadcast(devbot, "Play using ./tic <cell num>")
+		u.room.broadcast(devbot, "Play using tic <cell num>")
 		currentPlayer = tictactoe.X
 		tttGame = new(tictactoe.Board)
 		u.room.broadcast(devbot, "```\n"+" 1 │ 2 │ 3\n───┼───┼───\n 4 │ 5 │ 6\n───┼───┼───\n 7 │ 8 │ 9\n"+"\n```")
@@ -257,7 +254,7 @@ func roomCMD(rest string, u *user, _ bool) {
 		u.writeln(devbot, "Left private chat")
 		return
 	}
-	if rest == "" || rest == "s" { // s so "./rooms" works too
+	if rest == "" {
 		type kv struct {
 			roomName   string
 			numOfUsers int
@@ -336,9 +333,7 @@ func banIPCMD(line string, u *user, _ bool) {
 		u.room.broadcast(devbot, "Not authorized")
 		return
 	}
-	//bansMutex.Lock()
 	bans = append(bans, line)
-	//bansMutex.Unlock()
 	saveBans()
 }
 
@@ -424,12 +419,12 @@ Because there's SSH apps on all platforms, even on mobile, you can join from any
 Run ./cmds to see a list of commands.
 
 Interesting features:
-* Rooms! Run ./room to see all rooms and use ./room #foo to join a new room.
+* Rooms! Run cd to see all rooms and use cd #foo to join a new room.
 * Markdown support! Tables, headers, italics and everything. Just use \\n in place of newlines.
-* Code syntax highlighting. Use Markdown fences to send code. Run ./eg-code to see an example.
-* Direct messages! Send a quick DM using =user <msg> or stay in DMs by running ./room @user.
-* Timezone support, use ./tz Continent/City to set your timezone.
-* Built in Tic Tac Toe and Hangman! Run ./tic or ./hang <word> to start new games.
+* Code syntax highlighting. Use Markdown fences to send code. Run eg-code to see an example.
+* Direct messages! Send a quick DM using =user <msg> or stay in DMs by running cd @user.
+* Timezone support, use tz Continent/City to set your timezone.
+* Built in Tic Tac Toe and Hangman! Run tic or hang <word> to start new games.
 * Emoji replacements! \:rocket\: => :rocket: (like on Slack and Discord)
 
 For replacing newlines, I often use bulkseotools.com/add-remove-line-breaks.php.
@@ -451,9 +446,9 @@ func catCMD(line string, u *user, isSlack bool) {
 func rmCMD(line string, u *user, _ bool) {
 	if line == "" {
 		u.room.broadcast("", `usage: rm [-f | -i] [-dPRrvW] file ...
-       unlink file`)
+unlink file`)
 	} else {
-		u.room.broadcast("", "rm: "+line+": Permission denied, you troll")
+		u.room.broadcast("", "rm: "+line+": Permission denied, sucker")
 	}
 }
 

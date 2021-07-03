@@ -56,7 +56,6 @@ func autogenCommands(cmds []cmd) string {
 
 // check if a user is an admin
 func auth(u *user) bool {
-	//return true
 	for _, id := range admins {
 		if u.id == id || u.addr == id {
 			return true
@@ -84,7 +83,6 @@ func cleanName(name string) string {
 }
 
 func printPrettyDuration(d time.Duration) string {
-	//return strings.TrimSuffix(mainroom.Round(time.Minute).String(), "0s")
 	s := strings.TrimSpace(strings.TrimSuffix(d.Round(time.Minute).String(), "0s"))
 	if s == "" { // we cut off the seconds so if there's nothing in the string it means it was made of only seconds.
 		s = "< 1m"
@@ -201,15 +199,9 @@ func devbotChat(room *room, line string) {
 			"Looking for ./help?",
 			"See available commands with ./commands or see help with ./help :star:"}, 100)
 	}
-	if line == "ls" {
-		devbotRespond(room, []string{"./help", "Not a shell.", "bruv", "yeah no, this is not your regular ssh server"}, 100)
-	}
 	if strings.Contains(line, "rm -rf") {
 		devbotRespond(room, []string{"rm -rf you", "I've heard rm -rf / can really free up some space!\n\n you should try it on your computer", "evil"}, 100)
 		return
-	}
-	if strings.HasPrefix(line, "rm") {
-		devbotRespond(room, []string{"Bad human, bad human", "haha, permission denied", "this is not your regular ssh server", "hehe", "bruh"}, 100)
 	}
 	if strings.Contains(line, "where") && strings.Contains(line, "repo") {
 		devbotRespond(room, []string{"The repo's at github.com/quackduck/devzat!", ":star: github.com/quackduck/devzat :star:", "# github.com/quackduck/devzat"}, 100)
