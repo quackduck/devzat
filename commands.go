@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/acarl005/stripansi"
 	"runtime/debug"
 	"sort"
 	"strconv"
@@ -469,9 +470,15 @@ func commandsRestCMD(_ string, u *user, _ bool) {
 }
 
 func lsCMD(_ string, u *user, _ bool) {
-	u.room.broadcast("", `README.md *users *nick *room *tic *hang *people
-*tz *color *all *emojis *exit *help *commands *commands-rest 
-*hide *bell *id *ban *kick *ascii-art *shrug *example-code *banIP`)
+	roomList := ""
+	for _, r := range rooms {
+		roomList += blue.Paint(r.name + "/ ")
+	}
+	usersList := ""
+	for _, u := range u.room.users {
+		usersList += blue.Paint("@" + stripansi.Strip(u.name) + "/ ")
+	}
+	u.room.broadcast("", "README.md "+roomList+usersList)
 }
 
 func commandsCMD(_ string, u *user, _ bool) {
