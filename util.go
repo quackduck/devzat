@@ -4,7 +4,6 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -37,11 +36,12 @@ func getASCIIArt() string {
 }
 
 func printUsersInRoom(r *room) string {
-	names := make([]string, 0, len(r.users))
+	names := ""
 	for _, us := range r.users {
-		names = append(names, us.name)
+		names += us.name + " "
 	}
-	return fmt.Sprint(names)
+	names = names[:len(names)-1]
+	return names
 }
 
 func autogenCommands(cmds []cmd) string {

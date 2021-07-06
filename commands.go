@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/acarl005/stripansi"
 	"github.com/shurcooL/tictactoe"
 )
 
@@ -473,7 +472,7 @@ func lsCMD(_ string, u *user, _ bool) {
 	}
 	usersList := ""
 	for _, us := range u.room.users {
-		usersList += blue.Paint("\\@" + stripansi.Strip(us.name) + "/ ")
+		usersList += blue.Paint(us.name + "/ ")
 	}
 	u.room.broadcast("", "README.md "+roomList+usersList)
 }

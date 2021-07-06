@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/acarl005/stripansi"
-
 	"github.com/gliderlabs/ssh"
 	terminal "golang.org/x/term"
 )
@@ -184,12 +183,26 @@ func newUser(s ssh.Session) *user {
 	host, _, _ := net.SplitHostPort(s.RemoteAddr().String()) // definitely should not give an err
 	hash := sha256.New()
 	hash.Write([]byte(host))
-	u := &user{s.User(), s, term, true, "", hex.EncodeToString(hash.Sum(nil)), host, w, sync.Once{}, time.Now(), time.Now(), nil, mainRoom, nil}
+
+	u := &user{
+		name:          s.User(),
+		session:       s,
+		term:          term,
+		bell:          true,
+		id:            hex.EncodeToString(hash.Sum(nil)),
+		addr:          host,
+		win:           w,
+		lastTimestamp: time.Now(),
+		joinTime:      time.Now(),
+		room:          mainRoom}
+
 	go func() {
 		for u.win = range winChan {
 		}
 	}()
+
 	l.Println("Connected " + u.name + " [" + u.id + "]")
+
 	for i := range bans {
 		if u.addr == bans[i] || u.id == bans[i] { // allow banning by ID
 			if u.id == bans[i] { // then replace the ID in the ban with the actual IP
@@ -300,7 +313,7 @@ func (u *user) rWriteln(msg string) {
 func (u *user) pickUsername(possibleName string) (ok bool) {
 	possibleName = cleanName(possibleName)
 	var err error
-	for userDuplicate(u.room, possibleName) || possibleName == "" || possibleName == "devbot" {
+	for possibleName == "" || possibleName == "devbot" || strings.HasPrefix(possibleName, "#") || userDuplicate(u.room, possibleName) {
 		u.writeln("", "Pick a different username")
 		u.term.SetPrompt("> ")
 		possibleName, err = u.term.ReadLine()
