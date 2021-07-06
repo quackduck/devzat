@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/acarl005/stripansi"
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
+	"github.com/lunixbochs/vtclean"
 )
 
 var (
@@ -54,7 +54,7 @@ func sendCurrentUsersTwitterMessage() {
 		for _, us := range mainRoom.users {
 			names = append(names, us.name)
 		}
-		t, _, err := client.Statuses.Update("People on Devzat rn: "+stripansi.Strip(fmt.Sprint(names))+"\nJoin em with \"ssh devzat.hackclub.com\"\nUptime: "+printPrettyDuration(time.Since(startupTime)), nil)
+		t, _, err := client.Statuses.Update("People on Devzat rn: "+vtclean.Clean(fmt.Sprint(names), false)+"\nJoin em with \"ssh devzat.hackclub.com\"\nUptime: "+printPrettyDuration(time.Since(startupTime)), nil)
 		if err != nil {
 			if !strings.Contains(err.Error(), "twitter: 187 Status is a duplicate.") {
 				mainRoom.broadcast(devbot, "err: "+err.Error())

@@ -20,8 +20,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/acarl005/stripansi"
 	"github.com/gliderlabs/ssh"
+	"github.com/lunixbochs/vtclean"
 	terminal "golang.org/x/term"
 )
 
@@ -160,8 +160,8 @@ func (r *room) broadcastNoSlack(senderName, msg string) {
 	msg = strings.ReplaceAll(msg, "@everyone", green.Paint("everyone\a"))
 	r.usersMutex.Lock()
 	for i := range r.users {
-		msg = strings.ReplaceAll(msg, "@"+stripansi.Strip(r.users[i].name), r.users[i].name)
-		msg = strings.ReplaceAll(msg, `\`+r.users[i].name, "@"+stripansi.Strip(r.users[i].name)) // allow escaping
+		msg = strings.ReplaceAll(msg, "@"+vtclean.Clean(r.users[i].name, false), r.users[i].name)
+		msg = strings.ReplaceAll(msg, `\`+r.users[i].name, "@"+vtclean.Clean(r.users[i].name, false)) // allow escaping
 	}
 	for i := range r.users {
 		r.users[i].writeln(senderName, msg)
@@ -264,10 +264,10 @@ func (u *user) writeln(senderName string, msg string) {
 	msg = strings.ReplaceAll(msg, `\`+"\n", `\n`) // let people escape newlines
 	if senderName != "" {
 		if strings.HasSuffix(senderName, " <- ") || strings.HasSuffix(senderName, " -> ") { // kinda hacky DM detection
-			msg = strings.TrimSpace(mdRender(msg, len(stripansi.Strip(senderName)), u.win.Width))
+			msg = strings.TrimSpace(mdRender(msg, len(vtclean.Clean(senderName, false)), u.win.Width))
 			msg = senderName + msg + "\a"
 		} else {
-			msg = strings.TrimSpace(mdRender(msg, len(stripansi.Strip(senderName))+2, u.win.Width))
+			msg = strings.TrimSpace(mdRender(msg, len(vtclean.Clean(senderName, false))+2, u.win.Width))
 			msg = senderName + ": " + msg
 		}
 	} else {
@@ -350,7 +350,7 @@ func (u *user) repl() {
 			u.close(u.name + red.Paint(" has left the chat due to an error"))
 			return
 		}
-		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(len([]rune(stripansi.Strip(u.name+line)))+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
+		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(len([]rune(vtclean.Clean(u.name, false)+line))+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
 
 		antispamMessages[u.id]++
 		time.AfterFunc(5*time.Second, func() {

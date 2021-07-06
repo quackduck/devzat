@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/acarl005/stripansi"
 	"runtime/debug"
 	"sort"
 	"strconv"
@@ -10,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/lunixbochs/vtclean"
 	"github.com/shurcooL/tictactoe"
 )
 
@@ -475,8 +475,8 @@ func lsCMD(_ string, u *user, _ bool) {
 		roomList += blue.Paint(r.name + "/ ")
 	}
 	usersList := ""
-	for _, u := range u.room.users {
-		usersList += blue.Paint("@" + stripansi.Strip(u.name) + "/ ")
+	for _, us := range u.room.users {
+		usersList += blue.Paint("@" + vtclean.Clean(us.name, false) + "/ ")
 	}
 	u.room.broadcast("", "README.md "+roomList+usersList)
 }

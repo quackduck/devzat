@@ -3,7 +3,6 @@ module devchat
 go 1.16
 
 require (
-	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/dghubble/go-twitter v0.0.0-20210609183100-2fdbf421508e
@@ -13,6 +12,7 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/jwalton/gchalk v1.0.3
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
+	github.com/lunixbochs/vtclean v1.0.0
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/quackduck/go-term-markdown v0.7.0
