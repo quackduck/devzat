@@ -50,6 +50,14 @@ func getMsgsFromSlack() {
 }
 
 func getSendToSlackChan() chan string {
+	if offline {
+		msgs := make(chan string, 2)
+		go func() {
+			for range msgs {
+			}
+		}()
+		return msgs
+	}
 	slackAPI, err := ioutil.ReadFile("slackAPI.txt")
 	if err != nil {
 		panic(err)
@@ -59,9 +67,6 @@ func getSendToSlackChan() chan string {
 	msgs := make(chan string, 100)
 	go func() {
 		for msg := range msgs {
-			if offline {
-				continue
-			}
 			msg = strings.ReplaceAll(stripansi.Strip(msg), `\n`, "\n")
 			if strings.HasPrefix(msg, "sshchat: ") { // just in case
 				continue

@@ -310,7 +310,7 @@ func (u *user) pickUsername(possibleName string) (ok bool) {
 		possibleName = cleanName(possibleName)
 	}
 	u.name = possibleName
-	idx := rand.Intn(len(styles) * 120 / 100) // 20 percent chance of a random color
+	idx := rand.Intn(len(styles) * 140 / 100) // 40% chance of a random color
 	if idx >= len(styles) {                   // allow the possibility of having a completely random RGB color
 		u.changeColor("random")
 		return true

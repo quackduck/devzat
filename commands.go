@@ -34,16 +34,16 @@ var (
 		{"cd", roomCMD, "#room/@user", "Join #room, DM @user or run cd to see a list"}, // won't actually run, here just to show in docs
 		{"tz", tzCMD, "<zone>", "Set your IANA timezone (like tz Asia/Dubai)"},
 		{"nick", nickCMD, "<name>", "Change your username"},
-		{"./rest", commandsRestCMD, "", "Uncommon commands list"}}
+		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
 	cmdsRest = []cmd{
-		{"./bell", bellCMD, "", "Toggle the ANSI bell used in pings"},
-		{"./people", peopleCMD, "", "See info about nice people who joined"},
+		{"bell", bellCMD, "", "Toggle the ANSI bell used in pings"},
+		{"people", peopleCMD, "", "See info about nice people who joined"},
 		{"id", idCMD, "<user>", "Get a unique ID for a user (hashed IP)"},
 		{"eg-code", exampleCodeCMD, "", "Example syntax-highlighted code"},
-		{"./banIP", banIPCMD, "<IP>", "Ban an IP (admin)"},
-		{"./ban", banCMD, "<user>", "Ban <user> (admin)"},
-		{"./kick", kickCMD, "<user>", "Kick <user> (admin)"},
-		{"./art", asciiArtCMD, "", "Show some panda art"},
+		{"banIP", banIPCMD, "<IP>", "Ban an IP (admin)"},
+		{"ban", banCMD, "<user>", "Ban <user> (admin)"},
+		{"kick", kickCMD, "<user>", "Kick <user> (admin)"},
+		{"art", asciiArtCMD, "", "Show some panda art"},
 		{"shrug", shrugCMD, "", `¯\\_(ツ)_/¯`}} // won't actually run, here just to show in docs
 	secretCMDs = []cmd{
 		{"ls", lsCMD, "", ""},
@@ -84,10 +84,13 @@ func runCommands(line string, u *user, isUserSlack bool) {
 	switch currCmd {
 	case "hang":
 		hangCMD(strings.TrimSpace(strings.TrimPrefix(line, "hang")), u, isUserSlack)
+		return
 	case "cd":
 		roomCMD(strings.TrimSpace(strings.TrimPrefix(line, "cd")), u, isUserSlack)
+		return
 	case "shrug":
 		shrugCMD(strings.TrimSpace(strings.TrimPrefix(line, "shrug")), u, isUserSlack)
+		return
 	}
 
 	if isUserSlack {
