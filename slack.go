@@ -7,7 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lunixbochs/vtclean"
+	"github.com/acarl005/stripansi"
+
 	"github.com/slack-go/slack"
 )
 
@@ -67,7 +68,7 @@ func getSendToSlackChan() chan string {
 	msgs := make(chan string, 100)
 	go func() {
 		for msg := range msgs {
-			msg = strings.ReplaceAll(vtclean.Clean(msg, false), `\n`, "\n")
+			msg = strings.ReplaceAll(stripansi.Strip(msg), `\n`, "\n")
 			if strings.HasPrefix(msg, "sshchat: ") { // just in case
 				continue
 			}

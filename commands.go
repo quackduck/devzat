@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lunixbochs/vtclean"
+	"github.com/acarl005/stripansi"
 	"github.com/shurcooL/tictactoe"
 )
 
@@ -32,7 +32,7 @@ var (
 		{"clear", clearCMD, "", "Clear the screen"},
 		{"hang", hangCMD, "<char/word>", "Play hangman"}, // won't actually run, here just to show in docs
 		{"tic", ticCMD, "<cell num>", "Play tic tac toe!"},
-		{"cd", roomCMD, "#room/@user", "Join #room, DM @user or run cd to see a list"}, // won't actually run, here just to show in docs
+		{"cd", cdCMD, "#room/user", "Join #room, DM user or run cd to see a list"}, // won't actually run, here just to show in docs
 		{"tz", tzCMD, "<zone>", "Set your IANA timezone (like tz Asia/Dubai)"},
 		{"nick", nickCMD, "<name>", "Change your username"},
 		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
@@ -48,7 +48,6 @@ var (
 		{"shrug", shrugCMD, "", `¯\\_(ツ)_/¯`}} // won't actually run, here just to show in docs
 	secretCMDs = []cmd{
 		{"ls", lsCMD, "", ""},
-		{"cd", roomCMD, "#room/@user", "Join #room, DM @user or run room to see a list"},
 		{"cat", catCMD, "", ""},
 		{"rm", rmCMD, "", ""}}
 )
@@ -87,7 +86,7 @@ func runCommands(line string, u *user, isUserSlack bool) {
 		hangCMD(strings.TrimSpace(strings.TrimPrefix(line, "hang")), u, isUserSlack)
 		return
 	case "cd":
-		roomCMD(strings.TrimSpace(strings.TrimPrefix(line, "cd")), u, isUserSlack)
+		cdCMD(strings.TrimSpace(strings.TrimPrefix(line, "cd")), u, isUserSlack)
 		return
 	case "shrug":
 		shrugCMD(strings.TrimSpace(strings.TrimPrefix(line, "shrug")), u, isUserSlack)
@@ -245,28 +244,23 @@ func bellCMD(_ string, u *user, _ bool) {
 	}
 }
 
-func roomCMD(rest string, u *user, _ bool) {
+func cdCMD(rest string, u *user, _ bool) {
 	if u.messaging != nil {
 		u.messaging = nil
 		u.writeln(devbot, "Left private chat")
 	}
-	if strings.HasPrefix(rest, "@") {
-		restSplit := strings.Fields(strings.TrimPrefix(rest, "@"))
-		if len(restSplit) == 0 {
-			u.writeln(devbot, "You think people have empty names?")
-			return
+	if strings.HasPrefix(rest, "#") {
+		u.writeln(u.name, "cd "+rest)
+		if v, ok := rooms[rest]; ok {
+			u.changeRoom(v)
+		} else {
+			rooms[rest] = &room{rest, make([]*user, 0, 10), sync.Mutex{}}
+			u.changeRoom(rooms[rest])
 		}
-		peer, ok := findUserByName(u.room, restSplit[0])
-		if !ok {
-			u.writeln(devbot, "No such person lol, who you wanna dm? (you might be in the wrong room)")
-			return
-		}
-		u.messaging = peer
-		u.writeln(devbot, "Now in DMs with "+peer.name+". To leave use cd")
 		return
 	}
-	u.writeln(u.name, "cd "+rest)
 	if rest == "" {
+		u.writeln(u.name, "cd "+rest)
 		type kv struct {
 			roomName   string
 			numOfUsers int
@@ -285,15 +279,18 @@ func roomCMD(rest string, u *user, _ bool) {
 		u.room.broadcast("", "Rooms and users  \n"+strings.TrimSpace(roomsInfo))
 		return
 	}
-	if strings.HasPrefix(rest, "#") {
-		if v, ok := rooms[rest]; ok {
-			u.changeRoom(v)
-		} else {
-			rooms[rest] = &room{rest, make([]*user, 0, 10), sync.Mutex{}}
-			u.changeRoom(rooms[rest])
-		}
+	name := strings.Fields(rest)[0]
+	if len(name) == 0 {
+		u.writeln(devbot, "You think people have empty names?")
 		return
 	}
+	peer, ok := findUserByName(u.room, name)
+	if !ok {
+		u.writeln(devbot, "No such person lol, who you wanna dm? (you might be in the wrong room)")
+		return
+	}
+	u.messaging = peer
+	u.writeln(devbot, "Now in DMs with "+peer.name+". To leave use cd")
 	u.writeln(devbot, "Rooms need to start with # (public rooms) or @ (dms)")
 }
 
@@ -476,7 +473,7 @@ func lsCMD(_ string, u *user, _ bool) {
 	}
 	usersList := ""
 	for _, us := range u.room.users {
-		usersList += blue.Paint("@" + vtclean.Clean(us.name, false) + "/ ")
+		usersList += blue.Paint("\\@" + stripansi.Strip(us.name) + "/ ")
 	}
 	u.room.broadcast("", "README.md "+roomList+usersList)
 }

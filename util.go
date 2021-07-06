@@ -13,7 +13,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/lunixbochs/vtclean"
+	"github.com/acarl005/stripansi"
 	markdown "github.com/quackduck/go-term-markdown"
 )
 
@@ -109,7 +109,7 @@ func mdRender(a string, beforeMessageLen int, lineWidth int) string {
 // Returns true if the username is taken, false otherwise
 func userDuplicate(r *room, a string) bool {
 	for i := range r.users {
-		if vtclean.Clean(r.users[i].name, false) == vtclean.Clean(a, false) {
+		if stripansi.Strip(r.users[i].name) == stripansi.Strip(a) {
 			return true
 		}
 	}
@@ -142,7 +142,7 @@ func findUserByName(r *room, name string) (*user, bool) {
 	r.usersMutex.Lock()
 	defer r.usersMutex.Unlock()
 	for _, u := range r.users {
-		if vtclean.Clean(u.name, false) == name {
+		if stripansi.Strip(u.name) == name {
 			return u, true
 		}
 	}
