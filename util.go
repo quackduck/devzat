@@ -41,6 +41,7 @@ func printUsersInRoom(r *room) string {
 		names += us.name + " "
 	}
 	names = names[:len(names)-1]
+	names = "[" + names + "]"
 	return names
 }
 

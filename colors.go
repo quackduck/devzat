@@ -48,8 +48,8 @@ var (
 			a = stripansi.Strip(a)
 			buf := ""
 			colorOffset := rand.Intn(len(rainbow))
-			for i := range []rune(a) {
-				buf += rainbow[(colorOffset+i)%len(rainbow)].Paint(string(a[i]))
+			for i, r := range []rune(a) {
+				buf += rainbow[(colorOffset+i)%len(rainbow)].Paint(string(r))
 			}
 			return buf
 		}}}
