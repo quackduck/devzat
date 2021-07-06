@@ -45,7 +45,7 @@ var (
 		{"whiten", buildStyleNoStrip(chalk.WithBgWhite())},
 		{"rainbow", func(a string) string {
 			rainbow := []*gchalk.Builder{red, orange, yellow, green, cyan, blue, ansi256(2, 2, 5), magenta}
-			a = vtclean.Clean(a)
+			a = vtclean.Clean(a, false)
 			buf := ""
 			colorOffset := rand.Intn(len(rainbow))
 			for i := range []rune(a) {
@@ -62,7 +62,7 @@ type style struct {
 
 func buildStyle(c *gchalk.Builder) func(string) string {
 	return func(s string) string {
-		return c.Paint(vtclean.Clean(s))
+		return c.Paint(vtclean.Clean(s, false))
 	}
 }
 
