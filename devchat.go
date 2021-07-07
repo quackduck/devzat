@@ -252,7 +252,7 @@ func newUser(s ssh.Session) *user {
 	default:
 		u.writeln("", green.Paint("Welcome to the chat. There are", strconv.Itoa(len(mainRoom.users)-1), "more users"))
 	}
-	mainRoom.broadcast(devbot, u.name+green.Paint(" has joined the chat"))
+	mainRoom.broadcast(devbot, u.name+" has joined the chat")
 	return u
 }
 
@@ -356,12 +356,12 @@ func (u *user) repl() {
 		line = strings.TrimSpace(line)
 
 		if err == io.EOF {
-			u.close(u.name + red.Paint(" has left the chat"))
+			u.close(u.name + " has left the chat")
 			return
 		}
 		if err != nil {
 			l.Println(u.name, err)
-			u.close(u.name + red.Paint(" has left the chat due to an error"))
+			u.close(u.name + " has left the chat due to an error")
 			return
 		}
 		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(lenString(u.name+line)+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)

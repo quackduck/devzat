@@ -44,48 +44,48 @@ Because there's SSH apps on all platforms, even on mobile, you can join from any
 Run ./cmds to see a list of commands.
 
 Interesting features:
-• Rooms! Run ./room to see all rooms and use ./room #foo to join a new room.
+• Rooms! Run cd to see all rooms and use cd #foo to join a new room.
 • Markdown support! Tables, headers, italics and everything. Just use \n in place of newlines.
-• Code syntax highlighting. Use Markdown fences to send code. Run ./eg-code to see an example.
-• Direct messages! Send a quick DM using =user <msg> or stay in DMs by running ./room @user.
-• Timezone support, use ./tz Continent/City to set your timezone.
-• Built in Tic Tac Toe and Hangman! Run ./tic or ./hang <word> to start new games.
+• Code syntax highlighting. Use Markdown fences to send code. Run eg-code to see an example.
+• Direct messages! Send a quick DM using =user <msg> or stay in DMs by running cd @user.
+• Timezone support, use tz Continent/City to set your timezone.
+• Built in Tic Tac Toe and Hangman! Run tic or hang <word> to start new games.
 • Emoji replacements! :rocket: => 🚀  (like on Slack and Discord)
 
 For replacing newlines, I often use bulkseotools.com/add-remove-line-breaks.php.
 
 Made by Ishan Goel with feature ideas from friends.
-Thanks to Caleb Denio for lending his server
+Thanks to Caleb Denio for lending his server!
 ```
 ### Commands
 ```text
 Commands
-   =<user>   <msg>        DM <user> with <msg>
-   ./users                List users
-   ./all                  Get a list of all users ever
-   ./color   <color>      Change your name's color
-   ./exit                 Leave the chat
-   ./help                 Show help
-   ./emojis               See a list of emojis
-   ./clear                Clear the screen
-   ./hang    <char/word>  Play hangman
-   ./tic     <cell num>   Play tic tac toe!
-   ./room    #room/@user  Join #room, DM @user or run ./room to see a list
-   ./tz      <zone>       Set your IANA timezone (like ./tz Asia/Dubai)
-   ./nick    <name>       Change your username
-   ./rest                 Uncommon commands list
-   ./cmds                 Show this message
+   =<user>  <msg>        DM <user> with <msg>
+   users                 List users
+   color    <color>      Change your name's color
+   exit                  Leave the chat
+   help                  Show help
+   emojis                See a list of emojis
+   clear                 Clear the screen
+   hang     <char/word>  Play hangman
+   tic      <cell num>   Play tic tac toe!
+   cd       #room/user   Join #room, DM user or run cd to see a list
+   tz       <zone>       Set your IANA timezone (like tz Asia/Dubai)
+   nick     <name>       Change your username
+   rest                  Uncommon commands list
+   cmds                  Show this message
 ```
 ```
-/commands-rest:
-   ./bell             Toggle the ANSI bell used in pings
-   ./people           See info about nice people who joined
-   ./id       <user>  Get a unique ID for a user (hashed IP)
-   ./eg-code          Example syntax-highlighted code
-   ./banIP    <IP>    Ban an IP (admin)
-   ./ban      <user>  Ban <user> (admin)
-   ./kick     <user>  Kick <user> (admin)
-   ./art              Show some panda art
+The rest
+   bell             Toggle the ANSI bell used in pings
+   people           See info about nice people who joined
+   id       <user>  Get a unique ID for a user (hashed IP)
+   eg-code          Example syntax-highlighted code
+   banIP    <IP>    Ban an IP (admin)
+   ban      <user>  Ban <user> (admin)
+   kick     <user>  Kick <user> (admin)
+   art              Show some panda art
+   shrug            ¯\_(ツ)/¯_
 ```
 
 ## People
