@@ -71,7 +71,7 @@ func runCommands(line string, u *user, isUserSlack bool) {
 		}
 	}()
 	currCmd := strings.Fields(line)[0]
-	if u.messaging != nil && currCmd != "=" && currCmd != "room" { // the commands allowed in a private dm room
+	if u.messaging != nil && currCmd != "=" && currCmd != "cd" { // the commands allowed in a private dm room
 		dmRoomCMD(line, u, isUserSlack)
 		return
 	}
@@ -290,7 +290,6 @@ func cdCMD(rest string, u *user, _ bool) {
 	}
 	u.messaging = peer
 	u.writeln(devbot, "Now in DMs with "+peer.name+". To leave use cd")
-	u.writeln(devbot, "Rooms need to start with # (public rooms) or @ (dms)")
 }
 
 func tzCMD(tz string, u *user, _ bool) {

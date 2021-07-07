@@ -45,6 +45,10 @@ func printUsersInRoom(r *room) string {
 	return names
 }
 
+func lenString(a string) int {
+	return len([]rune(stripansi.Strip(a)))
+}
+
 func autogenCommands(cmds []cmd) string {
 	b := new(bytes.Buffer)
 	w := tabwriter.NewWriter(b, 0, 0, 2, ' ', 0)

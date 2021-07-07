@@ -278,10 +278,10 @@ func (u *user) writeln(senderName string, msg string) {
 	msg = strings.ReplaceAll(msg, `\`+"\n", `\n`) // let people escape newlines
 	if senderName != "" {
 		if strings.HasSuffix(senderName, " <- ") || strings.HasSuffix(senderName, " -> ") { // kinda hacky DM detection
-			msg = strings.TrimSpace(mdRender(msg, len(stripansi.Strip(senderName)), u.win.Width))
+			msg = strings.TrimSpace(mdRender(msg, lenString(senderName), u.win.Width))
 			msg = senderName + msg + "\a"
 		} else {
-			msg = strings.TrimSpace(mdRender(msg, len(stripansi.Strip(senderName))+2, u.win.Width))
+			msg = strings.TrimSpace(mdRender(msg, lenString(senderName)+2, u.win.Width))
 			msg = senderName + ": " + msg
 		}
 	} else {
@@ -303,8 +303,8 @@ func (u *user) writeln(senderName string, msg string) {
 
 // Write to the right of the user's window
 func (u *user) rWriteln(msg string) {
-	if u.win.Width-len([]rune(msg)) > 0 {
-		u.term.Write([]byte(strings.Repeat(" ", u.win.Width-len([]rune(msg))) + msg + "\n"))
+	if u.win.Width-lenString(msg) > 0 {
+		u.term.Write([]byte(strings.Repeat(" ", u.win.Width-lenString(msg)) + msg + "\n"))
 	} else {
 		u.term.Write([]byte(msg + "\n"))
 	}
@@ -364,7 +364,7 @@ func (u *user) repl() {
 			u.close(u.name + red.Paint(" has left the chat due to an error"))
 			return
 		}
-		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(len([]rune(stripansi.Strip(u.name)+line))+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
+		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(lenString(u.name+line)+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
 
 		antispamMessages[u.id]++
 		time.AfterFunc(5*time.Second, func() {
