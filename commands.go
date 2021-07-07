@@ -71,7 +71,7 @@ func runCommands(line string, u *user, isUserSlack bool) {
 		}
 	}()
 	currCmd := strings.Fields(line)[0]
-	if u.messaging != nil && currCmd != "=" && currCmd != "cd" { // the commands allowed in a private dm room
+	if u.messaging != nil && currCmd != "=" && currCmd != "cd" && currCmd != "exit" { // the commands allowed in a private dm room
 		dmRoomCMD(line, u, isUserSlack)
 		return
 	}
@@ -247,6 +247,9 @@ func cdCMD(rest string, u *user, _ bool) {
 	if u.messaging != nil {
 		u.messaging = nil
 		u.writeln(devbot, "Left private chat")
+		if rest == "" || rest == ".." {
+			return
+		}
 	}
 	if strings.HasPrefix(rest, "#") {
 		u.writeln(u.name, "cd "+rest)
@@ -289,7 +292,7 @@ func cdCMD(rest string, u *user, _ bool) {
 		return
 	}
 	u.messaging = peer
-	u.writeln(devbot, "Now in DMs with "+peer.name+". To leave use cd")
+	u.writeln(devbot, "Now in DMs with "+peer.name+". To leave use cd ..")
 }
 
 func tzCMD(tz string, u *user, _ bool) {
@@ -464,16 +467,19 @@ func commandsRestCMD(_ string, u *user, _ bool) {
 	u.room.broadcast("", "The rest  \n"+autogenCommands(cmdsRest))
 }
 
-func lsCMD(_ string, u *user, _ bool) {
+func lsCMD(rest string, u *user, _ bool) {
+	if rest != "" {
+		u.room.broadcast("", "ls: "+rest+" Permission denied")
+	}
 	roomList := ""
 	for _, r := range rooms {
 		roomList += blue.Paint(r.name + "/ ")
 	}
 	usersList := ""
 	for _, us := range u.room.users {
-		usersList += blue.Paint(us.name + "/ ")
+		usersList += us.name + blue.Paint("/ ")
 	}
-	u.room.broadcast("", "README.md "+roomList+usersList)
+	u.room.broadcast("", "README.md "+usersList+roomList)
 }
 
 func commandsCMD(_ string, u *user, _ bool) {
