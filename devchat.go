@@ -56,6 +56,7 @@ type user struct {
 	session       ssh.Session
 	term          *terminal.Terminal
 	bell          bool
+	pingEverytime bool
 	color         string
 	id            string
 	addr          string
@@ -297,6 +298,9 @@ func (u *user) writeln(senderName string, msg string) {
 	}
 	if !u.bell {
 		msg = strings.ReplaceAll(msg, "\a", "")
+	}
+	if u.pingEverytime {
+		msg += "\a"
 	}
 	u.term.Write([]byte(msg + "\n"))
 }

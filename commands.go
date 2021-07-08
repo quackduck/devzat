@@ -29,14 +29,14 @@ var (
 		{"help", helpCMD, "", "Show help"},
 		{"emojis", emojisCMD, "", "See a list of emojis"},
 		{"clear", clearCMD, "", "Clear the screen"},
-		{"hang", hangCMD, "<char/word>", "Play hangman"}, // won't actually run, here just to show in docs
+		{"hang", hangCMD, "<char|word>", "Play hangman"}, // won't actually run, here just to show in docs
 		{"tic", ticCMD, "<cell num>", "Play tic tac toe!"},
 		{"cd", cdCMD, "#room/user", "Join #room, DM user or run cd to see a list"}, // won't actually run, here just to show in docs
 		{"tz", tzCMD, "<zone>", "Set your IANA timezone (like tz Asia/Dubai)"},
 		{"nick", nickCMD, "<name>", "Change your username"},
 		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
 	cmdsRest = []cmd{
-		{"bell", bellCMD, "", "Toggle the ANSI bell used in pings"},
+		{"bell", bellCMD, "on|off|all", "Set the ANSI bell on pings (on), never (off) or for every message (all)"},
 		{"people", peopleCMD, "", "See info about nice people who joined"},
 		{"id", idCMD, "<user>", "Get a unique ID for a user (hashed IP)"},
 		{"eg-code", exampleCodeCMD, "", "Example syntax-highlighted code"},
@@ -234,12 +234,17 @@ func exitCMD(_ string, u *user, _ bool) {
 	u.close(u.name + red.Paint(" has left the chat"))
 }
 
-func bellCMD(_ string, u *user, _ bool) {
-	u.bell = !u.bell
-	if u.bell {
-		u.room.broadcast("", "bell on")
-	} else {
-		u.room.broadcast("", "bell off")
+func bellCMD(rest string, u *user, _ bool) {
+	switch rest {
+	case "off":
+		u.bell = false
+		u.room.broadcast("", "bell off (never)")
+	case "on":
+		u.bell = true
+		u.room.broadcast("", "bell on (pings)")
+	case "all":
+		u.pingEverytime = true
+		u.room.broadcast("", "bell all (every message)")
 	}
 }
 
