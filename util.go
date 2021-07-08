@@ -36,7 +36,7 @@ func getASCIIArt() string {
 }
 
 func printUsersInRoom(r *room) string {
-	names := ""
+	names := " "
 	for _, us := range r.users {
 		names += us.name + " "
 	}
