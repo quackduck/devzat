@@ -28,6 +28,7 @@ var (
 		{"exit", exitCMD, "", "Leave the chat"},
 		{"help", helpCMD, "", "Show help"},
 		{"emojis", emojisCMD, "", "See a list of emojis"},
+		{"bell", bellCMD, "on|off|all", "ANSI bell on pings (on), never (off) or for every message (all)"},
 		{"clear", clearCMD, "", "Clear the screen"},
 		{"hang", hangCMD, "<char|word>", "Play hangman"}, // won't actually run, here just to show in docs
 		{"tic", ticCMD, "<cell num>", "Play tic tac toe!"},
@@ -36,7 +37,6 @@ var (
 		{"nick", nickCMD, "<name>", "Change your username"},
 		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
 	cmdsRest = []cmd{
-		{"bell", bellCMD, "on|off|all", "Set the ANSI bell on pings (on), never (off) or for every message (all)"},
 		{"people", peopleCMD, "", "See info about nice people who joined"},
 		{"id", idCMD, "<user>", "Get a unique ID for a user (hashed IP)"},
 		{"eg-code", exampleCodeCMD, "", "Example syntax-highlighted code"},
