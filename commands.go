@@ -33,7 +33,7 @@ var (
 		{"hang", hangCMD, "<char|word>", "Play hangman"}, // won't actually run, here just to show in docs
 		{"tic", ticCMD, "<cell num>", "Play tic tac toe!"},
 		{"cd", cdCMD, "#room/user", "Join #room, DM user or run cd to see a list"}, // won't actually run, here just to show in docs
-		{"tz", tzCMD, "<zone>", "Set your IANA timezone (like tz Asia/Dubai)"},
+		{"tz", tzCMD, "<zone> [format]", "Set your IANA timezone (like tz Asia/Dubai). Set format to 24 to have hour in the 0-23 range."},
 		{"nick", nickCMD, "<name>", "Change your username"},
 		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
 	cmdsRest = []cmd{
