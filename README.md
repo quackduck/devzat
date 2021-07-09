@@ -17,6 +17,11 @@ Try it out:
 ssh devzat.hackclub.com
 ```
 
+You can log in with a nickname:
+```sh
+ssh nickname@devzat.hackclub.com
+```
+
 If you're under a firewall, you can still join on port 443:
 ```sh
 ssh devzat.hackclub.com -p 443
