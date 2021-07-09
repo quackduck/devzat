@@ -65,6 +65,7 @@ type user struct {
 	lastTimestamp time.Time
 	joinTime      time.Time
 	timezone      *time.Location
+	formatTime24  bool
 	room          *room
 	messaging     *user
 }
@@ -195,6 +196,8 @@ func newUser(s ssh.Session) *user {
 		win:           w,
 		lastTimestamp: time.Now(),
 		joinTime:      time.Now(),
+		timezone:      nil,
+		formatTime24:  false,
 		room:          mainRoom}
 
 	go func() {
@@ -292,7 +295,11 @@ func (u *user) writeln(senderName string, msg string) {
 		if u.timezone == nil {
 			u.rWriteln(printPrettyDuration(time.Since(u.joinTime)) + " in")
 		} else {
-			u.rWriteln(time.Now().In(u.timezone).Format("3:04 pm"))
+			if u.formatTime24 {
+				u.rWriteln(time.Now().In(u.timezone).Format("15:04"))
+			} else {
+				u.rWriteln(time.Now().In(u.timezone).Format("3:04 pm"))
+			}
 		}
 		u.lastTimestamp = time.Now()
 	}
