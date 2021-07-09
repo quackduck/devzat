@@ -31,6 +31,7 @@ If you add this to `~/.ssh/config`:
 ```ssh
 Host chat
     HostName devzat.hackclub.com
+	User yourNickNameHere
 ```
 
 You'll be able to join with just:
