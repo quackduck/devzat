@@ -318,7 +318,7 @@ func (u *user) pickUsername(possibleName string) (ok bool) {
 	possibleName = cleanName(possibleName)
 	var err error
 	for possibleName == "" || possibleName == "devbot" || strings.HasPrefix(possibleName, "#") || userDuplicate(u.room, possibleName) {
-		u.writeln("", "Your username is already used by someone else. Pick a different one:")
+		u.writeln("", "Your username is already in use. Pick a different one:")
 		u.term.SetPrompt("> ")
 		possibleName, err = u.term.ReadLine()
 		if err != nil {
