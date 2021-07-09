@@ -387,7 +387,7 @@ Tommy Pujol, Sam Poder, Rishi Kothari,
 Amogh Chaubey, Ella Xu, Hugo Hu,  
 Robert Goll, Tanishq Soni, Arash Nur Iman,  
 Temi, Aiden Bai, Ivan Bowman, @epic  
-Belle See  
+Belle See, Fayd  
 _Possibly more people_
 
 
@@ -416,7 +416,7 @@ func helpCMD(_ string, u *user, _ bool) {
 	u.room.broadcast("", `Welcome to Devzat! Devzat is chat over SSH: github.com/quackduck/devzat  
 Because there's SSH apps on all platforms, even on mobile, you can join from anywhere.
 
-Run ./cmds to see a list of commands.
+Run cmds to see a list of commands.
 
 Interesting features:
 * Rooms! Run cd to see all rooms and use cd #foo to join a new room.

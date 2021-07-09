@@ -36,11 +36,14 @@ func getASCIIArt() string {
 }
 
 func printUsersInRoom(r *room) string {
-	names := " "
+	names := ""
+	if len(r.users) == 0 {
+		return names
+	}
 	for _, us := range r.users {
 		names += us.name + " "
 	}
-	names = names[:len(names)-1]
+	names = names[:len(names)-1] // cut extra space at the end
 	names = "[" + names + "]"
 	return names
 }
