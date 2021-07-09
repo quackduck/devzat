@@ -33,7 +33,7 @@ var (
 		{"hang", hangCMD, "<char|word>", "Play hangman"}, // won't actually run, here just to show in docs
 		{"tic", ticCMD, "<cell num>", "Play tic tac toe!"},
 		{"cd", cdCMD, "#room/user", "Join #room, DM user or run cd to see a list"}, // won't actually run, here just to show in docs
-		{"tz", tzCMD, "<zone>", "Set your IANA timezone (like tz Asia/Dubai)"},
+		{"tz", tzCMD, "<zone> [24h]", "Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h"},
 		{"nick", nickCMD, "<name>", "Change your username"},
 		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
 	cmdsRest = []cmd{
@@ -302,16 +302,23 @@ func cdCMD(rest string, u *user, _ bool) {
 	u.writeln(devbot, "Now in DMs with "+peer.name+". To leave use cd ..")
 }
 
-func tzCMD(tz string, u *user, _ bool) {
+func tzCMD(tzArg string, u *user, _ bool) {
 	var err error
-	if tz == "" {
+	if tzArg == "" {
 		u.timezone = nil
 		return
 	}
+	tzArgList := strings.Fields(tzArg)
+	tz := tzArgList[0]
 	u.timezone, err = time.LoadLocation(tz)
 	if err != nil {
 		u.room.broadcast(devbot, "Weird timezone you have there, use Continent/City, EST, PST or see nodatime.org/TimeZones!")
 		return
+	}
+	if len(tzArgList) == 2 {
+		u.formatTime24 = tzArgList[1] == "24h"
+	} else {
+		u.formatTime24 = false
 	}
 	u.room.broadcast(devbot, "Done!")
 }
