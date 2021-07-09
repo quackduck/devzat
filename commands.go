@@ -245,6 +245,8 @@ func bellCMD(rest string, u *user, _ bool) {
 	case "all":
 		u.pingEverytime = true
 		u.room.broadcast("", "bell all (every message)")
+	default:
+		u.room.broadcast(devbot, "your options are off, on and all")
 	}
 }
 
@@ -257,7 +259,7 @@ func cdCMD(rest string, u *user, _ bool) {
 		}
 	}
 	if strings.HasPrefix(rest, "#") {
-		u.writeln(u.name, "cd "+rest)
+		u.room.broadcast(u.name, "cd "+rest)
 		if v, ok := rooms[rest]; ok {
 			u.changeRoom(v)
 		} else {
@@ -267,7 +269,7 @@ func cdCMD(rest string, u *user, _ bool) {
 		return
 	}
 	if rest == "" {
-		u.writeln(u.name, "cd "+rest)
+		u.room.broadcast(u.name, "cd "+rest)
 		type kv struct {
 			roomName   string
 			numOfUsers int
