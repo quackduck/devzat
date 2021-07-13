@@ -245,6 +245,14 @@ func bellCMD(rest string, u *user, _ bool) {
 	case "all":
 		u.pingEverytime = true
 		u.room.broadcast("", "bell all (every message)")
+	case "", "status":
+		if u.bell {
+			u.room.broadcast("", "bell on (pings)")
+		} else if u.pingEverytime {
+			u.room.broadcast("", "bell all (every message)")
+		} else { // bell is off
+			u.room.broadcast("", "bell off (never)")
+		}
 	default:
 		u.room.broadcast(devbot, "your options are off, on and all")
 	}
