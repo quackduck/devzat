@@ -479,7 +479,12 @@ func asciiArtCMD(_ string, u *user, _ bool) {
 }
 
 func pwdCMD(line string, u *user, _ bool) {
-	u.room.broadcast("", u.room.name)
+	if u.messaging != nil {
+		u.writeln("", u.messaging.name)
+		u.messaging.writeln("", u.messaging.name)
+	} else {
+		u.room.broadcast("", u.room.name)
+	}
 }
 
 func shrugCMD(line string, u *user, _ bool) {
