@@ -14,7 +14,7 @@ import (
 
 var (
 	client = loadTwitterClient()
-	allow_tweet = true //Variable used to lock the acces to the tweeting function
+	allowTweet = true // Variable used to lock the acces to the tweeting function
 )
 
 // Credentials stores Twitter creds
@@ -29,14 +29,14 @@ func sendCurrentUsersTwitterMessage() {
 	if offline {
 		return
 	}
-	if !allow_tweet {
-		return
-	}
-	allow_tweet = false
 	// TODO: count all users in all rooms
 	if len(mainRoom.users) == 0 {
 		return
 	}
+	if !allowTweet {
+		return
+	}
+	allowTweet = false
 	usersSnapshot := append(make([]*user, 0, len(mainRoom.users)), mainRoom.users...)
 	areUsersEqual := func(a []*user, b []*user) bool {
 		if len(a) != len(b) {
@@ -51,7 +51,7 @@ func sendCurrentUsersTwitterMessage() {
 	}
 	go func() {
 		time.Sleep(time.Second * 60)
-		allow_tweet = true //Once we wait the delay, acces to the function is re-enabled
+		allowTweet = true // Once we wait the delay, acces to the function is re-enabled
 		if !areUsersEqual(mainRoom.users, usersSnapshot) {
 			return
 		}
