@@ -186,7 +186,6 @@ func newUser(s ssh.Session) *user {
 	hash := sha256.New()
 	pubkey := s.PublicKey()
 	if pubkey != nil {
-		fmt.Printf("key: %s\n", pubkey.Marshal())
 		hash.Write([]byte(pubkey.Marshal()))
 	} else { // If we can't get the public key fall back to the IP.
 		hash.Write([]byte(host))
