@@ -44,6 +44,7 @@ var (
 		{"ban", banCMD, "<user>", "Ban <user> (admin)"},
 		{"kick", kickCMD, "<user>", "Kick <user> (admin)"},
 		{"art", asciiArtCMD, "", "Show some panda art"},
+		{"pwd", pwdCMD, "", "Display the name of the room you are in."},
 		{"shrug", shrugCMD, "", `¯\\_(ツ)_/¯`}} // won't actually run, here just to show in docs
 	secretCMDs = []cmd{
 		{"ls", lsCMD, "", ""},
@@ -475,6 +476,10 @@ func exampleCodeCMD(_ string, u *user, _ bool) {
 
 func asciiArtCMD(_ string, u *user, _ bool) {
 	u.room.broadcast("", art)
+}
+
+func pwdCMD(line string, u *user, _ bool) {
+	u.room.broadcast("", u.room.name)
 }
 
 func shrugCMD(line string, u *user, _ bool) {
