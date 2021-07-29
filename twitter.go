@@ -1,10 +1,12 @@
 package main
+
 import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"strings"
 	"time"
+
 	"github.com/acarl005/stripansi"
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
@@ -14,6 +16,14 @@ var (
 	client = loadTwitterClient()
 	allowTweet = true
 )
+
+// Credentials stores Twitter creds
+type Credentials struct {
+	ConsumerKey       string
+	ConsumerSecret    string
+	AccessToken       string
+	AccessTokenSecret string
+}
 
 // Credentials stores Twitter creds
 func sendCurrentUsersTwitterMessage() {
