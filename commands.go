@@ -44,7 +44,7 @@ var (
 		{"ban", banCMD, "<user>", "Ban <user> (admin)"},
 		{"kick", kickCMD, "<user>", "Kick <user> (admin)"},
 		{"art", asciiArtCMD, "", "Show some panda art"},
-		{"pwd", pwdCMD, "", "Display the name of the room you are in."},
+		{"pwd", pwdCMD, "", "Show your current room"},
 		{"shrug", shrugCMD, "", `¯\\_(ツ)_/¯`}} // won't actually run, here just to show in docs
 	secretCMDs = []cmd{
 		{"ls", lsCMD, "", ""},
