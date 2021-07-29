@@ -25,7 +25,6 @@ type Credentials struct {
 	AccessTokenSecret string
 }
 
-// Credentials stores Twitter creds
 func sendCurrentUsersTwitterMessage() {
 	if offline {
 		return
@@ -72,6 +71,7 @@ func sendCurrentUsersTwitterMessage() {
 		mainRoom.broadcast(devbot, "https\\://twitter.com/"+t.User.ScreenName+"/status/"+t.IDStr)
 	}()
 }
+
 func loadTwitterClient() *twitter.Client {
 	if offline {
 		return nil
