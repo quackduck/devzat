@@ -303,11 +303,11 @@ func (u *user) writeln(senderName string, msg string) {
 		}
 		u.lastTimestamp = time.Now()
 	}
-	if !u.bell {
-		msg = strings.ReplaceAll(msg, "\a", "")
-	}
 	if u.pingEverytime && senderName != u.name {
 		msg += "\a"
+	}
+	if !u.bell {
+		msg = strings.ReplaceAll(msg, "\a", "")
 	}
 	u.term.Write([]byte(msg + "\n"))
 }
