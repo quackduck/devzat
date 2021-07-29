@@ -238,9 +238,11 @@ func bellCMD(rest string, u *user, _ bool) {
 	switch rest {
 	case "off":
 		u.bell = false
+		u.pingEverytime = false
 		u.room.broadcast("", "bell off (never)")
 	case "on":
 		u.bell = true
+		u.pingEverytime = false
 		u.room.broadcast("", "bell on (pings)")
 	case "all":
 		u.pingEverytime = true
