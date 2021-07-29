@@ -72,7 +72,7 @@ func runCommands(line string, u *user, isUserSlack bool) {
 		}
 	}()
 	currCmd := strings.Fields(line)[0]
-	if u.messaging != nil && currCmd != "=" && currCmd != "cd" && currCmd != "exit" { // the commands allowed in a private dm room
+	if u.messaging != nil && currCmd != "=" && currCmd != "cd" && currCmd != "exit" && currCmd != "pwd" { // the commands allowed in a private dm room
 		dmRoomCMD(line, u, isUserSlack)
 		return
 	}
