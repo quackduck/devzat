@@ -58,7 +58,8 @@ type user struct {
 	bell          bool
 	pingEverytime bool
 	color         string
-	id            string
+	uid           string
+	cid           string
 	addr          string
 	win           ssh.Window
 	closeOnce     sync.Once
@@ -187,12 +188,13 @@ func newUser(s ssh.Session) *user {
 	pty, winChan, _ := s.Pty()
 	w := pty.Window
 	host, _, _ := net.SplitHostPort(s.RemoteAddr().String()) // definitely should not give an err
-	hash := sha256.New()
+	ip_hash := sha256.New()
+	config_hash := sha256.New()
 	pubkey := s.PublicKey()
 	if pubkey != nil {
-		hash.Write([]byte(pubkey.Marshal()))
+		config_hash.Write([]byte(pubkey.Marshal()))
 	} else { // If we can't get the public key fall back to the IP.
-		hash.Write([]byte(host))
+		ip_hash.Write([]byte(host))
 	}
 
 	u := &user{
@@ -200,7 +202,8 @@ func newUser(s ssh.Session) *user {
 		session:       s,
 		term:          term,
 		bell:          true,
-		id:            hex.EncodeToString(hash.Sum(nil)),
+		uid:           hex.EncodeToString(ip_hash.Sum(nil)),     // User ID = IP
+		cid:           hex.EncodeToString(config_hash.Sum(nil)), // Config ID = Pubkey
 		addr:          host,
 		win:           w,
 		lastTimestamp: time.Now(),
@@ -214,25 +217,25 @@ func newUser(s ssh.Session) *user {
 		}
 	}()
 
-	l.Println("Connected " + u.name + " [" + u.id + "]")
+	l.Println("Connected " + u.name + " [" + u.uid + "]")
 
 	for i := range bans {
-		if u.addr == bans[i] || u.id == bans[i] { // allow banning by ID
-			if u.id == bans[i] { // then replace the ID in the ban with the actual IP
+		if u.addr == bans[i] || u.uid == bans[i] { // allow banning by ID
+			if u.uid == bans[i] { // then replace the ID in the ban with the actual IP
 				bans[i] = u.addr
 				saveBans()
 			}
 			l.Println("Rejected " + u.name + " [" + u.addr + "]")
-			u.writeln(devbot, "**You are banned**. If you feel this was done wrongly, please reach out at github.com/quackduck/devzat/issues. Please include the following information: [ID "+u.id+"]")
+			u.writeln(devbot, "**You are banned**. If you feel this was done wrongly, please reach out at github.com/quackduck/devzat/issues. Please include the following information: [ID "+u.uid+"]")
 			u.close("")
 			return nil
 		}
 	}
-	idsInMinToTimes[u.id]++
+	idsInMinToTimes[u.uid]++
 	time.AfterFunc(60*time.Second, func() {
-		idsInMinToTimes[u.id]--
+		idsInMinToTimes[u.uid]--
 	})
-	if idsInMinToTimes[u.id] > 6 {
+	if idsInMinToTimes[u.uid] > 6 {
 		bans = append(bans, u.addr)
 		mainRoom.broadcast(devbot, u.name+" has been banned automatically. IP: "+u.addr)
 		return nil
@@ -386,11 +389,11 @@ func (u *user) repl() {
 		}
 		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(lenString(u.name+line)+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
 
-		antispamMessages[u.id]++
+		antispamMessages[u.uid]++
 		time.AfterFunc(5*time.Second, func() {
-			antispamMessages[u.id]--
+			antispamMessages[u.uid]--
 		})
-		if antispamMessages[u.id] >= 50 {
+		if antispamMessages[u.uid] >= 50 {
 			if !stringsContain(bans, u.addr) {
 				bans = append(bans, u.addr)
 				saveBans()

@@ -38,7 +38,7 @@ var (
 		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
 	cmdsRest = []cmd{
 		{"people", peopleCMD, "", "See info about nice people who joined"},
-		{"id", idCMD, "<user>", "Get a unique ID for a user (hashed IP)"},
+		{"id", idCMD, "<user>", "Get a unique ID for a user (hashed IP | SSH Public key)"},
 		{"eg-code", exampleCodeCMD, "", "Example syntax-highlighted code"},
 		{"banIP", banIPCMD, "<IP>", "Ban an IP (admin)"},
 		{"ban", banCMD, "<user>", "Ban <user> (admin)"},
@@ -339,7 +339,8 @@ func idCMD(line string, u *user, _ bool) {
 		u.room.broadcast("", "User not found")
 		return
 	}
-	u.room.broadcast("", victim.id)
+	u.room.broadcast("IP based id", victim.uid)
+	u.room.broadcast("Pubkey based id", victim.cid)
 }
 
 func nickCMD(line string, u *user, _ bool) {

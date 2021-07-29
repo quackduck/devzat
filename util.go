@@ -67,7 +67,7 @@ func autogenCommands(cmds []cmd) string {
 // check if a user is an admin
 func auth(u *user) bool {
 	for _, id := range admins {
-		if u.id == id || u.addr == id {
+		if u.uid == id || u.addr == id {
 			return true
 		}
 	}
