@@ -112,6 +112,10 @@ func main() {
 		}()
 		u.repl()
 	})
+	publicKeyOption := ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
+		return true // allow all keys, or use ssh.KeysEqual() to compare against known keys
+	})
+
 	var err error
 	if os.Getenv("PORT") != "" {
 		port, err = strconv.Atoi(os.Getenv("PORT"))
@@ -131,7 +135,7 @@ func main() {
 			}
 		}
 	}()
-	err = ssh.ListenAndServe(fmt.Sprintf(":%d", port), nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"))
+	err = ssh.ListenAndServe(fmt.Sprintf(":%d", port), nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"), publicKeyOption)
 	if err != nil {
 		fmt.Println(err)
 	}
