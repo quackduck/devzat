@@ -1,13 +1,10 @@
 package main
-
 import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"strings"
-	"sync"
 	"time"
-
 	"github.com/acarl005/stripansi"
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
@@ -15,17 +12,10 @@ import (
 
 var (
 	client = loadTwitterClient()
-	allowTweet = sync.Mutex{}
+	allowTweet = true
 )
 
 // Credentials stores Twitter creds
-type Credentials struct {
-	ConsumerKey       string
-	ConsumerSecret    string
-	AccessToken       string
-	AccessTokenSecret string
-}
-
 func sendCurrentUsersTwitterMessage() {
 	if offline {
 		return
@@ -34,6 +24,10 @@ func sendCurrentUsersTwitterMessage() {
 	if len(mainRoom.users) == 0 {
 		return
 	}
+	if !allowTweet {
+		return
+	}
+	allowTweet = false
 	usersSnapshot := append(make([]*user, 0, len(mainRoom.users)), mainRoom.users...)
 	areUsersEqual := func(a []*user, b []*user) bool {
 		if len(a) != len(b) {
@@ -47,9 +41,8 @@ func sendCurrentUsersTwitterMessage() {
 		return true
 	}
 	go func() {
-		allowTweet.Lock()
 		time.Sleep(time.Second * 60)
-		allowTweet.Unlock()
+		allowTweet = true
 		if !areUsersEqual(mainRoom.users, usersSnapshot) {
 			return
 		}
@@ -69,7 +62,6 @@ func sendCurrentUsersTwitterMessage() {
 		mainRoom.broadcast(devbot, "https\\://twitter.com/"+t.User.ScreenName+"/status/"+t.IDStr)
 	}()
 }
-
 func loadTwitterClient() *twitter.Client {
 	if offline {
 		return nil
