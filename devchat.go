@@ -112,10 +112,6 @@ func main() {
 		}()
 		u.repl()
 	})
-	publicKeyOption := ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
-		return true // allow all keys, or use ssh.KeysEqual() to compare against known keys
-	})
-
 	var err error
 	if os.Getenv("PORT") != "" {
 		port, err = strconv.Atoi(os.Getenv("PORT"))
@@ -135,7 +131,9 @@ func main() {
 			}
 		}
 	}()
-	err = ssh.ListenAndServe(fmt.Sprintf(":%d", port), nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"), publicKeyOption)
+	err = ssh.ListenAndServe(fmt.Sprintf(":%d", port), nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"), func(ctx ssh.Context, key ssh.PublicKey) bool {
+		return true // allow all keys, this lets us hash pubkeys later
+	})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -336,7 +334,6 @@ func (u *user) pickUsername(possibleName string) (ok bool) {
 	var err error
 	for {
 		if possibleName == "" {
-			u.writeln("", "No username chosen. Pick one:")
 		} else if strings.HasPrefix(possibleName, "#") || possibleName == "devbot" {
 			u.writeln("", "Your username is invalid. Pick a different one:")
 		} else if userDuplicate(u.room, possibleName) {
