@@ -47,7 +47,7 @@ We also have a Slack bridge! If you're on the [Hack Club](https://hackclub.com) 
 Welcome to Devzat! Devzat is chat over SSH: github.com/quackduck/devzat
 Because there's SSH apps on all platforms, even on mobile, you can join from anywhere.
 
-Run ./cmds to see a list of commands.
+Run `cmds` to see a list of commands.
 
 Interesting features:
 • Rooms! Run cd to see all rooms and use cd #foo to join a new room.
