@@ -336,18 +336,8 @@ func (u *user) rWriteln(msg string) {
 func (u *user) pickUsername(possibleName string) (ok bool) {
 	possibleName = cleanName(possibleName)
 	var err error
-	for {
-		if possibleName == "" {
-			u.writeln("", "No username chosen. Pick one:")
-		} else if strings.HasPrefix(possibleName, "#") || possibleName == "devbot" {
-			u.writeln("", "Your username is invalid. Pick a different one:")
-		} else if userDuplicate(u.room, possibleName) {
-			u.writeln("", "Your username is already in use. Pick a different one:")
-		} else {
-			possibleName = cleanName(possibleName)
-			break
-		}
-
+	for possibleName == "" || possibleName == "devbot" || strings.HasPrefix(possibleName, "#") || userDuplicate(u.room, possibleName) {
+		u.writeln("", "Your username is already in use. Pick a different one:")
 		u.term.SetPrompt("> ")
 		possibleName, err = u.term.ReadLine()
 		if err != nil {
@@ -356,7 +346,6 @@ func (u *user) pickUsername(possibleName string) (ok bool) {
 		}
 		possibleName = cleanName(possibleName)
 	}
-
 	u.name = possibleName
 	idx := rand.Intn(len(styles) * 140 / 100) // 40% chance of a random color
 	if idx >= len(styles) {                   // allow the possibility of having a completely random RGB color
