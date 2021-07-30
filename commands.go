@@ -44,6 +44,7 @@ var (
 		{"ban", banCMD, "<user>", "Ban <user> (admin)"},
 		{"kick", kickCMD, "<user>", "Kick <user> (admin)"},
 		{"art", asciiArtCMD, "", "Show some panda art"},
+		{"pwd", pwdCMD, "", "Show your current room"},
 		{"shrug", shrugCMD, "", `¯\\_(ツ)_/¯`}} // won't actually run, here just to show in docs
 	secretCMDs = []cmd{
 		{"ls", lsCMD, "", ""},
@@ -71,7 +72,7 @@ func runCommands(line string, u *user, isUserSlack bool) {
 		}
 	}()
 	currCmd := strings.Fields(line)[0]
-	if u.messaging != nil && currCmd != "=" && currCmd != "cd" && currCmd != "exit" { // the commands allowed in a private dm room
+	if u.messaging != nil && currCmd != "=" && currCmd != "cd" && currCmd != "exit" && currCmd != "pwd" { // the commands allowed in a private dm room
 		dmRoomCMD(line, u, isUserSlack)
 		return
 	}
@@ -477,6 +478,15 @@ func exampleCodeCMD(_ string, u *user, _ bool) {
 
 func asciiArtCMD(_ string, u *user, _ bool) {
 	u.room.broadcast("", art)
+}
+
+func pwdCMD(line string, u *user, _ bool) {
+	if u.messaging != nil {
+		u.writeln("", u.messaging.name)
+		u.messaging.writeln("", u.messaging.name)
+	} else {
+		u.room.broadcast("", u.room.name)
+	}
 }
 
 func shrugCMD(line string, u *user, _ bool) {

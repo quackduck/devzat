@@ -330,6 +330,7 @@ func (u *user) rWriteln(msg string) {
 	}
 }
 
+
 func (u *user) pickUsername(possibleName string) (ok bool) {
 	possibleName = cleanName(possibleName)
 	var err error

@@ -14,6 +14,7 @@ import (
 
 var (
 	client = loadTwitterClient()
+	allowTweet = true
 )
 
 // Credentials stores Twitter creds
@@ -32,6 +33,10 @@ func sendCurrentUsersTwitterMessage() {
 	if len(mainRoom.users) == 0 {
 		return
 	}
+	if !allowTweet {
+		return
+	}
+	allowTweet = false
 	usersSnapshot := append(make([]*user, 0, len(mainRoom.users)), mainRoom.users...)
 	areUsersEqual := func(a []*user, b []*user) bool {
 		if len(a) != len(b) {
@@ -46,6 +51,7 @@ func sendCurrentUsersTwitterMessage() {
 	}
 	go func() {
 		time.Sleep(time.Second * 60)
+		allowTweet = true
 		if !areUsersEqual(mainRoom.users, usersSnapshot) {
 			return
 		}
