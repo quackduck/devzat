@@ -38,7 +38,7 @@ var (
 		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
 	cmdsRest = []cmd{
 		{"people", peopleCMD, "", "See info about nice people who joined"},
-		{"id", idCMD, "<user>", "Get a unique ID for a user (hashed IP)"},
+		{"id", idCMD, "<user>", "Get a unique ID for a user (hashed key)"},
 		{"eg-code", exampleCodeCMD, "", "Example syntax-highlighted code"},
 		{"banIP", banIPCMD, "<IP>", "Ban an IP (admin)"},
 		{"ban", banCMD, "<user>", "Ban <user> (admin)"},

@@ -131,7 +131,9 @@ func main() {
 			}
 		}
 	}()
-	err = ssh.ListenAndServe(fmt.Sprintf(":%d", port), nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"))
+	err = ssh.ListenAndServe(fmt.Sprintf(":%d", port), nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"), func(ctx ssh.Context, key ssh.PublicKey) bool {
+		return true // allow all keys, this lets us hash pubkeys later
+	})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -184,7 +186,12 @@ func newUser(s ssh.Session) *user {
 	w := pty.Window
 	host, _, _ := net.SplitHostPort(s.RemoteAddr().String()) // definitely should not give an err
 	hash := sha256.New()
-	hash.Write([]byte(host))
+	pubkey := s.PublicKey()
+	if pubkey != nil {
+		hash.Write([]byte(pubkey.Marshal()))
+	} else { // If we can't get the public key fall back to the IP.
+		hash.Write([]byte(host))
+	}
 
 	u := &user{
 		name:          s.User(),
