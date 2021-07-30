@@ -327,7 +327,6 @@ func (u *user) pickUsername(possibleName string) (ok bool) {
 	var err error
 	for {
 		if possibleName == "" {
-			u.writeln("", "No username chosen. Pick one:")
 		} else if strings.HasPrefix(possibleName, "#") || possibleName == "devbot" {
 			u.writeln("", "Your username is invalid. Pick a different one:")
 		} else if userDuplicate(u.room, possibleName) {
