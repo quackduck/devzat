@@ -20,7 +20,7 @@ var (
 	art    = getASCIIArt()
 	admins = []string{"d84447e08901391eb36aa8e6d9372b548af55bee3799cd3abb6cdd503fdf2d82", // Ishan Goel
 		"f5c7f9826b6e143f6e9c3920767680f503f259570f121138b2465bb2b052a85d", // Ella Xu - hackclub
-		"6056734cc4d9fce31569167735e4808382004629a2d7fe6cb486e663714452fc", // Tommy Pujol - hackclub
+		"ac416b02c106e7407e8e53e74b40d96d6f7c11e365c285a8ab825c219f443dcd", // Tommy Pujol - hackclub
 		"e9d47bb4522345d019086d0ed48da8ce491a491923a44c59fd6bfffe6ea73317", // Arav Narula - twitter
 		"1eab2de20e41abed903ab2f22e7ff56dc059666dbe2ebbce07a8afeece8d0424", // Shok - school
 		"12a9f108e7420460864de3d46610f722e69c80b2ac2fb1e2ada34aa952bbd73e", // jmw: github.com/ciearius
@@ -67,7 +67,7 @@ func autogenCommands(cmds []cmd) string {
 // check if a user is an admin
 func auth(u *user) bool {
 	for _, id := range admins {
-		if u.uid == id || u.addr == id {
+		if u.id == id || u.addr == id {
 			return true
 		}
 	}

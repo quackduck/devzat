@@ -339,8 +339,7 @@ func idCMD(line string, u *user, _ bool) {
 		u.room.broadcast("", "User not found")
 		return
 	}
-	u.room.broadcast("IP based id", victim.uid)
-	u.room.broadcast("Pubkey based id", victim.cid)
+	u.room.broadcast("", victim.id)
 }
 
 func nickCMD(line string, u *user, _ bool) {
