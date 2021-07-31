@@ -131,9 +131,12 @@ func main() {
 			}
 		}
 	}()
-	err = ssh.ListenAndServe(fmt.Sprintf(":%d", port), nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"), func(ctx ssh.Context, key ssh.PublicKey) bool {
-		return true // allow all keys, this lets us hash pubkeys later
+
+	publicKeyOption := ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
+		return true // allow all keys, or use ssh.KeysEqual() to compare against known keys
 	})
+
+	err = ssh.ListenAndServe(fmt.Sprintf(":%d", port), nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"), publicKeyOption)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -327,7 +330,6 @@ func (u *user) rWriteln(msg string) {
 		u.term.Write([]byte(msg + "\n"))
 	}
 }
-
 
 func (u *user) pickUsername(possibleName string) (ok bool) {
 	possibleName = cleanName(possibleName)
