@@ -88,6 +88,9 @@ func (u *user) changeColor(colorName string) error {
 		return err
 	}
 	u.color = style.name
+	if colorName == "random" {
+		u.writeln("", "You're now using " + u.color)
+	}
 	u.name = style.apply(u.name)
 	u.term.SetPrompt(u.name + ": ")
 	saveBans()
