@@ -43,7 +43,7 @@ We also have a Slack bridge! If you're on the [Hack Club](https://hackclub.com) 
 
 ### Public key
 
-In order to keep track of who is connected, Devzat uses public key authentication. If when trying to connect through port 22 you are denied access with the message `psedo@devzat.hackclub.com: Permission denied (publickey).`, you should generate a key pair on your machine with the command `ssh-keygen`. Alternatively, you can connect through port 443 to bypass the public key authentication.
+Devzat uses public keys to identify users. If you are denied access: `foo@devzat.hackclub.com: Permission denied (publickey)`, you should generate an ssh key pair with the command `ssh-keygen`
 
 ### Help
 
