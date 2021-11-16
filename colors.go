@@ -87,14 +87,27 @@ func (u *user) changeColor(colorName string) error {
 	if err != nil {
 		return err
 	}
-	u.color = style.name
-	if colorName == "random" {
-		u.room.broadcast("", "You're now using " + u.color)
+	if strings.HasPrefix(colorName, "bg") {
+		u.colorBG = style.name
+	} else {
+		u.color = style.name
 	}
-	u.name = style.apply(u.name)
+	styleFG, _ := getStyle(u.color) // error can be discarded as it have already been checked when initialized
+	styleBG, _ := getStyle(u.colorBG)
+	if colorName == "random" {
+		u.room.broadcast("", "You're now using "+u.color)
+	}
+	u.name = styleFG.apply(u.name)
+	u.name = styleBG.apply(u.name)
 	u.term.SetPrompt(u.name + ": ")
 	saveBans()
 	return nil
+}
+
+// Ensure that both color functions for a user are properly set
+func (u *user) initColor() {
+	u.color = "white"
+	u.colorBG = "bg_off"
 }
 
 // Turns name into a style (defaults to nil)
@@ -104,6 +117,9 @@ func getStyle(name string) (*style, error) {
 		g := rand.Intn(6)
 		b := rand.Intn(6)
 		return &style{strconv.Itoa(r*100 + g*10 + b), buildStyle(ansi256(uint8(r), uint8(g), uint8(b)))}, nil
+	}
+	if name == "bg_off" {
+		return &style{"bg_off", func(a string) string { return a }}, nil // Used to remove one's background
 	}
 	for i := range styles {
 		if styles[i].name == name {
@@ -143,5 +159,5 @@ func getStyle(name string) (*style, error) {
 			colors = append(colors, styles[i].name)
 		}
 		return colors
-	}(), ", ") + "  \nMake your own colors using hex (#A0FFFF, etc) or RGB values from 0 to 5 (for example, ./color 530, a pretty nice orange). Set bg color like this: ./color bg530.  \nThere's also a few secret colors :)")
+	}(), ", ") + "  \nMake your own colors using hex (#A0FFFF, etc) or RGB values from 0 to 5 (for example, `color 530`, a pretty nice orange). Set bg color like this: `color bg530`; remove bg color with `bg_off`.\nThere's also a few secret colors :)")
 }

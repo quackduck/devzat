@@ -58,6 +58,7 @@ type user struct {
 	bell          bool
 	pingEverytime bool
 	color         string
+	colorBG       string
 	id            string
 	addr          string
 	win           ssh.Window
@@ -352,6 +353,7 @@ func (u *user) pickUsername(possibleName string) (ok bool) {
 	}
 
 	u.name = possibleName
+	u.initColor()
 	idx := rand.Intn(len(styles) * 140 / 100) // 40% chance of a random color
 	if idx >= len(styles) {                   // allow the possibility of having a completely random RGB color
 		u.changeColor("random")
