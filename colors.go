@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"strconv"
 	"strings"
+	"fmt"
 
 	"github.com/acarl005/stripansi"
 	"github.com/jwalton/gchalk"
@@ -116,7 +117,7 @@ func getStyle(name string) (*style, error) {
 		r := rand.Intn(6)
 		g := rand.Intn(6)
 		b := rand.Intn(6)
-		return &style{strconv.Itoa(r*100 + g*10 + b), buildStyle(ansi256(uint8(r), uint8(g), uint8(b)))}, nil
+		return &style{fmt.Sprintf("%03d", r*100 + g*10 + b), buildStyle(ansi256(uint8(r), uint8(g), uint8(b)))}, nil
 	}
 	if name == "bg_off" {
 		return &style{"bg_off", func(a string) string { return a }}, nil // Used to remove one's background
