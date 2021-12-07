@@ -223,7 +223,7 @@ func newUser(s ssh.Session) *user {
 			}
 			l.Println("Rejected " + u.name + " [" + u.addr + "]")
 			u.writeln(devbot, "**You are banned**. If you feel this was done wrongly, please reach out at github.com/quackduck/devzat/issues. Please include the following information: [ID "+u.id+"]")
-			u.close("")
+			u.closeBackend()
 			return nil
 		}
 	}
@@ -268,18 +268,24 @@ func newUser(s ssh.Session) *user {
 	return u
 }
 
+// Removes an user and print Twitter and chat message
 func (u *user) close(msg string) {
 	u.closeOnce.Do(func() {
-		u.room.usersMutex.Lock()
-		u.room.users = remove(u.room.users, u)
-		u.room.usersMutex.Unlock()
+		u.closeBackend()
 		go sendCurrentUsersTwitterMessage()
 		u.room.broadcast(devbot, msg)
 		if time.Since(u.joinTime) > time.Minute/2 {
 			u.room.broadcast(devbot, u.name+" stayed on for "+printPrettyDuration(time.Since(u.joinTime)))
 		}
-		u.session.Close()
 	})
+}
+
+// Removes an user in a silent way, used by the close function
+func (u *user) closeBackend() {
+	u.room.usersMutex.Lock()
+	u.room.users = remove(u.room.users, u)
+	u.room.usersMutex.Unlock()
+	u.session.Close()
 }
 
 func (u *user) writeln(senderName string, msg string) {
