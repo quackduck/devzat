@@ -1,0 +1,1 @@
+\`\`\`go\\nimport whatever\\nfmt.Print("yo")\\n\`\`\`
