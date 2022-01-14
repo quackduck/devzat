@@ -41,6 +41,10 @@ ssh chat
 
 We also have a Slack bridge! If you're on the [Hack Club](https://hackclub.com) Slack, check out the `#ssh-chat-bridge` channel!
 
+### Public key
+
+Devzat uses public keys to identify users. If you are denied access: `foo@devzat.hackclub.com: Permission denied (publickey)`, you should generate an ssh key pair with the command `ssh-keygen`
+
 ### Help
 
 ```text
