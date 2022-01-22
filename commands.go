@@ -306,7 +306,7 @@ func cdCMD(rest string, u *user, _ bool) {
 	}
 	peer, ok := findUserByName(u.room, name)
 	if !ok {
-		u.writeln(devbot, "No such person lol, who you wanna dm? (you might be in the wrong room)")
+		u.writeln(devbot, "No such person lol, who do you want to dm? (you might be in the wrong room)")
 		return
 	}
 	u.messaging = peer
@@ -321,9 +321,19 @@ func tzCMD(tzArg string, u *user, _ bool) {
 	}
 	tzArgList := strings.Fields(tzArg)
 	tz := tzArgList[0]
+	switch tz {
+	case "PST", "PDT":
+		tz = "PST8PDT"
+	case "CST", "CDT":
+		tz = "CST6CDT"
+	case "EST", "EDT":
+		tz = "EST5EDT"
+	case "MT":
+		tz = "America/Phoenix"
+	}
 	u.timezone, err = time.LoadLocation(tz)
 	if err != nil {
-		u.room.broadcast(devbot, "Weird timezone you have there, use Continent/City, EST, PST or see nodatime.org/TimeZones!")
+		u.room.broadcast(devbot, "Weird timezone you have there, use the format Continent/City, the usual US timezones (PST, PDT, EST, EDT...) or check nodatime.org/TimeZones!")
 		return
 	}
 	if len(tzArgList) == 2 {
@@ -331,7 +341,7 @@ func tzCMD(tzArg string, u *user, _ bool) {
 	} else {
 		u.formatTime24 = false
 	}
-	u.room.broadcast(devbot, "Done!")
+	u.room.broadcast(devbot, "Changed your timezone!")
 }
 
 func idCMD(line string, u *user, _ bool) {
