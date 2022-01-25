@@ -1,8 +1,6 @@
 package main
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"runtime/debug"
 	"sort"
@@ -373,8 +371,7 @@ func banIPCMD(line string, u *user, _ bool) {
 
 func listBansCMD(_ string, u *user, _ bool) {
 	for i := 0; i < len(bans); i++ {
-		sum := sha256.Sum256([]byte(bans[i]))
-		u.room.broadcast(devbot, cyan.Cyan(strconv.Itoa(i+1))+". "+hex.EncodeToString(sum[:]))
+		u.room.broadcast(devbot, cyan.Cyan(strconv.Itoa(i+1))+". "+bans[i])
 	}
 }
 
