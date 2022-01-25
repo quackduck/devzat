@@ -37,9 +37,10 @@ func getMsgsFromSlack() {
 			u, _ := api.GetUserInfo(msg.User)
 			if !strings.HasPrefix(text, "./hide") {
 				h := sha1.Sum([]byte(u.ID))
-				i, _ := strconv.ParseInt(hex.EncodeToString(h[:1]), 16, 0)
+				i, _ := strconv.ParseInt(hex.EncodeToString(h[:2]), 16, 0) // two bytes as an int
 				uslack.name = yellow.Paint("HC ") + (styles[int(i)%len(styles)]).apply(strings.Fields(u.RealName)[0])
-				runCommands(text, uslack, true)
+				uslack.isSlack = true
+				runCommands(text, uslack)
 			}
 		case *slack.ConnectedEvent:
 			l.Println("Connected to Slack")
@@ -69,9 +70,9 @@ func getSendToSlackChan() chan string {
 	go func() {
 		for msg := range msgs {
 			msg = strings.ReplaceAll(stripansi.Strip(msg), `\n`, "\n")
-			if strings.HasPrefix(msg, "sshchat: ") { // just in case
-				continue
-			}
+			//if strings.HasPrefix(msg, "sshchat: ") { // just in case
+			//	continue
+			//}
 			rtm.SendMessage(rtm.NewOutgoingMessage(msg, slackChannelID))
 		}
 	}()

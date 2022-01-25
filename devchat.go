@@ -1,9 +1,7 @@
 package main
 
 import (
-	"crypto/sha256"
 	_ "embed"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"log"
@@ -29,13 +27,13 @@ var (
 	port        = 22
 	scrollback  = 16
 	profilePort = 5555
-	// should this instance run offline?
+	// should this instance run offline? (should it not connect to slack or twitter?)
 	offline = os.Getenv("DEVZAT_OFFLINE") != ""
 
 	mainRoom         = &room{"#main", make([]*user, 0, 10), sync.Mutex{}}
 	rooms            = map[string]*room{mainRoom.name: mainRoom}
 	backlog          = make([]backlogMessage, 0, scrollback)
-	bans             = make([]string, 0, 10)
+	bans             = make([]ban, 0, 10)
 	idsInMinToTimes  = make(map[string]int, 10)
 	antispamMessages = make(map[string]int)
 
@@ -45,6 +43,11 @@ var (
 	startupTime = time.Now()
 )
 
+type ban struct {
+	Addr string
+	ID   string
+}
+
 type room struct {
 	name       string
 	users      []*user
@@ -52,23 +55,28 @@ type room struct {
 }
 
 type user struct {
-	name          string
-	session       ssh.Session
-	term          *terminal.Terminal
+	name    string
+	session ssh.Session
+	term    *terminal.Terminal
+
+	room      *room
+	messaging *user // currently messaging this user in a DM
+
 	bell          bool
 	pingEverytime bool
-	color         string
-	colorBG       string
-	id            string
-	//addr          string
+	isSlack       bool
+	formatTime24  bool
+
+	color   string
+	colorBG string
+	id      string
+	addr    string
+
 	win           ssh.Window
 	closeOnce     sync.Once
 	lastTimestamp time.Time
 	joinTime      time.Time
 	timezone      *time.Location
-	formatTime24  bool
-	room          *room
-	messaging     *user
 }
 
 type backlogMessage struct {
@@ -80,7 +88,10 @@ type backlogMessage struct {
 // TODO: have a web dashboard that shows logs
 func main() {
 	go func() {
-		http.ListenAndServe(fmt.Sprintf(":%d", profilePort), nil)
+		err := http.ListenAndServe(fmt.Sprintf(":%d", profilePort), nil)
+		if err != nil {
+			l.Println(err)
+		}
 	}()
 	devbot = green.Paint("devbot")
 	rand.Seed(time.Now().Unix())
@@ -186,26 +197,26 @@ func newUser(s ssh.Session) *user {
 	pty, winChan, _ := s.Pty()
 	w := pty.Window
 	host, _, _ := net.SplitHostPort(s.RemoteAddr().String()) // definitely should not give an err
-	hash := sha256.New()
+
+	toHash := ""
+
 	pubkey := s.PublicKey()
 	if pubkey != nil {
-		hash.Write(pubkey.Marshal())
+		toHash = string(pubkey.Marshal())
 	} else { // If we can't get the public key fall back to the IP.
-		hash.Write([]byte(host))
+		toHash = host
 	}
 
 	u := &user{
-		name:    s.User(),
-		session: s,
-		term:    term,
-		bell:    true,
-		id:      hex.EncodeToString(hash.Sum(nil)),
-		//addr:          host,
+		name:          s.User(),
+		session:       s,
+		term:          term,
+		bell:          true,
+		id:            shasum(toHash),
+		addr:          host,
 		win:           w,
 		lastTimestamp: time.Now(),
 		joinTime:      time.Now(),
-		timezone:      nil,
-		formatTime24:  false,
 		room:          mainRoom}
 
 	go func() {
@@ -215,20 +226,20 @@ func newUser(s ssh.Session) *user {
 
 	l.Println("Connected " + u.name + " [" + u.id + "]")
 
-	for i := range bans {
-		if u.id == bans[i] { // allow banning by ID
-			l.Println("Rejected " + u.name + " [" + host + "]")
-			u.writeln(devbot, "**You are banned**. If you feel this was a mistake, please reach out at github.com/quackduck/devzat/issues or email igoel.mail@gmail.com. Please include the following information: [ID "+u.id+"]")
-			u.closeBackend()
-			return nil
-		}
+	//for i := range bans {
+	if bansContains(bans, u.addr, u.id) {
+		l.Println("Rejected " + u.name + " [" + host + "]")
+		u.writeln(devbot, "**You are banned**. If you feel this was a mistake, please reach out at github.com/quackduck/devzat/issues or email igoel.mail@gmail.com. Please include the following information: [ID "+u.id+"]")
+		u.closeBackend()
+		return nil
 	}
+	//}
 	idsInMinToTimes[u.id]++
 	time.AfterFunc(60*time.Second, func() {
 		idsInMinToTimes[u.id]--
 	})
 	if idsInMinToTimes[u.id] > 6 {
-		bans = append(bans, u.id)
+		bans = append(bans, ban{u.addr, u.id})
 		mainRoom.broadcast(devbot, u.name+" has been banned automatically. ID: "+u.id)
 		return nil
 	}
@@ -244,14 +255,17 @@ func newUser(s ssh.Session) *user {
 		}
 	}
 
-	if !u.pickUsername(s.User()) { // user exited / had err
+	if err := u.pickUsername(s.User()); err != nil { // user exited or had some error
+		l.Println(err)
 		s.Close()
 		return nil
 	}
+
 	mainRoom.usersMutex.Lock()
 	mainRoom.users = append(mainRoom.users, u)
 	go sendCurrentUsersTwitterMessage()
 	mainRoom.usersMutex.Unlock()
+
 	switch len(mainRoom.users) - 1 {
 	case 0:
 		u.writeln("", blue.Paint("Welcome to the chat. There are no more users"))
@@ -264,7 +278,7 @@ func newUser(s ssh.Session) *user {
 	return u
 }
 
-// Removes an user and print Twitter and chat message
+// Removes a user and prints Twitter and chat message
 func (u *user) close(msg string) {
 	u.closeOnce.Do(func() {
 		u.closeBackend()
@@ -276,7 +290,7 @@ func (u *user) close(msg string) {
 	})
 }
 
-// Removes an user in a silent way, used by the close function
+// Removes a user silently, used to close banned users
 func (u *user) closeBackend() {
 	u.room.usersMutex.Lock()
 	u.room.users = remove(u.room.users, u)
@@ -331,7 +345,7 @@ func (u *user) rWriteln(msg string) {
 	}
 }
 
-func (u *user) pickUsername(possibleName string) (ok bool) {
+func (u *user) pickUsername(possibleName string) error {
 	possibleName = cleanName(possibleName)
 	var err error
 	for {
@@ -348,21 +362,20 @@ func (u *user) pickUsername(possibleName string) (ok bool) {
 		u.term.SetPrompt("> ")
 		possibleName, err = u.term.ReadLine()
 		if err != nil {
-			l.Println(err)
-			return false
+			return err
 		}
 		possibleName = cleanName(possibleName)
 	}
 
 	u.name = possibleName
 	u.initColor()
-	idx := rand.Intn(len(styles) * 140 / 100) // 40% chance of a random color
-	if idx >= len(styles) {                   // allow the possibility of having a completely random RGB color
-		u.changeColor("random")
-		return true
+
+	if rand.Float64() <= 0.4 { // 40% chance of being a random color
+		u.changeColor("random") // also sets prompt
+		return nil
 	}
-	u.changeColor(styles[idx].name) // also sets prompt
-	return true
+	u.changeColor(styles[rand.Intn(len(styles))].name)
+	return nil
 }
 
 func (u *user) changeRoom(r *room) {
@@ -403,14 +416,24 @@ func (u *user) repl() {
 			antispamMessages[u.id]--
 		})
 		if antispamMessages[u.id] >= 50 {
-			if !stringsContain(bans, u.id) {
-				bans = append(bans, u.id)
+			if !bansContains(bans, u.addr, u.id) {
+				bans = append(bans, ban{u.addr, u.id})
 				saveBans()
 			}
 			u.writeln(devbot, "anti-spam triggered")
 			u.close(red.Paint(u.name + " has been banned for spamming"))
 			return
 		}
-		runCommands(line, u, false)
+		runCommands(line, u)
 	}
+}
+
+// bansContains reports if the addr or id is found in the bans list
+func bansContains(b []ban, addr string, id string) bool {
+	for i := 0; i < len(b); i++ {
+		if b[i].Addr == addr || b[i].ID == id {
+			return true
+		}
+	}
+	return false
 }

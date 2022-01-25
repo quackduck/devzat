@@ -2,7 +2,9 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
 	_ "embed"
+	"encoding/hex"
 	"encoding/json"
 	"io/ioutil"
 	"math/rand"
@@ -256,11 +258,7 @@ func devbotRespond(room *room, messages []string, chance int) {
 	}
 }
 
-func stringsContain(a []string, s string) bool {
-	for i := range a {
-		if a[i] == s {
-			return true
-		}
-	}
-	return false
+func shasum(s string) string {
+	h := sha256.Sum256([]byte(s))
+	return hex.EncodeToString(h[:])
 }
