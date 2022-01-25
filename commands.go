@@ -407,7 +407,7 @@ func banCMD(line string, u *user, _ bool) {
 		return
 	}
 	//bansMutex.Lock()
-	bans = append(bans, victim.addr)
+	bans = append(bans, victim.id)
 	//bansMutex.Unlock()
 	saveBans()
 	victim.close(victim.name + " has been banned by " + u.name)

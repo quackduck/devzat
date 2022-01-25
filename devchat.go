@@ -60,7 +60,7 @@ type user struct {
 	color         string
 	colorBG       string
 	id            string
-	addr          string
+	//addr          string
 	win           ssh.Window
 	closeOnce     sync.Once
 	lastTimestamp time.Time
@@ -195,12 +195,12 @@ func newUser(s ssh.Session) *user {
 	}
 
 	u := &user{
-		name:          s.User(),
-		session:       s,
-		term:          term,
-		bell:          true,
-		id:            hex.EncodeToString(hash.Sum(nil)),
-		addr:          host,
+		name:    s.User(),
+		session: s,
+		term:    term,
+		bell:    true,
+		id:      hex.EncodeToString(hash.Sum(nil)),
+		//addr:          host,
 		win:           w,
 		lastTimestamp: time.Now(),
 		joinTime:      time.Now(),
@@ -216,12 +216,8 @@ func newUser(s ssh.Session) *user {
 	l.Println("Connected " + u.name + " [" + u.id + "]")
 
 	for i := range bans {
-		if u.addr == bans[i] || u.id == bans[i] { // allow banning by ID
-			if u.id == bans[i] { // then replace the ID in the ban with the actual IP
-				bans[i] = u.addr
-				saveBans()
-			}
-			l.Println("Rejected " + u.name + " [" + u.addr + "]")
+		if u.id == bans[i] { // allow banning by ID
+			l.Println("Rejected " + u.name + " [" + host + "]")
 			u.writeln(devbot, "**You are banned**. If you feel this was a mistake, please reach out at github.com/quackduck/devzat/issues or email igoel.mail@gmail.com. Please include the following information: [ID "+u.id+"]")
 			u.closeBackend()
 			return nil
@@ -232,8 +228,8 @@ func newUser(s ssh.Session) *user {
 		idsInMinToTimes[u.id]--
 	})
 	if idsInMinToTimes[u.id] > 6 {
-		bans = append(bans, u.addr)
-		mainRoom.broadcast(devbot, u.name+" has been banned automatically. IP: "+u.addr)
+		bans = append(bans, u.id)
+		mainRoom.broadcast(devbot, u.name+" has been banned automatically. ID: "+u.id)
 		return nil
 	}
 	if len(backlog) > 0 {
@@ -407,8 +403,8 @@ func (u *user) repl() {
 			antispamMessages[u.id]--
 		})
 		if antispamMessages[u.id] >= 50 {
-			if !stringsContain(bans, u.addr) {
-				bans = append(bans, u.addr)
+			if !stringsContain(bans, u.id) {
+				bans = append(bans, u.id)
 				saveBans()
 			}
 			u.writeln(devbot, "anti-spam triggered")
