@@ -378,16 +378,13 @@ func listBansCMD(_ string, u *user, _ bool) {
 	}
 }
 
-func unbanCMD(ip string, u *user, _ bool) {
+func unbanCMD(id string, u *user, _ bool) {
 	if !auth(u) {
 		u.room.broadcast(devbot, "Not authorized")
 		return
 	}
 	for i := 0; i < len(bans); i++ {
-		sum := sha256.Sum256([]byte(bans[i]))
-		id := hex.EncodeToString(sum[:])
-
-		if bans[i] == ip || bans[i] == id {
+		if bans[i] == id {
 			u.room.broadcast(devbot, "Unbanned person: "+bans[i])
 			// remove this ban
 			bans = append(bans[:i], bans[i+1:]...)
