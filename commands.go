@@ -34,7 +34,7 @@ var (
 		{"clear", clearCMD, "", "Clear the screen"},
 		{"hang", hangCMD, "<char|word>", "Play hangman"}, // won't actually run, here just to show in docs
 		{"tic", ticCMD, "<cell num>", "Play tic tac toe!"},
-		{"cd", cdCMD, "#room/user", "Join #room, DM user or run cd to see a list"}, // won't actually run, here just to show in docs
+		{"cd", cdCMD, "#room|user", "Join #room, DM user or run cd to see a list"}, // won't actually run, here just to show in docs
 		{"tz", tzCMD, "<zone> [24h]", "Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h"},
 		{"nick", nickCMD, "<name>", "Change your username"},
 		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
@@ -42,9 +42,10 @@ var (
 		{"people", peopleCMD, "", "See info about nice people who joined"},
 		{"id", idCMD, "<user>", "Get a unique ID for a user (hashed key)"},
 		{"eg-code", exampleCodeCMD, "", "Example syntax-highlighted code"},
-		{"banIP", banIPCMD, "<IP>", "Ban an IP (admin)"},
+		{"lsbans", listBansCMD, "", "List banned IDs"},
 		{"ban", banCMD, "<user>", "Ban <user> (admin)"},
-		{"unban", unbanCMD, "<user>", "Unban <IP|ID> (admin)"},
+		{"unban", unbanCMD, "<IP|ID>", "Unban a person (admin)"},
+		{"banIP", banIPCMD, "<IP>", "Ban an IP (admin)"},
 		{"kick", kickCMD, "<user>", "Kick <user> (admin)"},
 		{"art", asciiArtCMD, "", "Show some panda art"},
 		{"pwd", pwdCMD, "", "Show your current room"},
@@ -370,6 +371,13 @@ func banIPCMD(line string, u *user, _ bool) {
 	saveBans()
 }
 
+func listBansCMD(_ string, u *user, _ bool) {
+	for i := 0; i < len(bans); i++ {
+		sum := sha256.Sum256([]byte(bans[i]))
+		u.room.broadcast(devbot, cyan.Cyan(strconv.Itoa(i+1))+". "+hex.EncodeToString(sum[:]))
+	}
+}
+
 func unbanCMD(ip string, u *user, _ bool) {
 	if !auth(u) {
 		u.room.broadcast(devbot, "Not authorized")
@@ -385,9 +393,7 @@ func unbanCMD(ip string, u *user, _ bool) {
 			bans = append(bans[:i], bans[i+1:]...)
 		}
 	}
-	//bans = append(bans, victim.addr)
 	saveBans()
-	//victim.close(victim.name + " has been banned by " + u.name)
 }
 
 func banCMD(line string, u *user, _ bool) {
