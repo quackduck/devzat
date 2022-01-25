@@ -189,7 +189,7 @@ func newUser(s ssh.Session) *user {
 	hash := sha256.New()
 	pubkey := s.PublicKey()
 	if pubkey != nil {
-		hash.Write([]byte(pubkey.Marshal()))
+		hash.Write(pubkey.Marshal())
 	} else { // If we can't get the public key fall back to the IP.
 		hash.Write([]byte(host))
 	}
@@ -222,7 +222,7 @@ func newUser(s ssh.Session) *user {
 				saveBans()
 			}
 			l.Println("Rejected " + u.name + " [" + u.addr + "]")
-			u.writeln(devbot, "**You are banned**. If you feel this was done wrongly, please reach out at github.com/quackduck/devzat/issues. Please include the following information: [ID "+u.id+"]")
+			u.writeln(devbot, "**You are banned**. If you feel this was a mistake, please reach out at github.com/quackduck/devzat/issues or email igoel.mail@gmail.com. Please include the following information: [ID "+u.id+"]")
 			u.closeBackend()
 			return nil
 		}

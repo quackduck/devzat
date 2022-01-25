@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"runtime/debug"
 	"sort"
@@ -42,6 +44,7 @@ var (
 		{"eg-code", exampleCodeCMD, "", "Example syntax-highlighted code"},
 		{"banIP", banIPCMD, "<IP>", "Ban an IP (admin)"},
 		{"ban", banCMD, "<user>", "Ban <user> (admin)"},
+		{"unban", unbanCMD, "<user>", "Unban <IP|ID> (admin)"},
 		{"kick", kickCMD, "<user>", "Kick <user> (admin)"},
 		{"art", asciiArtCMD, "", "Show some panda art"},
 		{"pwd", pwdCMD, "", "Show your current room"},
@@ -365,6 +368,26 @@ func banIPCMD(line string, u *user, _ bool) {
 	}
 	bans = append(bans, line)
 	saveBans()
+}
+
+func unbanCMD(ip string, u *user, _ bool) {
+	if !auth(u) {
+		u.room.broadcast(devbot, "Not authorized")
+		return
+	}
+	for i := 0; i < len(bans); i++ {
+		sum := sha256.Sum256([]byte(bans[i]))
+		id := hex.EncodeToString(sum[:])
+
+		if bans[i] == ip || bans[i] == id {
+			u.room.broadcast(devbot, "Unbanned person: "+bans[i])
+			// remove this ban
+			bans = append(bans[:i], bans[i+1:]...)
+		}
+	}
+	//bans = append(bans, victim.addr)
+	saveBans()
+	//victim.close(victim.name + " has been banned by " + u.name)
 }
 
 func banCMD(line string, u *user, _ bool) {
