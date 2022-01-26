@@ -29,7 +29,9 @@ var (
 		"12a9f108e7420460864de3d46610f722e69c80b2ac2fb1e2ada34aa952bbd73e", // jmw: github.com/ciearius
 		"2433e7c03997d13f9117ded9e36cd2d23bddc4d588b8717c4619bedeb3b7e9ad", // @epic: github.com/TAG-Epic
 		"c90cf5ea8a9bf831a9024ecfd9876a7116a2382653a9ce84a6d80b4dcfa2f979", // cole: github.com/ColeDrain
-		"f365953cfaedde491aaeabde53b3e078806a6dea0b1c9dec04231d9d7d2ba02e"} // Arkaeriit: github.com/Arkaeriit
+		"f365953cfaedde491aaeabde53b3e078806a6dea0b1c9dec04231d9d7d2ba02e", // Arkaeriit: github.com/Arkaeriit
+		"111d1c193354309b040854a74aeb15c985d1fbe4390128dd035fe5407c71f2fd", // elitedino: github.com/elitedino
+	}
 )
 
 func getASCIIArt() string {
