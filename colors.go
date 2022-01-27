@@ -8,7 +8,9 @@ import (
 	"strings"
 
 	"github.com/acarl005/stripansi"
+	chromastyles "github.com/alecthomas/chroma/styles"
 	"github.com/jwalton/gchalk"
+	markdown "github.com/quackduck/go-term-markdown"
 )
 
 var (
@@ -55,6 +57,10 @@ var (
 			return buf
 		}}}
 )
+
+func init() {
+	markdown.CurrentTheme = chromastyles.ParaisoDark
+}
 
 type style struct {
 	name  string

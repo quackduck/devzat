@@ -34,7 +34,7 @@ var (
 	rooms            = map[string]*room{mainRoom.name: mainRoom}
 	backlog          = make([]backlogMessage, 0, scrollback)
 	bans             = make([]ban, 0, 10)
-	idsInMinToTimes  = make(map[string]int, 10)
+	idsInMinToTimes  = make(map[string]int, 10) // TODO: maybe add some IP-based factor to disallow rapid key-gen attempts
 	antispamMessages = make(map[string]int)
 
 	logfile, _  = os.OpenFile("log.txt", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0666)
