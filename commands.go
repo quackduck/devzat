@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	chromastyles "github.com/alecthomas/chroma/styles"
+	markdown "github.com/quackduck/go-term-markdown"
 	"github.com/shurcooL/tictactoe"
 )
 
@@ -35,15 +37,15 @@ var (
 		{"cd", cdCMD, "#room|user", "Join #room, DM user or run cd to see a list"}, // won't actually run, here just to show in docs
 		{"tz", tzCMD, "<zone> [24h]", "Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h"},
 		{"nick", nickCMD, "<name>", "Change your username"},
+		{"theme", themeCMD, "<theme>|list", "Change the syntax highlighting theme"},
 		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
 	cmdsRest = []cmd{
 		{"people", peopleCMD, "", "See info about nice people who joined"},
 		{"id", idCMD, "<user>", "Get a unique ID for a user (hashed key)"},
-		{"eg-code", exampleCodeCMD, "", "Example syntax-highlighted code"},
+		{"eg-code", exampleCodeCMD, "[big]", "Example syntax-highlighted code"},
 		{"lsbans", listBansCMD, "", "List banned IDs"},
 		{"ban", banCMD, "<user>", "Ban <user> (admin)"},
 		{"unban", unbanCMD, "<IP|ID>", "Unban a person (admin)"},
-		//{"banIP", banIPCMD, "<IP>", "Ban an IP (admin)"},
 		{"kick", kickCMD, "<user>", "Kick <user> (admin)"},
 		{"art", asciiArtCMD, "", "Show some panda art"},
 		{"pwd", pwdCMD, "", "Show your current room"},
@@ -360,15 +362,6 @@ func nickCMD(line string, u *user) {
 	return
 }
 
-//func banIPCMD(line string, u *user, _ bool) {
-//	if !auth(u) {
-//		u.room.broadcast(devbot, "Not authorized")
-//		return
-//	}
-//	bans = append(bans, line)
-//	saveBans()
-//}
-
 func listBansCMD(_ string, u *user) {
 	msg := "Printing bans by ID:  \n"
 	for i := 0; i < len(bans); i++ {
@@ -402,9 +395,7 @@ func banCMD(line string, u *user) {
 		u.room.broadcast(devbot, "Not authorized")
 		return
 	}
-	//bansMutex.Lock()
 	bans = append(bans, ban{victim.addr, victim.id})
-	//bansMutex.Unlock()
 	saveBans()
 	victim.close(victim.name + " has been banned by " + u.name)
 }
@@ -507,8 +498,26 @@ unlink file`)
 	}
 }
 
-func exampleCodeCMD(_ string, u *user) {
+func exampleCodeCMD(line string, u *user) {
+	if line == "big" {
+		u.room.broadcast(devbot, "```go\npackage main\n\nimport \"fmt\"\n\nfunc sum(nums ...int) {\n    fmt.Print(nums, \" \")\n    total := 0\n    for _, num := range nums {\n        total += num\n    }\n    fmt.Println(total)\n}\n\nfunc main() {\n\n    sum(1, 2)\n    sum(1, 2, 3)\n\n    nums := []int{1, 2, 3, 4}\n    sum(nums...)\n}\n```")
+	}
 	u.room.broadcast(devbot, "\n```go\npackage main\nimport \"fmt\"\nfunc main() {\n   fmt.Println(\"Example!\")\n}\n```")
+}
+
+func themeCMD(line string, u *user) {
+	if line == "list" {
+		u.room.broadcast(devbot, "Available themes: "+strings.Join(chromastyles.Names(), ", "))
+		return
+	}
+	for _, name := range chromastyles.Names() {
+		if name == line {
+			markdown.CurrentTheme = chromastyles.Get(name)
+			u.room.broadcast(devbot, "Theme set to "+name)
+			return
+		}
+	}
+	u.room.broadcast(devbot, "What theme is that? Use theme list to see what's available.")
 }
 
 func asciiArtCMD(_ string, u *user) {
