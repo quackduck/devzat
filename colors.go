@@ -149,7 +149,7 @@ func getStyle(name string) (*style, error) {
 	if strings.HasPrefix(name, "#") {
 		return &style{name, buildStyle(chalk.WithHex(name))}, nil
 	}
-	if len(name) == 4 || len(name) == 6 {
+	if len(name) == 3 || len(name) == 6 {
 		rgbCode := name
 		if strings.HasPrefix(name, "bg-") {
 			rgbCode = strings.TrimPrefix(rgbCode, "bg-")
