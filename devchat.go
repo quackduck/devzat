@@ -266,6 +266,8 @@ func newUser(s ssh.Session) *user {
 	go sendCurrentUsersTwitterMessage()
 	mainRoom.usersMutex.Unlock()
 
+	u.term.SetBracketedPasteMode(true) // experimental paste bracketing support
+
 	switch len(mainRoom.users) - 1 {
 	case 0:
 		u.writeln("", blue.Paint("Welcome to the chat. There are no more users"))
@@ -398,18 +400,26 @@ func (u *user) changeRoom(r *room) {
 func (u *user) repl() {
 	for {
 		line, err := u.term.ReadLine()
-		line = strings.TrimSpace(line)
-
 		if err == io.EOF {
 			u.close(u.name + " has left the chat")
 			return
 		}
+		line += "\n"
+		for err == terminal.ErrPasteIndicator {
+			additionalLine := ""
+			//fmt.Println("Paste detected!!!")
+			additionalLine, err = u.term.ReadLine()
+			line += additionalLine + "\n"
+			//fmt.Println("`" + line + "`")
+		}
+		line = strings.TrimSpace(line)
+
 		if err != nil {
 			l.Println(u.name, err)
 			u.close(u.name + " has left the chat due to an error")
 			return
 		}
-		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(lenString(u.name+line)+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
+		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", strings.Count(line, "\n")+int(math.Ceil(float64(lenString(u.name+line)+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
 
 		antispamMessages[u.id]++
 		time.AfterFunc(5*time.Second, func() {
