@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math"
 	"math/rand"
 	"net"
 	"net/http"
@@ -405,26 +404,44 @@ func (u *user) repl() {
 			return
 		}
 		line += "\n"
+		//oldPrompt := u.name + ": "
 		for err == terminal.ErrPasteIndicator {
+			//u.term.SetPrompt(strings.Repeat(" ", lenString(u.name)+2))
+			u.term.SetPrompt("")
 			additionalLine := ""
-			//fmt.Println("Paste detected!!!")
 			additionalLine, err = u.term.ReadLine()
+			additionalLine = strings.ReplaceAll(additionalLine, `\n`, `\\n`)
+			//additionalLine = strings.ReplaceAll(additionalLine, "\t", strings.Repeat(" ", 8))
 			line += additionalLine + "\n"
-			//fmt.Println("`" + line + "`")
 		}
+		u.term.SetPrompt(u.name + ": ")
 		line = strings.TrimSpace(line)
 
 		if err != nil {
 			l.Println(u.name, err)
-			u.close(u.name + " has left the chat due to an error")
+			u.close(u.name + " has left the chat due to an error: " + err.Error())
 			return
 		}
-		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", strings.Count(line, "\n")+int(math.Ceil(float64(lenString(u.name+line)+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
+		//numLines := strings.Count(line, "\n")
+		//u.term.Write([]byte(strings.Repeat("\033[A\033[2K", numLines+int(
+		//	math.Ceil(
+		//		float64(lenString(u.name+line)+2-numLines)/(float64(u.win.Width)),
+		//	),
+		//)))) // basically, ceil(length of line divided by term width)
+
+		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", calculateLinesTaken(u.name+": "+line, u.win.Width)))) // basically, ceil(length of line divided by term width)
+
+		if line == "" {
+			continue
+		}
 
 		antispamMessages[u.id]++
 		time.AfterFunc(5*time.Second, func() {
 			antispamMessages[u.id]--
 		})
+		if antispamMessages[u.id] >= 30 {
+			u.room.broadcast(devbot, u.name+", stop spamming or you could get banned.")
+		}
 		if antispamMessages[u.id] >= 50 {
 			if !bansContains(bans, u.addr, u.id) {
 				bans = append(bans, ban{u.addr, u.id})
@@ -436,6 +453,28 @@ func (u *user) repl() {
 		}
 		runCommands(line, u)
 	}
+}
+
+func calculateLinesTaken(s string, width int) int {
+	s = stripansi.Strip(s)
+
+	pos := 0
+	lines := 1
+	currLine := ""
+	for _, c := range s {
+		pos++
+		currLine += string(c)
+		if c == '\t' {
+			pos += 8
+		}
+		if c == '\n' || pos > width { // || (c == '\t' && pos+8 > width)
+			pos = 1
+			lines++
+			//currLine = string(c)
+		}
+		//fmt.Println("`" + currLine + "`")
+	}
+	return lines
 }
 
 // bansContains reports if the addr or id is found in the bans list
