@@ -279,6 +279,17 @@ func newUser(s ssh.Session) *user {
 	return u
 }
 
+// Deletes any empty room. Checks all rooms so that it works even when the
+// user left.
+func cleanupRooms() {
+	for _, r := range rooms {
+		if r != mainRoom && len(r.users) == 0 {
+			fmt.Println("Cleand up a room.")
+			delete(rooms, r.name)
+		}
+	}
+}
+
 // Removes a user and prints Twitter and chat message
 func (u *user) close(msg string) {
 	u.closeOnce.Do(func() {
@@ -289,6 +300,7 @@ func (u *user) close(msg string) {
 			u.room.broadcast(devbot, u.name+" stayed on for "+printPrettyDuration(time.Since(u.joinTime)))
 		}
 	})
+	cleanupRooms()
 }
 
 // Removes a user silently, used to close banned users
