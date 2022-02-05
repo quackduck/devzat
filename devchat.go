@@ -284,7 +284,6 @@ func newUser(s ssh.Session) *user {
 func cleanupRooms() {
 	for _, r := range rooms {
 		if r != mainRoom && len(r.users) == 0 {
-			fmt.Println("Cleand up a room.")
 			delete(rooms, r.name)
 		}
 	}
