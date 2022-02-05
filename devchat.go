@@ -397,15 +397,13 @@ func (u *user) changeRoom(r *room) {
 	}
 	u.room.users = remove(u.room.users, u)
 	u.room.broadcast("", u.name+" is joining "+blue.Paint(r.name)) // tell the old room
-	if u.room != mainRoom && len(u.room.users) == 0 {
-		delete(rooms, u.room.name)
-	}
 	u.room = r
 	if userDuplicate(u.room, u.name) {
 		u.pickUsername("")
 	}
 	u.room.users = append(u.room.users, u)
 	u.room.broadcast(devbot, u.name+" has joined "+blue.Paint(u.room.name))
+	cleanupRooms();
 }
 
 func (u *user) repl() {
