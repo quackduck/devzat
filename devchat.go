@@ -402,7 +402,7 @@ func (u *user) changeRoom(r *room) {
 	}
 	u.room.users = append(u.room.users, u)
 	u.room.broadcast(devbot, u.name+" has joined "+blue.Paint(u.room.name))
-	cleanupRooms();
+	cleanupRooms()
 }
 
 func (u *user) repl() {
