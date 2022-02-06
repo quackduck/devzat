@@ -37,6 +37,7 @@ var (
 		{"cd", cdCMD, "#room|user", "Join #room, DM user or run cd to see a list"}, // won't actually run, here just to show in docs
 		{"tz", tzCMD, "<zone> [24h]", "Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h"},
 		{"nick", nickCMD, "<name>", "Change your username"},
+		{"pronouns", pronounCMD, "<@user|pronoun...>", "Set your pronouns or get another user's"},
 		{"theme", themeCMD, "<theme>|list", "Change the syntax highlighting theme"},
 		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
 	cmdsRest = []cmd{
@@ -96,7 +97,7 @@ func runCommands(line string, u *user) {
 		shrugCMD(strings.TrimSpace(strings.TrimPrefix(line, "shrug")), u)
 		return
 	}
-
+	
 	if u.isSlack {
 		u.room.broadcastNoSlack(u.name, line)
 	} else {
@@ -536,6 +537,23 @@ func pwdCMD(_ string, u *user) {
 
 func shrugCMD(line string, u *user) {
 	u.room.broadcast(u.name, line+` ¯\\_(ツ)_/¯`)
+}
+
+func pronounCMD(line string, u* user) {
+	argv := strings.Split(line, " ")
+	if len(argv) == 1 && strings.HasPrefix(argv[0], "@") {
+        user, err := findUserByName(u.room, argv[0][1:])
+        if err == true && user == nil {
+        	u.room.broadcast("", argv[0] + ": no such user")
+        	return
+        }
+		u.room.broadcast("", argv[0] + " has the pronouns" + user.displayPronouns())	
+		return
+	}
+	u.pronouns = strings.Split(line, " ")
+	u.changeColor(u.color)
+        u.room.broadcast(devbot, u.name + " has the pronouns " + u.displayPronouns())
+
 }
 
 func emojisCMD(_ string, u *user) {
