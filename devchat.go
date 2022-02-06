@@ -281,11 +281,9 @@ func newUser(s ssh.Session) *user {
 
 // Deletes any empty room. Checks all rooms so that it works even when the
 // user left.
-func cleanupRooms() {
-	for _, r := range rooms {
-		if r != mainRoom && len(r.users) == 0 {
-			delete(rooms, r.name)
-		}
+func cleanupRoom(r *room) {
+	if r != mainRoom && len(r.users) == 0 {
+		delete(rooms, r.name)
 	}
 }
 
@@ -298,8 +296,9 @@ func (u *user) close(msg string) {
 		if time.Since(u.joinTime) > time.Minute/2 {
 			u.room.broadcast(devbot, u.name+" stayed on for "+printPrettyDuration(time.Since(u.joinTime)))
 		}
+		u.room.users = remove(u.room.users, u)
+		cleanupRoom(u.room)
 	})
-	cleanupRooms()
 }
 
 // Removes a user silently, used to close banned users
@@ -396,13 +395,13 @@ func (u *user) changeRoom(r *room) {
 	}
 	u.room.users = remove(u.room.users, u)
 	u.room.broadcast("", u.name+" is joining "+blue.Paint(r.name)) // tell the old room
+	cleanupRoom(u.room)
 	u.room = r
 	if userDuplicate(u.room, u.name) {
 		u.pickUsername("")
 	}
 	u.room.users = append(u.room.users, u)
 	u.room.broadcast(devbot, u.name+" has joined "+blue.Paint(u.room.name))
-	cleanupRooms()
 }
 
 func (u *user) repl() {
