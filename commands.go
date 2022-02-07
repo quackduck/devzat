@@ -97,7 +97,7 @@ func runCommands(line string, u *user) {
 		shrugCMD(strings.TrimSpace(strings.TrimPrefix(line, "shrug")), u)
 		return
 	}
-	
+
 	if u.isSlack {
 		u.room.broadcastNoSlack(u.name, line)
 	} else {
@@ -539,20 +539,20 @@ func shrugCMD(line string, u *user) {
 	u.room.broadcast(u.name, line+` ¯\\_(ツ)_/¯`)
 }
 
-func pronounCMD(line string, u* user) {
+func pronounCMD(line string, u *user) {
 	argv := strings.Split(line, " ")
 	if len(argv) == 1 && strings.HasPrefix(argv[0], "@") {
-        user, err := findUserByName(u.room, argv[0][1:])
-        if err == true && user == nil {
-        	u.room.broadcast("", argv[0] + ": no such user")
-        	return
-        }
-		u.room.broadcast("", argv[0] + " has the pronouns" + user.displayPronouns())	
+		user, err := findUserByName(u.room, argv[0][1:])
+		if err == true && user == nil {
+			u.room.broadcast("", argv[0]+": no such user")
+			return
+		}
+		u.room.broadcast("", argv[0]+" has the pronouns"+user.displayPronouns())
 		return
 	}
 	u.pronouns = strings.Split(line, " ")
 	u.changeColor(u.color)
-        u.room.broadcast(devbot, u.name + " has the pronouns " + u.displayPronouns())
+	u.room.broadcast(devbot, u.name+" has the pronouns "+u.displayPronouns())
 
 }
 

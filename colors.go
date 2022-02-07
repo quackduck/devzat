@@ -108,9 +108,9 @@ func (u *user) changeColor(colorName string) error {
 	styleBG, _ := getStyle(u.colorBG)
 	u.name = styleFG.apply(u.name) // fg clears the bg color
 	u.name = styleBG.apply(u.name) // then re-add bg color if any
-        for i := 0; i < len(u.pronouns); i++ {
-           u.pronouns[i] = styleFG.apply(u.pronouns[i])
-        }
+	for i := 0; i < len(u.pronouns); i++ {
+		u.pronouns[i] = styleFG.apply(u.pronouns[i])
+	}
 	u.term.SetPrompt(u.name + ": ")
 	saveBans()
 	return nil

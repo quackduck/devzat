@@ -54,10 +54,10 @@ type room struct {
 }
 
 type user struct {
-	name    string
-    pronouns []string
-	session ssh.Session
-	term    *terminal.Terminal
+	name     string
+	pronouns []string
+	session  ssh.Session
+	term     *terminal.Terminal
 
 	room      *room
 	messaging *user // currently messaging this user in a DM
