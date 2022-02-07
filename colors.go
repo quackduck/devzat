@@ -141,7 +141,7 @@ func getRandomColor(name string) *style {
 }
 
 // If the input is a named style, returns it. Otherwise, returns nil.
-func getNamedStyle(name string) *style {
+func getNamedColor(name string) *style {
 	for i := range styles {
 		if styles[i].name == name {
 			return styles[i]
@@ -189,9 +189,9 @@ func getStyle(name string) (*style, error) {
 	if name == "bg-off" {
 		return &style{"bg-off", func(a string) string { return a }}, nil // Used to remove one's background
 	}
-    namedStyle := getNamedStyle(name)
-    if namedStyle != nil {
-        return namedStyle, nil
+    namedColor := getNamedColor(name)
+    if namedColor != nil {
+        return namedColor, nil
     }
 	if strings.HasPrefix(name, "#") {
 		return &style{name, buildStyle(chalk.WithHex(name))}, nil
