@@ -15,49 +15,50 @@ import (
 )
 
 type cmd struct {
-	name     string
-	run      func(line string, u *user)
-	argsInfo string
-	info     string
+	name      string
+	run       func(line string, u *user)
+	argsInfo  string
+	info      string
+	printable bool
 }
 
 var (
 	allcmds = make([]cmd, 30)
 	cmds    = []cmd{
-		{"=<user>", dmCMD, "<msg>", "DM <user> with <msg>"}, // won't actually run, here just to show in docs
-		{"users", usersCMD, "", "List users"},
-		{"color", colorCMD, "<color>", "Change your name's color"},
-		{"exit", exitCMD, "", "Leave the chat"},
-		{"help", helpCMD, "", "Show help"},
-		{"emojis", emojisCMD, "", "See a list of emojis"},
-		{"bell", bellCMD, "on|off|all", "ANSI bell on pings (on), never (off) or for every message (all)"},
-		{"clear", clearCMD, "", "Clear the screen"},
-		{"hang", hangCMD, "<char|word>", "Play hangman"}, // won't actually run, here just to show in docs
-		{"tic", ticCMD, "<cell num>", "Play tic tac toe!"},
-		{"cd", cdCMD, "#room|user", "Join #room, DM user or run cd to see a list"}, // won't actually run, here just to show in docs
-		{"tz", tzCMD, "<zone> [24h]", "Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h"},
-		{"nick", nickCMD, "<name>", "Change your username"},
-		{"theme", themeCMD, "<theme>|list", "Change the syntax highlighting theme"},
-		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
+		{"=<user>", dmCMD, "<msg>", "DM <user> with <msg>", false}, // won't actually run, here just to show in docs
+		{"users", usersCMD, "", "List users", true},
+		{"color", colorCMD, "<color>", "Change your name's color", true},
+		{"exit", exitCMD, "", "Leave the chat", true},
+		{"help", helpCMD, "", "Show help", true},
+		{"emojis", emojisCMD, "", "See a list of emojis", true},
+		{"bell", bellCMD, "on|off|all", "ANSI bell on pings (on), never (off) or for every message (all)", true},
+		{"clear", clearCMD, "", "Clear the screen", true},
+		{"hang", hangCMD, "<char|word>", "Play hangman", false},
+		{"tic", ticCMD, "<cell num>", "Play tic tac toe!", true},
+		{"cd", cdCMD, "#room|user", "Join #room, DM user or run cd to see a list", false},
+		{"tz", tzCMD, "<zone> [24h]", "Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h", true},
+		{"nick", nickCMD, "<name>", "Change your username", true},
+		{"theme", themeCMD, "<theme>|list", "Change the syntax highlighting theme", true},
+		{"rest", commandsRestCMD, "", "Uncommon commands list", true}}
 	cmdsRest = []cmd{
-		{"people", peopleCMD, "", "See info about nice people who joined"},
-		{"id", idCMD, "<user>", "Get a unique ID for a user (hashed key)"},
-		{"eg-code", exampleCodeCMD, "[big]", "Example syntax-highlighted code"},
-		{"lsbans", listBansCMD, "", "List banned IDs"},
-		{"ban", banCMD, "<user>", "Ban <user> (admin)"},
-		{"unban", unbanCMD, "<IP|ID>", "Unban a person (admin)"},
-		{"kick", kickCMD, "<user>", "Kick <user> (admin)"},
-		{"art", asciiArtCMD, "", "Show some panda art"},
-		{"pwd", pwdCMD, "", "Show your current room"},
-		{"shrug", shrugCMD, "", `¯\\_(ツ)_/¯`}} // won't actually run, here just to show in docs
+		{"people", peopleCMD, "", "See info about nice people who joined", true},
+		{"id", idCMD, "<user>", "Get a unique ID for a user (hashed key)", true},
+		{"eg-code", exampleCodeCMD, "[big]", "Example syntax-highlighted code", true},
+		{"lsbans", listBansCMD, "", "List banned IDs", true},
+		{"ban", banCMD, "<user>", "Ban <user> (admin)", true},
+		{"unban", unbanCMD, "<IP|ID>", "Unban a person (admin)", true},
+		{"kick", kickCMD, "<user>", "Kick <user> (admin)", true},
+		{"art", asciiArtCMD, "", "Show some panda art", true},
+		{"pwd", pwdCMD, "", "Show your current room", true},
+		{"shrug", shrugCMD, "", `¯\\_(ツ)_/¯`, false}}
 	secretCMDs = []cmd{
-		{"ls", lsCMD, "", ""},
-		{"cat", catCMD, "", ""},
-		{"rm", rmCMD, "", ""}}
+		{"ls", lsCMD, "", "", true},
+		{"cat", catCMD, "", "", true},
+		{"rm", rmCMD, "", "", true}}
 )
 
 func init() {
-	cmds = append(cmds, cmd{"cmds", commandsCMD, "", "Show this message"}) // avoid initialization loop
+	cmds = append(cmds, cmd{"cmds", commandsCMD, "", "Show this message", true}) // avoid initialization loop
 	allcmds = append(append(append(allcmds,
 		cmds...), cmdsRest...), secretCMDs...)
 }
@@ -85,16 +86,15 @@ func runCommands(line string, u *user) {
 		return
 	}
 
-	switch currCmd {
-	case "hang":
-		hangCMD(strings.TrimSpace(strings.TrimPrefix(line, "hang")), u)
-		return
-	case "cd":
-		cdCMD(strings.TrimSpace(strings.TrimPrefix(line, "cd")), u)
-		return
-	case "shrug":
-		shrugCMD(strings.TrimSpace(strings.TrimPrefix(line, "shrug")), u)
-		return
+	for _, c := range allcmds {
+		if c.name == currCmd {
+			c.run(strings.TrimSpace(strings.TrimPrefix(line, c.name)), u)
+            if !c.printable {
+                return
+            } else {
+                break
+            }
+		}
 	}
 
 	if u.isSlack {
@@ -105,12 +105,6 @@ func runCommands(line string, u *user) {
 
 	devbotChat(u.room, line)
 
-	for _, c := range allcmds {
-		if c.name == currCmd {
-			c.run(strings.TrimSpace(strings.TrimPrefix(line, c.name)), u)
-			return
-		}
-	}
 }
 
 func dmCMD(rest string, u *user) {
