@@ -182,57 +182,57 @@ func remove(s []*user, a *user) []*user {
 }
 
 func devbotChat(room *room, line string) {
-	if strings.Contains(line, "devbot") {
-		if strings.Contains(line, "how are you") || strings.Contains(line, "how you") {
-			devbotRespond(room, []string{"How are _you_",
-				"Good as always lol",
-				"Ah the usual, solving quantum gravity :smile:",
-				"Howdy?",
-				"Thinking about intergalactic cows",
-				"Could maths be different in other universes?",
-				""}, 99)
-			return
-		}
-		if strings.Contains(line, "thank") {
-			devbotRespond(room, []string{"you're welcome",
-				"no problem",
-				"yeah dw about it",
-				":smile:",
-				"no worries",
-				"you're welcome man!",
-				"lol"}, 93)
-			return
-		}
-		if strings.Contains(line, "good") || strings.Contains(line, "cool") || strings.Contains(line, "awesome") || strings.Contains(line, "amazing") {
-			devbotRespond(room, []string{"Thanks haha", ":sunglasses:", ":smile:", "lol", "haha", "Thanks lol", "yeeeeeeeee"}, 93)
-			return
-		}
-		if strings.Contains(line, "bad") || strings.Contains(line, "idiot") || strings.Contains(line, "stupid") {
-			devbotRespond(room, []string{"what an idiot, bullying a bot", ":(", ":angry:", ":anger:", ":cry:", "I'm in the middle of something okay", "shut up", "Run ./help, you need it."}, 60)
-			return
-		}
-		if strings.Contains(line, "shut up") {
-			devbotRespond(room, []string{"NO YOU", "You shut up", "what an idiot, bullying a bot"}, 90)
-			return
-		}
+	if canDevbotReply(line, []string{"devbot"}, []string{"how are you", "how you"}, []string{}) {
+		devbotRespond(room, []string{"How are _you_",
+			"Good as always lol",
+			"Ah the usual, solving quantum gravity :smile:",
+			"Howdy?",
+			"Thinking about intergalactic cows",
+			"Could maths be different in other universes?",
+			""}, 99)
+		return
+	}
+	if canDevbotReply(line, []string{"devbot", "thanks"}, []string{}, []string{}) {
+		devbotRespond(room, []string{"you're welcome",
+			"no problem",
+			"yeah dw about it",
+			":smile:",
+			"no worries",
+			"you're welcome man!",
+			"lol"}, 93)
+		return
+	}
+	if canDevbotReply(line, []string{"devbot"}, []string{"good", "cool", "awesome", "amazing"}, []string{}) {
+		devbotRespond(room, []string{"Thanks haha", ":sunglasses:", ":smile:", "lol", "haha", "Thanks lol", "yeeeeeeeee"}, 93)
+		return
+	}
+	if canDevbotReply(line, []string{"devbot"}, []string{"bad", "idiot", "stupid"}, []string{}) {
+		devbotRespond(room, []string{"what an idiot, bullying a bot", ":(", ":angry:", ":anger:", ":cry:", "I'm in the middle of something okay", "shut up", "Run ./help, you need it."}, 60)
+		return
+	}
+	if canDevbotReply(line, []string{"devbot", "shut up"}, []string{}, []string{}) {
+		devbotRespond(room, []string{"NO YOU", "You shut up", "what an idiot, bullying a bot"}, 90)
+		return
+	}
+	if canDevbotReply(line, []string{"devbot"}, []string{}, []string{}) {
 		devbotRespond(room, []string{"Hi I'm devbot", "Hey", "HALLO :rocket:", "Yes?", "Devbot to the rescue!", ":wave:"}, 90)
 	}
-	if line == "./help" || line == "/help" || strings.Contains(line, "help me") {
+	if canDevbotReply(line, []string{}, []string{"help", "/help", "helm me"}, []string{}) {
 		devbotRespond(room, []string{"Run help to get help!",
 			"Looking for help?",
 			"See available commands with cmds or see help with help :star:"}, 100)
 	}
-	if line == "easter" {
+	if canDevbotReply(line, []string{"easter"}, []string{}, []string{}) {
 		devbotRespond(room, []string{"eggs?", "bunny?"}, 100)
 	}
-	if strings.Contains(line, "rm -rf") {
+	if canDevbotReply(line, []string{"rm -rf"}, []string{}, []string{}) {
 		devbotRespond(room, []string{"rm -rf you", "I've heard rm -rf / can really free up some space!\n\n you should try it on your computer", "evil"}, 100)
 		return
 	}
-	if strings.Contains(line, "where") && strings.Contains(line, "repo") {
+	if canDevbotReply(line, []string{"where", "repo"}, []string{}, []string{}) {
 		devbotRespond(room, []string{"The repo's at github.com/quackduck/devzat!", ":star: github.com/quackduck/devzat :star:", "# github.com/quackduck/devzat"}, 100)
 	}
-	if strings.Contains(line, "rocket") || strings.Contains(line, "spacex") || strings.Contains(line, "tesla") {
+	if canDevbotReply(line, []string{}, []string{"rocket", "spacex", "tesla"}, []string{}) {
 		devbotRespond(room, []string{"Doge to the mooooon :rocket:",
 			"I should have bought ETH before it :rocket:ed to the :moon:",
 			":rocket:",
@@ -240,22 +240,53 @@ func devbotChat(room *room, line string) {
 			"SpaceX",
 			"Elon Musk OP"}, 80)
 	}
-	if strings.Contains(line, "elon") {
+	if canDevbotReply(line, []string{}, []string{"elon", "Elon"}, []string{}) {
 		devbotRespond(room, []string{"When something is important enough, you do it even if the odds are not in your favor. - Elon",
 			"I do think there is a lot of potential if you have a compelling product - Elon",
 			"If you're trying to create a company, it's like baking a cake. You have to have all the ingredients in the right proportion. - Elon",
 			"Patience is a virtue, and I'm learning patience. It's a tough lesson. - Elon"}, 75)
 	}
-	if !strings.Contains(line, "start") && strings.Contains(line, "star") {
+	if canDevbotReply(line, []string{"star"}, []string{}, []string{"start"}) {
 		devbotRespond(room, []string{"Someone say :star:?",
 			"If you like Devzat, give it a star at github.com/quackduck/devzat!",
 			":star: github.com/quackduck/devzat", ":star:"}, 90)
 	}
-	if strings.Contains(line, "cool project") || strings.Contains(line, "this is cool") || strings.Contains(line, "this is so cool") {
+	if canDevbotReply(line, []string{}, []string{"cool project", "this is cool", "this is so cool"}, []string{}) {
 		devbotRespond(room, []string{"Thank you :slight_smile:!",
 			" If you like Devzat, do give it a star at github.com/quackduck/devzat!",
 			"Star Devzat here: github.com/quackduck/devzat"}, 90)
 	}
+}
+
+// This function returns true if `line` contains all elements from
+// `containsAllOf`, any element from `andAnyOf`, but no elements from
+// `butNotAnyOf`. If any of the list is empty, the condition associated with
+// it will default to true.
+func canDevbotReply(line string, containsAllOf []string, andAnyOf []string, butNotAnyOf []string) bool {
+	if len(containsAllOf) != 0 {
+		for _, s := range containsAllOf {
+			if !strings.Contains(line, s) {
+				return false
+			}
+		}
+	}
+	if len(butNotAnyOf) != 0 {
+		for _, s := range butNotAnyOf {
+			if strings.Contains(line, s) {
+				return false
+			}
+		}
+	}
+	if len(andAnyOf) != 0 {
+		for _, s := range andAnyOf {
+			if strings.Contains(line, s) {
+				return true
+			}
+		}
+	} else {
+		return true
+	}
+	return false
 }
 
 func devbotRespond(room *room, messages []string, chance int) {
