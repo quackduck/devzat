@@ -36,7 +36,7 @@ func getAdmins() []string {
 		return []string{}
 	}
 	ids := make([]string, 0, len(adminsList))
-	for id, _ := range adminsList {
+	for id := range adminsList {
 		ids = append(ids, id)
 	}
 	return ids
