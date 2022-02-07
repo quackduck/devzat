@@ -279,8 +279,7 @@ func newUser(s ssh.Session) *user {
 	return u
 }
 
-// Deletes any empty room. Checks all rooms so that it works even when the
-// user left.
+// cleanupRoom deletes a room if it's empty and isn't the main room
 func cleanupRoom(r *room) {
 	if r != mainRoom && len(r.users) == 0 {
 		delete(rooms, r.name)
