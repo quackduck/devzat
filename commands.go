@@ -88,12 +88,11 @@ func runCommands(line string, u *user) {
 
 	for _, c := range allcmds {
 		if c.name == currCmd {
-			c.run(strings.TrimSpace(strings.TrimPrefix(line, c.name)), u)
-            if !c.printable {
-                return
-            } else {
-                break
+            if c.printable {
+                u.room.broadcast(u.name, line)
             }
+			c.run(strings.TrimSpace(strings.TrimPrefix(line, c.name)), u)
+            return
 		}
 	}
 
