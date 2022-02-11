@@ -390,10 +390,12 @@ func (u *user) pickUsername(possibleName string) error {
 }
 
 func (u *user) displayPronouns() string {
-	if len(u.pronouns) > 0 {
-		return strings.Join(u.pronouns, "/")
+	result := ""
+	for i := 0; i < len(u.pronouns); i++ {
+		str, _ := applyColorToData(u.pronouns[i], u.color, u.colorBG)
+		result += "/" + str
 	}
-	return ""
+	return result[1:]
 }
 
 func (u *user) changeRoom(r *room) {

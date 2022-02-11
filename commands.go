@@ -37,7 +37,7 @@ var (
 		{"cd", cdCMD, "#room|user", "Join #room, DM user or run cd to see a list"}, // won't actually run, here just to show in docs
 		{"tz", tzCMD, "<zone> [24h]", "Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h"},
 		{"nick", nickCMD, "<name>", "Change your username"},
-		{"pronouns", pronounCMD, "<@user|pronoun...>", "Set your pronouns or get another user's"},
+		{"pronouns", pronounsCMD, "<@user|pronoun...>", "Set your pronouns or get another user's"},
 		{"theme", themeCMD, "<theme>|list", "Change the syntax highlighting theme"},
 		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
 	cmdsRest = []cmd{
@@ -539,21 +539,22 @@ func shrugCMD(line string, u *user) {
 	u.room.broadcast(u.name, line+` ¯\\_(ツ)_/¯`)
 }
 
-func pronounCMD(line string, u *user) {
-	argv := strings.Split(line, " ")
-	if len(argv) == 1 && strings.HasPrefix(argv[0], "@") {
-		user, err := findUserByName(u.room, argv[0][1:])
-		if err == true && user == nil {
-			u.room.broadcast("", argv[0]+": no such user")
+func pronounsCMD(line string, u *user) {
+	args := strings.Fields(strings.ReplaceAll(strings.ToLower(line), "\n", ""))
+
+	if len(args) == 1 && strings.HasPrefix(args[0], "@") {
+		victim, ok := findUserByName(u.room, args[0][1:])
+		if !ok {
+			u.room.broadcast(devbot, "Who's that?")
 			return
 		}
-		u.room.broadcast("", argv[0]+" has the pronouns"+user.displayPronouns())
+		u.room.broadcast(devbot, victim.name+" goes by "+victim.displayPronouns())
 		return
 	}
-	u.pronouns = strings.Split(line, " ")
-	u.changeColor(u.color)
-	u.room.broadcast(devbot, u.name+" has the pronouns "+u.displayPronouns())
 
+	u.pronouns = args
+	//u.changeColor(u.color) // refresh pronouns
+	u.room.broadcast(devbot, u.name+" now goes by "+u.displayPronouns())
 }
 
 func emojisCMD(_ string, u *user) {
