@@ -40,6 +40,7 @@ var (
 		{"nick", nickCMD, "<name>", "Change your username", true},
 		{"theme", themeCMD, "<theme>|list", "Change the syntax highlighting theme", true},
 		{"rest", commandsRestCMD, "", "Uncommon commands list", true}}
+		{"pronouns", pronounCMD, "<@user|pronoun...>", "Set your pronouns or get another user's", true},
 	cmdsRest = []cmd{
 		{"people", peopleCMD, "", "See info about nice people who joined", true},
 		{"id", idCMD, "<user>", "Get a unique ID for a user (hashed key)", true},
@@ -529,6 +530,23 @@ func pwdCMD(_ string, u *user) {
 
 func shrugCMD(line string, u *user) {
 	u.room.broadcast(u.name, line+` ¯\\_(ツ)_/¯`)
+}
+
+func pronounCMD(line string, u *user) {
+	argv := strings.Split(line, " ")
+	if len(argv) == 1 && strings.HasPrefix(argv[0], "@") {
+		user, err := findUserByName(u.room, argv[0][1:])
+		if err == true && user == nil {
+			u.room.broadcast("", argv[0]+": no such user")
+			return
+		}
+		u.room.broadcast("", argv[0]+" has the pronouns"+user.displayPronouns())
+		return
+	}
+	u.pronouns = strings.Split(line, " ")
+	u.changeColor(u.color)
+	u.room.broadcast(devbot, u.name+" has the pronouns "+u.displayPronouns())
+
 }
 
 func emojisCMD(_ string, u *user) {
