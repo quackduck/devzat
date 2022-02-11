@@ -125,21 +125,21 @@ func (u *user) initColor() {
 // Sets either the foreground or the background with a random color if the
 // given name is correct.
 func getRandomColor(name string) *style {
-    var foreground bool
-    if name == "random" {
-        foreground = true
-    } else if name == "bg-random" {
-        foreground = false
-    } else {
-        return nil
-    }
-    r := rand.Intn(6)
-    g := rand.Intn(6)
-    b := rand.Intn(6)
-    if foreground {
+	var foreground bool
+	if name == "random" {
+		foreground = true
+	} else if name == "bg-random" {
+		foreground = false
+	} else {
+		return nil
+	}
+	r := rand.Intn(6)
+	g := rand.Intn(6)
+	b := rand.Intn(6)
+	if foreground {
 		return &style{fmt.Sprintf("%03d", r*100+g*10+b), buildStyle(ansi256(uint8(r), uint8(g), uint8(b)))}
-    }
-    return &style{fmt.Sprintf("bg-%03d", r*100+g*10+b), buildStyleNoStrip(bgAnsi256(uint8(r), uint8(g), uint8(b)))}
+	}
+	return &style{fmt.Sprintf("bg-%03d", r*100+g*10+b), buildStyleNoStrip(bgAnsi256(uint8(r), uint8(g), uint8(b)))}
 }
 
 // If the input is a named style, returns it. Otherwise, returns nil.
@@ -154,7 +154,7 @@ func getNamedColor(name string) *style {
 			return secretStyles[i]
 		}
 	}
-    return nil
+	return nil
 }
 
 func getCustomColor(name string) (*style, error) {
@@ -175,35 +175,35 @@ func getCustomColor(name string) (*style, error) {
 				return &style{name, buildStyleNoStrip(bgAnsi256(uint8(r), uint8(g), uint8(b)))}, nil
 			}
 			return &style{name, buildStyle(ansi256(uint8(r), uint8(g), uint8(b)))}, nil
-        }
-        return nil, err
+		}
+		return nil, err
 	}
-    return nil, nil
+	return nil, nil
 }
 
 // Turns name into a style (defaults to nil)
 func getStyle(name string) (*style, error) {
-    randomColor := getRandomColor(name)
-    if randomColor != nil {
-        return randomColor, nil
-    }
+	randomColor := getRandomColor(name)
+	if randomColor != nil {
+		return randomColor, nil
+	}
 	if name == "bg-off" {
 		return &style{"bg-off", func(a string) string { return a }}, nil // Used to remove one's background
 	}
-    namedColor := getNamedColor(name)
-    if namedColor != nil {
-        return namedColor, nil
-    }
+	namedColor := getNamedColor(name)
+	if namedColor != nil {
+		return namedColor, nil
+	}
 	if strings.HasPrefix(name, "#") {
 		return &style{name, buildStyle(chalk.WithHex(name))}, nil
 	}
-    custoColor, err := getCustomColor(name)
-    if err != nil {
-        return nil, err
-    }
-    if custoColor != nil {
-        return custoColor, nil
-    }
+	custoColor, err := getCustomColor(name)
+	if err != nil {
+		return nil, err
+	}
+	if custoColor != nil {
+		return custoColor, nil
+	}
 	return nil, errors.New("Which color? Choose from random, " + strings.Join(func() []string {
 		colors := make([]string, 0, len(styles))
 		for i := range styles {

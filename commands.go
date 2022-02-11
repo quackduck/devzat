@@ -39,8 +39,8 @@ var (
 		{"tz", tzCMD, "<zone> [24h]", "Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h", true},
 		{"nick", nickCMD, "<name>", "Change your username", true},
 		{"theme", themeCMD, "<theme>|list", "Change the syntax highlighting theme", true},
-		{"rest", commandsRestCMD, "", "Uncommon commands list", true}}
-		{"pronouns", pronounCMD, "<@user|pronoun...>", "Set your pronouns or get another user's", true},
+		{"rest", commandsRestCMD, "", "Uncommon commands list", true},
+		{"pronouns", pronounCMD, "<@user|pronoun...>", "Set your pronouns or get another user's", true}}
 	cmdsRest = []cmd{
 		{"people", peopleCMD, "", "See info about nice people who joined", true},
 		{"id", idCMD, "<user>", "Get a unique ID for a user (hashed key)", true},
@@ -89,11 +89,11 @@ func runCommands(line string, u *user) {
 
 	for _, c := range allcmds {
 		if c.name == currCmd {
-            if c.printable {
-                u.room.broadcast(u.name, line)
-            }
+			if c.printable {
+				u.room.broadcast(u.name, line)
+			}
 			c.run(strings.TrimSpace(strings.TrimPrefix(line, c.name)), u)
-            return
+			return
 		}
 	}
 

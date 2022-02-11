@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	client = loadTwitterClient()
+	client     = loadTwitterClient()
 	allowTweet = true
 )
 
