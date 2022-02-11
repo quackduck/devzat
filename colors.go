@@ -138,9 +138,8 @@ func getRandomColor(name string) *style {
     b := rand.Intn(6)
     if foreground {
 		return &style{fmt.Sprintf("%03d", r*100+g*10+b), buildStyle(ansi256(uint8(r), uint8(g), uint8(b)))}
-    } else {
-		return &style{fmt.Sprintf("bg-%03d", r*100+g*10+b), buildStyleNoStrip(bgAnsi256(uint8(r), uint8(g), uint8(b)))}
     }
+    return &style{fmt.Sprintf("bg-%03d", r*100+g*10+b), buildStyleNoStrip(bgAnsi256(uint8(r), uint8(g), uint8(b)))}
 }
 
 // If the input is a named style, returns it. Otherwise, returns nil.
@@ -176,9 +175,8 @@ func getCustomColor(name string) (*style, error) {
 				return &style{name, buildStyleNoStrip(bgAnsi256(uint8(r), uint8(g), uint8(b)))}, nil
 			}
 			return &style{name, buildStyle(ansi256(uint8(r), uint8(g), uint8(b)))}, nil
-		} else {
-            return nil, err
         }
+        return nil, err
 	}
     return nil, nil
 }
