@@ -197,12 +197,12 @@ func getStyle(name string) (*style, error) {
 	if strings.HasPrefix(name, "#") {
 		return &style{name, buildStyle(chalk.WithHex(name))}, nil
 	}
-	custoColor, err := getCustomColor(name)
+	customColor, err := getCustomColor(name)
 	if err != nil {
 		return nil, err
 	}
-	if custoColor != nil {
-		return custoColor, nil
+	if customColor != nil {
+		return customColor, nil
 	}
 	return nil, errors.New("Which color? Choose from random, " + strings.Join(func() []string {
 		colors := make([]string, 0, len(styles))
