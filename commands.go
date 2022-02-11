@@ -548,7 +548,7 @@ func pronounsCMD(line string, u *user) {
 			u.room.broadcast(devbot, "Who's that?")
 			return
 		}
-		u.room.broadcast(devbot, victim.name+" goes by "+victim.displayPronouns())
+		u.room.broadcast(devbot, victim.name+"'s pronouns are "+victim.displayPronouns())
 		return
 	}
 
