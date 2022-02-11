@@ -54,9 +54,10 @@ type room struct {
 }
 
 type user struct {
-	name    string
-	session ssh.Session
-	term    *terminal.Terminal
+	name     string
+	pronouns []string
+	session  ssh.Session
+	term     *terminal.Terminal
 
 	room      *room
 	messaging *user // currently messaging this user in a DM
@@ -386,6 +387,13 @@ func (u *user) pickUsername(possibleName string) error {
 	}
 	u.changeColor(styles[rand.Intn(len(styles))].name)
 	return nil
+}
+
+func (u *user) displayPronouns() string {
+	if len(u.pronouns) > 0 {
+		return strings.Join(u.pronouns, "/")
+	}
+	return ""
 }
 
 func (u *user) changeRoom(r *room) {
