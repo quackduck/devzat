@@ -22,9 +22,15 @@ type cmd struct {
 }
 
 var (
+	unprintableCommands = map[string]cmd{
+		"shrug": {"shrug", shrugCMD, "", `¯\\_(ツ)_/¯`},
+		"cd":    {"cd", cdCMD, "#room|user", "Join #room, DM user or run cd to see a list"},
+		"hang":  {"hang", hangCMD, "<char|word>", "Play hangman"},
+		"pm":    {"=<user>", dmCMD, "<msg>", "DM <user> with <msg>"},
+	}
 	allcmds = make([]cmd, 30)
 	cmds    = []cmd{
-		{"=<user>", dmCMD, "<msg>", "DM <user> with <msg>"}, // won't actually run, here just to show in docs
+		unprintableCommands["pm"], // won't actually run, here just to show in docs
 		{"users", usersCMD, "", "List users"},
 		{"color", colorCMD, "<color>", "Change your name's color"},
 		{"exit", exitCMD, "", "Leave the chat"},
@@ -32,9 +38,9 @@ var (
 		{"emojis", emojisCMD, "", "See a list of emojis"},
 		{"bell", bellCMD, "on|off|all", "ANSI bell on pings (on), never (off) or for every message (all)"},
 		{"clear", clearCMD, "", "Clear the screen"},
-		{"hang", hangCMD, "<char|word>", "Play hangman"},
+		unprintableCommands["hang"],
 		{"tic", ticCMD, "<cell num>", "Play tic tac toe!"},
-		{"cd", cdCMD, "#room|user", "Join #room, DM user or run cd to see a list"},
+		unprintableCommands["cd"],
 		{"tz", tzCMD, "<zone> [24h]", "Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h"},
 		{"nick", nickCMD, "<name>", "Change your username"},
 		{"pronouns", pronounsCMD, "<@user|pronoun...>", "Set your pronouns or get another user's"},
@@ -50,16 +56,11 @@ var (
 		{"kick", kickCMD, "<user>", "Kick <user> (admin)"},
 		{"art", asciiArtCMD, "", "Show some panda art"},
 		{"pwd", pwdCMD, "", "Show your current room"},
-		{"shrug", shrugCMD, "", `¯\\_(ツ)_/¯`}}
+		unprintableCommands["shrug"]}
 	secretCMDs = []cmd{
 		{"ls", lsCMD, "", ""},
 		{"cat", catCMD, "", ""},
 		{"rm", rmCMD, "", ""}}
-	unprintableCommands = []string{
-		"shrug",
-		"cd",
-		"hang",
-		"=<user>"}
 )
 
 func init() {
@@ -69,8 +70,8 @@ func init() {
 }
 
 func isCommandPrintable(c cmd) bool {
-	for _, name := range unprintableCommands {
-		if name == c.name {
+	for _, cmd := range unprintableCommands {
+		if c.name == cmd.name { // We must compare names as comparison is not possible between structs with a function inside.
 			return false
 		}
 	}
