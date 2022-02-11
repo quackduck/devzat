@@ -209,6 +209,7 @@ func newUser(s ssh.Session) *user {
 
 	u := &user{
 		name:          s.User(),
+		pronouns:      []string{"unset"},
 		session:       s,
 		term:          term,
 		bell:          true,
@@ -226,14 +227,12 @@ func newUser(s ssh.Session) *user {
 
 	l.Println("Connected " + u.name + " [" + u.id + "]")
 
-	//for i := range bans {
 	if bansContains(bans, u.addr, u.id) {
 		l.Println("Rejected " + u.name + " [" + host + "]")
 		u.writeln(devbot, "**You are banned**. If you feel this was a mistake, please reach out at github.com/quackduck/devzat/issues or email igoel.mail@gmail.com. Please include the following information: [ID "+u.id+"]")
 		u.closeBackend()
 		return nil
 	}
-	//}
 	idsInMinToTimes[u.id]++
 	time.AfterFunc(60*time.Second, func() {
 		idsInMinToTimes[u.id]--
@@ -390,10 +389,15 @@ func (u *user) pickUsername(possibleName string) error {
 }
 
 func (u *user) displayPronouns() string {
-	if len(u.pronouns) > 0 {
-		return strings.Join(u.pronouns, "/")
+	result := ""
+	for i := 0; i < len(u.pronouns); i++ {
+		str, _ := applyColorToData(u.pronouns[i], u.color, u.colorBG)
+		result += "/" + str
 	}
-	return ""
+	if result == "" {
+		return result
+	}
+	return result[1:]
 }
 
 func (u *user) changeRoom(r *room) {
@@ -437,14 +441,8 @@ func (u *user) repl() {
 			u.close(u.name + " has left the chat due to an error: " + err.Error())
 			return
 		}
-		//numLines := strings.Count(line, "\n")
-		//u.term.Write([]byte(strings.Repeat("\033[A\033[2K", numLines+int(
-		//	math.Ceil(
-		//		float64(lenString(u.name+line)+2-numLines)/(float64(u.win.Width)),
-		//	),
-		//)))) // basically, ceil(length of line divided by term width)
 
-		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", calculateLinesTaken(u.name+": "+line, u.win.Width)))) // basically, ceil(length of line divided by term width)
+		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", calculateLinesTaken(u.name+": "+line, u.win.Width-lenString(u.name+": ")))))
 
 		if line == "" {
 			continue
@@ -485,9 +483,7 @@ func calculateLinesTaken(s string, width int) int {
 		if c == '\n' || pos > width { // || (c == '\t' && pos+8 > width)
 			pos = 1
 			lines++
-			//currLine = string(c)
 		}
-		//fmt.Println("`" + currLine + "`")
 	}
 	return lines
 }

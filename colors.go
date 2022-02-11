@@ -104,16 +104,27 @@ func (u *user) changeColor(colorName string) error {
 		u.room.broadcast("", "You're now using "+u.color)
 	}
 
-	styleFG, _ := getStyle(u.color) // error can be discarded as it has already been checked earlier
-	styleBG, _ := getStyle(u.colorBG)
-	u.name = styleFG.apply(u.name) // fg clears the bg color
-	u.name = styleBG.apply(u.name) // then re-add bg color if any
-	for i := 0; i < len(u.pronouns); i++ {
-		u.pronouns[i] = styleFG.apply(u.pronouns[i])
-	}
+	u.name, _ = applyColorToData(u.name, u.color, u.colorBG) // error can be discarded as it has already been checked earlier
+
+	//styleFG, _ := getStyle(u.color)
+	//styleBG, _ := getStyle(u.colorBG)
+	//u.name = styleFG.apply(u.name) // fg clears the bg color
+	//u.name = styleBG.apply(u.name) // then re-add bg color if any
 	u.term.SetPrompt(u.name + ": ")
 	saveBans()
 	return nil
+}
+
+func applyColorToData(data string, color string, colorBG string) (string, error) {
+	styleFG, err := getStyle(color)
+	if err != nil {
+		return "", err
+	}
+	styleBG, err := getStyle(colorBG)
+	if err != nil {
+		return "", err
+	}
+	return styleBG.apply(styleFG.apply(data)), nil // fg clears the bg color
 }
 
 // Ensure that both color functions for a user are properly set
