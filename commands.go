@@ -15,53 +15,66 @@ import (
 )
 
 type cmd struct {
-	name      string
-	run       func(line string, u *user)
-	argsInfo  string
-	info      string
-	printable bool
+	name     string
+	run      func(line string, u *user)
+	argsInfo string
+	info     string
 }
 
 var (
 	allcmds = make([]cmd, 30)
 	cmds    = []cmd{
-		{"=<user>", dmCMD, "<msg>", "DM <user> with <msg>", false}, // won't actually run, here just to show in docs
-		{"users", usersCMD, "", "List users", true},
-		{"color", colorCMD, "<color>", "Change your name's color", true},
-		{"exit", exitCMD, "", "Leave the chat", true},
-		{"help", helpCMD, "", "Show help", true},
-		{"emojis", emojisCMD, "", "See a list of emojis", true},
-		{"bell", bellCMD, "on|off|all", "ANSI bell on pings (on), never (off) or for every message (all)", true},
-		{"clear", clearCMD, "", "Clear the screen", true},
-		{"hang", hangCMD, "<char|word>", "Play hangman", false},
-		{"tic", ticCMD, "<cell num>", "Play tic tac toe!", true},
-		{"cd", cdCMD, "#room|user", "Join #room, DM user or run cd to see a list", false},
-		{"tz", tzCMD, "<zone> [24h]", "Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h", true},
-		{"nick", nickCMD, "<name>", "Change your username", true},
-		{"theme", themeCMD, "<theme>|list", "Change the syntax highlighting theme", true},
-		{"rest", commandsRestCMD, "", "Uncommon commands list", true},
-		{"pronouns", pronounCMD, "<@user|pronoun...>", "Set your pronouns or get another user's", true}}
+		{"=<user>", dmCMD, "<msg>", "DM <user> with <msg>"}, // won't actually run, here just to show in docs
+		{"users", usersCMD, "", "List users"},
+		{"color", colorCMD, "<color>", "Change your name's color"},
+		{"exit", exitCMD, "", "Leave the chat"},
+		{"help", helpCMD, "", "Show help"},
+		{"emojis", emojisCMD, "", "See a list of emojis"},
+		{"bell", bellCMD, "on|off|all", "ANSI bell on pings (on), never (off) or for every message (all)"},
+		{"clear", clearCMD, "", "Clear the screen"},
+		{"hang", hangCMD, "<char|word>", "Play hangman"},
+		{"tic", ticCMD, "<cell num>", "Play tic tac toe!"},
+		{"cd", cdCMD, "#room|user", "Join #room, DM user or run cd to see a list"},
+		{"tz", tzCMD, "<zone> [24h]", "Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h"},
+		{"nick", nickCMD, "<name>", "Change your username"},
+		{"theme", themeCMD, "<theme>|list", "Change the syntax highlighting theme"},
+		{"rest", commandsRestCMD, "", "Uncommon commands list"},
+		{"pronouns", pronounCMD, "<@user|pronoun...>", "Set your pronouns or get another user's"}}
 	cmdsRest = []cmd{
-		{"people", peopleCMD, "", "See info about nice people who joined", true},
-		{"id", idCMD, "<user>", "Get a unique ID for a user (hashed key)", true},
-		{"eg-code", exampleCodeCMD, "[big]", "Example syntax-highlighted code", true},
-		{"lsbans", listBansCMD, "", "List banned IDs", true},
-		{"ban", banCMD, "<user>", "Ban <user> (admin)", true},
-		{"unban", unbanCMD, "<IP|ID>", "Unban a person (admin)", true},
-		{"kick", kickCMD, "<user>", "Kick <user> (admin)", true},
-		{"art", asciiArtCMD, "", "Show some panda art", true},
-		{"pwd", pwdCMD, "", "Show your current room", true},
-		{"shrug", shrugCMD, "", `¯\\_(ツ)_/¯`, false}}
+		{"people", peopleCMD, "", "See info about nice people who joined"},
+		{"id", idCMD, "<user>", "Get a unique ID for a user (hashed key)"},
+		{"eg-code", exampleCodeCMD, "[big]", "Example syntax-highlighted code"},
+		{"lsbans", listBansCMD, "", "List banned IDs"},
+		{"ban", banCMD, "<user>", "Ban <user> (admin)"},
+		{"unban", unbanCMD, "<IP|ID>", "Unban a person (admin)"},
+		{"kick", kickCMD, "<user>", "Kick <user> (admin)"},
+		{"art", asciiArtCMD, "", "Show some panda art"},
+		{"pwd", pwdCMD, "", "Show your current room"},
+		{"shrug", shrugCMD, "", `¯\\_(ツ)_/¯`}}
 	secretCMDs = []cmd{
-		{"ls", lsCMD, "", "", true},
-		{"cat", catCMD, "", "", true},
-		{"rm", rmCMD, "", "", true}}
+		{"ls", lsCMD, "", ""},
+		{"cat", catCMD, "", ""},
+		{"rm", rmCMD, "", ""}}
+	unprintableCommands = []string{
+		"shrug",
+		"cd",
+		"hang",
+		"=<user>"}
 )
 
 func init() {
-	cmds = append(cmds, cmd{"cmds", commandsCMD, "", "Show this message", true}) // avoid initialization loop
+	cmds = append(cmds, cmd{"cmds", commandsCMD, "", "Show this message"}) // avoid initialization loop
 	allcmds = append(append(append(allcmds,
 		cmds...), cmdsRest...), secretCMDs...)
+}
+
+func isCommandPrintable(c cmd) bool {
+	for _, name := range unprintableCommands {
+		if name == c.name {
+			return false
+		}
+	}
+	return true
 }
 
 // runCommands parses a line of raw input from a user and sends a message as
@@ -89,7 +102,7 @@ func runCommands(line string, u *user) {
 
 	for _, c := range allcmds {
 		if c.name == currCmd {
-			if c.printable {
+			if isCommandPrintable(c) {
 				u.room.broadcast(u.name, line)
 			}
 			c.run(strings.TrimSpace(strings.TrimPrefix(line, c.name)), u)
