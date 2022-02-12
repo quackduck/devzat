@@ -169,6 +169,12 @@ func getNamedColor(name string) *style {
 }
 
 func getCustomColor(name string) (*style, error) {
+	if strings.HasPrefix(name, "#") {
+		return &style{name, buildStyle(chalk.WithHex(name))}, nil
+	}
+	if strings.HasPrefix(name, "bg-#") {
+		return &style{name, buildStyleNoStrip(chalk.WithBgHex(name))}, nil
+	}
 	if len(name) == 3 || len(name) == 6 {
 		rgbCode := name
 		if strings.HasPrefix(name, "bg-") {

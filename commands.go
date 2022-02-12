@@ -547,7 +547,7 @@ func shrugCMD(line string, u *user) {
 }
 
 func pronounsCMD(line string, u *user) {
-	args := strings.Fields(strings.ReplaceAll(strings.ToLower(line), "\n", ""))
+	args := strings.Fields(line)
 
 	if len(args) == 1 && strings.HasPrefix(args[0], "@") {
 		victim, ok := findUserByName(u.room, args[0][1:])
@@ -559,7 +559,7 @@ func pronounsCMD(line string, u *user) {
 		return
 	}
 
-	u.pronouns = args
+	u.pronouns = strings.Fields(strings.ReplaceAll(strings.ToLower(line), "\n", ""))
 	//u.changeColor(u.color) // refresh pronouns
 	u.room.broadcast(devbot, u.name+" now goes by "+u.displayPronouns())
 }

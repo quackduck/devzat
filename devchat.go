@@ -442,7 +442,8 @@ func (u *user) repl() {
 			return
 		}
 
-		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", calculateLinesTaken(u.name+": "+line, u.win.Width-lenString(u.name+": ")))))
+		//fmt.Println("window", u.win)
+		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", calculateLinesTaken(u.name+": "+line, u.win.Width))))
 
 		if line == "" {
 			continue
@@ -468,9 +469,10 @@ func (u *user) repl() {
 	}
 }
 
+// may contain a bug (may because it could be the terminal's fault)
 func calculateLinesTaken(s string, width int) int {
 	s = stripansi.Strip(s)
-
+	//fmt.Println("`"+s+"`", "width", width)
 	pos := 0
 	lines := 1
 	currLine := ""
@@ -484,6 +486,7 @@ func calculateLinesTaken(s string, width int) int {
 			pos = 1
 			lines++
 		}
+		//fmt.Println(string(c), "`"+currLine+"`", "pos", pos, "lines", lines)
 	}
 	return lines
 }
