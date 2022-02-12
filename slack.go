@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"strconv"
 	"strings"
+	"errors"
+	"os"
 
 	"github.com/acarl005/stripansi"
 
@@ -61,9 +63,11 @@ func getSendToSlackChan() chan string {
 		return msgs
 	}
 	slackAPI, err := ioutil.ReadFile("slackAPI.txt")
-	if err != nil {
+
+	if !errors.Is(err, os.ErrNotExist) { // If file does not exist don't panic and treat it as a blank file.
 		panic(err)
 	}
+
 	api = slack.New(string(slackAPI))
 	rtm = api.NewRTM()
 	msgs := make(chan string, 100)

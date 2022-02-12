@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"strings"
 	"time"
+	"errors"
+	"os"
 
 	"github.com/acarl005/stripansi"
 	"github.com/dghubble/go-twitter/twitter"
@@ -76,10 +78,15 @@ func loadTwitterClient() *twitter.Client {
 	if offline {
 		return nil
 	}
+	
 	d, err := ioutil.ReadFile("twitter-creds.json")
-	if err != nil {
+
+	if !errors.Is(err, os.ErrNotExist) { // If file does not exist don't panic and treat it as a blank JSON file.
 		panic(err)
+	} else {
+		d = []byte("{}")
 	}
+
 	twitterCreds := new(Credentials)
 	err = json.Unmarshal(d, twitterCreds)
 	if err != nil {

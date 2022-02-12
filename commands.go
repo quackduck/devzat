@@ -365,8 +365,10 @@ func nickCMD(line string, u *user) {
 
 func listBansCMD(_ string, u *user) {
 	msg := "Printing bans by ID:  \n"
-	for i := 0; i < len(bans); i++ {
-		msg += cyan.Cyan(strconv.Itoa(i+1)) + ". " + bans[i].ID + "  \n"
+	i := 0
+	for ban := range bans {
+		msg += cyan.Cyan(strconv.Itoa(i+1)) + ". " + ban.ID + "  \n"
+		i++
 	}
 	u.room.broadcast(devbot, msg)
 }
@@ -376,11 +378,11 @@ func unbanCMD(toUnban string, u *user) {
 		u.room.broadcast(devbot, "Not authorized")
 		return
 	}
-	for i := 0; i < len(bans); i++ {
-		if bans[i].ID == toUnban || bans[i].Addr == toUnban { // allow unbanning by either ID or IP
-			u.room.broadcast(devbot, "Unbanned person: "+bans[i].ID)
-			// remove this ban
-			bans = append(bans[:i], bans[i+1:]...)
+
+	for ban := range bans {
+		if ban.ID == toUnban || ban.Addr == toUnban { // allow unbanning by either ID or IP
+			u.room.broadcast(devbot, "Unbanned person: " + ban.ID)
+			delete(bans, ban)
 		}
 	}
 	saveBans()
@@ -396,7 +398,8 @@ func banCMD(line string, u *user) {
 		u.room.broadcast(devbot, "Not authorized")
 		return
 	}
-	bans = append(bans, ban{victim.addr, victim.id})
+	tmp := ban{victim.addr, victim.id}
+	bans[tmp] = true
 	saveBans()
 	victim.close(victim.name + " has been banned by " + u.name)
 }
