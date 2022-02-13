@@ -367,7 +367,6 @@ func listBansCMD(_ string, u *user) {
 	msg := "Printing bans by ID:  \n"
 	for i := 0; i < len(bans); i++ {
 		msg += cyan.Cyan(strconv.Itoa(i+1)) + ". " + bans[i].ID + "  \n"
-		i++
 	}
 	u.room.broadcast(devbot, msg)
 }
