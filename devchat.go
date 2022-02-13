@@ -32,7 +32,7 @@ var (
 	mainRoom         = &room{"#main", make([]*user, 0, 10), sync.Mutex{}}
 	rooms            = map[string]*room{mainRoom.name: mainRoom}
 	backlog          = make([]backlogMessage, 0, scrollback)
-	bans             = make(map[ban]bool, 10)
+	bans             = make([]ban, 0, 10)
 	idsInMinToTimes  = make(map[string]int, 10) // TODO: maybe add some IP-based factor to disallow rapid key-gen attempts
 	antispamMessages = make(map[string]int)
 
@@ -238,9 +238,8 @@ func newUser(s ssh.Session) *user {
 		idsInMinToTimes[u.id]--
 	})
 	if idsInMinToTimes[u.id] > 6 {
-		ban := ban{u.addr, u.id}
-		bans[ban] = true
-		mainRoom.broadcast(devbot, u.name + " has been banned automatically. ID: "+u.id)
+		bans = append(bans, ban{u.addr, u.id})
+		mainRoom.broadcast(devbot, u.name+" has been banned automatically. ID: "+u.id)
 		return nil
 	}
 	if len(backlog) > 0 {
@@ -459,8 +458,7 @@ func (u *user) repl() {
 		}
 		if antispamMessages[u.id] >= 50 {
 			if !bansContains(bans, u.addr, u.id) {
-				tmp := ban{u.addr, u.id}
-				bans[tmp] = true
+				bans = append(bans, ban{u.addr, u.id})
 				saveBans()
 			}
 			u.writeln(devbot, "anti-spam triggered")
@@ -494,7 +492,11 @@ func calculateLinesTaken(s string, width int) int {
 }
 
 // bansContains reports if the addr or id is found in the bans list
-func bansContains(b map[ban]bool, addr string, id string) bool {
-	tmp := ban{addr, id}
-	return b[tmp] == true
+func bansContains(b []ban, addr string, id string) bool {
+	for i := 0; i < len(b); i++ {
+		if b[i].Addr == addr || b[i].ID == id {
+			return true
+		}
+	}
+	return false
 }
