@@ -77,11 +77,11 @@ func sendCurrentUsersTwitterMessage() {
 func loadTwitterClient() *twitter.Client {
 	d, err := ioutil.ReadFile("twitter-creds.json")
 
-	if !errors.Is(err, os.ErrNotExist) {
-		panic(err)
-	} else {
+	if errors.Is(err, os.ErrNotExist) {
 		offlineTwitter = true
 		l.Println("Did not find twitter-creds.json. Enabling offline mode.")
+	} else {
+		panic(err)
 	}
 
 	if offlineTwitter {

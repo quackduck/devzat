@@ -57,11 +57,11 @@ func getMsgsFromSlack() {
 func getSendToSlackChan() chan string {
 	slackAPI, err := ioutil.ReadFile("slackAPI.txt")
 
-	if !errors.Is(err, os.ErrNotExist) {
-		panic(err)
-	} else {
+	if errors.Is(err, os.ErrNotExist) {
 		offlineSlack = true
 		l.Println("Did not find slackAPI.txt. Enabling offline mode.")
+	} else {
+		panic(err)
 	}
 
 	if offlineSlack {
