@@ -28,7 +28,7 @@ type Credentials struct {
 }
 
 func sendCurrentUsersTwitterMessage() {
-	if offline {
+	if offlineTwitter {
 		return
 	}
 	// TODO: count all users in all rooms
@@ -75,17 +75,16 @@ func sendCurrentUsersTwitterMessage() {
 }
 
 func loadTwitterClient() *twitter.Client {
-	if offline {
-		return nil
-	}
-	
 	d, err := ioutil.ReadFile("twitter-creds.json")
 
 	if !errors.Is(err, os.ErrNotExist) {
 		panic(err)
 	} else {
-		offline = true
+		offlineTwitter = true
 		l.Println("Did not find twitter-creds.json. Enabling offline mode.")
+	}
+
+	if offlineTwitter {
 		return nil
 	}
 

@@ -22,9 +22,10 @@ var (
 )
 
 func getMsgsFromSlack() {
-	if offline {
+	if offlineSlack {
 		return
 	}
+
 	go rtm.ManageConnection()
 	uslack := new(user)
 	uslack.room = mainRoom
@@ -54,22 +55,22 @@ func getMsgsFromSlack() {
 }
 
 func getSendToSlackChan() chan string {
-	if offline {
+	slackAPI, err := ioutil.ReadFile("slackAPI.txt")
+
+	if !errors.Is(err, os.ErrNotExist) {
+		panic(err)
+	} else {
+		offlineSlack = true
+		l.Println("Did not find slackAPI.txt. Enabling offline mode.")
+	}
+
+	if offlineSlack {
 		msgs := make(chan string, 2)
 		go func() {
 			for range msgs {
 			}
 		}()
 		return msgs
-	}
-	slackAPI, err := ioutil.ReadFile("slackAPI.txt")
-
-	if !errors.Is(err, os.ErrNotExist) {
-		panic(err)
-	} else {
-		offline = true
-		l.Println("Did not find slackAPI.txt. Enabling offline mode.")
-		return nil
 	}
 
 	api = slack.New(string(slackAPI))

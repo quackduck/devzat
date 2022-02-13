@@ -27,7 +27,8 @@ var (
 	scrollback  = 16
 	profilePort = 5555
 	// should this instance run offline? (should it not connect to slack or twitter?)
-	offline = os.Getenv("DEVZAT_OFFLINE") != ""
+	offlineSlack = os.Getenv("DEVZAT_OFFLINE_SLACK") != ""
+	offlineTwitter = os.Getenv("DEVZAT_OFFLINE_TWITTER") != ""
 
 	mainRoom         = &room{"#main", make([]*user, 0, 10), sync.Mutex{}}
 	rooms            = map[string]*room{mainRoom.name: mainRoom}
@@ -132,6 +133,13 @@ func main() {
 			return
 		}
 	}
+
+	offline := os.Getenv("DEVZAT_OFFLINE") != "" // Check for global offline for backwards compatibility
+	if offline {
+		offlineSlack = true
+		offlineTwitter = true
+	}
+
 	fmt.Printf("Starting chat server on port %d and profiling on port %d\n", port, profilePort)
 	go getMsgsFromSlack()
 	go func() {
