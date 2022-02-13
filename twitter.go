@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"strings"
 	"time"
-	"errors"
 	"os"
 
 	"github.com/acarl005/stripansi"
@@ -77,7 +76,7 @@ func sendCurrentUsersTwitterMessage() {
 func loadTwitterClient() *twitter.Client {
 	d, err := ioutil.ReadFile("twitter-creds.json")
 
-	if errors.Is(err, os.ErrNotExist) {
+	if os.IsNotExist(err) {
 		offlineTwitter = true
 		l.Println("Did not find twitter-creds.json. Enabling offline mode.")
 	} else {

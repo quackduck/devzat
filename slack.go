@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"strconv"
 	"strings"
-	"errors"
 	"os"
 
 	"github.com/acarl005/stripansi"
@@ -57,7 +56,7 @@ func getMsgsFromSlack() {
 func getSendToSlackChan() chan string {
 	slackAPI, err := ioutil.ReadFile("slackAPI.txt")
 
-	if errors.Is(err, os.ErrNotExist) {
+	if os.IsNotExist(err) {
 		offlineSlack = true
 		l.Println("Did not find slackAPI.txt. Enabling offline mode.")
 	} else {
