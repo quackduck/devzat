@@ -81,10 +81,12 @@ func loadTwitterClient() *twitter.Client {
 	
 	d, err := ioutil.ReadFile("twitter-creds.json")
 
-	if !errors.Is(err, os.ErrNotExist) { // If file does not exist don't panic and treat it as a blank JSON file.
+	if !errors.Is(err, os.ErrNotExist) {
 		panic(err)
 	} else {
-		d = []byte("{}")
+		offline = true
+		l.Println("Did not find twitter-creds.json. Enabling offline mode.")
+		return nil
 	}
 
 	twitterCreds := new(Credentials)

@@ -64,8 +64,12 @@ func getSendToSlackChan() chan string {
 	}
 	slackAPI, err := ioutil.ReadFile("slackAPI.txt")
 
-	if !errors.Is(err, os.ErrNotExist) { // If file does not exist don't panic and treat it as a blank file.
+	if !errors.Is(err, os.ErrNotExist) {
 		panic(err)
+	} else {
+		offline = true
+		l.Println("Did not find slackAPI.txt. Enabling offline mode.")
+		return nil
 	}
 
 	api = slack.New(string(slackAPI))
