@@ -376,6 +376,7 @@ func unbanCMD(toUnban string, u *user) {
 		u.room.broadcast(devbot, "Not authorized")
 		return
 	}
+
 	for i := 0; i < len(bans); i++ {
 		if bans[i].ID == toUnban || bans[i].Addr == toUnban { // allow unbanning by either ID or IP
 			u.room.broadcast(devbot, "Unbanned person: "+bans[i].ID)
@@ -383,6 +384,7 @@ func unbanCMD(toUnban string, u *user) {
 			bans = append(bans[:i], bans[i+1:]...)
 		}
 	}
+
 	saveBans()
 }
 

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"strconv"
 	"strings"
+	"os"
 
 	"github.com/acarl005/stripansi"
 
@@ -20,9 +21,10 @@ var (
 )
 
 func getMsgsFromSlack() {
-	if offline {
+	if offlineSlack {
 		return
 	}
+
 	go rtm.ManageConnection()
 	uslack := new(user)
 	uslack.room = mainRoom
@@ -52,7 +54,16 @@ func getMsgsFromSlack() {
 }
 
 func getSendToSlackChan() chan string {
-	if offline {
+	slackAPI, err := ioutil.ReadFile("slackAPI.txt")
+
+	if os.IsNotExist(err) {
+		offlineSlack = true
+		l.Println("Did not find slackAPI.txt. Enabling offline mode.")
+	} else {
+		panic(err)
+	}
+
+	if offlineSlack {
 		msgs := make(chan string, 2)
 		go func() {
 			for range msgs {
@@ -60,10 +71,7 @@ func getSendToSlackChan() chan string {
 		}()
 		return msgs
 	}
-	slackAPI, err := ioutil.ReadFile("slackAPI.txt")
-	if err != nil {
-		panic(err)
-	}
+
 	api = slack.New(string(slackAPI))
 	rtm = api.NewRTM()
 	msgs := make(chan string, 100)
