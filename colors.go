@@ -13,6 +13,26 @@ import (
 	markdown "github.com/quackduck/go-term-markdown"
 )
 
+func makeFlag(colors []string) func(a string) string {
+	flag := []*gchalk.Builder{}
+	for _, color := range colors {
+		flag = append(flag, chalk.WithHex(color))
+	}
+	return func(a string) string {
+		return applyRainbow(flag, a)
+	}
+}
+
+func applyRainbow(rainbow []*gchalk.Builder, a string) string {
+	a = stripansi.Strip(a)
+	buf := ""
+	colorOffset := rand.Intn(len(rainbow))
+	for i, r := range []rune(a) {
+		buf += rainbow[(colorOffset+i)%len(rainbow)].Paint(string(r))
+	}
+	return buf
+}
+
 var (
 	chalk   = gchalk.New(gchalk.ForceLevel(gchalk.LevelAnsi256))
 	green   = ansi256(1, 5, 1)
@@ -46,6 +66,16 @@ var (
 		{"hacker", buildStyle(chalk.WithRGB(0, 255, 0).WithBgRGB(0, 0, 0))},
 		{"l33t", buildStyleNoStrip(chalk.WithBgBrightBlack())},
 		{"whiten", buildStyleNoStrip(chalk.WithBgWhite())},
+		{"trans", makeFlag([]string{"#55CDFC", "#F7A8B8", "#FFFFFF", "#F7A8B8", "#55CDFC"})},
+		{"gay", makeFlag([]string{"#FF0018", "#FFA52C", "#FFFF41", "#008018", "#0000F9", "#86007D"})},
+		{"lesbian", makeFlag([]string{"#D62E02", "#FD9855", "#FFFFFF", "#D161A2", "#A20160"})},
+		{"bi", makeFlag([]string{"#D60270", "#D60270", "#9B4F96", "#0038A8", "#0038A8"})},
+		{"ace", makeFlag([]string{"#333333", "#A4A4A4", "#FFFFFF", "#810081"})},
+		{"pan", makeFlag([]string{"#FF1B8D", "#FFDA00", "#1BB3FF"})},
+		{"enby", makeFlag([]string{"#FFF430", "#FFFFFF", "#9C59D1", "#000000"})},
+		{"aro", makeFlag([]string{"#3AA63F", "#A8D47A", "#FFFFFF", "#AAAAAA", "#000000"})},
+		{"genderfluid", makeFlag([]string{"#FE75A1", "#FFFFFF", "#BE18D6", "#333333", "#333EBC"})},
+		{"agender", makeFlag([]string{"#333333", "#BCC5C6", "#FFFFFF", "#B5F582", "#FFFFFF", "#BCC5C6", "#333333"})},
 		{"rainbow", func(a string) string {
 			rainbow := []*gchalk.Builder{red, orange, yellow, green, cyan, blue, ansi256(2, 2, 5), magenta}
 			a = stripansi.Strip(a)
