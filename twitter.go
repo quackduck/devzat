@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 	"time"
-	"os"
 
 	"github.com/acarl005/stripansi"
 	"github.com/dghubble/go-twitter/twitter"
@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	client = loadTwitterClient()
+	client     = loadTwitterClient()
 	allowTweet = true
 )
 
@@ -79,7 +79,7 @@ func loadTwitterClient() *twitter.Client {
 	if os.IsNotExist(err) {
 		offlineTwitter = true
 		l.Println("Did not find twitter-creds.json. Enabling offline mode.")
-	} else {
+	} else if err != nil {
 		panic(err)
 	}
 

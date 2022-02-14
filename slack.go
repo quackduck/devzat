@@ -4,9 +4,9 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
-	"os"
 
 	"github.com/acarl005/stripansi"
 
@@ -15,7 +15,7 @@ import (
 
 var (
 	slackChan      = getSendToSlackChan()
-	slackChannelID = "C01T5J557AA"
+	slackChannelID = "C01T5J557AA" // todo: generalize
 	api            *slack.Client
 	rtm            *slack.RTM
 )
@@ -59,7 +59,7 @@ func getSendToSlackChan() chan string {
 	if os.IsNotExist(err) {
 		offlineSlack = true
 		l.Println("Did not find slackAPI.txt. Enabling offline mode.")
-	} else {
+	} else if err != nil {
 		panic(err)
 	}
 
