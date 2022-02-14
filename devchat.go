@@ -477,7 +477,7 @@ func (u *user) repl() {
 	}
 }
 
-// may contain a bug (may because it could be the terminal's fault)
+// may contain a bug ("may" because it could be the terminal's fault)
 func calculateLinesTaken(s string, width int) int {
 	s = stripansi.Strip(s)
 	//fmt.Println("`"+s+"`", "width", width)
@@ -490,7 +490,7 @@ func calculateLinesTaken(s string, width int) int {
 		if c == '\t' {
 			pos += 8
 		}
-		if c == '\n' || pos > width { // || (c == '\t' && pos+8 > width)
+		if c == '\n' || pos > width {
 			pos = 1
 			lines++
 		}

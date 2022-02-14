@@ -478,6 +478,8 @@ Interesting features:
 
 For replacing newlines, I often use bulkseotools.com/add-remove-line-breaks.php.
 
+Join the Devzat discord server: https://discord.gg/GW6SmCXY
+
 Made by Ishan Goel with feature ideas from friends.  
 Thanks to Caleb Denio for lending his server!`)
 }
