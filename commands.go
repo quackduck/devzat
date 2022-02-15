@@ -546,6 +546,11 @@ func shrugCMD(line string, u *user) {
 func pronounsCMD(line string, u *user) {
 	args := strings.Fields(line)
 
+	if line == "" {
+		u.room.broadcast(devbot, "Set pronouns by providing em or query a user's pronouns!")
+		return
+	}
+
 	if len(args) == 1 && strings.HasPrefix(args[0], "@") {
 		victim, ok := findUserByName(u.room, args[0][1:])
 		if !ok {
