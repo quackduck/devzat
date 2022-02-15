@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"math/rand"
 	"net"
 	"net/http"
@@ -295,7 +296,7 @@ func valentines(u *user) {
 	if time.Now().Month() == time.February && (time.Now().Day() == 14 || time.Now().Day() == 15 || time.Now().Day() == 13) {
 		// TODO: add a few more random images
 		u.writeln("", "![❤️](https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/160/apple/81/heavy-black-heart_2764.png)")
-		u.term.Write([]byte("\u001B[A\u001B[2K\u001B[A\u001B[2K")) // delete last line of rendered markdown
+		//u.term.Write([]byte("\u001B[A\u001B[2K\u001B[A\u001B[2K")) // delete last line of rendered markdown
 		time.Sleep(time.Second)
 		// clear screen
 		clearCMD("", u)
@@ -446,8 +447,10 @@ func (u *user) repl() {
 			return
 		}
 		line += "\n"
+		hasNewlines := false
 		//oldPrompt := u.name + ": "
 		for err == terminal.ErrPasteIndicator {
+			hasNewlines = true
 			//u.term.SetPrompt(strings.Repeat(" ", lenString(u.name)+2))
 			u.term.SetPrompt("")
 			additionalLine := ""
@@ -466,7 +469,12 @@ func (u *user) repl() {
 		}
 
 		//fmt.Println("window", u.win)
-		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", calculateLinesTaken(u.name+": "+line, u.win.Width))))
+		if hasNewlines {
+			calculateLinesTaken(u, u.name+": "+line, u.win.Width)
+		} else {
+			u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(lenString(u.name+line)+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
+		}
+		//u.term.Write([]byte(strings.Repeat("\033[A\033[2K", calculateLinesTaken(u.name+": "+line, u.win.Width))))
 
 		if line == "" {
 			continue
@@ -493,11 +501,12 @@ func (u *user) repl() {
 }
 
 // may contain a bug ("may" because it could be the terminal's fault)
-func calculateLinesTaken(s string, width int) int {
+func calculateLinesTaken(u *user, s string, width int) {
 	s = stripansi.Strip(s)
 	//fmt.Println("`"+s+"`", "width", width)
 	pos := 0
-	lines := 1
+	//lines := 1
+	u.term.Write([]byte("\033[A\033[2K"))
 	currLine := ""
 	for _, c := range s {
 		pos++
@@ -507,11 +516,12 @@ func calculateLinesTaken(s string, width int) int {
 		}
 		if c == '\n' || pos > width {
 			pos = 1
-			lines++
+			//lines++
+			u.term.Write([]byte("\033[A\033[2K"))
 		}
 		//fmt.Println(string(c), "`"+currLine+"`", "pos", pos, "lines", lines)
 	}
-	return lines
+	//return lines
 }
 
 // bansContains reports if the addr or id is found in the bans list
