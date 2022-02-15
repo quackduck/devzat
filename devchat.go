@@ -27,7 +27,7 @@ var (
 	scrollback  = 16
 	profilePort = 5555
 	// should this instance run offline? (should it not connect to slack or twitter?)
-	offlineSlack = os.Getenv("DEVZAT_OFFLINE_SLACK") != ""
+	offlineSlack   = os.Getenv("DEVZAT_OFFLINE_SLACK") != ""
 	offlineTwitter = os.Getenv("DEVZAT_OFFLINE_TWITTER") != ""
 
 	mainRoom         = &room{"#main", make([]*user, 0, 10), sync.Mutex{}}
@@ -134,8 +134,8 @@ func main() {
 		}
 	}
 
-	offline := os.Getenv("DEVZAT_OFFLINE") != "" // Check for global offline for backwards compatibility
-	if offline {
+	// Check for global offline for backwards compatibility
+	if os.Getenv("DEVZAT_OFFLINE") != "" {
 		offlineSlack = true
 		offlineTwitter = true
 	}
@@ -275,6 +275,9 @@ func newUser(s ssh.Session) *user {
 
 	u.term.SetBracketedPasteMode(true) // experimental paste bracketing support
 
+	clearCMD("", u) // always clear the screen on connect
+	valentines(u)
+
 	switch len(mainRoom.users) - 1 {
 	case 0:
 		u.writeln("", blue.Paint("Welcome to the chat. There are no more users"))
@@ -285,6 +288,17 @@ func newUser(s ssh.Session) *user {
 	}
 	mainRoom.broadcast(devbot, u.name+" has joined the chat")
 	return u
+}
+
+func valentines(u *user) {
+	if time.Now().Month() == time.February && (time.Now().Day() == 14 || time.Now().Day() == 15 || time.Now().Day() == 13) {
+		// TODO: add a few more random images
+		u.writeln("", "![❤️](https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/160/apple/81/heavy-black-heart_2764.png)")
+		u.term.Write([]byte("\u001B[A\u001B[2K\u001B[A\u001B[2K")) // delete last line of rendered markdown
+		time.Sleep(time.Second)
+		// clear screen
+		clearCMD("", u)
+	}
 }
 
 // cleanupRoom deletes a room if it's empty and isn't the main room
