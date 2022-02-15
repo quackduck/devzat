@@ -250,6 +250,10 @@ func newUser(s ssh.Session) *user {
 		mainRoom.broadcast(devbot, u.name+" has been banned automatically. ID: "+u.id)
 		return nil
 	}
+
+	clearCMD("", u) // always clear the screen on connect
+	valentines(u)
+
 	if len(backlog) > 0 {
 		lastStamp := backlog[0].timestamp
 		u.rWriteln(printPrettyDuration(u.joinTime.Sub(lastStamp)) + " earlier")
@@ -274,9 +278,6 @@ func newUser(s ssh.Session) *user {
 	mainRoom.usersMutex.Unlock()
 
 	u.term.SetBracketedPasteMode(true) // experimental paste bracketing support
-
-	clearCMD("", u) // always clear the screen on connect
-	valentines(u)
 
 	switch len(mainRoom.users) - 1 {
 	case 0:
