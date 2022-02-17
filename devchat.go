@@ -541,7 +541,6 @@ func fetchEmoji(names []string) string {
 }
 
 func fetchEmojiSingle(name string) string {
-	fmt.Println(name)
 	if offlineSlack {
 		return ""
 	}

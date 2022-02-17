@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"image"
+	"net/http"
 	"runtime/debug"
 	"sort"
 	"strconv"
@@ -10,8 +13,11 @@ import (
 	"time"
 
 	chromastyles "github.com/alecthomas/chroma/styles"
+	"github.com/mattn/go-sixel"
 	markdown "github.com/quackduck/go-term-markdown"
 	"github.com/shurcooL/tictactoe"
+	_ "image/jpeg"
+	_ "image/png"
 )
 
 type cmd struct {
@@ -50,6 +56,7 @@ var (
 		{"kick", kickCMD, "<user>", "Kick <user> (admin)"},
 		{"art", asciiArtCMD, "", "Show some panda art"},
 		{"pwd", pwdCMD, "", "Show your current room"},
+		{"sixel", sixelCMD, "<png url>", "Render an image in high quality"},
 		{"shrug", shrugCMD, "", `¯\\_(ツ)_/¯`}} // won't actually run, here just to show in docs
 	secretCMDs = []cmd{
 		{"ls", lsCMD, "", ""},
@@ -264,6 +271,28 @@ func bellCMD(rest string, u *user) {
 	default:
 		u.room.broadcast(devbot, "your options are off, on and all")
 	}
+}
+
+func sixelCMD(url string, u *user) {
+	r, err := http.Get(url)
+	if err != nil {
+		u.room.broadcast(devbot, "huh, are you sure that's a working link?")
+		return
+	}
+	i, _, err := image.Decode(r.Body)
+	if err != nil {
+		u.room.broadcast(devbot, "are you sure that's a link to a png or a jpeg?")
+		return
+	}
+	b := new(bytes.Buffer)
+	err = sixel.NewEncoder(b).Encode(i)
+	if err != nil {
+		u.room.broadcast(devbot, "uhhh I got this error trying to encode the image: "+err.Error())
+	}
+	for _, us := range u.room.users {
+		us.term.Write(b.Bytes()) // TODO: won't shpw up in the backlog, is that okay?
+	}
+	//u.room.broadcast("", b.String())
 }
 
 func cdCMD(rest string, u *user) {
