@@ -78,13 +78,7 @@ var (
 		{"agender", makeFlag([]string{"#333333", "#BCC5C6", "#FFFFFF", "#B5F582", "#FFFFFF", "#BCC5C6", "#333333"})},
 		{"rainbow", func(a string) string {
 			rainbow := []*gchalk.Builder{red, orange, yellow, green, cyan, blue, ansi256(2, 2, 5), magenta}
-			a = stripansi.Strip(a)
-			buf := ""
-			colorOffset := rand.Intn(len(rainbow))
-			for i, r := range []rune(a) {
-				buf += rainbow[(colorOffset+i)%len(rainbow)].Paint(string(r))
-			}
-			return buf
+			return applyRainbow(rainbow, a)
 		}}}
 )
 
