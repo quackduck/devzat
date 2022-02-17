@@ -496,8 +496,62 @@ func (u *user) repl() {
 			u.close(red.Paint(u.name + " has been banned for spamming"))
 			return
 		}
+		line = replaceSlackEmoji(line)
 		runCommands(line, u)
 	}
+}
+
+func replaceSlackEmoji(input string) string {
+	if len(input) < 4 {
+		return input
+	}
+	emojiName := ""
+	result := ""
+	inEmojiName := false
+	for i := 0; i < len(input)-1; i++ {
+		if inEmojiName {
+			emojiName += string(input[i]) // end result: if input contains "::lol::", emojiName will contain ":lol:". "::lol:: ::cat::" => ":lol::cat:"
+		}
+		if input[i] == ':' && input[i+1] == ':' {
+			inEmojiName = !inEmojiName
+		}
+		//if !inEmojiName {
+		result += string(input[i])
+		//}
+	}
+	result += string(input[len(input)-1])
+	if emojiName != "" {
+		toAdd := fetchEmoji(strings.Split(strings.ReplaceAll(emojiName[1:len(emojiName)-1], "::", ":"), ":")) // cut the ':' at the start and end
+
+		result += toAdd
+	}
+	return result
+}
+
+// accepts a ':' separated list of emoji
+func fetchEmoji(names []string) string {
+	if offlineSlack {
+		return ""
+	}
+	result := ""
+	for _, name := range names {
+		result += fetchEmojiSingle(name)
+	}
+	return result
+}
+
+func fetchEmojiSingle(name string) string {
+	fmt.Println(name)
+	if offlineSlack {
+		return ""
+	}
+	r, err := http.Get("https://e.benjaminsmith.dev/" + name)
+	defer r.Body.Close()
+
+	if err != nil || r.StatusCode != 200 {
+		return ""
+	}
+	return "![" + name + "](https://e.benjaminsmith.dev/" + name + ")"
 }
 
 // may contain a bug ("may" because it could be the terminal's fault)
