@@ -20,7 +20,7 @@ import (
 
 	"github.com/acarl005/stripansi"
 	"github.com/gliderlabs/ssh"
-	terminal "golang.org/x/term"
+	terminal "github.com/quackduck/term"
 )
 
 var (
