@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 
@@ -14,15 +15,16 @@ import (
 
 var (
 	slackChan      = getSendToSlackChan()
-	slackChannelID = "C01T5J557AA"
+	slackChannelID = "C01T5J557AA" // todo: generalize
 	api            *slack.Client
 	rtm            *slack.RTM
 )
 
 func getMsgsFromSlack() {
-	if offline {
+	if offlineSlack {
 		return
 	}
+
 	go rtm.ManageConnection()
 	uslack := new(user)
 	uslack.room = mainRoom
@@ -52,7 +54,16 @@ func getMsgsFromSlack() {
 }
 
 func getSendToSlackChan() chan string {
-	if offline {
+	slackAPI, err := ioutil.ReadFile("slackAPI.txt")
+
+	if os.IsNotExist(err) {
+		offlineSlack = true
+		l.Println("Did not find slackAPI.txt. Enabling offline mode.")
+	} else if err != nil {
+		panic(err)
+	}
+
+	if offlineSlack {
 		msgs := make(chan string, 2)
 		go func() {
 			for range msgs {
@@ -60,10 +71,7 @@ func getSendToSlackChan() chan string {
 		}()
 		return msgs
 	}
-	slackAPI, err := ioutil.ReadFile("slackAPI.txt")
-	if err != nil {
-		panic(err)
-	}
+
 	api = slack.New(string(slackAPI))
 	rtm = api.NewRTM()
 	msgs := make(chan string, 100)

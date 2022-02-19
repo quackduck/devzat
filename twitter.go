@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 	"time"
 
@@ -26,7 +27,7 @@ type Credentials struct {
 }
 
 func sendCurrentUsersTwitterMessage() {
-	if offline {
+	if offlineTwitter {
 		return
 	}
 	// TODO: count all users in all rooms
@@ -73,13 +74,19 @@ func sendCurrentUsersTwitterMessage() {
 }
 
 func loadTwitterClient() *twitter.Client {
-	if offline {
-		return nil
-	}
 	d, err := ioutil.ReadFile("twitter-creds.json")
-	if err != nil {
+
+	if os.IsNotExist(err) {
+		offlineTwitter = true
+		l.Println("Did not find twitter-creds.json. Enabling offline mode.")
+	} else if err != nil {
 		panic(err)
 	}
+
+	if offlineTwitter {
+		return nil
+	}
+
 	twitterCreds := new(Credentials)
 	err = json.Unmarshal(d, twitterCreds)
 	if err != nil {

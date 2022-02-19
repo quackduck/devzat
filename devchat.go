@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"math/rand"
 	"net"
 	"net/http"
@@ -19,7 +20,7 @@ import (
 
 	"github.com/acarl005/stripansi"
 	"github.com/gliderlabs/ssh"
-	terminal "golang.org/x/term"
+	terminal "github.com/quackduck/term"
 )
 
 var (
@@ -27,7 +28,8 @@ var (
 	scrollback  = 16
 	profilePort = 5555
 	// should this instance run offline? (should it not connect to slack or twitter?)
-	offline = os.Getenv("DEVZAT_OFFLINE") != ""
+	offlineSlack   = os.Getenv("DEVZAT_OFFLINE_SLACK") != ""
+	offlineTwitter = os.Getenv("DEVZAT_OFFLINE_TWITTER") != ""
 
 	mainRoom         = &room{"#main", make([]*user, 0, 10), sync.Mutex{}}
 	rooms            = map[string]*room{mainRoom.name: mainRoom}
@@ -132,6 +134,13 @@ func main() {
 			return
 		}
 	}
+
+	// Check for global offline for backwards compatibility
+	if os.Getenv("DEVZAT_OFFLINE") != "" {
+		offlineSlack = true
+		offlineTwitter = true
+	}
+
 	fmt.Printf("Starting chat server on port %d and profiling on port %d\n", port, profilePort)
 	go getMsgsFromSlack()
 	go func() {
@@ -242,6 +251,10 @@ func newUser(s ssh.Session) *user {
 		mainRoom.broadcast(devbot, u.name+" has been banned automatically. ID: "+u.id)
 		return nil
 	}
+
+	clearCMD("", u) // always clear the screen on connect
+	valentines(u)
+
 	if len(backlog) > 0 {
 		lastStamp := backlog[0].timestamp
 		u.rWriteln(printPrettyDuration(u.joinTime.Sub(lastStamp)) + " earlier")
@@ -277,6 +290,17 @@ func newUser(s ssh.Session) *user {
 	}
 	mainRoom.broadcast(devbot, u.name+" has joined the chat")
 	return u
+}
+
+func valentines(u *user) {
+	if time.Now().Month() == time.February && (time.Now().Day() == 14 || time.Now().Day() == 15 || time.Now().Day() == 13) {
+		// TODO: add a few more random images
+		u.writeln("", "![❤️](https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/160/apple/81/heavy-black-heart_2764.png)")
+		//u.term.Write([]byte("\u001B[A\u001B[2K\u001B[A\u001B[2K")) // delete last line of rendered markdown
+		time.Sleep(time.Second)
+		// clear screen
+		clearCMD("", u)
+	}
 }
 
 // cleanupRoom deletes a room if it's empty and isn't the main room
@@ -315,7 +339,7 @@ func (u *user) writeln(senderName string, msg string) {
 	msg = strings.ReplaceAll(msg, `\n`, "\n")
 	msg = strings.ReplaceAll(msg, `\`+"\n", `\n`) // let people escape newlines
 	if senderName != "" {
-		if strings.HasSuffix(senderName, " <- ") || strings.HasSuffix(senderName, " -> ") { // kinda hacky DM detection
+		if strings.HasSuffix(senderName, " <- ") || strings.HasSuffix(senderName, " -> ") { // TODO: kinda hacky DM detection
 			msg = strings.TrimSpace(mdRender(msg, lenString(senderName), u.win.Width))
 			msg = senderName + msg + "\a"
 		} else {
@@ -423,8 +447,10 @@ func (u *user) repl() {
 			return
 		}
 		line += "\n"
+		hasNewlines := false
 		//oldPrompt := u.name + ": "
 		for err == terminal.ErrPasteIndicator {
+			hasNewlines = true
 			//u.term.SetPrompt(strings.Repeat(" ", lenString(u.name)+2))
 			u.term.SetPrompt("")
 			additionalLine := ""
@@ -443,7 +469,12 @@ func (u *user) repl() {
 		}
 
 		//fmt.Println("window", u.win)
-		u.term.Write([]byte(strings.Repeat("\033[A\033[2K", calculateLinesTaken(u.name+": "+line, u.win.Width))))
+		if hasNewlines {
+			calculateLinesTaken(u, u.name+": "+line, u.win.Width)
+		} else {
+			u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(lenString(u.name+line)+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
+		}
+		//u.term.Write([]byte(strings.Repeat("\033[A\033[2K", calculateLinesTaken(u.name+": "+line, u.win.Width))))
 
 		if line == "" {
 			continue
@@ -465,16 +496,70 @@ func (u *user) repl() {
 			u.close(red.Paint(u.name + " has been banned for spamming"))
 			return
 		}
+		line = replaceSlackEmoji(line)
 		runCommands(line, u)
 	}
 }
 
-// may contain a bug (may because it could be the terminal's fault)
-func calculateLinesTaken(s string, width int) int {
+func replaceSlackEmoji(input string) string {
+	if len(input) < 4 {
+		return input
+	}
+	emojiName := ""
+	result := ""
+	inEmojiName := false
+	for i := 0; i < len(input)-1; i++ {
+		if inEmojiName {
+			emojiName += string(input[i]) // end result: if input contains "::lol::", emojiName will contain ":lol:". "::lol:: ::cat::" => ":lol::cat:"
+		}
+		if input[i] == ':' && input[i+1] == ':' {
+			inEmojiName = !inEmojiName
+		}
+		//if !inEmojiName {
+		result += string(input[i])
+		//}
+	}
+	result += string(input[len(input)-1])
+	if emojiName != "" {
+		toAdd := fetchEmoji(strings.Split(strings.ReplaceAll(emojiName[1:len(emojiName)-1], "::", ":"), ":")) // cut the ':' at the start and end
+
+		result += toAdd
+	}
+	return result
+}
+
+// accepts a ':' separated list of emoji
+func fetchEmoji(names []string) string {
+	if offlineSlack {
+		return ""
+	}
+	result := ""
+	for _, name := range names {
+		result += fetchEmojiSingle(name)
+	}
+	return result
+}
+
+func fetchEmojiSingle(name string) string {
+	if offlineSlack {
+		return ""
+	}
+	r, err := http.Get("https://e.benjaminsmith.dev/" + name)
+	defer r.Body.Close()
+
+	if err != nil || r.StatusCode != 200 {
+		return ""
+	}
+	return "![" + name + "](https://e.benjaminsmith.dev/" + name + ")"
+}
+
+// may contain a bug ("may" because it could be the terminal's fault)
+func calculateLinesTaken(u *user, s string, width int) {
 	s = stripansi.Strip(s)
 	//fmt.Println("`"+s+"`", "width", width)
 	pos := 0
-	lines := 1
+	//lines := 1
+	u.term.Write([]byte("\033[A\033[2K"))
 	currLine := ""
 	for _, c := range s {
 		pos++
@@ -482,13 +567,14 @@ func calculateLinesTaken(s string, width int) int {
 		if c == '\t' {
 			pos += 8
 		}
-		if c == '\n' || pos > width { // || (c == '\t' && pos+8 > width)
+		if c == '\n' || pos > width {
 			pos = 1
-			lines++
+			//lines++
+			u.term.Write([]byte("\033[A\033[2K"))
 		}
 		//fmt.Println(string(c), "`"+currLine+"`", "pos", pos, "lines", lines)
 	}
-	return lines
+	//return lines
 }
 
 // bansContains reports if the addr or id is found in the bans list

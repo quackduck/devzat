@@ -1,7 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"image"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
+	"net/http"
 	"runtime/debug"
 	"sort"
 	"strconv"
@@ -9,7 +15,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/alecthomas/chroma"
 	chromastyles "github.com/alecthomas/chroma/styles"
+	"github.com/mattn/go-sixel"
 	markdown "github.com/quackduck/go-term-markdown"
 	"github.com/shurcooL/tictactoe"
 )
@@ -56,7 +64,8 @@ var (
 		{"kick", kickCMD, "<user>", "Kick <user> (admin)"},
 		{"art", asciiArtCMD, "", "Show some panda art"},
 		{"pwd", pwdCMD, "", "Show your current room"},
-		unprintableCommands["shrug"]}
+		unprintableCommands["shrug"],
+		{"sixel", sixelCMD, "<png url>", "Render an image in high quality"}}
 	secretCMDs = []cmd{
 		{"ls", lsCMD, "", ""},
 		{"cat", catCMD, "", ""},
@@ -124,7 +133,7 @@ func runCommands(line string, u *user) {
 func dmCMD(rest string, u *user) {
 	restSplit := strings.Fields(rest)
 	if len(restSplit) < 2 {
-		u.writeln(devbot, "You gotta have a message mate")
+		u.writeln(devbot, "You gotta have a message, mate")
 		return
 	}
 	peer, ok := findUserByName(u.room, restSplit[0])
@@ -273,6 +282,27 @@ func bellCMD(rest string, u *user) {
 	}
 }
 
+func sixelCMD(url string, u *user) {
+	r, err := http.Get(url)
+	if err != nil {
+		u.room.broadcast(devbot, "huh, are you sure that's a working link?")
+		return
+	}
+	i, _, err := image.Decode(r.Body)
+	if err != nil {
+		u.room.broadcast(devbot, "are you sure that's a link to a png or a jpeg?")
+		return
+	}
+	b := new(bytes.Buffer)
+	err = sixel.NewEncoder(b).Encode(i)
+	if err != nil {
+		u.room.broadcast(devbot, "uhhh I got this error trying to encode the image: "+err.Error())
+	}
+	for _, us := range u.room.users {
+		us.term.Write(b.Bytes()) // TODO: won't shpw up in the backlog, is that okay?
+	}
+}
+
 func cdCMD(rest string, u *user) {
 	if u.messaging != nil {
 		u.messaging = nil
@@ -383,6 +413,7 @@ func unbanCMD(toUnban string, u *user) {
 		u.room.broadcast(devbot, "Not authorized")
 		return
 	}
+
 	for i := 0; i < len(bans); i++ {
 		if bans[i].ID == toUnban || bans[i].Addr == toUnban { // allow unbanning by either ID or IP
 			u.room.broadcast(devbot, "Unbanned person: "+bans[i].ID)
@@ -390,6 +421,7 @@ func unbanCMD(toUnban string, u *user) {
 			bans = append(bans[:i], bans[i+1:]...)
 		}
 	}
+
 	saveBans()
 }
 
@@ -441,7 +473,8 @@ Tommy Pujol, Sam Poder, Rishi Kothari,
 Amogh Chaubey, Ella Xu, Hugo Hu,  
 Robert Goll, Tanishq Soni, Arash Nur Iman,  
 Temi, Aiden Bai, Ivan Bowman, @epic  
-Belle See, Fayd  
+Belle See, Fayd, Benjamin Smith
+Matt Gleich, Jason Appah
 _Possibly more people_
 
 
@@ -483,6 +516,8 @@ Interesting features:
 
 For replacing newlines, I often use bulkseotools.com/add-remove-line-breaks.php.
 
+Join the Devzat discord server: https://discord.gg/GW6SmCXY
+
 Made by Ishan Goel with feature ideas from friends.  
 Thanks to Caleb Denio for lending his server!`)
 }
@@ -512,6 +547,49 @@ func exampleCodeCMD(line string, u *user) {
 		return
 	}
 	u.room.broadcast(devbot, "\n```go\npackage main\nimport \"fmt\"\nfunc main() {\n   fmt.Println(\"Example!\")\n}\n```")
+}
+
+func init() { // add Matt Gleich's blackbird theme from https://github.com/blackbirdtheme/vscode/blob/master/themes/blackbird-midnight-color-theme.json#L175
+	red := "#ff1131" // added saturation
+	redItalic := "italic " + red
+	white := "#fdf7cd"
+	yellow := "#e1db3f"
+	blue := "#268ef8"  // added saturation
+	green := "#22e327" // added saturation
+	gray := "#5a637e"
+	teal := "#00ecd8"
+	tealItalic := "italic " + teal
+
+	chromastyles.Register(chroma.MustNewStyle("blackbird", chroma.StyleEntries{
+		chroma.Text:                white,
+		chroma.Error:               red,
+		chroma.Comment:             gray,
+		chroma.Keyword:             redItalic,
+		chroma.KeywordNamespace:    redItalic,
+		chroma.KeywordType:         tealItalic,
+		chroma.Operator:            blue,
+		chroma.Punctuation:         white,
+		chroma.Name:                white,
+		chroma.NameAttribute:       white,
+		chroma.NameClass:           green,
+		chroma.NameConstant:        tealItalic,
+		chroma.NameDecorator:       green,
+		chroma.NameException:       red,
+		chroma.NameFunction:        green,
+		chroma.NameOther:           white,
+		chroma.NameTag:             yellow,
+		chroma.LiteralNumber:       blue,
+		chroma.Literal:             yellow,
+		chroma.LiteralDate:         yellow,
+		chroma.LiteralString:       yellow,
+		chroma.LiteralStringEscape: teal,
+		chroma.GenericDeleted:      red,
+		chroma.GenericEmph:         "italic",
+		chroma.GenericInserted:     green,
+		chroma.GenericStrong:       "bold",
+		chroma.GenericSubheading:   yellow,
+		chroma.Background:          "bg:#000000",
+	}))
 }
 
 func themeCMD(line string, u *user) {
@@ -548,6 +626,11 @@ func shrugCMD(line string, u *user) {
 
 func pronounsCMD(line string, u *user) {
 	args := strings.Fields(line)
+
+	if line == "" {
+		u.room.broadcast(devbot, "Set pronouns by providing em or query a user's pronouns!")
+		return
+	}
 
 	if len(args) == 1 && strings.HasPrefix(args[0], "@") {
 		victim, ok := findUserByName(u.room, args[0][1:])
