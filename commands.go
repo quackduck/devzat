@@ -30,15 +30,9 @@ type cmd struct {
 }
 
 var (
-	unprintableCommands = map[string]cmd{
-		"shrug": {"shrug", shrugCMD, "", `¯\\_(ツ)_/¯`},
-		"cd":    {"cd", cdCMD, "#room|user", "Join #room, DM user or run cd to see a list"},
-		"hang":  {"hang", hangCMD, "<char|word>", "Play hangman"},
-		"pm":    {"=<user>", dmCMD, "<msg>", "DM <user> with <msg>"},
-	}
 	allcmds = make([]cmd, 30)
 	cmds    = []cmd{
-		unprintableCommands["pm"], // won't actually run, here just to show in docs
+		{"=<user>", dmCMD, "<msg>", "DM <user> with <msg>"}, // won't actually run, here just to show in docs
 		{"users", usersCMD, "", "List users"},
 		{"color", colorCMD, "<color>", "Change your name's color"},
 		{"exit", exitCMD, "", "Leave the chat"},
@@ -46,9 +40,9 @@ var (
 		{"emojis", emojisCMD, "", "See a list of emojis"},
 		{"bell", bellCMD, "on|off|all", "ANSI bell on pings (on), never (off) or for every message (all)"},
 		{"clear", clearCMD, "", "Clear the screen"},
-		unprintableCommands["hang"],
+		{"hang", hangCMD, "<char|word>", "Play hangman"}, // won't actually run, here just to show in docs
 		{"tic", ticCMD, "<cell num>", "Play tic tac toe!"},
-		unprintableCommands["cd"],
+		{"cd", cdCMD, "#room|user", "Join #room, DM user or run cd to see a list"}, // won't actually run, here just to show in docs
 		{"tz", tzCMD, "<zone> [24h]", "Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h"},
 		{"nick", nickCMD, "<name>", "Change your username"},
 		{"pronouns", pronounsCMD, "<@user|pronoun...>", "Set your pronouns or get another user's"},
@@ -64,8 +58,8 @@ var (
 		{"kick", kickCMD, "<user>", "Kick <user> (admin)"},
 		{"art", asciiArtCMD, "", "Show some panda art"},
 		{"pwd", pwdCMD, "", "Show your current room"},
-		unprintableCommands["shrug"],
-		{"sixel", sixelCMD, "<png url>", "Render an image in high quality"}}
+		{"sixel", sixelCMD, "<png url>", "Render an image in high quality"},
+		{"shrug", shrugCMD, "", `¯\\_(ツ)_/¯`}} // won't actually run, here just to show in docs
 	secretCMDs = []cmd{
 		{"ls", lsCMD, "", ""},
 		{"cat", catCMD, "", ""},
@@ -76,15 +70,6 @@ func init() {
 	cmds = append(cmds, cmd{"cmds", commandsCMD, "", "Show this message"}) // avoid initialization loop
 	allcmds = append(append(append(allcmds,
 		cmds...), cmdsRest...), secretCMDs...)
-}
-
-func isCommandPrintable(c cmd) bool {
-	for _, cmd := range unprintableCommands {
-		if c.name == cmd.name { // We must compare names as comparison is not possible between structs with a function inside.
-			return false
-		}
-	}
-	return true
 }
 
 // runCommands parses a line of raw input from a user and sends a message as
@@ -110,14 +95,16 @@ func runCommands(line string, u *user) {
 		return
 	}
 
-	for _, c := range allcmds {
-		if c.name == currCmd {
-			if isCommandPrintable(c) {
-				u.room.broadcast(u.name, line)
-			}
-			c.run(strings.TrimSpace(strings.TrimPrefix(line, c.name)), u)
-			return
-		}
+	switch currCmd {
+	case "hang":
+		hangCMD(strings.TrimSpace(strings.TrimPrefix(line, "hang")), u)
+		return
+	case "cd":
+		cdCMD(strings.TrimSpace(strings.TrimPrefix(line, "cd")), u)
+		return
+	case "shrug":
+		shrugCMD(strings.TrimSpace(strings.TrimPrefix(line, "shrug")), u)
+		return
 	}
 
 	if u.isSlack {
@@ -128,6 +115,12 @@ func runCommands(line string, u *user) {
 
 	devbotChat(u.room, line)
 
+	for _, c := range allcmds {
+		if c.name == currCmd {
+			c.run(strings.TrimSpace(strings.TrimPrefix(line, c.name)), u)
+			return
+		}
+	}
 }
 
 func dmCMD(rest string, u *user) {
