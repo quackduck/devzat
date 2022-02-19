@@ -543,19 +543,16 @@ func exampleCodeCMD(line string, u *user) {
 }
 
 func init() { // add Matt Gleich's blackbird theme from https://github.com/blackbirdtheme/vscode/blob/master/themes/blackbird-midnight-color-theme.json#L175
-	redItalic := "italic #e92741"
+	red := "#ff1131" // added saturation
+	redItalic := "italic " + red
 	white := "#fdf7cd"
-	//redBold := "bold #e92741"
-	red := "#e92741"
 	yellow := "#e1db3f"
-	blue := "#418edd"
-	//blueItalic := "italic #418edd"
-	green := "#3ec841"
-	//orange := "#ff9900"
+	blue := "#268ef8"  // added saturation
+	green := "#22e327" // added saturation
 	gray := "#5a637e"
-	tealItalic := "italic #00ecd8"
 	teal := "#00ecd8"
-	//tealBold := "bold #00ecd8"
+	tealItalic := "italic " + teal
+
 	chromastyles.Register(chroma.MustNewStyle("blackbird", chroma.StyleEntries{
 		chroma.Text:                white,
 		chroma.Error:               red,
