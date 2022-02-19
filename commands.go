@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"image"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 	"net/http"
 	"runtime/debug"
 	"sort"
@@ -12,12 +15,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/alecthomas/chroma"
 	chromastyles "github.com/alecthomas/chroma/styles"
 	"github.com/mattn/go-sixel"
 	markdown "github.com/quackduck/go-term-markdown"
 	"github.com/shurcooL/tictactoe"
-	_ "image/jpeg"
-	_ "image/png"
 )
 
 type cmd struct {
@@ -124,7 +126,7 @@ func runCommands(line string, u *user) {
 func dmCMD(rest string, u *user) {
 	restSplit := strings.Fields(rest)
 	if len(restSplit) < 2 {
-		u.writeln(devbot, "You gotta have a message mate")
+		u.writeln(devbot, "You gotta have a message, mate")
 		return
 	}
 	peer, ok := findUserByName(u.room, restSplit[0])
@@ -292,7 +294,6 @@ func sixelCMD(url string, u *user) {
 	for _, us := range u.room.users {
 		us.term.Write(b.Bytes()) // TODO: won't shpw up in the backlog, is that okay?
 	}
-	//u.room.broadcast("", b.String())
 }
 
 func cdCMD(rest string, u *user) {
@@ -465,7 +466,8 @@ Tommy Pujol, Sam Poder, Rishi Kothari,
 Amogh Chaubey, Ella Xu, Hugo Hu,  
 Robert Goll, Tanishq Soni, Arash Nur Iman,  
 Temi, Aiden Bai, Ivan Bowman, @epic  
-Belle See, Fayd  
+Belle See, Fayd, Benjamin Smith
+Matt Gleich, Jason Appah
 _Possibly more people_
 
 
@@ -538,6 +540,52 @@ func exampleCodeCMD(line string, u *user) {
 		return
 	}
 	u.room.broadcast(devbot, "\n```go\npackage main\nimport \"fmt\"\nfunc main() {\n   fmt.Println(\"Example!\")\n}\n```")
+}
+
+func init() { // add Matt Gleich's blackbird theme from https://github.com/blackbirdtheme/vscode/blob/master/themes/blackbird-midnight-color-theme.json#L175
+	redItalic := "italic #e92741"
+	white := "#fdf7cd"
+	//redBold := "bold #e92741"
+	red := "#e92741"
+	yellow := "#e1db3f"
+	blue := "#418edd"
+	//blueItalic := "italic #418edd"
+	green := "#3ec841"
+	//orange := "#ff9900"
+	gray := "#5a637e"
+	tealItalic := "italic #00ecd8"
+	teal := "#00ecd8"
+	//tealBold := "bold #00ecd8"
+	chromastyles.Register(chroma.MustNewStyle("blackbird", chroma.StyleEntries{
+		chroma.Text:                white,
+		chroma.Error:               red,
+		chroma.Comment:             gray,
+		chroma.Keyword:             redItalic,
+		chroma.KeywordNamespace:    redItalic,
+		chroma.KeywordType:         tealItalic,
+		chroma.Operator:            blue,
+		chroma.Punctuation:         white,
+		chroma.Name:                white,
+		chroma.NameAttribute:       white,
+		chroma.NameClass:           green,
+		chroma.NameConstant:        tealItalic,
+		chroma.NameDecorator:       green,
+		chroma.NameException:       red,
+		chroma.NameFunction:        green,
+		chroma.NameOther:           white,
+		chroma.NameTag:             yellow,
+		chroma.LiteralNumber:       blue,
+		chroma.Literal:             yellow,
+		chroma.LiteralDate:         yellow,
+		chroma.LiteralString:       yellow,
+		chroma.LiteralStringEscape: teal,
+		chroma.GenericDeleted:      red,
+		chroma.GenericEmph:         "italic",
+		chroma.GenericInserted:     green,
+		chroma.GenericStrong:       "bold",
+		chroma.GenericSubheading:   yellow,
+		chroma.Background:          "bg:#000000",
+	}))
 }
 
 func themeCMD(line string, u *user) {
