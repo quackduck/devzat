@@ -45,6 +45,10 @@ var (
 	startupTime = time.Now()
 )
 
+const (
+    maxLenMessage = 1000
+)
+
 type ban struct {
 	Addr string
 	ID   string
@@ -503,6 +507,9 @@ func (u *user) repl() {
 			return
 		}
 		line = replaceSlackEmoji(line)
+        if len(line) > maxLenMessage {
+            line = line[0:maxLenMessage]
+        }
 		runCommands(line, u)
 	}
 }
