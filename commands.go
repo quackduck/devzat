@@ -129,6 +129,7 @@ func runCommands(line string, u *user) {
 }
 
 func detectBadWords(text string) bool {
+	text = strings.ToLower(text)
 	badWords := []string{"nigger"} // TODO: add more, it's sad that this is necessary, but the internet is harsh
 	for _, word := range badWords {
 		if strings.Contains(text, word) {
