@@ -46,7 +46,7 @@ var (
 )
 
 const (
-    maxLenMessage = 1000
+	maxLenMessage = 1000
 )
 
 type ban struct {
@@ -507,9 +507,9 @@ func (u *user) repl() {
 			return
 		}
 		line = replaceSlackEmoji(line)
-        if len(line) > maxLenMessage {
-            line = line[0:maxLenMessage]
-        }
+		if len(line) > maxLenMessage {
+			line = line[0:maxLenMessage]
+		}
 		runCommands(line, u)
 	}
 }
