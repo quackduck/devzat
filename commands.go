@@ -58,7 +58,7 @@ var (
 		{"kick", kickCMD, "<user>", "Kick <user> (admin)"},
 		{"art", asciiArtCMD, "", "Show some panda art"},
 		{"pwd", pwdCMD, "", "Show your current room"},
-//		{"sixel", sixelCMD, "<png url>", "Render an image in high quality"},
+		//		{"sixel", sixelCMD, "<png url>", "Render an image in high quality"},
 		{"shrug", shrugCMD, "", `¯\\_(ツ)_/¯`}} // won't actually run, here just to show in docs
 	secretCMDs = []cmd{
 		{"ls", lsCMD, "", ""},
@@ -77,6 +77,11 @@ func init() {
 // It also accepts a boolean indicating if the line of input is from slack, in
 // which case some commands will not be run (such as ./tz and ./exit)
 func runCommands(line string, u *user) {
+	if detectBadWords(line) {
+		banUser("devbot [grow up]", u)
+		return
+	}
+
 	if line == "" {
 		return
 	}
@@ -121,6 +126,16 @@ func runCommands(line string, u *user) {
 			return
 		}
 	}
+}
+
+func detectBadWords(text string) bool {
+	badWords := []string{"nigger"} // TODO: add more, it's sad that this is necessary, but the internet is harsh
+	for _, word := range badWords {
+		if strings.Contains(text, word) {
+			return true
+		}
+	}
+	return false
 }
 
 func dmCMD(rest string, u *user) {
@@ -428,9 +443,13 @@ func banCMD(line string, u *user) {
 		u.room.broadcast(devbot, "Not authorized")
 		return
 	}
+	banUser(u.name, victim)
+}
+
+func banUser(banner string, victim *user) {
 	bans = append(bans, ban{victim.addr, victim.id})
 	saveBans()
-	victim.close(victim.name + " has been banned by " + u.name)
+	victim.close(victim.name + " has been banned by " + banner)
 }
 
 func kickCMD(line string, u *user) {

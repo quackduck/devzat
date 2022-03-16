@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"math/rand"
 	"os"
 	"strings"
@@ -114,6 +115,9 @@ func printPrettyDuration(d time.Duration) string {
 }
 
 func mdRender(a string, beforeMessageLen int, lineWidth int) string {
+	if strings.Contains(a, "![") && strings.Contains(a, "](") {
+		lineWidth = int(math.Min(float64(lineWidth/2), 200)) // max image width is 200
+	}
 	md := string(markdown.Render(a, lineWidth-(beforeMessageLen), 0))
 	md = strings.TrimSuffix(md, "\n")
 	split := strings.Split(md, "\n")

@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "embed"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -399,6 +400,11 @@ func (u *user) pickUsername(possibleName string) error {
 			return err
 		}
 		possibleName = cleanName(possibleName)
+	}
+
+	if detectBadWords(possibleName) { // sadly this is necessary
+		banUser("devbot [grow up]", u)
+		return errors.New(u.name + "'s username contained a bad word")
 	}
 
 	u.name = possibleName
