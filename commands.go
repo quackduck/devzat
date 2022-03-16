@@ -131,8 +131,14 @@ func runCommands(line string, u *user) {
 func detectBadWords(text string) bool {
 	text = strings.ToLower(text)
 	badWords := []string{"nigger"} // TODO: add more, it's sad that this is necessary, but the internet is harsh
+	badWKillWords := []string{"tranny", "muslim", "jew"}
 	for _, word := range badWords {
 		if strings.Contains(text, word) {
+			return true
+		}
+	}
+	for _, word := range badWKillWords {
+		if strings.Contains(text, word) && (strings.Contains(text, "kill") || strings.Contains(text, "death")) {
 			return true
 		}
 	}
