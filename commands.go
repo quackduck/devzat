@@ -66,6 +66,10 @@ var (
 		{"rm", rmCMD, "", ""}}
 )
 
+const (
+	maxLengthRoomName = 30
+)
+
 func init() {
 	cmds = append(cmds, cmd{"cmds", commandsCMD, "", "Show this message"}) // avoid initialization loop
 	allcmds = append(append(append(allcmds,
@@ -327,12 +331,16 @@ func cdCMD(rest string, u *user) {
 		}
 	}
 	if strings.HasPrefix(rest, "#") {
-		u.room.broadcast(u.name, "cd "+rest)
-		if v, ok := rooms[rest]; ok {
+		new_room := rest
+		if len(new_room) > maxLengthRoomName {
+			new_room = new_room[0:maxLengthRoomName]
+		}
+		u.room.broadcast(u.name, "cd "+new_room)
+		if v, ok := rooms[new_room]; ok {
 			u.changeRoom(v)
 		} else {
-			rooms[rest] = &room{rest, make([]*user, 0, 10), sync.Mutex{}}
-			u.changeRoom(rooms[rest])
+			rooms[new_room] = &room{new_room, make([]*user, 0, 10), sync.Mutex{}}
+			u.changeRoom(rooms[new_room])
 		}
 		return
 	}
