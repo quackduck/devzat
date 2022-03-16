@@ -331,16 +331,16 @@ func cdCMD(rest string, u *user) {
 		}
 	}
 	if strings.HasPrefix(rest, "#") {
-		new_room := rest
-		if len(new_room) > maxLengthRoomName {
-			new_room = new_room[0:maxLengthRoomName]
+		newRoom := rest
+		if len(newRoom) > maxLengthRoomName {
+			newRoom = newRoom[0:maxLengthRoomName]
 		}
-		u.room.broadcast(u.name, "cd "+new_room)
-		if v, ok := rooms[new_room]; ok {
+		u.room.broadcast(u.name, "cd "+newRoom)
+		if v, ok := rooms[newRoom]; ok {
 			u.changeRoom(v)
 		} else {
-			rooms[new_room] = &room{new_room, make([]*user, 0, 10), sync.Mutex{}}
-			u.changeRoom(rooms[new_room])
+			rooms[newRoom] = &room{newRoom, make([]*user, 0, 10), sync.Mutex{}}
+			u.changeRoom(rooms[newRoom])
 		}
 		return
 	}
