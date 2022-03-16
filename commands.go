@@ -128,17 +128,18 @@ func runCommands(line string, u *user) {
 	}
 }
 
+// TODO: replacing with asterisks could be faster
 func detectBadWords(text string) bool {
 	text = strings.ToLower(text)
-	badWords := []string{"nigger"} // TODO: add more, it's sad that this is necessary, but the internet is harsh
-	badWKillWords := []string{"tranny", "muslim", "jew"}
+	badWords := []string{"nigger", "faggot", "tranny", "trannies"} // TODO: add more, it's sad that this is necessary, but the internet is harsh
+	badWKillWords := []string{"tranny", "trannies", "transgender", "gay", "muslim", "jew"}
 	for _, word := range badWords {
 		if strings.Contains(text, word) {
 			return true
 		}
 	}
 	for _, word := range badWKillWords {
-		if strings.Contains(text, word) && (strings.Contains(text, "kill") || strings.Contains(text, "death")) {
+		if strings.Contains(text, word) && (strings.Contains(text, "kill") || strings.Contains(text, "death") || strings.Contains(text, "dead") || strings.Contains(text, "murder")) {
 			return true
 		}
 	}
@@ -492,8 +493,8 @@ Tommy Pujol, Sam Poder, Rishi Kothari,
 Amogh Chaubey, Ella Xu, Hugo Hu,  
 Robert Goll, Tanishq Soni, Arash Nur Iman,  
 Temi, Aiden Bai, Ivan Bowman, @epic  
-Belle See, Fayd, Benjamin Smith
-Matt Gleich, Jason Appah
+Belle See, Fayd, Benjamin Smith  
+Matt Gleich, Jason Appah  
 _Possibly more people_
 
 
@@ -677,6 +678,7 @@ func commandsRestCMD(_ string, u *user) {
 func lsCMD(rest string, u *user) {
 	if rest != "" {
 		u.room.broadcast("", "ls: "+rest+" Permission denied")
+		return
 	}
 	roomList := ""
 	for _, r := range rooms {
