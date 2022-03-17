@@ -269,7 +269,7 @@ func newUser(s ssh.Session) *user {
 		}
 	}
 
-	if err := u.pickUsername(s.User()); err != nil { // user exited or had some error
+	if _, err := u.pickUsername(s.User()); err != nil { // user exited or had some error
 		l.Println(err)
 		s.Close()
 		return nil
@@ -381,9 +381,13 @@ func (u *user) rWriteln(msg string) {
 	}
 }
 
-func (u *user) pickUsername(possibleName string) error {
+// try to change the nickname of an user and if the name is invalid, a promt
+// to fix it is exposed. The first returned value is `true` if the prompt was
+// presented and `false` otherwise. The second is misc error.
+func (u *user) pickUsername(possibleName string) (bool, error) {
 	possibleName = cleanName(possibleName)
 	var err error
+	showedPrompt := false
 	for {
 		if possibleName == "" {
 		} else if strings.HasPrefix(possibleName, "#") || possibleName == "devbot" {
@@ -397,18 +401,19 @@ func (u *user) pickUsername(possibleName string) error {
 			possibleName = cleanName(possibleName)
 			break
 		}
+		showedPrompt = true
 
 		u.term.SetPrompt("> ")
 		possibleName, err = u.term.ReadLine()
 		if err != nil {
-			return err
+			return showedPrompt, err
 		}
 		possibleName = cleanName(possibleName)
 	}
 
 	if detectBadWords(possibleName) { // sadly this is necessary
 		banUser("devbot [grow up]", u)
-		return errors.New(u.name + "'s username contained a bad word")
+		return showedPrompt, errors.New(u.name + "'s username contained a bad word")
 	}
 
 	u.name = possibleName
@@ -416,10 +421,10 @@ func (u *user) pickUsername(possibleName string) error {
 
 	if rand.Float64() <= 0.4 { // 40% chance of being a random color
 		u.changeColor("random") // also sets prompt
-		return nil
+		return showedPrompt, nil
 	}
 	u.changeColor(styles[rand.Intn(len(styles))].name)
-	return nil
+	return showedPrompt, nil
 }
 
 func (u *user) displayPronouns() string {
