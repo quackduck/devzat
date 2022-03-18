@@ -483,7 +483,7 @@ func colorCMD(rest string, u *user) {
 }
 
 func adminsCMD(_ string, u *user) {
-	for i, _ := range admins {
+	for i := range admins {
 		u.room.broadcast(admins[i], adminsInfo[i])
 	}
 }
