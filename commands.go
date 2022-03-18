@@ -57,7 +57,14 @@ var (
 		{"art", asciiArtCMD, "", "Show some panda art"},
 		{"pwd", pwdCMD, "", "Show your current room"},
 		//		{"sixel", sixelCMD, "<png url>", "Render an image in high quality"},
+<<<<<<< HEAD
 		{"shrug", shrugCMD, "", `¯\\\_(ツ)\_/¯`}} // won't actually run, here just to show in docs
+=======
+		{"shrug", shrugCMD, "", `¯\\_(ツ)_/¯`}, // won't actually run, here just to show in docs
+		{"autoload", autoloadCMD, "on|off", "enable autoloading of preferences"},
+		{"save", saveCMD, "", "save"},
+		{"load", loadCMD, "", "load"}}
+>>>>>>> 6596329 (Add autoloading of preferences)
 	secretCMDs = []cmd{
 		{"ls", lsCMD, "???", "???"},
 		{"cat", catCMD, "???", "???"},
@@ -749,4 +756,37 @@ func lsCMD(rest string, u *user) {
 
 func commandsCMD(_ string, u *user) {
 	u.room.broadcast("", "Commands  \n"+autogenCommands(cmds))
+}
+
+func autoloadCMD(arg string, u *user) {
+	if arg == "on" {
+		u.autoload = true
+	} else if arg == "off" {
+		u.autoload = false
+	} else if arg == "" {
+		var aload string
+		if u.autoload {
+			aload = "on"
+		} else {
+			aload = "off"
+		}
+		u.room.broadcast("", u.name+" has autoload "+aload)
+	} else {
+		u.room.broadcast("", "usage: autoload on|off")
+	}
+}
+func saveCMD(_ string, u *user) {
+	err := u.savePrefs()
+	if err != nil {
+		u.room.broadcast(devbot, "An error occurred while saving: " + err.Error())
+		fmt.Fprintf(os.Stderr, "error while saving user data: %v\n", err)
+	}
+
+}
+func loadCMD(_ string, u *user) {
+	err := u.loadPrefs(false)
+	if err != nil {
+		u.room.broadcast(devbot, "An error occurred while loading: " + err.Error())
+		fmt.Fprintf(os.Stderr, "error while loading user data: %v\n", err)
+	}
 }

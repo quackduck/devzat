@@ -2,9 +2,11 @@ package main
 
 import (
 	_ "embed"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"math"
 	"math/rand"
@@ -13,6 +15,7 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -61,6 +64,20 @@ type room struct {
 	usersMutex sync.Mutex
 }
 
+// don't forget to update savePrefs() and loadPrefs() if you change this!
+type userexport struct {
+	Name          string
+	Pronouns      []string
+	Bell          bool
+	PingEverytime bool
+	FormatTime24  bool
+	Color         string
+	ColorBG       string
+	Timezone      *time.Location
+	Autoload      bool
+}
+
+// don't forget to update savePrefs() and loadPrefs() if you change this!
 type user struct {
 	name     string
 	pronouns []string
@@ -74,6 +91,7 @@ type user struct {
 	pingEverytime bool
 	isSlack       bool
 	formatTime24  bool
+	autoload      bool
 
 	color   string
 	colorBG string
@@ -282,6 +300,7 @@ func newUser(s ssh.Session) *user {
 		term:          term,
 		bell:          true,
 		colorBG:       "bg-off", // the FG will be set randomly
+		autoload:      false,
 		id:            shasum(toHash),
 		addr:          host,
 		win:           w,
@@ -333,6 +352,10 @@ func newUser(s ssh.Session) *user {
 		return nil
 	}
 
+	err := u.loadPrefs(true) // since we are loading for the first time, respect the saved value
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Could not load user: %v\n", err)
+	}
 	mainRoom.usersMutex.Lock()
 	mainRoom.users = append(mainRoom.users, u)
 	go sendCurrentUsersTwitterMessage()
@@ -377,6 +400,10 @@ func cleanupRoom(r *room) {
 func (u *user) close(msg string) {
 	u.closeOnce.Do(func() {
 		u.closeQuietly()
+		if u.autoload {
+			u.savePrefs()
+		}
+		u.closeBackend()
 		go sendCurrentUsersTwitterMessage()
 		if time.Since(u.joinTime) > time.Minute/2 {
 			msg += ". They were online for " + printPrettyDuration(time.Since(u.joinTime))
@@ -514,6 +541,77 @@ func (u *user) displayPronouns() string {
 		return result
 	}
 	return result[1:]
+}
+
+func (u *user) savePrefs() error {
+	export := userexport{}
+
+	export.Name = stripansi.Strip(u.name)
+	export.Pronouns = u.pronouns
+	export.Bell = u.bell
+	export.PingEverytime = u.pingEverytime
+	export.FormatTime24 = u.formatTime24
+	export.Color = u.color
+	export.ColorBG = u.colorBG
+	export.Timezone = u.timezone
+	export.Autoload = u.autoload
+
+	saved, err := json.Marshal(export)
+	if err != nil {
+		return err
+	}
+	xdg_data_dir := os.Getenv("XDG_DATA_DIR")
+
+	if xdg_data_dir == "" {
+		// According to XDG, this is the default if it's unset
+		xdg_data_dir = filepath.Join(os.Getenv("HOME"), ".local", "share")
+	}
+
+	save := filepath.Join(xdg_data_dir, "/devzat")
+	os.Mkdir(save, 0755)
+	save = filepath.Join(save, u.id)
+
+	f, err := os.Create(save)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	f.Write(saved)
+	return nil
+}
+
+func (u *user) loadPrefs(firsttime bool) error {
+	xdg_data_dir := os.Getenv("XDG_DATA_DIR")
+	if xdg_data_dir == "" {
+		xdg_data_dir = filepath.Join(os.Getenv("HOME"), ".local", "share")
+	}
+
+	save := filepath.Join(xdg_data_dir, "/devzat", u.id)
+
+	contents, err := ioutil.ReadFile(save)
+	if err != nil {
+		return err
+	}
+
+	export := userexport{}
+	json.Unmarshal(contents, &export)
+
+	if !export.Autoload && firsttime {
+		return nil
+	}
+
+	u.pickUsername(export.Name)
+	u.pronouns = export.Pronouns
+	u.bell = export.Bell
+	u.pingEverytime = export.PingEverytime
+	u.formatTime24 = export.FormatTime24
+	u.changeColor(export.Color)
+	// u.color = export.Color
+	u.colorBG = export.ColorBG
+	u.timezone = export.Timezone
+	u.autoload = export.Autoload
+	return nil
+
 }
 
 func (u *user) changeRoom(r *room) {
