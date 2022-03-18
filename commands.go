@@ -51,6 +51,7 @@ var (
 	cmdsRest = []cmd{
 		{"people", peopleCMD, "", "See info about nice people who joined"},
 		{"id", idCMD, "<user>", "Get a unique ID for a user (hashed key)"},
+		{"admins", adminsCMD, "", "Print the ID (hashed key) for all admins"},
 		{"eg-code", exampleCodeCMD, "[big]", "Example syntax-highlighted code"},
 		{"lsbans", listBansCMD, "", "List banned IDs"},
 		{"ban", banCMD, "<user>", "Ban <user> (admin)"},
@@ -478,6 +479,12 @@ func colorCMD(rest string, u *user) {
 		u.room.broadcast(devbot, "you're using "+u.color)
 	} else if err := u.changeColor(rest); err != nil {
 		u.room.broadcast(devbot, err.Error())
+	}
+}
+
+func adminsCMD(_ string, u *user) {
+	for i, _ := range admins {
+		u.room.broadcast(admins[i], adminsInfo[i])
 	}
 }
 

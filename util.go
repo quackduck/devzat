@@ -21,26 +21,29 @@ import (
 )
 
 var (
-	art    = getASCIIArt()
-	admins = getAdmins()
+	art                = getASCIIArt()
+	admins, adminsInfo = getAdmins()
 )
 
-func getAdmins() []string {
+func getAdmins() ([]string, []string) {
 	data, err := ioutil.ReadFile("admins.json")
 	if err != nil {
 		fmt.Println("Error reading admins.json:", err, ". Make an admins.json file to add admins.")
-		return []string{}
+		return []string{}, []string{}
 	}
 	var adminsList map[string]string // id to info
 	err = json.Unmarshal(data, &adminsList)
 	if err != nil {
-		return []string{}
+		fmt.Println("Error in formating.")
+		return []string{}, []string{}
 	}
 	ids := make([]string, 0, len(adminsList))
-	for id := range adminsList {
+	infos := make([]string, 0, len(adminsList))
+	for id, info := range adminsList {
 		ids = append(ids, id)
+		infos = append(infos, info)
 	}
-	return ids
+	return ids, infos
 }
 
 func getASCIIArt() string {
