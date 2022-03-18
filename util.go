@@ -60,6 +60,9 @@ func printUsersInRoom(r *room) string {
 		return names
 	}
 	for _, us := range r.users {
+		if auth(us) {
+			names += "⭐"
+		}
 		names += us.name + " "
 	}
 	names = names[:len(names)-1] // cut extra space at the end
