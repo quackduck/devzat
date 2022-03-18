@@ -416,10 +416,10 @@ func idCMD(line string, u *user) {
 }
 
 func nickCMD(line string, u *user) {
-	old_name := u.name
+	oldName := u.name
 	showedPrompt, _ := u.pickUsername(line)
 	if showedPrompt {
-		u.room.broadcast(devbot, old_name+" have been renamed to "+u.name+".")
+		u.room.broadcast(devbot, oldName+" have been renamed to "+u.name+".")
 	}
 	return
 }
