@@ -539,14 +539,14 @@ func (u *user) savePrefs() error {
 	if err != nil {
 		return err
 	}
-	xdg_data_dir := os.Getenv("XDG_DATA_DIR")
+	xdgDataDir := os.Getenv("XDG_DATA_DIR")
 
-	if xdg_data_dir == "" {
+	if xdgDataDir == "" {
 		// According to XDG, this is the default if it's unset
-		xdg_data_dir = filepath.Join(os.Getenv("HOME"), ".local", "share")
+		xdgDataDir = filepath.Join(os.Getenv("HOME"), ".local", "share")
 	}
 
-	save := filepath.Join(xdg_data_dir, "/devzat")
+	save := filepath.Join(xdgDataDir, "/devzat")
 	os.Mkdir(save, 0755)
 	save = filepath.Join(save, u.id)
 
@@ -560,12 +560,12 @@ func (u *user) savePrefs() error {
 }
 
 func (u *user) loadPrefs(firsttime bool) error {
-	xdg_data_dir := os.Getenv("XDG_DATA_DIR")
-	if xdg_data_dir == "" {
-		xdg_data_dir = filepath.Join(os.Getenv("HOME"), ".local", "share")
+	xdgDataDir := os.Getenv("XDG_DATA_DIR")
+	if xdgDataDir == "" {
+		xdgDataDir = filepath.Join(os.Getenv("HOME"), ".local", "share")
 	}
 
-	save := filepath.Join(xdg_data_dir, "/devzat", u.id)
+	save := filepath.Join(xdgDataDir, "/devzat", u.id)
 
 	contents, err := ioutil.ReadFile(save)
 	if err != nil {
