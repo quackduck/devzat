@@ -98,9 +98,9 @@ func cleanName(name string) string {
 	if len([]rune(name)) > 27 {
 		name = string([]rune(name)[:27])
 	}
-	for i := 0; i < len(s); i++ {
-		if 33 <= s[i] && s[i] <= 126 { // ascii printables only: '!' to '~'
-			s += string(s[i])
+	for i := 0; i < len(name); i++ {
+		if 33 <= name[i] && name[i] <= 126 { // ascii printables only: '!' to '~'
+			s += string(name[i])
 		}
 	}
 	return s

@@ -37,6 +37,7 @@ var (
 		{"color", colorCMD, "<color>", "Change your name's color"},
 		{"exit", exitCMD, "", "Leave the chat"},
 		{"help", helpCMD, "", "Show help"},
+		{"man", manCMD, "<cmd>", "Get help for a specific command"},
 		{"emojis", emojisCMD, "", "See a list of emojis"},
 		{"bell", bellCMD, "on|off|all", "ANSI bell on pings (on), never (off) or for every message (all)"},
 		{"clear", clearCMD, "", "Clear the screen"},
@@ -61,9 +62,9 @@ var (
 		//		{"sixel", sixelCMD, "<png url>", "Render an image in high quality"},
 		{"shrug", shrugCMD, "", `¯\\_(ツ)_/¯`}} // won't actually run, here just to show in docs
 	secretCMDs = []cmd{
-		{"ls", lsCMD, "", ""},
-		{"cat", catCMD, "", ""},
-		{"rm", rmCMD, "", ""}}
+		{"ls", lsCMD, "???", "???"},
+		{"cat", catCMD, "???", "???"},
+		{"rm", rmCMD, "???", "???"}}
 )
 
 func init() {
@@ -673,6 +674,21 @@ func emojisCMD(_ string, u *user) {
 
 func commandsRestCMD(_ string, u *user) {
 	u.room.broadcast("", "The rest  \n"+autogenCommands(cmdsRest))
+}
+
+func manCMD(rest string, u *user) {
+	if rest == "" {
+		u.room.broadcast(devbot, "What command do you want help with?")
+		return
+	}
+
+	for _, c := range allcmds {
+		if c.name == rest {
+			u.room.broadcast(devbot, "Usage: "+c.name+" "+c.argsInfo+"  \n"+c.info)
+			return
+		}
+	}
+	u.room.broadcast("", "This system has been minimized by removing packages and content that are not required on a system that users do not log into.\n\nTo restore this content, including manpages, you can run the 'unminimize' command. You will still need to ensure the 'man-db' package is installed.")
 }
 
 func lsCMD(rest string, u *user) {
