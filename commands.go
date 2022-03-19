@@ -780,7 +780,7 @@ func saveCMD(_ string, u *user) {
 
 }
 func loadCMD(_ string, u *user) {
-	err := u.loadPrefs(false)
+	err := u.loadPrefs()
 	if err != nil {
 		u.room.broadcast(devbot, "An error occurred while loading: " + err.Error())
 		fmt.Fprintf(os.Stderr, "error while loading user data: %v\n", err)

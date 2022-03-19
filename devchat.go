@@ -64,7 +64,6 @@ type room struct {
 	usersMutex sync.Mutex
 }
 
-
 // don't forget to update savePrefs() and loadPrefs() if you change this!
 type user struct {
 	Name     string
@@ -340,7 +339,7 @@ func newUser(s ssh.Session) *user {
 		return nil
 	}
 
-	err := u.loadPrefs(true) // since we are loading for the first time, respect the saved value
+	err := u.loadPrefs() // since we are loading for the first time, respect the saved value
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Could not load user: %v\n", err)
 	}
@@ -388,9 +387,7 @@ func cleanupRoom(r *room) {
 func (u *user) close(msg string) {
 	u.closeOnce.Do(func() {
 		u.closeQuietly()
-		if u.Autoload {
-			u.savePrefs()
-		}
+		u.savePrefs()
 		u.closeBackend()
 		go sendCurrentUsersTwitterMessage()
 		if time.Since(u.joinTime) > time.Minute/2 {
@@ -559,7 +556,7 @@ func (u *user) savePrefs() error {
 	return nil
 }
 
-func (u *user) loadPrefs(firsttime bool) error {
+func (u *user) loadPrefs() error {
 	xdgDataDir := os.Getenv("XDG_DATA_DIR")
 	if xdgDataDir == "" {
 		xdgDataDir = filepath.Join(os.Getenv("HOME"), ".local", "share")
@@ -575,7 +572,8 @@ func (u *user) loadPrefs(firsttime bool) error {
 	export := user{}
 	json.Unmarshal(contents, &export)
 
-	if !export.Autoload && firsttime {
+	if !export.Autoload {
+		fmt.Println("Not loading")
 		return nil
 	}
 
