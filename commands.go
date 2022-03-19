@@ -483,9 +483,11 @@ func colorCMD(rest string, u *user) {
 }
 
 func adminsCMD(_ string, u *user) {
+	msg := "Admins:  \n"
 	for i := range admins {
-		u.room.broadcast(admins[i], adminsInfo[i])
+		msg += admins[i] + ": " + i + "  \n"
 	}
+	u.room.broadcast(devbot, msg)
 }
 
 func peopleCMD(_ string, u *user) {
