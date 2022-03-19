@@ -124,9 +124,9 @@ func (u *user) changeColor(colorName string) error {
 		u.color = style.name // update fg color
 	}
 
-	if colorName == "random" {
-		u.room.broadcast("", "You're now using "+u.color)
-	}
+	//if colorName == "random" {
+	//	u.room.broadcast("", "You're now using "+u.color)
+	//}
 
 	u.name, _ = applyColorToData(u.name, u.color, u.colorBG) // error can be discarded as it has already been checked earlier
 
