@@ -14,7 +14,6 @@ import (
 	"strings"
 	"text/tabwriter"
 	"time"
-	"unicode"
 
 	"github.com/acarl005/stripansi"
 	markdown "github.com/quackduck/go-term-markdown"
@@ -88,6 +87,7 @@ func auth(u *user) bool {
 	return false
 }
 
+// removes arrows, spaces and non-ascii-printable characters
 func cleanName(name string) string {
 	s := ""
 	name = strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(
@@ -98,9 +98,9 @@ func cleanName(name string) string {
 	if len([]rune(name)) > 27 {
 		name = string([]rune(name)[:27])
 	}
-	for _, r := range name {
-		if unicode.IsPrint(r) {
-			s += string(r)
+	for i := 0; i < len(s); i++ {
+		if 33 <= s[i] && s[i] <= 126 { // ascii printables only: '!' to '~'
+			s += string(s[i])
 		}
 	}
 	return s
