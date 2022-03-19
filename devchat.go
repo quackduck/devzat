@@ -64,37 +64,25 @@ type room struct {
 	usersMutex sync.Mutex
 }
 
-// don't forget to update savePrefs() and loadPrefs() if you change this!
-type userexport struct {
-	Name          string
-	Pronouns      []string
-	Bell          bool
-	PingEverytime bool
-	FormatTime24  bool
-	Color         string
-	ColorBG       string
-	Timezone      *time.Location
-	Autoload      bool
-}
 
 // don't forget to update savePrefs() and loadPrefs() if you change this!
 type user struct {
-	name     string
-	pronouns []string
+	Name     string
+	Pronouns []string
 	session  ssh.Session
 	term     *terminal.Terminal
 
 	room      *room
 	messaging *user // currently messaging this user in a DM
 
-	bell          bool
-	pingEverytime bool
+	Bell          bool
+	PingEverytime bool
 	isSlack       bool
-	formatTime24  bool
-	autoload      bool
+	FormatTime24  bool
+	Autoload      bool
 
-	color   string
-	colorBG string
+	Color   string
+	ColorBG string
 	id      string
 	addr    string
 
@@ -102,7 +90,7 @@ type user struct {
 	closeOnce     sync.Once
 	lastTimestamp time.Time
 	joinTime      time.Time
-	timezone      *time.Location
+	Timezone      *time.Location
 }
 
 type backlogMessage struct {
@@ -209,8 +197,8 @@ func (r *room) broadcastNoSlack(senderName, msg string) {
 	msg = strings.ReplaceAll(msg, "@everyone", green.Paint("everyone\a"))
 	r.usersMutex.Lock()
 	for i := range r.users {
-		msg = strings.ReplaceAll(msg, "@"+stripansi.Strip(r.users[i].name), r.users[i].name)
-		msg = strings.ReplaceAll(msg, `\`+r.users[i].name, "@"+stripansi.Strip(r.users[i].name)) // allow escaping
+		msg = strings.ReplaceAll(msg, "@"+stripansi.Strip(r.users[i].Name), r.users[i].Name)
+		msg = strings.ReplaceAll(msg, `\`+r.users[i].Name, "@"+stripansi.Strip(r.users[i].Name)) // allow escaping
 	}
 	for i := range r.users {
 		r.users[i].writeln(senderName, msg)
@@ -294,13 +282,13 @@ func newUser(s ssh.Session) *user {
 	}
 
 	u := &user{
-		name:          "",
-		pronouns:      []string{"unset"},
+		Name:          s.User(),
+		Pronouns:      []string{"unset"},
 		session:       s,
 		term:          term,
-		bell:          true,
-		colorBG:       "bg-off", // the FG will be set randomly
-		autoload:      false,
+		ColorBG:       "bg-off",
+		Bell:          true,
+		Autoload:      false,
 		id:            shasum(toHash),
 		addr:          host,
 		win:           w,
@@ -313,10 +301,10 @@ func newUser(s ssh.Session) *user {
 		}
 	}()
 
-	l.Println("Connected " + u.name + " [" + u.id + "]")
+	l.Println("Connected " + u.Name + " [" + u.id + "]")
 
 	if bansContains(bans, u.addr, u.id) {
-		l.Println("Rejected " + u.name + " [" + host + "]")
+		l.Println("Rejected " + u.Name + " [" + host + "]")
 		u.writeln(devbot, "**You are banned**. If you feel this was a mistake, please reach out at github.com/quackduck/devzat/issues or email igoel.mail@gmail.com. Please include the following information: [ID "+u.id+"]")
 		u.closeQuietly()
 		return nil
@@ -374,7 +362,7 @@ func newUser(s ssh.Session) *user {
 	default:
 		u.writeln("", green.Paint("Welcome to the chat. There are", strconv.Itoa(len(mainRoom.users)-1), "more users"))
 	}
-	mainRoom.broadcast(devbot, u.name+" has joined the chat")
+	mainRoom.broadcast(devbot, u.Name+" has joined the chat")
 	return u
 }
 
@@ -400,7 +388,7 @@ func cleanupRoom(r *room) {
 func (u *user) close(msg string) {
 	u.closeOnce.Do(func() {
 		u.closeQuietly()
-		if u.autoload {
+		if u.Autoload {
 			u.savePrefs()
 		}
 		u.closeBackend()
@@ -423,7 +411,7 @@ func (u *user) closeQuietly() {
 }
 
 func (u *user) writeln(senderName string, msg string) {
-	if strings.Contains(msg, u.name) { // is a ping
+	if strings.Contains(msg, u.Name) { // is a ping
 		msg += "\a"
 	}
 	msg = strings.ReplaceAll(msg, `\n`, "\n")
@@ -440,21 +428,21 @@ func (u *user) writeln(senderName string, msg string) {
 		msg = strings.TrimSpace(mdRender(msg, 0, u.win.Width)) // No sender
 	}
 	if time.Since(u.lastTimestamp) > time.Minute {
-		if u.timezone == nil {
+		if u.Timezone == nil {
 			u.rWriteln(printPrettyDuration(time.Since(u.joinTime)) + " in")
 		} else {
-			if u.formatTime24 {
-				u.rWriteln(time.Now().In(u.timezone).Format("15:04"))
+			if u.FormatTime24 {
+				u.rWriteln(time.Now().In(u.Timezone).Format("15:04"))
 			} else {
-				u.rWriteln(time.Now().In(u.timezone).Format("3:04 pm"))
+				u.rWriteln(time.Now().In(u.Timezone).Format("3:04 pm"))
 			}
 		}
 		u.lastTimestamp = time.Now()
 	}
-	if u.pingEverytime && senderName != u.name {
+	if u.PingEverytime && senderName != u.Name {
 		msg += "\a"
 	}
-	if !u.bell {
+	if !u.Bell {
 		msg = strings.ReplaceAll(msg, "\a", "")
 	}
 	_, err := u.term.Write([]byte(msg + "\n"))
@@ -514,10 +502,10 @@ func (u *user) pickUsernameQuietly(possibleName string) error {
 
 	if detectBadWords(possibleName) { // sadly this is necessary
 		banUser("devbot [grow up]", u)
-		return errors.New(u.name + "'s username contained a bad word")
+		return errors.New(u.Name + "'s username contained a bad word")
 	}
 
-	u.name = possibleName
+	u.Name = possibleName
 
 	if rand.Float64() <= 0.1 { // 10% chance of a random bg color
 		// changeColor also sets prompt
@@ -533,8 +521,8 @@ func (u *user) pickUsernameQuietly(possibleName string) error {
 
 func (u *user) displayPronouns() string {
 	result := ""
-	for i := 0; i < len(u.pronouns); i++ {
-		str, _ := applyColorToData(u.pronouns[i], u.color, u.colorBG)
+	for i := 0; i < len(u.Pronouns); i++ {
+		str, _ := applyColorToData(u.Pronouns[i], u.Color, u.ColorBG)
 		result += "/" + str
 	}
 	if result == "" {
@@ -544,19 +532,10 @@ func (u *user) displayPronouns() string {
 }
 
 func (u *user) savePrefs() error {
-	export := userexport{}
-
-	export.Name = stripansi.Strip(u.name)
-	export.Pronouns = u.pronouns
-	export.Bell = u.bell
-	export.PingEverytime = u.pingEverytime
-	export.FormatTime24 = u.formatTime24
-	export.Color = u.color
-	export.ColorBG = u.colorBG
-	export.Timezone = u.timezone
-	export.Autoload = u.autoload
-
-	saved, err := json.Marshal(export)
+	oldname := u.Name
+	u.Name = stripansi.Strip(u.Name)
+	saved, err := json.Marshal(u)
+	u.Name = oldname
 	if err != nil {
 		return err
 	}
@@ -593,7 +572,7 @@ func (u *user) loadPrefs(firsttime bool) error {
 		return err
 	}
 
-	export := userexport{}
+	export := user{}
 	json.Unmarshal(contents, &export)
 
 	if !export.Autoload && firsttime {
@@ -601,15 +580,15 @@ func (u *user) loadPrefs(firsttime bool) error {
 	}
 
 	u.pickUsername(export.Name)
-	u.pronouns = export.Pronouns
-	u.bell = export.Bell
-	u.pingEverytime = export.PingEverytime
-	u.formatTime24 = export.FormatTime24
+	u.Pronouns = export.Pronouns
+	u.Bell = export.Bell
+	u.PingEverytime = export.PingEverytime
+	u.FormatTime24 = export.FormatTime24
 	u.changeColor(export.Color)
-	// u.color = export.Color
-	u.colorBG = export.ColorBG
-	u.timezone = export.Timezone
-	u.autoload = export.Autoload
+	// u.Color = export.Colo
+	u.ColorBG = export.ColorBG
+	u.Timezone = export.Timezone
+	u.Autoload = export.Autoload
 	return nil
 
 }
@@ -619,29 +598,29 @@ func (u *user) changeRoom(r *room) {
 		return
 	}
 	u.room.users = remove(u.room.users, u)
-	u.room.broadcast("", u.name+" is joining "+blue.Paint(r.name)) // tell the old room
+	u.room.broadcast("", u.Name+" is joining "+blue.Paint(r.name)) // tell the old room
 	cleanupRoom(u.room)
 	u.room = r
-	if _, dup := userDuplicate(u.room, u.name); dup {
+	if _, dup := userDuplicate(u.room, u.Name); dup {
 		u.pickUsername("") //nolint:errcheck // if reading input failed the next repl will err out
 	}
 	u.room.users = append(u.room.users, u)
-	u.room.broadcast(devbot, u.name+" has joined "+blue.Paint(u.room.name))
+	u.room.broadcast(devbot, u.Name+" has joined "+blue.Paint(u.room.name))
 }
 
 func (u *user) repl() {
 	for {
 		line, err := u.term.ReadLine()
 		if err == io.EOF {
-			u.close(u.name + " has left the chat")
+			u.close(u.Name + " has left the chat")
 			return
 		}
 		line += "\n"
 		hasNewlines := false
-		//oldPrompt := u.name + ": "
+		//oldPrompt := u.Name + ": "
 		for err == terminal.ErrPasteIndicator {
 			hasNewlines = true
-			//u.term.SetPrompt(strings.Repeat(" ", lenString(u.name)+2))
+			//u.term.SetPrompt(strings.Repeat(" ", lenString(u.Name)+2))
 			u.term.SetPrompt("")
 			additionalLine := ""
 			additionalLine, err = u.term.ReadLine()
@@ -650,8 +629,8 @@ func (u *user) repl() {
 			line += additionalLine + "\n"
 		}
 		if err != nil {
-			l.Println(u.name, err)
-			u.close(u.name + " has left the chat due to an error: " + err.Error())
+			l.Println(u.Name, err)
+			u.close(u.Name + " has left the chat due to an error: " + err.Error())
 			return
 		}
 		if len(line) > maxMsgLen { // limit msg len as early as possible.
@@ -663,11 +642,11 @@ func (u *user) repl() {
 
 		//fmt.Println("window", u.win)
 		if hasNewlines {
-			calculateLinesTaken(u, u.name+": "+line, u.win.Width)
+			calculateLinesTaken(u, u.Name+": "+line, u.win.Width)
 		} else {
-			u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(lenString(u.name+line)+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
+			u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(lenString(u.Name+line)+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
 		}
-		//u.term.Write([]byte(strings.Repeat("\033[A\033[2K", calculateLinesTaken(u.name+": "+line, u.win.Width))))
+		//u.term.Write([]byte(strings.Repeat("\033[A\033[2K", calculateLinesTaken(u.Name+": "+line, u.win.Width))))
 
 		if line == "" {
 			continue
@@ -678,7 +657,7 @@ func (u *user) repl() {
 			antispamMessages[u.id]--
 		})
 		if antispamMessages[u.id] >= 30 {
-			u.room.broadcast(devbot, u.name+", stop spamming or you could get banned.")
+			u.room.broadcast(devbot, u.Name+", stop spamming or you could get banned.")
 		}
 		if antispamMessages[u.id] >= 50 {
 			if !bansContains(bans, u.addr, u.id) {
@@ -686,7 +665,7 @@ func (u *user) repl() {
 				saveBans()
 			}
 			u.writeln(devbot, "anti-spam triggered")
-			u.close(red.Paint(u.name + " has been banned for spamming"))
+			u.close(red.Paint(u.Name + " has been banned for spamming"))
 			return
 		}
 		line = replaceSlackEmoji(line)
