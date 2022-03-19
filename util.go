@@ -51,9 +51,6 @@ func getASCIIArt() string {
 func printUsersInRoom(r *room) string {
 	names := ""
 	admins := ""
-	if len(r.users) == 0 {
-		return names
-	}
 	for _, us := range r.users {
 		if auth(us) {
 			admins += us.name + " "
@@ -61,10 +58,13 @@ func printUsersInRoom(r *room) string {
 		}
 		names += us.name + " "
 	}
-	names = names[:len(names)-1] // cut extra space at the end
+	if len(names) > 0 {
+		names = names[:len(names)-1] // cut extra space at the end
+	}
 	names = "[" + names + "]"
-
-	admins = admins[:len(admins)-1]
+	if len(names) > 0 {
+		admins = admins[:len(admins)-1]
+	}
 	admins = "[" + admins + "]"
 	return names + "  \nAdmins: " + admins
 }
