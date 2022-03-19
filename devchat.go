@@ -385,6 +385,9 @@ func (u *user) pickUsername(possibleName string) error {
 	possibleName = cleanName(possibleName)
 	var err error
 	for {
+		if possibleName == stripansi.Strip(u.name) { // allow selecting the same name as before
+			break
+		}
 		if possibleName == "" {
 		} else if strings.HasPrefix(possibleName, "#") || possibleName == "devbot" {
 			u.writeln("", "Your username is invalid. Pick a different one:")
