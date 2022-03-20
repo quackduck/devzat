@@ -219,7 +219,7 @@ func newUser(s ssh.Session) *user {
 	}
 
 	u := &user{
-		name:          s.User(),
+		name:          "",
 		pronouns:      []string{"unset"},
 		session:       s,
 		term:          term,
@@ -385,13 +385,13 @@ func (u *user) pickUsername(possibleName string) error {
 	possibleName = cleanName(possibleName)
 	var err error
 	for {
-		if possibleName == stripansi.Strip(u.name) { // allow selecting the same name as before
-			break
-		}
 		if possibleName == "" {
 		} else if strings.HasPrefix(possibleName, "#") || possibleName == "devbot" {
 			u.writeln("", "Your username is invalid. Pick a different one:")
-		} else if userDuplicate(u.room, possibleName) {
+		} else if otherUser, dup := userDuplicate(u.room, possibleName); dup {
+			if otherUser == u {
+				break // allow selecting the same name as before
+			}
 			u.writeln("", "Your username is already in use. Pick a different one:")
 		} else {
 			possibleName = cleanName(possibleName)
@@ -442,7 +442,7 @@ func (u *user) changeRoom(r *room) {
 	u.room.broadcast("", u.name+" is joining "+blue.Paint(r.name)) // tell the old room
 	cleanupRoom(u.room)
 	u.room = r
-	if userDuplicate(u.room, u.name) {
+	if _, dup := userDuplicate(u.room, u.name); dup {
 		u.pickUsername("")
 	}
 	u.room.users = append(u.room.users, u)

@@ -133,14 +133,14 @@ func mdRender(a string, beforeMessageLen int, lineWidth int) string {
 	return strings.Join(split, "\n")
 }
 
-// Returns true if the username is taken, false otherwise
-func userDuplicate(r *room, a string) bool {
+// Returns true and the user with the same name if the username is taken, false and nil otherwise
+func userDuplicate(r *room, a string) (*user, bool) {
 	for i := range r.users {
 		if stripansi.Strip(r.users[i].name) == stripansi.Strip(a) {
-			return true
+			return r.users[i], true
 		}
 	}
-	return false
+	return nil, false
 }
 
 func saveBans() {
