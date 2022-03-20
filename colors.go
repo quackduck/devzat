@@ -61,6 +61,7 @@ var (
 		{"orange", buildStyle(orange)},
 		{"blue", buildStyle(blue)}}
 	secretStyles = []*style{
+		{"ukraine", buildStyle(chalk.WithHex("#005bbb").WithBgHex("#ffd500"))},
 		{"easter", buildStyle(chalk.WithRGB(255, 51, 255).WithBgRGB(255, 255, 0))},
 		{"baby", buildStyle(chalk.WithRGB(255, 51, 255).WithBgRGB(102, 102, 255))},
 		{"hacker", buildStyle(chalk.WithRGB(0, 255, 0).WithBgRGB(0, 0, 0))},
