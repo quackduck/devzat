@@ -555,9 +555,11 @@ func fetchEmojiSingle(name string) string {
 		return ""
 	}
 	r, err := http.Get("https://e.benjaminsmith.dev/" + name)
+	if err != nil {
+		return ""
+	}
 	defer r.Body.Close()
-
-	if err != nil || r.StatusCode != 200 {
+	if r.StatusCode != 200 {
 		return ""
 	}
 	return "![" + name + "](https://e.benjaminsmith.dev/" + name + ")"

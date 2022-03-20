@@ -415,7 +415,6 @@ func idCMD(line string, u *user) {
 
 func nickCMD(line string, u *user) {
 	u.pickUsername(line)
-	return
 }
 
 func listBansCMD(_ string, u *user) {
