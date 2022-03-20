@@ -65,7 +65,7 @@ func printUsersInRoom(r *room) string {
 		admins = admins[:len(admins)-1]
 	}
 	admins = "[" + admins + "]"
-	return names + "  \nAdmins: " + admins
+	return names + " Admins: " + admins
 }
 
 func lenString(a string) int {
