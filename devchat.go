@@ -250,7 +250,7 @@ func newUser(s ssh.Session) *user {
 	})
 	if idsInMinToTimes[u.id] > 6 {
 		bans = append(bans, ban{u.addr, u.id})
-		mainRoom.broadcast(devbot, u.name+" has been banned automatically. ID: "+u.id)
+		mainRoom.broadcast(devbot, "`"+s.User()+"` has been banned automatically. ID: "+u.id)
 		return nil
 	}
 
