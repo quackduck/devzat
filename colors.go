@@ -14,7 +14,7 @@ import (
 )
 
 func makeFlag(colors []string) func(a string) string {
-	flag := make([]*gchalk.Builder, 0, len(colors))
+	flag := make([]*gchalk.Builder, len(colors))
 	for i := range colors {
 		flag[i] = chalk.WithHex(colors[i])
 	}
