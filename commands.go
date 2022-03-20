@@ -334,7 +334,7 @@ func cdCMD(rest string, u *user) {
 		newRoom := rest
 		if len(newRoom) > maxLengthRoomName {
 			newRoom = newRoom[0:maxLengthRoomName]
-			u.room.broadcast(devbot, "The requested room name is too long. Shortening it to " + newRoom + ".")
+			u.room.broadcast(devbot, "The requested room name is too long. Shortening it to "+newRoom+".")
 		}
 		u.room.broadcast(u.name, "cd "+newRoom)
 		if v, ok := rooms[newRoom]; ok {
