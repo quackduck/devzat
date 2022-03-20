@@ -55,7 +55,7 @@ var (
 		{"eg-code", exampleCodeCMD, "[big]", "Example syntax-highlighted code"},
 		{"lsbans", listBansCMD, "", "List banned IDs"},
 		{"ban", banCMD, "<user>", "Ban <user> (admin)"},
-		{"unban", unbanCMD, "<IP|ID>", "Unban a person (admin)"},
+		{"unban", unbanCMD, "<IP|ID> [dur]", "Unban a person and optionally, for a duration (admin)"},
 		{"kick", kickCMD, "<user>", "Kick <user> (admin)"},
 		{"art", asciiArtCMD, "", "Show some panda art"},
 		{"pwd", pwdCMD, "", "Show your current room"},
@@ -431,25 +431,55 @@ func unbanCMD(toUnban string, u *user) {
 		return
 	}
 
+	if unbanIDorIP(toUnban) {
+		u.room.broadcast(devbot, "Unbanned person: "+toUnban)
+		saveBans()
+	} else {
+		u.room.broadcast(devbot, "I couldn't find that person")
+	}
+}
+
+// unbanIDorIP unbans an ID or an IP, but does NOT save bans to the bans file.
+// It returns whether the person was found, and so, whether the bans slice was modified.
+func unbanIDorIP(toUnban string) bool {
 	for i := 0; i < len(bans); i++ {
 		if bans[i].ID == toUnban || bans[i].Addr == toUnban { // allow unbanning by either ID or IP
-			u.room.broadcast(devbot, "Unbanned person: "+bans[i].ID)
 			// remove this ban
 			bans = append(bans[:i], bans[i+1:]...)
+			return true
 		}
 	}
-
-	saveBans()
+	return false
 }
 
 func banCMD(line string, u *user) {
-	victim, ok := findUserByName(u.room, line)
+	if !auth(u) {
+		u.room.broadcast(devbot, "Not authorized")
+		return
+	}
+	split := strings.Split(line, " ")
+	if len(split) == 0 {
+		u.room.broadcast(devbot, "Which user do you want to ban?")
+		return
+	}
+	victim, ok := findUserByName(u.room, split[0])
 	if !ok {
 		u.room.broadcast("", "User not found")
 		return
 	}
-	if !auth(u) {
-		u.room.broadcast(devbot, "Not authorized")
+	// check if the ban is for a certain duration
+	if len(split) > 1 {
+		dur, err := time.ParseDuration(split[1])
+		if err != nil {
+			u.room.broadcast(devbot, "I couldn't parse that as a duration")
+			return
+		}
+		bans = append(bans, ban{victim.addr, victim.id})
+		victim.close(victim.name + " has been banned by " + u.name + " for " + dur.String())
+		go func(id string) {
+			time.Sleep(dur)
+			unbanIDorIP(id)
+		}(victim.id) // evaluate id now, call unban with that value later
 		return
 	}
 	banUser(u.name, victim)
