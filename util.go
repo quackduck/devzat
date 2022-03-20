@@ -61,7 +61,7 @@ func printUsersInRoom(r *room) string {
 		names = names[:len(names)-1] // cut extra space at the end
 	}
 	names = "[" + names + "]"
-	if len(names) > 0 {
+	if len(admins) > 0 {
 		admins = admins[:len(admins)-1]
 	}
 	admins = "[" + admins + "]"
