@@ -24,22 +24,19 @@ var (
 	admins = getAdmins()
 )
 
-func getAdmins() []string {
+func getAdmins() map[string]string {
 	data, err := ioutil.ReadFile("admins.json")
 	if err != nil {
 		fmt.Println("Error reading admins.json:", err, ". Make an admins.json file to add admins.")
-		return []string{}
+		return nil
 	}
 	var adminsList map[string]string // id to info
 	err = json.Unmarshal(data, &adminsList)
 	if err != nil {
-		return []string{}
+		fmt.Println("Error in admins.json formatting.")
+		return nil
 	}
-	ids := make([]string, 0, len(adminsList))
-	for id := range adminsList {
-		ids = append(ids, id)
-	}
-	return ids
+	return adminsList
 }
 
 func getASCIIArt() string {
@@ -52,15 +49,23 @@ func getASCIIArt() string {
 
 func printUsersInRoom(r *room) string {
 	names := ""
-	if len(r.users) == 0 {
-		return names
-	}
+	admins := ""
 	for _, us := range r.users {
+		if auth(us) {
+			admins += us.name + " "
+			continue
+		}
 		names += us.name + " "
 	}
-	names = names[:len(names)-1] // cut extra space at the end
+	if len(names) > 0 {
+		names = names[:len(names)-1] // cut extra space at the end
+	}
 	names = "[" + names + "]"
-	return names
+	if len(names) > 0 {
+		admins = admins[:len(admins)-1]
+	}
+	admins = "[" + admins + "]"
+	return names + "  \nAdmins: " + admins
 }
 
 func lenString(a string) int {
@@ -79,12 +84,8 @@ func autogenCommands(cmds []cmd) string {
 
 // check if a user is an admin
 func auth(u *user) bool {
-	for _, id := range admins {
-		if u.id == id {
-			return true
-		}
-	}
-	return false
+	_, ok := admins[u.id]
+	return ok
 }
 
 // removes arrows, spaces and non-ascii-printable characters
