@@ -26,7 +26,7 @@ import (
 )
 
 var (
-	port        = 22
+	port        = 2222
 	scrollback  = 16
 	profilePort = 5555
 	// should this instance run offline? (should it not connect to slack or twitter?)
@@ -202,8 +202,17 @@ func (r *room) broadcastNoSlack(senderName, msg string) {
 	}
 }
 
+func autocomplete_callback(line string, pos int, key rune) (newLine string, newPos int, ok bool) {
+	if key == 9 {
+		return "AUTO", pos + 4, true
+	}
+	return "", pos, false
+}
+
 func newUser(s ssh.Session) *user {
 	term := terminal.NewTerminal(s, "> ")
+	term.AutoCompleteCallback = autocomplete_callback
+
 	_ = term.SetSize(10000, 10000) // disable any formatting done by term
 	pty, winChan, _ := s.Pty()
 	w := pty.Window
