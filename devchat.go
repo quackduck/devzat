@@ -204,7 +204,7 @@ func (r *room) broadcastNoSlack(senderName, msg string) {
 
 func autocomplete_callback(line string, pos int, key rune) (newLine string, newPos int, ok bool) {
 	if key == 9 {
-		return "AUTO", pos + 4, true
+		return line + "AUTO	", pos + 4, true
 	}
 	return "", pos, false
 }
