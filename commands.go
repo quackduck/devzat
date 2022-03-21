@@ -221,9 +221,10 @@ func clearCMD(_ string, u *user) {
 }
 
 func usersCMD(rest string, u *user) {
-	if rest == "" {
-		u.room.broadcast("", printUsersInRoom(u.room))
+	if rest != "" {
+		return
 	}
+	u.room.broadcast("", printUsersInRoom(u.room))
 }
 
 func dmRoomCMD(line string, u *user) {
@@ -275,9 +276,10 @@ func ticCMD(rest string, u *user) {
 }
 
 func exitCMD(rest string, u *user) {
-	if rest == "" {
-		u.close(u.name + red.Paint(" has left the chat"))
+	if rest != "" {
+		return
 	}
+	u.close(u.name + red.Paint(" has left the chat"))
 }
 
 func bellCMD(rest string, u *user) {
@@ -507,13 +509,14 @@ func colourCMD(rest string, u *user) {
 }
 
 func adminsCMD(rest string, u *user) {
-	if rest == "" {
-		msg := "Admins:  \n"
-		for i := range admins {
-			msg += admins[i] + ": " + i + "  \n"
-		}
-		u.room.broadcast(devbot, msg)
+	if rest != "" {
+		return
 	}
+	msg := "Admins:  \n"
+	for i := range admins {
+		msg += admins[i] + ": " + i + "  \n"
+	}
+	u.room.broadcast(devbot, msg)
 }
 
 func peopleCMD(rest string, u *user) {
@@ -709,15 +712,17 @@ func pronounsCMD(line string, u *user) {
 }
 
 func emojisCMD(rest string, u *user) {
-	if rest == "" {
-		u.room.broadcast(devbot, "Check out https\\://github.com/ikatyang/emoji-cheat-sheet")
+	if rest != "" {
+		return
 	}
+	u.room.broadcast(devbot, "Check out https\\://github.com/ikatyang/emoji-cheat-sheet")
 }
 
 func commandsRestCMD(rest string, u *user) {
-	if rest == "" {
-		u.room.broadcast("", "The rest  \n"+autogenCommands(cmdsRest))
+	if rest != "" {
+		return
 	}
+	u.room.broadcast("", "The rest  \n"+autogenCommands(cmdsRest))
 }
 
 func manCMD(rest string, u *user) {
