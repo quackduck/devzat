@@ -61,7 +61,7 @@ var (
 		{"art", asciiArtCMD, "", "Show some panda art"},
 		{"pwd", pwdCMD, "", "Show your current room"},
 		//		{"sixel", sixelCMD, "<png url>", "Render an image in high quality"},
-		{"shrug", shrugCMD, "", `¯\\_(ツ)_/¯`}} // won't actually run, here just to show in docs
+		{"shrug", shrugCMD, "", `¯\\\_(ツ)\_/¯`}} // won't actually run, here just to show in docs
 	secretCMDs = []cmd{
 		{"ls", lsCMD, "???", "???"},
 		{"cat", catCMD, "???", "???"},
@@ -687,7 +687,7 @@ func pwdCMD(_ string, u *user) {
 }
 
 func shrugCMD(line string, u *user) {
-	u.room.broadcast(u.name, line+` ¯\\_(ツ)_/¯`)
+	u.room.broadcast(u.name, line+` ¯\\\_(ツ)\_/¯`)
 }
 
 func pronounsCMD(line string, u *user) {
