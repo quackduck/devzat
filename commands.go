@@ -65,7 +65,9 @@ var (
 	secretCMDs = []cmd{
 		{"ls", lsCMD, "???", "???"},
 		{"cat", catCMD, "???", "???"},
-		{"rm", rmCMD, "???", "???"}}
+		{"rm", rmCMD, "???", "???"},
+		{"colour", colourCMD, "???", "This is an alias of color"},
+	}
 )
 
 func init() {
@@ -510,6 +512,11 @@ func colorCMD(rest string, u *user) {
 	} else if err := u.changeColor(rest); err != nil {
 		u.room.broadcast(devbot, err.Error())
 	}
+}
+
+// appease the british
+func colourCMD(rest string, u *user) {
+	colorCMD(rest, u)
 }
 
 func adminsCMD(_ string, u *user) {
