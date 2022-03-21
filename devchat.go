@@ -516,7 +516,7 @@ func replaceSlackEmoji(input string) string {
 		return input
 	}
 	emojiName := ""
-	result := ""
+	result := make([]byte, 0, len(input))
 	inEmojiName := false
 	for i := 0; i < len(input)-1; i++ {
 		if inEmojiName {
@@ -526,16 +526,16 @@ func replaceSlackEmoji(input string) string {
 			inEmojiName = !inEmojiName
 		}
 		//if !inEmojiName {
-		result += string(input[i])
+		result = append(result, input[i])
 		//}
 	}
-	result += string(input[len(input)-1])
+	result = append(result, input[len(input)-1])
 	if emojiName != "" {
 		toAdd := fetchEmoji(strings.Split(strings.ReplaceAll(emojiName[1:len(emojiName)-1], "::", ":"), ":")) // cut the ':' at the start and end
 
-		result += toAdd
+		result = append(result, toAdd...)
 	}
-	return result
+	return string(result)
 }
 
 // accepts a ':' separated list of emoji
