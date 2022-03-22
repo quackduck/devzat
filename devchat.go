@@ -269,7 +269,7 @@ func newUser(s ssh.Session) *user {
 		}
 	}
 
-	if _, err := u.pickUsername(s.User()); err != nil { // user exited or had some error
+	if err := u.pickUsernameQuietly(s.User()); err != nil { // user exited or had some error
 		l.Println(err)
 		s.Close()
 		return nil
@@ -381,13 +381,24 @@ func (u *user) rWriteln(msg string) {
 	}
 }
 
-// try to change the nickname of an user and if the name is invalid, a promt
-// to fix it is exposed. The first returned value is `true` if the prompt was
-// presented and `false` otherwise. The second is misc error.
-func (u *user) pickUsername(possibleName string) (bool, error) {
+// pickUsernameQuietly changes the user's username, broadcasting a name change notification if needed.
+// An error is returned if the username entered had a bad word or reading input failed.
+func (u *user) pickUsername(possibleName string) error {
+	oldName := u.name
+	err := u.pickUsernameQuietly(possibleName)
+	if err != nil {
+		return err
+	}
+	if stripansi.Strip(u.name) != stripansi.Strip(oldName) && stripansi.Strip(u.name) != possibleName { // did the name change, and is it not what the user entered?
+		u.room.broadcast(devbot, oldName+" is now called "+u.name)
+	}
+	return nil
+}
+
+// pickUsernameQuietly is like pickUsername but does not
+func (u *user) pickUsernameQuietly(possibleName string) error {
 	possibleName = cleanName(possibleName)
 	var err error
-	showedPrompt := false
 	for {
 		if possibleName == "" {
 		} else if strings.HasPrefix(possibleName, "#") || possibleName == "devbot" {
@@ -401,19 +412,18 @@ func (u *user) pickUsername(possibleName string) (bool, error) {
 			possibleName = cleanName(possibleName)
 			break
 		}
-		showedPrompt = true
 
 		u.term.SetPrompt("> ")
 		possibleName, err = u.term.ReadLine()
 		if err != nil {
-			return showedPrompt, err
+			return err
 		}
 		possibleName = cleanName(possibleName)
 	}
 
 	if detectBadWords(possibleName) { // sadly this is necessary
 		banUser("devbot [grow up]", u)
-		return showedPrompt, errors.New(u.name + "'s username contained a bad word")
+		return errors.New(u.name + "'s username contained a bad word")
 	}
 
 	u.name = possibleName
@@ -421,23 +431,9 @@ func (u *user) pickUsername(possibleName string) (bool, error) {
 
 	if rand.Float64() <= 0.4 { // 40% chance of being a random color
 		u.changeColor("random") // also sets prompt
-		return showedPrompt, nil
+		return nil
 	}
 	u.changeColor(styles[rand.Intn(len(styles))].name)
-	return showedPrompt, nil
-}
-
-// Calls the pickUsername function and prints a message about the name change
-// if the user had to use the prompt to choose their username.
-func (u *user) pickUsernameExplicit(possibleName string) error {
-	oldName := u.name
-	showedPrompt, err := u.pickUsername(possibleName)
-	if err != nil {
-		return err
-	}
-	if showedPrompt {
-		u.room.broadcast(devbot, oldName+" have been renamed to "+u.name+".")
-	}
 	return nil
 }
 
