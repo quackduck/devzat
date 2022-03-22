@@ -174,8 +174,10 @@ func (r *room) broadcast(senderName, msg string) {
 	}
 	if senderName != "" {
 		slackChan <- "[" + r.name + "] " + senderName + ": " + msg
+		discordChan <- "[" + r.name + "] " + senderName + ": " + msg
 	} else {
 		slackChan <- "[" + r.name + "] " + msg
+		discordChan <- "[" + r.name + "] " + msg
 	}
 	r.broadcastNoSlack(senderName, msg)
 }
