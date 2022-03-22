@@ -32,6 +32,9 @@ If you add this to `~/.ssh/config`:
 Host chat
     HostName devzat.hackclub.com
     User yourNickNameHere
+# If you are using the latest version of OpenSSH, include these options as well:
+    HostkeyAlgorithms +ssh-rsa
+    PubkeyAcceptedAlgorithms +ssh-rsa
 ```
 
 You'll be able to join with just:
