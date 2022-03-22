@@ -416,12 +416,7 @@ func idCMD(line string, u *user) {
 }
 
 func nickCMD(line string, u *user) {
-	oldName := u.name
-	showedPrompt, _ := u.pickUsername(line)
-	if showedPrompt {
-		u.room.broadcast(devbot, oldName+" have been renamed to "+u.name+".")
-	}
-	return
+	u.pickUsernameExplicit(line)
 }
 
 func listBansCMD(_ string, u *user) {

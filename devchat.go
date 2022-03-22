@@ -427,6 +427,20 @@ func (u *user) pickUsername(possibleName string) (bool, error) {
 	return showedPrompt, nil
 }
 
+// Calls the pickUsername function and prints a message about the name change
+// if the user had to use the prompt to choose their username.
+func (u *user) pickUsernameExplicit(possibleName string) error {
+	oldName := u.name
+	showedPrompt, err := u.pickUsername(possibleName)
+	if err != nil {
+		return err
+	}
+	if showedPrompt {
+		u.room.broadcast(devbot, oldName+" have been renamed to "+u.name+".")
+	}
+	return nil
+}
+
 func (u *user) displayPronouns() string {
 	result := ""
 	for i := 0; i < len(u.pronouns); i++ {
