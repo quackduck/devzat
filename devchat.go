@@ -202,9 +202,21 @@ func (r *room) broadcastNoSlack(senderName, msg string) {
 	}
 }
 
+func find_prefix(prefix string, currUser user) {
+	
+}
+
 func autocomplete_callback(line string, pos int, key rune) (newLine string, newPos int, ok bool) {
 	if key == 9 {
-		return line + "AUTO	", pos + 4, true
+		// Parse the line so far, look for an @<prefix> and compare it to the list of users
+		// Split the input string to look for an @<namePrefix> 
+		words := strings.Split(line, " ");
+		// Check the last word they were typing and see if it's trying to refer to a user
+		// If it is, slice off the @ and take the rest as a prefix and iterate over all users until we find a match. 
+		if string(words[len(words) - 1][0]) == "@" {
+			return line + "AUTO	", pos + 4, true
+		}
+
 	}
 	return "", pos, false
 }
