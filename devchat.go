@@ -26,7 +26,7 @@ import (
 )
 
 var (
-	port        = 2222
+	port        = 22
 	scrollback  = 16
 	profilePort = 5555
 	// should this instance run offline? (should it not connect to slack or twitter?)
