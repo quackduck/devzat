@@ -30,50 +30,50 @@ type cmd struct {
 }
 
 var (
-	allcmds = make([]cmd, 30)
+	cmdsAll = make([]cmd, 30)
 	cmds    = []cmd{
-		{"=<user>", dmCMD, "<msg>", "DM <user> with <msg>"}, // won't actually run, here just to show in docs
-		{"users", usersCMD, "", "List users"},
-		{"color", colorCMD, "<color>", "Change your name's color"},
-		{"exit", exitCMD, "", "Leave the chat"},
-		{"help", helpCMD, "", "Show help"},
-		{"man", manCMD, "<cmd>", "Get help for a specific command"},
-		{"emojis", emojisCMD, "", "See a list of emojis"},
-		{"bell", bellCMD, "on|off|all", "ANSI bell on pings (on), never (off) or for every message (all)"},
-		{"clear", clearCMD, "", "Clear the screen"},
-		{"hang", hangCMD, "<char|word>", "Play hangman"}, // won't actually run, here just to show in docs
-		{"tic", ticCMD, "<cell num>", "Play tic tac toe!"},
-		{"cd", cdCMD, "#room|user", "Join #room, DM user or run cd to see a list"}, // won't actually run, here just to show in docs
-		{"tz", tzCMD, "<zone> [24h]", "Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h"},
-		{"nick", nickCMD, "<name>", "Change your username"},
-		{"pronouns", pronounsCMD, "<@user|pronoun...>", "Set your pronouns or get another user's"},
-		{"theme", themeCMD, "<theme>|list", "Change the syntax highlighting theme"},
-		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
+		{"=<user>", dmCmd, "<msg>", "DM <user> with <msg>"}, // won't actually run, here just to show in docs
+		{"users", usersCmd, "", "List users"},
+		{"color", colorCmd, "<color>", "Change your name's color"},
+		{"exit", exitCmd, "", "Leave the chat"},
+		{"help", helpCmd, "", "Show help"},
+		{"man", manCmd, "<cmd>", "Get help for a specific command"},
+		{"emojis", emojisCmd, "", "See a list of emojis"},
+		{"bell", bellCmd, "on|off|all", "ANSI bell on pings (on), never (off) or for every message (all)"},
+		{"clear", clearCmd, "", "Clear the screen"},
+		{"hang", hangCmd, "<char|word>", "Play hangman"}, // won't actually run, here just to show in docs
+		{"tic", ticCmd, "<cell num>", "Play tic tac toe!"},
+		{"cd", cdCmd, "#room|user", "Join #room, DM user or run cd to see a list"}, // won't actually run, here just to show in docs
+		{"tz", tzCmd, "<zone> [24h]", "Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h"},
+		{"nick", nickCmd, "<name>", "Change your username"},
+		{"pronouns", pronounsCmd, "<@user|pronoun...>", "Set your pronouns or get another user's"},
+		{"theme", themeCmd, "<theme>|list", "Change the syntax highlighting theme"},
+		{"rest", commandsRestCmd, "", "Uncommon commands list"}}
 	cmdsRest = []cmd{
-		{"people", peopleCMD, "", "See info about nice people who joined"},
-		{"id", idCMD, "<user>", "Get a unique ID for a user (hashed key)"},
-		{"admins", adminsCMD, "", "Print the ID (hashed key) for all admins"},
-		{"eg-code", exampleCodeCMD, "[big]", "Example syntax-highlighted code"},
-		{"lsbans", listBansCMD, "", "List banned IDs"},
-		{"ban", banCMD, "<user>", "Ban <user> (admin)"},
-		{"unban", unbanCMD, "<IP|ID> [dur]", "Unban a person and optionally, for a duration (admin)"},
-		{"kick", kickCMD, "<user>", "Kick <user> (admin)"},
-		{"art", asciiArtCMD, "", "Show some panda art"},
-		{"pwd", pwdCMD, "", "Show your current room"},
-		//		{"sixel", sixelCMD, "<png url>", "Render an image in high quality"},
-		{"shrug", shrugCMD, "", `¯\\\_(ツ)\_/¯`}} // won't actually run, here just to show in docs
-	secretCMDs = []cmd{
-		{"ls", lsCMD, "???", "???"},
-		{"cat", catCMD, "???", "???"},
-		{"rm", rmCMD, "???", "???"},
-		{"colour", colourCMD, "???", "This is an alias of color"},
+		{"people", peopleCmd, "", "See info about nice people who joined"},
+		{"id", idCmd, "<user>", "Get a unique ID for a user (hashed key)"},
+		{"admins", adminsCmd, "", "Print the ID (hashed key) for all admins"},
+		{"eg-code", exampleCodeCmd, "[big]", "Example syntax-highlighted code"},
+		{"lsbans", listBansCmd, "", "List banned IDs"},
+		{"ban", banCmd, "<user>", "Ban <user> (admin)"},
+		{"unban", unbanCmd, "<IP|ID> [dur]", "Unban a person and optionally, for a duration (admin)"},
+		{"kick", kickCmd, "<user>", "Kick <user> (admin)"},
+		{"art", asciiArtCmd, "", "Show some panda art"},
+		{"pwd", pwdCmd, "", "Show your current room"},
+		//		{"sixel", sixelCmd, "<png url>", "Render an image in high quality"},
+		{"shrug", shrugCmd, "", `¯\\\_(ツ)\_/¯`}} // won't actually run, here just to show in docs
+	cmdsSecret = []cmd{
+		{"ls", lsCmd, "???", "???"},
+		{"cat", catCmd, "???", "???"},
+		{"rm", rmCmd, "???", "???"},
+		{"colour", colourCmd, "???", "This is an alias of color"},
 	}
 )
 
 func init() {
-	cmds = append(cmds, cmd{"cmds", commandsCMD, "", "Show this message"}) // avoid initialization loop
-	allcmds = append(append(append(allcmds,
-		cmds...), cmdsRest...), secretCMDs...)
+	cmds = append(cmds, cmd{"cmds", commandsCmd, "", "Show this message"}) // avoid initialization loop
+	cmdsAll = append(append(append(cmdsAll,
+		cmds...), cmdsRest...), cmdsSecret...)
 }
 
 // runCommands parses a line of raw input from a user and sends a message as
@@ -94,25 +94,25 @@ func runCommands(line string, u *user) {
 			mainRoom.broadcast(devbot, "Slap the developers in the face for me, the server almost crashed, also tell them this: "+fmt.Sprint(i, "\n"+string(debug.Stack())))
 		}
 	}()
-	currCmd := strings.Fields(line)[0]
-	if u.messaging != nil && currCmd != "=" && currCmd != "cd" && currCmd != "exit" && currCmd != "pwd" { // the commands allowed in a private dm room
-		dmRoomCMD(line, u)
+	cmdCurr := strings.Fields(line)[0]
+	if u.messaging != nil && cmdCurr != "=" && cmdCurr != "cd" && cmdCurr != "exit" && cmdCurr != "pwd" { // the commands allowed in a private dm room
+		dmRoomCmd(line, u)
 		return
 	}
 	if strings.HasPrefix(line, "=") && !u.isSlack {
-		dmCMD(strings.TrimSpace(strings.TrimPrefix(line, "=")), u)
+		dmCmd(strings.TrimSpace(strings.TrimPrefix(line, "=")), u)
 		return
 	}
 
-	switch currCmd {
+	switch cmdCurr {
 	case "hang":
-		hangCMD(strings.TrimSpace(strings.TrimPrefix(line, "hang")), u)
+		hangCmd(strings.TrimSpace(strings.TrimPrefix(line, "hang")), u)
 		return
 	case "cd":
-		cdCMD(strings.TrimSpace(strings.TrimPrefix(line, "cd")), u)
+		cdCmd(strings.TrimSpace(strings.TrimPrefix(line, "cd")), u)
 		return
 	case "shrug":
-		shrugCMD(strings.TrimSpace(strings.TrimPrefix(line, "shrug")), u)
+		shrugCmd(strings.TrimSpace(strings.TrimPrefix(line, "shrug")), u)
 		return
 	}
 
@@ -124,8 +124,8 @@ func runCommands(line string, u *user) {
 
 	devbotChat(u.room, line)
 
-	for _, c := range allcmds {
-		if c.name == currCmd {
+	for _, c := range cmdsAll {
+		if c.name == cmdCurr {
 			c.run(strings.TrimSpace(strings.TrimPrefix(line, c.name)), u)
 			return
 		}
@@ -150,7 +150,7 @@ func detectBadWords(text string) bool {
 	return false
 }
 
-func dmCMD(rest string, u *user) {
+func dmCmd(rest string, u *user) {
 	restSplit := strings.Fields(rest)
 	if len(restSplit) < 2 {
 		u.writeln(devbot, "You gotta have a message, mate")
@@ -173,7 +173,7 @@ func dmCMD(rest string, u *user) {
 	peer.writeln(u.name+" -> ", msg)
 }
 
-func hangCMD(rest string, u *user) {
+func hangCmd(rest string, u *user) {
 	if len(rest) > 1 {
 		if !u.isSlack {
 			u.writeln(u.name, "hang "+rest)
@@ -216,15 +216,15 @@ func hangCMD(rest string, u *user) {
 	}
 }
 
-func clearCMD(_ string, u *user) {
+func clearCmd(_ string, u *user) {
 	u.term.Write([]byte("\033[H\033[2J"))
 }
 
-func usersCMD(_ string, u *user) {
+func usersCmd(_ string, u *user) {
 	u.room.broadcast("", printUsersInRoom(u.room))
 }
 
-func dmRoomCMD(line string, u *user) {
+func dmRoomCmd(line string, u *user) {
 	u.writeln(u.messaging.name+" <- ", line)
 	if u == u.messaging {
 		devbotRespond(u.room, []string{"You must be really lonely, DMing yourself.",
@@ -236,7 +236,7 @@ func dmRoomCMD(line string, u *user) {
 	u.messaging.writeln(u.name+" -> ", line)
 }
 
-func ticCMD(rest string, u *user) {
+func ticCmd(rest string, u *user) {
 	if rest == "" {
 		u.room.broadcast(devbot, "Starting a new game of Tic Tac Toe! The first player is always X.")
 		u.room.broadcast(devbot, "Play using tic <cell num>")
@@ -272,11 +272,11 @@ func ticCMD(rest string, u *user) {
 	}
 }
 
-func exitCMD(_ string, u *user) {
+func exitCmd(_ string, u *user) {
 	u.close(u.name + red.Paint(" has left the chat"))
 }
 
-func bellCMD(rest string, u *user) {
+func bellCmd(rest string, u *user) {
 	switch rest {
 	case "off":
 		u.bell = false
@@ -302,7 +302,7 @@ func bellCMD(rest string, u *user) {
 	}
 }
 
-func sixelCMD(url string, u *user) {
+func sixelCmd(url string, u *user) {
 	r, err := http.Get(url)
 	if err != nil {
 		u.room.broadcast(devbot, "huh, are you sure that's a working link?")
@@ -323,7 +323,7 @@ func sixelCMD(url string, u *user) {
 	}
 }
 
-func cdCMD(rest string, u *user) {
+func cdCmd(rest string, u *user) {
 	if u.messaging != nil {
 		u.messaging = nil
 		u.writeln(devbot, "Left private chat")
@@ -375,7 +375,7 @@ func cdCMD(rest string, u *user) {
 	u.writeln(devbot, "Now in DMs with "+peer.name+". To leave use cd ..")
 }
 
-func tzCMD(tzArg string, u *user) {
+func tzCmd(tzArg string, u *user) {
 	var err error
 	if tzArg == "" {
 		u.timezone = nil
@@ -406,7 +406,7 @@ func tzCMD(tzArg string, u *user) {
 	u.room.broadcast(devbot, "Changed your timezone!")
 }
 
-func idCMD(line string, u *user) {
+func idCmd(line string, u *user) {
 	victim, ok := findUserByName(u.room, line)
 	if !ok {
 		u.room.broadcast("", "User not found")
@@ -415,11 +415,11 @@ func idCMD(line string, u *user) {
 	u.room.broadcast("", victim.id)
 }
 
-func nickCMD(line string, u *user) {
+func nickCmd(line string, u *user) {
 	u.pickUsername(line)
 }
 
-func listBansCMD(_ string, u *user) {
+func listBansCmd(_ string, u *user) {
 	msg := "Printing bans by ID:  \n"
 	for i := 0; i < len(bans); i++ {
 		msg += cyan.Cyan(strconv.Itoa(i+1)) + ". " + bans[i].ID + "  \n"
@@ -427,7 +427,7 @@ func listBansCMD(_ string, u *user) {
 	u.room.broadcast(devbot, msg)
 }
 
-func unbanCMD(toUnban string, u *user) {
+func unbanCmd(toUnban string, u *user) {
 	if !auth(u) {
 		u.room.broadcast(devbot, "Not authorized")
 		return
@@ -454,7 +454,7 @@ func unbanIDorIP(toUnban string) bool {
 	return false
 }
 
-func banCMD(line string, u *user) {
+func banCmd(line string, u *user) {
 	if !auth(u) {
 		u.room.broadcast(devbot, "Not authorized")
 		return
@@ -493,7 +493,7 @@ func banUser(banner string, victim *user) {
 	victim.close(victim.name + " has been banned by " + banner)
 }
 
-func kickCMD(line string, u *user) {
+func kickCmd(line string, u *user) {
 	victim, ok := findUserByName(u.room, line)
 	if !ok {
 		u.room.broadcast("", "User not found")
@@ -506,7 +506,7 @@ func kickCMD(line string, u *user) {
 	victim.close(victim.name + red.Paint(" has been kicked by ") + u.name)
 }
 
-func colorCMD(rest string, u *user) {
+func colorCmd(rest string, u *user) {
 	if rest == "which" {
 		u.room.broadcast(devbot, "you're using "+u.color)
 	} else if err := u.changeColor(rest); err != nil {
@@ -515,11 +515,11 @@ func colorCMD(rest string, u *user) {
 }
 
 // appease the british
-func colourCMD(rest string, u *user) {
-	colorCMD(rest, u)
+func colourCmd(rest string, u *user) {
+	colorCmd(rest, u)
 }
 
-func adminsCMD(_ string, u *user) {
+func adminsCmd(_ string, u *user) {
 	msg := "Admins:  \n"
 	for i := range admins {
 		msg += admins[i] + ": " + i + "  \n"
@@ -527,7 +527,7 @@ func adminsCMD(_ string, u *user) {
 	u.room.broadcast(devbot, msg)
 }
 
-func peopleCMD(_ string, u *user) {
+func peopleCmd(_ string, u *user) {
 	u.room.broadcast("", `
 **Hack Club members**  
 Zach Latta     - Founder of Hack Club  
@@ -565,7 +565,7 @@ Harsh           @harshb__
 **And many more have joined!**`)
 }
 
-func helpCMD(_ string, u *user) {
+func helpCmd(_ string, u *user) {
 	u.room.broadcast("", `Welcome to Devzat! Devzat is chat over SSH: github.com/quackduck/devzat  
 Because there's SSH apps on all platforms, even on mobile, you can join from anywhere.
 
@@ -588,17 +588,17 @@ Made by Ishan Goel with feature ideas from friends.
 Thanks to Caleb Denio for lending his server!`)
 }
 
-func catCMD(line string, u *user) {
+func catCmd(line string, u *user) {
 	if line == "" {
 		u.room.broadcast("", "usage: cat [-benstuv] [file ...]")
 	} else if line == "README.md" {
-		helpCMD(line, u)
+		helpCmd(line, u)
 	} else {
 		u.room.broadcast("", "cat: "+line+": Permission denied")
 	}
 }
 
-func rmCMD(line string, u *user) {
+func rmCmd(line string, u *user) {
 	if line == "" {
 		u.room.broadcast("", `usage: rm [-f | -i] [-dPRrvW] file ...
 unlink file`)
@@ -607,7 +607,7 @@ unlink file`)
 	}
 }
 
-func exampleCodeCMD(line string, u *user) {
+func exampleCodeCmd(line string, u *user) {
 	if line == "big" {
 		u.room.broadcast(devbot, "```go\npackage main\n\nimport \"fmt\"\n\nfunc sum(nums ...int) {\n    fmt.Print(nums, \" \")\n    total := 0\n    for _, num := range nums {\n        total += num\n    }\n    fmt.Println(total)\n}\n\nfunc main() {\n\n    sum(1, 2)\n    sum(1, 2, 3)\n\n    nums := []int{1, 2, 3, 4}\n    sum(nums...)\n}\n```")
 		return
@@ -658,7 +658,7 @@ func init() { // add Matt Gleich's blackbird theme from https://github.com/black
 	}))
 }
 
-func themeCMD(line string, u *user) {
+func themeCmd(line string, u *user) {
 	if line == "list" {
 		u.room.broadcast(devbot, "Available themes: "+strings.Join(chromastyles.Names(), ", "))
 		return
@@ -673,11 +673,11 @@ func themeCMD(line string, u *user) {
 	u.room.broadcast(devbot, "What theme is that? Use theme list to see what's available.")
 }
 
-func asciiArtCMD(_ string, u *user) {
+func asciiArtCmd(_ string, u *user) {
 	u.room.broadcast("", art)
 }
 
-func pwdCMD(_ string, u *user) {
+func pwdCmd(_ string, u *user) {
 	if u.messaging != nil {
 		u.writeln("", u.messaging.name)
 		u.messaging.writeln("", u.messaging.name)
@@ -686,11 +686,11 @@ func pwdCMD(_ string, u *user) {
 	}
 }
 
-func shrugCMD(line string, u *user) {
+func shrugCmd(line string, u *user) {
 	u.room.broadcast(u.name, line+` ¯\\\_(ツ)\_/¯`)
 }
 
-func pronounsCMD(line string, u *user) {
+func pronounsCmd(line string, u *user) {
 	args := strings.Fields(line)
 
 	if line == "" {
@@ -713,21 +713,21 @@ func pronounsCMD(line string, u *user) {
 	u.room.broadcast(devbot, u.name+" now goes by "+u.displayPronouns())
 }
 
-func emojisCMD(_ string, u *user) {
+func emojisCmd(_ string, u *user) {
 	u.room.broadcast(devbot, "Check out github.com/ikatyang/emoji-cheat-sheet")
 }
 
-func commandsRestCMD(_ string, u *user) {
+func commandsRestCmd(_ string, u *user) {
 	u.room.broadcast("", "The rest  \n"+autogenCommands(cmdsRest))
 }
 
-func manCMD(rest string, u *user) {
+func manCmd(rest string, u *user) {
 	if rest == "" {
 		u.room.broadcast(devbot, "What command do you want help with?")
 		return
 	}
 
-	for _, c := range allcmds {
+	for _, c := range cmdsAll {
 		if c.name == rest {
 			u.room.broadcast(devbot, "Usage: "+c.name+" "+c.argsInfo+"  \n"+c.info)
 			return
@@ -736,7 +736,7 @@ func manCMD(rest string, u *user) {
 	u.room.broadcast("", "This system has been minimized by removing packages and content that are not required on a system that users do not log into.\n\nTo restore this content, including manpages, you can run the 'unminimize' command. You will still need to ensure the 'man-db' package is installed.")
 }
 
-func lsCMD(rest string, u *user) {
+func lsCmd(rest string, u *user) {
 	if rest != "" {
 		u.room.broadcast("", "ls: "+rest+" Permission denied")
 		return
@@ -752,6 +752,6 @@ func lsCMD(rest string, u *user) {
 	u.room.broadcast("", "README.md "+usersList+roomList)
 }
 
-func commandsCMD(_ string, u *user) {
+func commandsCmd(_ string, u *user) {
 	u.room.broadcast("", "Commands  \n"+autogenCommands(cmds))
 }

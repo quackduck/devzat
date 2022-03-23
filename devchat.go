@@ -254,7 +254,7 @@ func newUser(s ssh.Session) *user {
 		return nil
 	}
 
-	clearCMD("", u) // always clear the screen on connect
+	clearCmd("", u) // always clear the screen on connect
 	valentines(u)
 
 	if len(backlog) > 0 {
@@ -301,7 +301,7 @@ func valentines(u *user) {
 		//u.term.Write([]byte("\u001B[A\u001B[2K\u001B[A\u001B[2K")) // delete last line of rendered markdown
 		time.Sleep(time.Second)
 		// clear screen
-		clearCMD("", u)
+		clearCmd("", u)
 	}
 }
 
