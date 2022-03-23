@@ -66,7 +66,7 @@ var (
 		{"ls", lsCMD, "???", "???"},
 		{"cat", catCMD, "???", "???"},
 		{"rm", rmCMD, "???", "???"},
-		{"colour", colourCMD, "???", "This is an alias of color"},
+		{"colour", colorCMD, "???", "This is an alias of color"}, // appease the british
 	}
 )
 
@@ -508,15 +508,10 @@ func kickCMD(line string, u *user) {
 
 func colorCMD(rest string, u *user) {
 	if rest == "which" {
-		u.room.broadcast(devbot, "you're using "+u.color)
+		u.room.broadcast(devbot, "fg: "+u.color+" & bg: "+u.colorBG)
 	} else if err := u.changeColor(rest); err != nil {
 		u.room.broadcast(devbot, err.Error())
 	}
-}
-
-// appease the british
-func colourCMD(rest string, u *user) {
-	colorCMD(rest, u)
 }
 
 func adminsCMD(_ string, u *user) {

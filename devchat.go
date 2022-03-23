@@ -224,6 +224,7 @@ func newUser(s ssh.Session) *user {
 		session:       s,
 		term:          term,
 		bell:          true,
+		colorBG:       "bg-off", // the FG will be set randomly
 		id:            shasum(toHash),
 		addr:          host,
 		win:           w,
@@ -412,7 +413,7 @@ func (u *user) pickUsername(possibleName string) error {
 	}
 
 	u.name = possibleName
-	u.initColor()
+	//u.initColor()
 
 	if rand.Float64() <= 0.4 { // 40% chance of being a random color
 		u.changeColor("random") // also sets prompt

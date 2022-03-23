@@ -131,10 +131,6 @@ func (u *user) changeColor(colorName string) error {
 
 	u.name, _ = applyColorToData(u.name, u.color, u.colorBG) // error can be discarded as it has already been checked earlier
 
-	//styleFG, _ := getStyle(u.color)
-	//styleBG, _ := getStyle(u.colorBG)
-	//u.name = styleFG.apply(u.name) // fg clears the bg color
-	//u.name = styleBG.apply(u.name) // then re-add bg color if any
 	u.term.SetPrompt(u.name + ": ")
 	saveBans()
 	return nil
@@ -150,12 +146,6 @@ func applyColorToData(data string, color string, colorBG string) (string, error)
 		return "", err
 	}
 	return styleBG.apply(styleFG.apply(data)), nil // fg clears the bg color
-}
-
-// Ensure that both color functions for a user are properly set
-func (u *user) initColor() {
-	u.color = "white"
-	u.colorBG = "bg-off"
 }
 
 // Sets either the foreground or the background with a random color if the
