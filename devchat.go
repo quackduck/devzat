@@ -202,18 +202,18 @@ func (r *room) broadcastNoSlack(senderName, msg string) {
 	}
 }
 
-func find_prefix(prefix string, currUser user) {
-	
+func findPrefix(prefix string, currUser *user) {
+
 }
 
-func autocomplete_callback(line string, pos int, key rune) (newLine string, newPos int, ok bool) {
-	if key == 9 {
+func autocompleteCallback(line string, pos int, key rune) (newLine string, newPos int, ok bool) {
+	if key == '\t' {
 		// Parse the line so far, look for an @<prefix> and compare it to the list of users
-		// Split the input string to look for an @<namePrefix> 
-		words := strings.Split(line, " ");
+		// Split the input string to look for an @<namePrefix>
+		words := strings.Fields(line)
 		// Check the last word they were typing and see if it's trying to refer to a user
-		// If it is, slice off the @ and take the rest as a prefix and iterate over all users until we find a match. 
-		if string(words[len(words) - 1][0]) == "@" {
+		// If it is, slice off the @ and take the rest as a prefix and iterate over all users until we find a match.
+		if string(words[len(words)-1][0]) == "@" {
 			return line + "AUTO	", pos + 4, true
 		}
 
@@ -223,7 +223,7 @@ func autocomplete_callback(line string, pos int, key rune) (newLine string, newP
 
 func newUser(s ssh.Session) *user {
 	term := terminal.NewTerminal(s, "> ")
-	term.AutoCompleteCallback = autocomplete_callback
+	term.AutoCompleteCallback = autocompleteCallback
 
 	_ = term.SetSize(10000, 10000) // disable any formatting done by term
 	pty, winChan, _ := s.Pty()
