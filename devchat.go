@@ -291,7 +291,7 @@ func newUser(s ssh.Session) *user {
 		}
 	}
 
-	if err := u.pickUsername(s.User()); err != nil { // user exited or had some error
+	if err := u.pickUsernameQuietly(s.User()); err != nil { // user exited or had some error
 		l.Println(err)
 		s.Close()
 		return nil
@@ -406,7 +406,22 @@ func (u *user) rWriteln(msg string) {
 	}
 }
 
+// pickUsernameQuietly changes the user's username, broadcasting a name change notification if needed.
+// An error is returned if the username entered had a bad word or reading input failed.
 func (u *user) pickUsername(possibleName string) error {
+	oldName := u.name
+	err := u.pickUsernameQuietly(possibleName)
+	if err != nil {
+		return err
+	}
+	if stripansi.Strip(u.name) != stripansi.Strip(oldName) && stripansi.Strip(u.name) != possibleName { // did the name change, and is it not what the user entered?
+		u.room.broadcast(devbot, oldName+" is now called "+u.name)
+	}
+	return nil
+}
+
+// pickUsernameQuietly is like pickUsername but does not
+func (u *user) pickUsernameQuietly(possibleName string) error {
 	possibleName = cleanName(possibleName)
 	var err error
 	for {
