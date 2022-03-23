@@ -70,6 +70,10 @@ var (
 	}
 )
 
+const (
+	maxLengthRoomName = 30
+)
+
 func init() {
 	cmds = append(cmds, cmd{"cmds", commandsCMD, "", "Show this message"}) // avoid initialization loop
 	allcmds = append(append(append(allcmds,
@@ -333,6 +337,10 @@ func cdCMD(rest string, u *user) {
 	}
 	if strings.HasPrefix(rest, "#") {
 		u.room.broadcast(u.name, "cd "+rest)
+		if len(rest) > maxLengthRoomName {
+			rest = rest[0:maxLengthRoomName]
+			u.room.broadcast(devbot, "Room name lengths are limited, so I'm shortening it to "+rest+".")
+		}
 		if v, ok := rooms[rest]; ok {
 			u.changeRoom(v)
 		} else {
