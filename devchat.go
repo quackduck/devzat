@@ -226,7 +226,6 @@ func autocompleteCallback(u *user, line string, pos int, key rune) (string, int,
 
 func newUser(s ssh.Session) *user {
 	term := terminal.NewTerminal(s, "> ")
-
 	_ = term.SetSize(10000, 10000) // disable any formatting done by term
 	pty, winChan, _ := s.Pty()
 	w := pty.Window
