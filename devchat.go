@@ -202,7 +202,7 @@ func (r *room) broadcastNoSlack(senderName, msg string) {
 	}
 }
 
-func autocompleteCallback(u *user, line string, pos int, key rune) (newLine string, newPos int, ok bool) {
+func autocompleteCallback(u *user, line string, pos int, key rune) (string, int, bool) {
 	if key == '\t' {
 		// Autocomplete a username
 
@@ -210,14 +210,14 @@ func autocompleteCallback(u *user, line string, pos int, key rune) (newLine stri
 		words := strings.Fields(line)
 		// Check the last word and see if it's trying to refer to a user
 		if len(words) > 0 && string(words[len(words)-1][0]) == "@" {
-			toAdd := ""
-			curr := words[len(words)-1][1:] // slice the @ off
-			for _, us := range u.room.users {
-				if strings.HasPrefix(stripansi.Strip(us.name), curr) { // find a match
-					toAdd = strings.TrimPrefix(stripansi.Strip(us.name), curr)
+			inputWord := words[len(words)-1][1:] // slice the @ off
+			for i := range u.room.users {
+				strippedName := stripansi.Strip(u.room.users[i].name)
+				toAdd := strings.TrimPrefix(strippedName, inputWord)
+				if toAdd != strippedName { // there was a match, and some text got trimmed!
+					return line + toAdd + " ", pos + len(toAdd) + 1, true
 				}
 			}
-			return line + toAdd + " ", pos + len(toAdd) + 1, true
 		}
 
 	}
