@@ -241,7 +241,7 @@ func newUser(s ssh.Session) *user {
 	if bansContains(bans, u.addr, u.id) {
 		l.Println("Rejected " + u.name + " [" + host + "]")
 		u.writeln(devbot, "**You are banned**. If you feel this was a mistake, please reach out at github.com/quackduck/devzat/issues or email igoel.mail@gmail.com. Please include the following information: [ID "+u.id+"]")
-		u.closeBackend()
+		u.closeQuietly()
 		return nil
 	}
 	idsInMinToTimes[u.id]++
@@ -315,19 +315,19 @@ func cleanupRoom(r *room) {
 // Removes a user and prints Twitter and chat message
 func (u *user) close(msg string) {
 	u.closeOnce.Do(func() {
-		u.closeBackend()
+		u.closeQuietly()
 		go sendCurrentUsersTwitterMessage()
-		u.room.broadcast(devbot, msg)
 		if time.Since(u.joinTime) > time.Minute/2 {
-			u.room.broadcast(devbot, u.name+" stayed on for "+printPrettyDuration(time.Since(u.joinTime)))
+			msg += ". They were online for " + printPrettyDuration(time.Since(u.joinTime))
 		}
+		u.room.broadcast(devbot, msg)
 		u.room.users = remove(u.room.users, u)
 		cleanupRoom(u.room)
 	})
 }
 
 // Removes a user silently, used to close banned users
-func (u *user) closeBackend() {
+func (u *user) closeQuietly() {
 	u.room.usersMutex.Lock()
 	u.room.users = remove(u.room.users, u)
 	u.room.usersMutex.Unlock()
@@ -516,7 +516,7 @@ func replaceSlackEmoji(input string) string {
 		return input
 	}
 	emojiName := ""
-	result := ""
+	result := make([]byte, 0, len(input))
 	inEmojiName := false
 	for i := 0; i < len(input)-1; i++ {
 		if inEmojiName {
@@ -526,16 +526,16 @@ func replaceSlackEmoji(input string) string {
 			inEmojiName = !inEmojiName
 		}
 		//if !inEmojiName {
-		result += string(input[i])
+		result = append(result, input[i])
 		//}
 	}
-	result += string(input[len(input)-1])
+	result = append(result, input[len(input)-1])
 	if emojiName != "" {
 		toAdd := fetchEmoji(strings.Split(strings.ReplaceAll(emojiName[1:len(emojiName)-1], "::", ":"), ":")) // cut the ':' at the start and end
 
-		result += toAdd
+		result = append(result, toAdd...)
 	}
-	return result
+	return string(result)
 }
 
 // accepts a ':' separated list of emoji
