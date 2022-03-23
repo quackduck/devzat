@@ -202,19 +202,22 @@ func (r *room) broadcastNoSlack(senderName, msg string) {
 	}
 }
 
-func findPrefix(prefix string, currUser *user) {
-
-}
-
-func autocompleteCallback(line string, pos int, key rune) (newLine string, newPos int, ok bool) {
+func autocompleteCallback(u *user, line string, pos int, key rune) (newLine string, newPos int, ok bool) {
 	if key == '\t' {
-		// Parse the line so far, look for an @<prefix> and compare it to the list of users
-		// Split the input string to look for an @<namePrefix>
+		// Autocomplete a username
+
+		// Split the input string to look for @<name>
 		words := strings.Fields(line)
-		// Check the last word they were typing and see if it's trying to refer to a user
-		// If it is, slice off the @ and take the rest as a prefix and iterate over all users until we find a match.
-		if string(words[len(words)-1][0]) == "@" {
-			return line + "AUTO	", pos + 4, true
+		// Check the last word and see if it's trying to refer to a user
+		if len(words) > 0 && string(words[len(words)-1][0]) == "@" {
+			toAdd := ""
+			curr := words[len(words)-1][1:] // slice the @ off
+			for _, us := range u.room.users {
+				if strings.HasPrefix(stripansi.Strip(us.name), curr) { // find a match
+					toAdd = strings.TrimPrefix(stripansi.Strip(us.name), curr)
+				}
+			}
+			return line + toAdd + " ", pos + len(toAdd) + 1, true
 		}
 
 	}
@@ -223,7 +226,6 @@ func autocompleteCallback(line string, pos int, key rune) (newLine string, newPo
 
 func newUser(s ssh.Session) *user {
 	term := terminal.NewTerminal(s, "> ")
-	term.AutoCompleteCallback = autocompleteCallback
 
 	_ = term.SetSize(10000, 10000) // disable any formatting done by term
 	pty, winChan, _ := s.Pty()
@@ -302,6 +304,9 @@ func newUser(s ssh.Session) *user {
 	mainRoom.usersMutex.Unlock()
 
 	u.term.SetBracketedPasteMode(true) // experimental paste bracketing support
+	term.AutoCompleteCallback = func (line string, pos int, key rune) (string, int, bool) {
+		return autocompleteCallback(u, line, pos, key)
+	}
 
 	switch len(mainRoom.users) - 1 {
 	case 0:
