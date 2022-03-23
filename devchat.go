@@ -202,6 +202,28 @@ func (r *room) broadcastNoSlack(senderName, msg string) {
 	}
 }
 
+func autocompleteCallback(u *user, line string, pos int, key rune) (string, int, bool) {
+	if key == '\t' {
+		// Autocomplete a username
+
+		// Split the input string to look for @<name>
+		words := strings.Fields(line)
+		// Check the last word and see if it's trying to refer to a user
+		if len(words) > 0 && string(words[len(words)-1][0]) == "@" {
+			inputWord := words[len(words)-1][1:] // slice the @ off
+			for i := range u.room.users {
+				strippedName := stripansi.Strip(u.room.users[i].name)
+				toAdd := strings.TrimPrefix(strippedName, inputWord)
+				if toAdd != strippedName { // there was a match, and some text got trimmed!
+					return line + toAdd + " ", pos + len(toAdd) + 1, true
+				}
+			}
+		}
+
+	}
+	return "", pos, false
+}
+
 func newUser(s ssh.Session) *user {
 	term := terminal.NewTerminal(s, "> ")
 	_ = term.SetSize(10000, 10000) // disable any formatting done by term
@@ -281,6 +303,9 @@ func newUser(s ssh.Session) *user {
 	mainRoom.usersMutex.Unlock()
 
 	u.term.SetBracketedPasteMode(true) // experimental paste bracketing support
+	term.AutoCompleteCallback = func (line string, pos int, key rune) (string, int, bool) {
+		return autocompleteCallback(u, line, pos, key)
+	}
 
 	switch len(mainRoom.users) - 1 {
 	case 0:
