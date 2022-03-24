@@ -66,6 +66,10 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/quackduck/go-term-markdown v0.11.0 h1:F5bdjoXI+dQ5oosx+d9hgKzar8DGYTemd/0PL4Z2VsE=
 github.com/quackduck/go-term-markdown v0.11.0/go.mod h1:cL3bDHloG5xnJJdM8L6y1oT5v8ep2x/K6Lp9d5UveGg=
+github.com/quackduck/go-term-markdown v0.12.0 h1:v7f8/SOfL028yRGf8AmlF7I3Qfh2M189r9f48RDmGRE=
+github.com/quackduck/go-term-markdown v0.12.0/go.mod h1:cL3bDHloG5xnJJdM8L6y1oT5v8ep2x/K6Lp9d5UveGg=
+github.com/quackduck/go-term-markdown v0.13.0 h1:RDtCulzbRnSqHT7hoKmWYwItVjoWYK4633KXcnyG1as=
+github.com/quackduck/go-term-markdown v0.13.0/go.mod h1:cL3bDHloG5xnJJdM8L6y1oT5v8ep2x/K6Lp9d5UveGg=
 github.com/quackduck/term v0.0.0-20220217011143-d10974b5f140 h1:1YYZ7EaIfIFHz+wwEooLRw8KCzBaJ4CpvA0X8umn/qE=
 github.com/quackduck/term v0.0.0-20220217011143-d10974b5f140/go.mod h1:oYgTJa+zqLac6A7hnmWXIYqpja3iMjValoOdduDIGB8=
 github.com/rivo/uniseg v0.1.0 h1:+2KBaVoUmb9XzDsrx/Ct0W/EYOSFf/nWTauy++DprtY=

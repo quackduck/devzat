@@ -10,7 +10,7 @@ require (
 	github.com/gliderlabs/ssh v0.3.3
 	github.com/jwalton/gchalk v1.2.1
 	github.com/mattn/go-sixel v0.0.1
-	github.com/quackduck/go-term-markdown v0.11.0
+	github.com/quackduck/go-term-markdown v0.13.0
 	github.com/quackduck/term v0.0.0-20220217011143-d10974b5f140
 	github.com/shurcooL/tictactoe v0.0.0-20210613024444-e573ff1376a3
 	github.com/slack-go/slack v0.10.2
