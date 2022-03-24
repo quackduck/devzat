@@ -208,20 +208,48 @@ func autocompleteCallback(u *user, line string, pos int, key rune) (string, int,
 
 		// Split the input string to look for @<name>
 		words := strings.Fields(line)
-		// Check the last word and see if it's trying to refer to a user
-		if len(words) > 0 && string(words[len(words)-1][0]) == "@" {
-			inputWord := words[len(words)-1][1:] // slice the @ off
-			for i := range u.room.users {
-				strippedName := stripansi.Strip(u.room.users[i].name)
-				toAdd := strings.TrimPrefix(strippedName, inputWord)
-				if toAdd != strippedName { // there was a match, and some text got trimmed!
-					return line + toAdd + " ", pos + len(toAdd) + 1, true
-				}
-			}
+
+		toAdd := userMentionAutocomplete(u, words)
+		if toAdd != "" {
+			return line + toAdd, pos + len(toAdd), true
 		}
+		toAdd = roomAutocomplete(u, words)
+		if toAdd != "" {
+			return line + toAdd, pos + len(toAdd), true
+		}
+		//return line + toAdd + " ", pos + len(toAdd) + 1, true
 
 	}
 	return "", pos, false
+}
+
+func userMentionAutocomplete(u *user, words []string) string {
+	// Check the last word and see if it's trying to refer to a user
+	if len(words) > 0 && words[len(words)-1][0] == '@' {
+		inputWord := words[len(words)-1][1:] // slice the @ off
+		for i := range u.room.users {
+			strippedName := stripansi.Strip(u.room.users[i].name)
+			toAdd := strings.TrimPrefix(strippedName, inputWord)
+			if toAdd != strippedName { // there was a match, and some text got trimmed!
+				return toAdd + " "
+			}
+		}
+	}
+	return ""
+}
+
+func roomAutocomplete(u *user, words []string) string {
+	// trying to refer to a room?
+	if len(words) > 0 && words[len(words)-1][0] == '#' {
+		// don't slice the # off, since the room name includes it
+		for name := range rooms {
+			toAdd := strings.TrimPrefix(name, words[len(words)-1])
+			if toAdd != name { // there was a match, and some text got trimmed!
+				return toAdd + " "
+			}
+		}
+	}
+	return ""
 }
 
 func newUser(s ssh.Session) *user {
@@ -304,7 +332,7 @@ func newUser(s ssh.Session) *user {
 	mainRoom.usersMutex.Unlock()
 
 	u.term.SetBracketedPasteMode(true) // experimental paste bracketing support
-	term.AutoCompleteCallback = func (line string, pos int, key rune) (string, int, bool) {
+	term.AutoCompleteCallback = func(line string, pos int, key rune) (string, int, bool) {
 		return autocompleteCallback(u, line, pos, key)
 	}
 
