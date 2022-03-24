@@ -692,7 +692,7 @@ func pronounsCMD(line string, u *user) {
 }
 
 func emojisCMD(_ string, u *user) {
-    u.room.broadcast(devbot, "Check out https://github.com/ikatyang/emoji-cheat-sheet")
+	u.room.broadcast(devbot, "Check out https://github.com/ikatyang/emoji-cheat-sheet")
 }
 
 func commandsRestCMD(_ string, u *user) {
