@@ -423,7 +423,10 @@ func (u *user) writeln(senderName string, msg string) {
 	if !u.bell {
 		msg = strings.ReplaceAll(msg, "\a", "")
 	}
-	u.term.Write([]byte(msg + "\n"))
+	_, err := u.term.Write([]byte(msg + "\n"))
+	if err != nil {
+		u.close(u.name + "has left the chat because of an error writing to their terminal: " + err.Error())
+	}
 }
 
 // Write to the right of the user's window
@@ -484,10 +487,11 @@ func (u *user) pickUsernameQuietly(possibleName string) error {
 	//u.initColor()
 
 	if rand.Float64() <= 0.4 { // 40% chance of being a random color
-		u.changeColor("random") // also sets prompt
+		// changeColor also sets prompt
+		u.changeColor("random") //nolint:errcheck // we know "random" is a valid color
 		return nil
 	}
-	u.changeColor(styles[rand.Intn(len(styles))].name)
+	u.changeColor(styles[rand.Intn(len(styles))].name) //nolint:errcheck // we know this is a valid color
 	return nil
 }
 
@@ -512,7 +516,7 @@ func (u *user) changeRoom(r *room) {
 	cleanupRoom(u.room)
 	u.room = r
 	if _, dup := userDuplicate(u.room, u.name); dup {
-		u.pickUsername("")
+		u.pickUsername("") //nolint:errcheck // if reading input failed the next repl will err out
 	}
 	u.room.users = append(u.room.users, u)
 	u.room.broadcast(devbot, u.name+" has joined "+blue.Paint(u.room.name))

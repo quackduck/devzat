@@ -76,7 +76,7 @@ func autogenCommands(cmds []cmd) string {
 	b := new(bytes.Buffer)
 	w := tabwriter.NewWriter(b, 0, 0, 2, ' ', 0)
 	for _, cmd := range cmds {
-		w.Write([]byte("   " + cmd.name + "\t" + cmd.argsInfo + "\t_" + cmd.info + "_  \n"))
+		w.Write([]byte("   " + cmd.name + "\t" + cmd.argsInfo + "\t_" + cmd.info + "_  \n")) //nolint:errcheck // bytes.Buffer is never going to err out
 	}
 	w.Flush()
 	return b.String()
@@ -152,7 +152,12 @@ func saveBans() {
 	}
 	j := json.NewEncoder(f)
 	j.SetIndent("", "   ")
-	j.Encode(bans)
+	err = j.Encode(bans)
+	if err != nil {
+		rooms["#main"].broadcast(devbot, "error saving bans: "+err.Error())
+		l.Println(err)
+		return
+	}
 	f.Close()
 }
 
@@ -162,7 +167,12 @@ func readBans() {
 		l.Println(err)
 		return
 	}
-	json.NewDecoder(f).Decode(&bans)
+	err = json.NewDecoder(f).Decode(&bans)
+	if err != nil {
+		rooms["#main"].broadcast(devbot, "error reading bans: "+err.Error())
+		l.Println(err)
+		return
+	}
 	f.Close()
 }
 

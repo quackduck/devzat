@@ -1,13 +1,10 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"image"
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
-	"net/http"
 	"runtime/debug"
 	"sort"
 	"strconv"
@@ -17,7 +14,6 @@ import (
 
 	"github.com/alecthomas/chroma"
 	chromastyles "github.com/alecthomas/chroma/styles"
-	"github.com/mattn/go-sixel"
 	markdown "github.com/quackduck/go-term-markdown"
 	"github.com/shurcooL/tictactoe"
 )
@@ -306,27 +302,6 @@ func bellCMD(rest string, u *user) {
 	}
 }
 
-func sixelCMD(url string, u *user) {
-	r, err := http.Get(url)
-	if err != nil {
-		u.room.broadcast(devbot, "huh, are you sure that's a working link?")
-		return
-	}
-	i, _, err := image.Decode(r.Body)
-	if err != nil {
-		u.room.broadcast(devbot, "are you sure that's a link to a png or a jpeg?")
-		return
-	}
-	b := new(bytes.Buffer)
-	err = sixel.NewEncoder(b).Encode(i)
-	if err != nil {
-		u.room.broadcast(devbot, "uhhh I got this error trying to encode the image: "+err.Error())
-	}
-	for _, us := range u.room.users {
-		us.term.Write(b.Bytes()) // TODO: won't shpw up in the backlog, is that okay?
-	}
-}
-
 func cdCMD(rest string, u *user) {
 	if u.messaging != nil {
 		u.messaging = nil
@@ -424,7 +399,7 @@ func idCMD(line string, u *user) {
 }
 
 func nickCMD(line string, u *user) {
-	u.pickUsername(line)
+	u.pickUsername(line) //nolint:errcheck // if reading input fails, the next repl will err out
 }
 
 func listBansCMD(_ string, u *user) {
