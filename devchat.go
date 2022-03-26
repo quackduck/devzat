@@ -224,9 +224,12 @@ func autocompleteCallback(u *user, line string, pos int, key rune) (string, int,
 }
 
 func userMentionAutocomplete(u *user, words []string) string {
+	if len(words) > 0 {
+		return ""
+	}
 	// Check the last word and see if it's trying to refer to a user
-	if len(words) > 0 && words[len(words)-1][0] == '@' {
-		inputWord := words[len(words)-1][1:] // slice the @ off
+	if words[len(words)-1][0] == '@' || (len(words)-1 == 0 && words[0][0] == '=') { // mentioning someone or dm-ing someone
+		inputWord := words[len(words)-1][1:] // slice the @ or = off
 		for i := range u.room.users {
 			strippedName := stripansi.Strip(u.room.users[i].name)
 			toAdd := strings.TrimPrefix(strippedName, inputWord)
