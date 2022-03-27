@@ -1,0 +1,42 @@
+package colors
+
+const (
+	White       = "White"
+	Red         = "Red"
+	Coral       = "coral"
+	Green       = "Green"
+	Sky         = "sky"
+	Cyan        = "Cyan"
+	Magenta     = "Magenta"
+	Pink        = "pink"
+	Rose        = "rose"
+	Cranberry   = "cranberry"
+	Lavender    = "lavender"
+	Fire        = "fire"
+	PastelGreen = "pastel Green"
+	Olive       = "olive"
+	Yellow      = "Yellow"
+	Orange      = "Orange"
+	Blue        = "Blue"
+	Ukraine     = "ukraine"
+	Easter      = "easter"
+	Baby        = "baby"
+	Hacker      = "hacker"
+	L33t        = "l33t"
+	Whiten      = "whiten"
+	Trans       = "trans"
+	Gay         = "gay"
+	Lesbian     = "lesbian"
+	Bi          = "bi"
+	Ace         = "ace"
+	Pan         = "pan"
+	Enby        = "enby"
+	Aro         = "aro"
+	Genderfluid = "genderfluid"
+	Agender     = "agender"
+	Rainbow     = "rainbow"
+)
+
+const (
+	NoBackground = "bg-off"
+)

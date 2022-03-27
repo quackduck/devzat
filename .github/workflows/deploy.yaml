@@ -16,7 +16,7 @@ jobs:
       with:
           ssh-private-key: ${{ secrets.PRIVKEY }}
     - name: Deploy
-      run: bash deploy.sh
+      run: bash scripts/deploy.sh
       env:
           PRIVKEY: ${{ secrets.PRIVKEY }}
           PUBKEY: ${{ secrets.PUBKEY }}
