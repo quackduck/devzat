@@ -1,4 +1,4 @@
-package main
+package pkg
 
 import (
 	"encoding/json"
@@ -30,7 +30,7 @@ func sendCurrentUsersTwitterMessage() {
 	if offlineTwitter {
 		return
 	}
-	// TODO: count all users in all rooms
+	// TODO: count all users in all Rooms
 	if len(mainRoom.users) == 0 {
 		return
 	}
@@ -38,8 +38,8 @@ func sendCurrentUsersTwitterMessage() {
 		return
 	}
 	allowTweet = false
-	usersSnapshot := append(make([]*user, 0, len(mainRoom.users)), mainRoom.users...)
-	areUsersEqual := func(a []*user, b []*user) bool {
+	usersSnapshot := append(make([]*User, 0, len(mainRoom.users)), mainRoom.users...)
+	areUsersEqual := func(a []*User, b []*User) bool {
 		if len(a) != len(b) {
 			return false
 		}
