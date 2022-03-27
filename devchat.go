@@ -224,7 +224,7 @@ func autocompleteCallback(u *user, line string, pos int, key rune) (string, int,
 }
 
 func userMentionAutocomplete(u *user, words []string) string {
-	if len(words) > 0 {
+	if len(words) < 1 {
 		return ""
 	}
 	// Check the last word and see if it's trying to refer to a user
