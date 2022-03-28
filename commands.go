@@ -62,7 +62,7 @@ var (
 		{"ls", lsCMD, "???", "???"},
 		{"cat", catCMD, "???", "???"},
 		{"rm", rmCMD, "???", "???"},
-		{"colour", colourCMD, "???", "This is an alias of color"}, // appease the british
+		{"colour", colorCMD, "???", "This is an alias of color"}, // appease the british
 	}
 )
 
@@ -501,11 +501,6 @@ func colorCMD(rest string, u *user) {
 	} else if err := u.changeColor(rest); err != nil {
 		u.room.broadcast(devbot, err.Error())
 	}
-}
-
-// appease the british
-func colourCMD(rest string, u *user) {
-	colorCMD(rest, u)
 }
 
 func adminsCMD(rest string, u *user) {
