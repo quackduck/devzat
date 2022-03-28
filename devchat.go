@@ -46,7 +46,7 @@ var (
 )
 
 const (
-	maxLenMessage = 5120
+	maxMsgLen = 5120
 )
 
 type ban struct {
@@ -469,14 +469,17 @@ func (u *user) repl() {
 			//additionalLine = strings.ReplaceAll(additionalLine, "\t", strings.Repeat(" ", 8))
 			line += additionalLine + "\n"
 		}
-		u.term.SetPrompt(u.name + ": ")
-		line = strings.TrimSpace(line)
-
 		if err != nil {
 			l.Println(u.name, err)
 			u.close(u.name + " has left the chat due to an error: " + err.Error())
 			return
 		}
+		if len(line) > maxMsgLen { // limit msg len as early as possible.
+			line = line[0:maxMsgLen]
+		}
+		line = strings.TrimSpace(line)
+
+		u.term.SetPrompt(u.name + ": ")
 
 		//fmt.Println("window", u.win)
 		if hasNewlines {
@@ -507,9 +510,6 @@ func (u *user) repl() {
 			return
 		}
 		line = replaceSlackEmoji(line)
-		if len(line) > maxLenMessage {
-			line = line[0:maxLenMessage]
-		}
 		runCommands(line, u)
 	}
 }
