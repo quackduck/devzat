@@ -310,6 +310,12 @@ func cdCMD(rest string, u *user) {
 			return
 		}
 	}
+	if rest == ".." { // cd back into the main room
+		if u.room != mainRoom {
+			u.changeRoom(mainRoom)
+		}
+		return
+	}
 	if strings.HasPrefix(rest, "#") {
 		u.room.broadcast(u.name, "cd "+rest)
 		if len(rest) > maxLengthRoomName {
