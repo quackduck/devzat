@@ -46,7 +46,7 @@ var (
 )
 
 const (
-	maxLenMessage = 1000
+	maxLenMessage = 5120
 )
 
 type ban struct {
