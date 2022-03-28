@@ -715,6 +715,16 @@ func manCMD(rest string, u *user) {
 }
 
 func lsCMD(rest string, u *user) {
+	if len(rest) > 0 && rest[0] == '#' {
+		if r, ok := rooms[rest]; ok {
+			usersList := ""
+			for _, us := range r.users {
+				usersList += us.name + blue.Paint("/ ")
+			}
+			u.room.broadcast("", usersList)
+			return
+		}
+	}
 	if rest != "" {
 		u.room.broadcast("", "ls: "+rest+" Permission denied")
 		return
