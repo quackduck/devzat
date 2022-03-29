@@ -53,6 +53,7 @@ var (
 		{"magenta", buildStyle(magenta)},
 		{"pink", buildStyle(ansi256(5, 3, 4))},
 		{"rose", buildStyle(ansi256(5, 0, 2))},
+		{"cranberry", buildStyle(ansi256(3, 0, 1))},
 		{"lavender", buildStyle(ansi256(4, 2, 5))},
 		{"fire", buildStyle(ansi256(5, 2, 0))},
 		{"pastel green", buildStyle(ansi256(0, 5, 3))},
@@ -236,6 +237,11 @@ func getStyle(name string) (*style, error) {
 	if customColor != nil {
 		return customColor, nil
 	}
+	//s, err := chalk.WithStyle(strings.Split(name, "-")...)
+	//if err == nil {
+	//	return &style{name, buildStyle(s)}, nil
+	//}
+
 	return nil, errors.New("Which color? Choose from random, " + strings.Join(func() []string {
 		colors := make([]string, 0, len(styles))
 		for i := range styles {
