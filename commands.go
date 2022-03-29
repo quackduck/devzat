@@ -372,7 +372,7 @@ func tzCMD(tzArg string, u *user) {
 	}
 	tzArgList := strings.Fields(tzArg)
 	tz := tzArgList[0]
-	switch tz {
+	switch strings.ToUpper(tz) {
 	case "PST", "PDT":
 		tz = "PST8PDT"
 	case "CST", "CDT":
