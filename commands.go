@@ -26,7 +26,7 @@ type cmd struct {
 }
 
 var (
-	allcmds = make([]cmd, 30)
+	allcmds = make([]cmd, 0, 30)
 	cmds    = []cmd{
 		{"=<user>", dmCMD, "<msg>", "DM <user> with <msg>"}, // won't actually run, here just to show in docs
 		{"users", usersCMD, "", "List users"},
@@ -42,7 +42,7 @@ var (
 		{"cd", cdCMD, "#room|user", "Join #room, DM user or run cd to see a list"}, // won't actually run, here just to show in docs
 		{"tz", tzCMD, "<zone> [24h]", "Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h"},
 		{"nick", nickCMD, "<name>", "Change your username"},
-		{"pronouns", pronounsCMD, "<@user|pronoun...>", "Set your pronouns or get another user's"},
+		{"pronouns", pronounsCMD, "@user|pronouns", "Set your pronouns or get another user's"},
 		{"theme", themeCMD, "<theme>|list", "Change the syntax highlighting theme"},
 		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
 	cmdsRest = []cmd{

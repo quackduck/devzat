@@ -4,7 +4,7 @@
 
 Where are the devs at? Devzat!
 
-Devzat is chat over SSH. Because there's SSH apps literally on all platforms, even your phone, you can connect to Devzat on any device!
+Devzat is chat over SSH. Because there's SSH apps on all platforms (even your phone) you can connect to Devzat on any device!
 
 ![image](https://user-images.githubusercontent.com/38882631/115499526-a4d70280-a280-11eb-8723-817f54eccf3e.png)
 
@@ -43,7 +43,7 @@ We also have a Slack bridge! If you're on the [Hack Club](https://hackclub.com) 
 
 ### Public key
 
-Devzat uses public keys to identify users. If you are denied access: `foo@devzat.hackclub.com: Permission denied (publickey)`, you should generate an ssh key pair with the command `ssh-keygen`
+Devzat uses public keys to identify users. If you are denied access - `foo@devzat.hackclub.com: Permission denied (publickey)` - you should generate an ssh key pair with the command `ssh-keygen` or login on port 443: `ssh devzat.hackclub.com -p 443`.
 
 ### Help
 
@@ -70,32 +70,38 @@ Thanks to Caleb Denio for lending his server!
 ### Commands
 ```text
 Commands
-   =<user>  <msg>        DM <user> with <msg>
-   users                 List users
-   color    <color>      Change your name's color
-   exit                  Leave the chat
-   help                  Show help
-   emojis                See a list of emojis
-   clear                 Clear the screen
-   hang     <char/word>  Play hangman
-   tic      <cell num>   Play tic tac toe!
-   cd       #room/user   Join #room, DM user or run cd to see a list
-   tz       <zone>       Set your IANA timezone (like tz Asia/Dubai)
-   nick     <name>       Change your username
-   rest                  Uncommon commands list
-   cmds                  Show this message
+   =<user>   <msg>               DM <user> with <msg>
+   users                         List users
+   color     <color>             Change your name's color
+   exit                          Leave the chat
+   help                          Show help
+   man       <cmd>               Get help for a specific command
+   emojis                        See a list of emojis
+   bell      on|off|all          ANSI bell on pings (on), never (off) or for every message (all)
+   clear                         Clear the screen
+   hang      <char|word>         Play hangman
+   tic       <cell num>          Play tic tac toe!
+   cd        #room|user          Join #room, DM user or run cd to see a list
+   tz        <zone> [24h]        Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h
+   nick      <name>              Change your username
+   pronouns  <@user|pronoun...>  Set your pronouns or get another user's
+   theme     <theme>|list        Change the syntax highlighting theme
+   rest                          Uncommon commands list
+   cmds                          Show this message
 ```
 ```
 The rest
-   bell             Toggle the ANSI bell used in pings
-   people           See info about nice people who joined
-   id       <user>  Get a unique ID for a user (hashed IP)
-   eg-code          Example syntax-highlighted code
-   banIP    <IP>    Ban an IP (admin)
-   ban      <user>  Ban <user> (admin)
-   kick     <user>  Kick <user> (admin)
-   art              Show some panda art
-   shrug            ¯\_(ツ)/¯_
+   people                  See info about nice people who joined
+   id       <user>         Get a unique ID for a user (hashed key)
+   admins                  Print the ID (hashed key) for all admins
+   eg-code  [big]          Example syntax-highlighted code
+   lsbans                  List banned IDs
+   ban      <user>         Ban <user> (admin)
+   unban    <IP|ID> [dur]  Unban a person and optionally, for a duration (admin)
+   kick     <user>         Kick <user> (admin)
+   art                     Show some panda art
+   pwd                     Show your current room
+   shrug                   ¯\_(ツ)_/¯
 ```
 
 ## People
