@@ -311,6 +311,7 @@ func cdCMD(rest string, u *user) {
 		}
 	}
 	if rest == ".." { // cd back into the main room
+		u.room.broadcast(u.name, "cd "+rest)
 		if u.room != mainRoom {
 			u.changeRoom(mainRoom)
 		}
