@@ -491,10 +491,12 @@ func (u *user) pickUsernameQuietly(possibleName string) error {
 	}
 
 	u.name = possibleName
-	//u.initColor()
 
-	if rand.Float64() <= 0.4 { // 40% chance of being a random color
+	if rand.Float64() <= 0.1 { // 10% chance of a random bg color
 		// changeColor also sets prompt
+		u.changeColor("bg-random") //nolint:errcheck // we know "bg-random" is a valid color
+	}
+	if rand.Float64() <= 0.4 { // 40% chance of being a random color
 		u.changeColor("random") //nolint:errcheck // we know "random" is a valid color
 		return nil
 	}
