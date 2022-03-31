@@ -240,7 +240,7 @@ func userMentionAutocomplete(u *user, words []string) string {
 	if words[len(words)-1][0] == '@' || (len(words)-1 == 0 && words[0][0] == '=') { // mentioning someone or dm-ing someone
 		inputWord := words[len(words)-1][1:] // slice the @ or = off
 		for i := range u.room.users {
-			strippedName := stripansi.Strip(u.room.users[i].name)
+			strippedName := stripansi.Strip(u.room.users[i].Name)
 			toAdd := strings.TrimPrefix(strippedName, inputWord)
 			if toAdd != strippedName { // there was a match, and some text got trimmed!
 				return toAdd + " "
@@ -443,7 +443,7 @@ func (u *user) writeln(senderName string, msg string) {
 	}
 	_, err := u.term.Write([]byte(msg + "\n"))
 	if err != nil {
-		u.close(u.name + "has left the chat because of an error writing to their terminal: " + err.Error())
+		u.close(u.Name + "has left the chat because of an error writing to their terminal: " + err.Error())
 	}
 }
 
@@ -459,13 +459,13 @@ func (u *user) rWriteln(msg string) {
 // pickUsernameQuietly changes the user's username, broadcasting a name change notification if needed.
 // An error is returned if the username entered had a bad word or reading input failed.
 func (u *user) pickUsername(possibleName string) error {
-	oldName := u.name
+	oldName := u.Name
 	err := u.pickUsernameQuietly(possibleName)
 	if err != nil {
 		return err
 	}
-	if stripansi.Strip(u.name) != stripansi.Strip(oldName) && stripansi.Strip(u.name) != possibleName { // did the name change, and is it not what the user entered?
-		u.room.broadcast(devbot, oldName+" is now called "+u.name)
+	if stripansi.Strip(u.Name) != stripansi.Strip(oldName) && stripansi.Strip(u.Name) != possibleName { // did the name change, and is it not what the user entered?
+		u.room.broadcast(devbot, oldName+" is now called "+u.Name)
 	}
 	return nil
 }
@@ -655,7 +655,7 @@ func (u *user) repl() {
 		}
 		line = strings.TrimSpace(line)
 
-		u.term.SetPrompt(u.name + ": ")
+		u.term.SetPrompt(u.Name + ": ")
 
 		//fmt.Println("window", u.win)
 		if hasNewlines {

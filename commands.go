@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"os"
 	"time"
 
 	"github.com/alecthomas/chroma"
@@ -314,14 +315,14 @@ func cdCMD(rest string, u *user) {
 		}
 	}
 	if rest == ".." { // cd back into the main room
-		u.room.broadcast(u.name, "cd "+rest)
+		u.room.broadcast(u.Name, "cd "+rest)
 		if u.room != mainRoom {
 			u.changeRoom(mainRoom)
 		}
 		return
 	}
 	if strings.HasPrefix(rest, "#") {
-		u.room.broadcast(u.name, "cd "+rest)
+		u.room.broadcast(u.Name, "cd "+rest)
 		if len(rest) > maxLengthRoomName {
 			rest = rest[0:maxLengthRoomName]
 			u.room.broadcast(devbot, "Room name lengths are limited, so I'm shortening it to "+rest+".")
@@ -470,7 +471,7 @@ func banCMD(line string, u *user) {
 			return
 		}
 		bans = append(bans, ban{victim.addr, victim.id})
-		victim.close(victim.name + " has been banned by " + u.name + " for " + dur.String())
+		victim.close(victim.Name + " has been banned by " + u.Name + " for " + dur.String())
 		go func(id string) {
 			time.Sleep(dur)
 			unbanIDorIP(id)
@@ -501,7 +502,7 @@ func kickCMD(line string, u *user) {
 
 func colorCMD(rest string, u *user) {
 	if rest == "which" {
-		u.room.broadcast(devbot, "fg: "+u.color+" & bg: "+u.colorBG)
+		u.room.broadcast(devbot, "fg: "+u.Color+" & bg: "+u.ColorBG)
 	} else if err := u.changeColor(rest); err != nil {
 		u.room.broadcast(devbot, err.Error())
 	}
@@ -697,7 +698,7 @@ func pronounsCMD(line string, u *user) {
 	}
 
 	u.Pronouns = strings.Fields(strings.ReplaceAll(strings.ToLower(line), "\n", ""))
-	//u.changeColor(u.color) // refresh pronouns
+	//u.changeColor(u.Color) // refresh pronouns
 	u.room.broadcast(devbot, u.Name+" now goes by "+u.displayPronouns())
 }
 
@@ -729,7 +730,7 @@ func lsCMD(rest string, u *user) {
 		if r, ok := rooms[rest]; ok {
 			usersList := ""
 			for _, us := range r.users {
-				usersList += us.name + blue.Paint("/ ")
+				usersList += us.Name + blue.Paint("/ ")
 			}
 			u.room.broadcast("", usersList)
 			return
