@@ -774,7 +774,7 @@ func autoloadCMD(arg string, u *user) {
 func saveCMD(_ string, u *user) {
 	err := u.savePrefs()
 	if err != nil {
-		u.room.broadcast(devbot, "An error occurred while saving: " + err.Error())
+		u.room.broadcast(devbot, "An error occurred while saving: "+err.Error())
 		fmt.Fprintf(os.Stderr, "error while saving user data: %v\n", err)
 	}
 
@@ -782,7 +782,7 @@ func saveCMD(_ string, u *user) {
 func loadCMD(_ string, u *user) {
 	err := u.loadPrefs()
 	if err != nil {
-		u.room.broadcast(devbot, "An error occurred while loading: " + err.Error())
+		u.room.broadcast(devbot, "An error occurred while loading: "+err.Error())
 		fmt.Fprintf(os.Stderr, "error while loading user data: %v\n", err)
 	}
 }
