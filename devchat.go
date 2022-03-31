@@ -387,8 +387,7 @@ func cleanupRoom(r *room) {
 func (u *user) close(msg string) {
 	u.closeOnce.Do(func() {
 		u.closeQuietly()
-		u.savePrefs()
-		u.closeBackend()
+		u.savePrefs()//nolint:errcheck // if it fails, what can we do? The sessions isn't clean
 		go sendCurrentUsersTwitterMessage()
 		if time.Since(u.joinTime) > time.Minute/2 {
 			msg += ". They were online for " + printPrettyDuration(time.Since(u.joinTime))
@@ -536,15 +535,20 @@ func (u *user) savePrefs() error {
 	if err != nil {
 		return err
 	}
-	xdgDataDir := os.Getenv("XDG_DATA_DIR")
+	devzatDataDir := os.Getenv("DEVZAT_DATA_DIR")
+	if devzatDataDir == "" {
+		devzatDataDir = os.Getenv("XDG_DATA_DIR")
 
-	if xdgDataDir == "" {
-		// According to XDG, this is the default if it's unset
-		xdgDataDir = filepath.Join(os.Getenv("HOME"), ".local", "share")
+		if devzatDataDir == "" {
+			// According to XDG, this is the default if it's unset
+			devzatDataDir = filepath.Join(os.Getenv("HOME"), ".local", "share")
+		}
 	}
-
-	save := filepath.Join(xdgDataDir, "/devzat")
-	os.Mkdir(save, 0755)
+	save := filepath.Join(devzatDataDir, "/devzat")
+	err = os.Mkdir(save, 0755)
+	if err != nil {
+		return err;
+	}
 	save = filepath.Join(save, u.id)
 
 	f, err := os.Create(save)
@@ -552,17 +556,23 @@ func (u *user) savePrefs() error {
 		return err
 	}
 	defer f.Close()
-	f.Write(saved)
+	_, err = f.Write(saved)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (u *user) loadPrefs() error {
-	xdgDataDir := os.Getenv("XDG_DATA_DIR")
-	if xdgDataDir == "" {
-		xdgDataDir = filepath.Join(os.Getenv("HOME"), ".local", "share")
+	devzatDataDir := os.Getenv("DEVZAT_DATA_DIR")
+	if devzatDataDir == "" {
+		devzatDataDir = os.Getenv("XDG_DATA_DIR")
+		if devzatDataDir == "" {
+			devzatDataDir = filepath.Join(os.Getenv("HOME"), ".local", "share")
+		}
 	}
 
-	save := filepath.Join(xdgDataDir, "/devzat", u.id)
+	save := filepath.Join(devzatDataDir, "/devzat", u.id)
 
 	contents, err := ioutil.ReadFile(save)
 	if err != nil {
@@ -570,23 +580,32 @@ func (u *user) loadPrefs() error {
 	}
 
 	export := user{}
-	json.Unmarshal(contents, &export)
+	err = json.Unmarshal(contents, &export)
+	if err != nil {
+		return err
+	}
 
 	if !export.Autoload {
 		fmt.Println("Not loading")
 		return nil
 	}
 
-	u.pickUsername(export.Name)
+	err = u.pickUsername(export.Name)
+	if err != nil {
+		return err
+	}
 	u.Pronouns = export.Pronouns
 	u.Bell = export.Bell
 	u.PingEverytime = export.PingEverytime
 	u.FormatTime24 = export.FormatTime24
-	u.changeColor(export.Color)
 	// u.Color = export.Colo
 	u.ColorBG = export.ColorBG
 	u.Timezone = export.Timezone
 	u.Autoload = export.Autoload
+	err = u.changeColor(export.Color)
+	if err != nil {
+		return err
+	}
 	return nil
 
 }
