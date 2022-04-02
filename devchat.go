@@ -152,7 +152,7 @@ func main() {
 	go func() {
 		if port == 22 {
 			fmt.Println("Also starting chat server on port 443")
-			err = ssh.ListenAndServe(":443", nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"))
+			err := ssh.ListenAndServe(":443", nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"))
 			if err != nil {
 				fmt.Println(err)
 			}
