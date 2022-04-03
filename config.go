@@ -8,27 +8,33 @@ import (
 )
 
 type config struct {
-	SSHPort     int `yaml:"ssh_port"`
-	ProfilePort int `yaml:"profile_port"`
+	SSHPort     int    `yaml:"ssh_port"`
+	ProfilePort int    `yaml:"profile_port"`
+	DataDir     string `yaml:"data_dir"`
+	KeyFile     string `yaml:"key_file"`
 
-	DataDir   string `yaml:"data_dir"`
-	KeyFile   string `yaml:"key_file"`
-	CredsFile string `yaml:"creds_file"`
+	IntegrationConfig string `yaml:"integration_config"`
 }
 
-type secrets struct {
-	Twitter twitterSecrets `yaml:"twitter"`
-	Slack   slackSecrets   `yaml:"slack"`
+// integrations stores information needed by integrations.
+// Code that uses this should check if fields are nil.
+type integrations struct {
+	// Twitter stores the information needed for the Twitter integration.
+	// Check if it is enabled by checking if Twitter is nil.
+	Twitter *twitterInfo `yaml:"twitter"`
+	// Slack stores the information needed for the Slack integration.
+	// Check if it is enabled by checking if Slack is nil.
+	Slack *slackInfo `yaml:"slack"`
 }
 
-type twitterSecrets struct {
+type twitterInfo struct {
 	ConsumerKey       string `yaml:"consumer_key"`
 	ConsumerSecret    string `yaml:"consumer_secret"`
 	AccessToken       string `yaml:"access_token"`
 	AccessTokenSecret string `yaml:"access_token_secret"`
 }
 
-type slackSecrets struct {
+type slackInfo struct {
 	// Token is the Slack API token
 	Token string `yaml:"token"`
 	// Channel is the Slack channel to post to
@@ -41,25 +47,17 @@ var (
 	// TODO: use this config!!
 
 	Config = config{ // first stores default config
-		2221,
-		5555,
-		"./devzat-data",
-		"./devzat-sshkey",
-		"",
+		SSHPort:     2221,
+		ProfilePort: 5555,
+		DataDir:     "./devzat-data",
+		KeyFile:     "./devzat-sshkey",
+
+		IntegrationConfig: "",
 	}
 
-	Secrets = secrets{
-		twitterSecrets{
-			"consumerkey",
-			"consumersecret",
-			"accesstoken",
-			"accesstokensecret",
-		},
-		slackSecrets{
-			"slacktoken",
-			"channelid",
-			"Slack",
-		},
+	Integrations = integrations{
+		Twitter: nil,
+		Slack:   nil,
 	}
 )
 
@@ -94,11 +92,41 @@ func init() {
 	errCheck(err)
 	fmt.Println("Config loaded from " + cfgFile)
 
-	if Config.CredsFile != "" {
-		d, err = ioutil.ReadFile(Config.CredsFile)
+	if Config.IntegrationConfig != "" {
+		d, err = ioutil.ReadFile(Config.IntegrationConfig)
 		errCheck(err)
-		err = yaml.Unmarshal(d, &Secrets)
+		err = yaml.Unmarshal(d, &Integrations)
 		errCheck(err)
-		fmt.Println("Secrets loaded from " + Config.CredsFile)
+
+		if Integrations.Slack.Prefix == "" {
+			Integrations.Slack.Prefix = "Slack"
+		}
+		if sl := Integrations.Slack; sl.Token == "" || sl.ChannelID == "" {
+			fmt.Println("error: Slack token or Channel ID is missing")
+			os.Exit(0)
+		}
+		if tw := Integrations.Twitter; tw.AccessToken == "" ||
+			tw.AccessTokenSecret == "" ||
+			tw.ConsumerKey == "" ||
+			tw.ConsumerSecret == "" {
+			fmt.Println("error: Twitter credentials are incomplete")
+			os.Exit(0)
+		}
+
+		fmt.Println("Integration config loaded from " + Config.IntegrationConfig)
+
+		if os.Getenv("DEVZAT_OFFLINE_SLACK") != "" {
+			Integrations.Slack = nil
+		}
+		if os.Getenv("DEVZAT_OFFLINE_TWITTER") != "" {
+			Integrations.Twitter = nil
+		}
+		// Check for global offline for backwards compatibility
+		if os.Getenv("DEVZAT_OFFLINE") != "" {
+			Integrations.Slack = nil
+			Integrations.Twitter = nil
+		}
+		slackInit()
+		twitterInit()
 	}
 }

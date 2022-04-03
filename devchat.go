@@ -29,9 +29,6 @@ var (
 	port        = 22
 	scrollback  = 16
 	profilePort = 5555
-	// should this instance run offline? (should it not connect to slack or twitter?)
-	offlineSlack   = os.Getenv("DEVZAT_OFFLINE_SLACK") != ""
-	offlineTwitter = os.Getenv("DEVZAT_OFFLINE_TWITTER") != ""
 
 	mainRoom         = &room{"#main", make([]*user, 0, 10), sync.Mutex{}}
 	rooms            = map[string]*room{mainRoom.name: mainRoom}
@@ -139,12 +136,6 @@ func main() {
 			fmt.Println(err)
 			return
 		}
-	}
-
-	// Check for global offline for backwards compatibility
-	if os.Getenv("DEVZAT_OFFLINE") != "" {
-		offlineSlack = true
-		offlineTwitter = true
 	}
 
 	fmt.Printf("Starting chat server on port %d and profiling on port %d\n", port, profilePort)
@@ -625,7 +616,7 @@ func replaceSlackEmoji(input string) string {
 
 // accepts a ':' separated list of emoji
 func fetchEmoji(names []string) string {
-	if offlineSlack {
+	if Integrations.Slack == nil {
 		return ""
 	}
 	result := ""
@@ -636,7 +627,7 @@ func fetchEmoji(names []string) string {
 }
 
 func fetchEmojiSingle(name string) string {
-	if offlineSlack {
+	if Integrations.Slack == nil {
 		return ""
 	}
 	r, err := http.Get("https://e.benjaminsmith.dev/" + name)
