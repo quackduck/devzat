@@ -45,7 +45,7 @@ var (
 		5555,
 		"./devzat-data",
 		"./devzat-sshkey",
-		"./devzat-creds.json",
+		"",
 	}
 
 	Secrets = secrets{
