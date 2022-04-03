@@ -115,14 +115,14 @@ func init() {
 
 		fmt.Println("Integration config loaded from " + Config.IntegrationConfig)
 
-		if os.Getenv("DEVZAT_OFFLINE_SLACK") != "" {
+		if os.Getenv("DEVZAT_OFFLINE_SLACK") == "" {
 			Integrations.Slack = nil
 		}
-		if os.Getenv("DEVZAT_OFFLINE_TWITTER") != "" {
+		if os.Getenv("DEVZAT_OFFLINE_TWITTER") == "" {
 			Integrations.Twitter = nil
 		}
 		// Check for global offline for backwards compatibility
-		if os.Getenv("DEVZAT_OFFLINE") != "" {
+		if os.Getenv("DEVZAT_OFFLINE") == "" {
 			Integrations.Slack = nil
 			Integrations.Twitter = nil
 		}
