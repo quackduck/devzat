@@ -16,6 +16,27 @@ type config struct {
 	CredsFile string `yaml:"creds_file"`
 }
 
+type secrets struct {
+	Twitter twitterSecrets `yaml:"twitter"`
+	Slack   slackSecrets   `yaml:"slack"`
+}
+
+type twitterSecrets struct {
+	ConsumerKey       string `yaml:"consumer_key"`
+	ConsumerSecret    string `yaml:"consumer_secret"`
+	AccessToken       string `yaml:"access_token"`
+	AccessTokenSecret string `yaml:"access_token_secret"`
+}
+
+type slackSecrets struct {
+	// Token is the Slack API token
+	Token string `yaml:"token"`
+	// Channel is the Slack channel to post to
+	ChannelID string `yaml:"channel_id"`
+	// Prefix is the prefix to prepend to messages from slack when rendered for SSH users
+	Prefix string `yaml:"prefix"`
+}
+
 var (
 	// TODO: use this config!!
 
@@ -25,6 +46,20 @@ var (
 		"./devzat-data",
 		"./devzat-sshkey",
 		"./devzat-creds.json",
+	}
+
+	Secrets = secrets{
+		twitterSecrets{
+			"consumerkey",
+			"consumersecret",
+			"accesstoken",
+			"accesstokensecret",
+		},
+		slackSecrets{
+			"slacktoken",
+			"channelid",
+			"Slack",
+		},
 	}
 )
 
@@ -37,7 +72,7 @@ func init() {
 	errCheck := func(err error) {
 		if err != nil {
 			fmt.Println("err: " + err.Error())
-			os.Exit(0)
+			os.Exit(0) // match `return` behavior
 		}
 	}
 
@@ -57,5 +92,13 @@ func init() {
 	errCheck(err)
 	err = yaml.Unmarshal(d, &Config)
 	errCheck(err)
-	fmt.Println("Config loaded from "+cfgFile, Config)
+	fmt.Println("Config loaded from " + cfgFile)
+
+	if Config.CredsFile != "" {
+		d, err = ioutil.ReadFile(Config.CredsFile)
+		errCheck(err)
+		err = yaml.Unmarshal(d, &Secrets)
+		errCheck(err)
+		fmt.Println("Secrets loaded from " + Config.CredsFile)
+	}
 }
