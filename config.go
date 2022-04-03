@@ -126,7 +126,7 @@ func init() {
 			Integrations.Slack = nil
 			Integrations.Twitter = nil
 		}
-		slackInit()
-		twitterInit()
 	}
+	slackInit()
+	twitterInit()
 }
