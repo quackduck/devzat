@@ -88,14 +88,14 @@ func init() {
 	}
 	d, err := ioutil.ReadFile(cfgFile)
 	errCheck(err)
-	err = yaml.Unmarshal(d, &Config)
+	err = yaml.UnmarshalStrict(d, &Config)
 	errCheck(err)
 	fmt.Println("Config loaded from " + cfgFile)
 
 	if Config.IntegrationConfig != "" {
 		d, err = ioutil.ReadFile(Config.IntegrationConfig)
 		errCheck(err)
-		err = yaml.Unmarshal(d, &Integrations)
+		err = yaml.UnmarshalStrict(d, &Integrations)
 		errCheck(err)
 
 		if Integrations.Slack.Prefix == "" {
@@ -115,14 +115,17 @@ func init() {
 
 		fmt.Println("Integration config loaded from " + Config.IntegrationConfig)
 
-		if os.Getenv("DEVZAT_OFFLINE_SLACK") == "" {
+		if os.Getenv("DEVZAT_OFFLINE_SLACK") != "" {
+			fmt.Println("Disabling Slack")
 			Integrations.Slack = nil
 		}
-		if os.Getenv("DEVZAT_OFFLINE_TWITTER") == "" {
+		if os.Getenv("DEVZAT_OFFLINE_TWITTER") != "" {
+			fmt.Println("Disabling Twitter")
 			Integrations.Twitter = nil
 		}
 		// Check for global offline for backwards compatibility
-		if os.Getenv("DEVZAT_OFFLINE") == "" {
+		if os.Getenv("DEVZAT_OFFLINE") != "" {
+			fmt.Println("Offline mode")
 			Integrations.Slack = nil
 			Integrations.Twitter = nil
 		}

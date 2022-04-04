@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -60,6 +61,7 @@ func slackInit() { // called by init() in config.go
 		return
 	}
 
+	fmt.Println(Integrations)
 	api = slack.New(Integrations.Slack.Token)
 	rtm = api.NewRTM()
 	slackChan = make(chan string, 100)
