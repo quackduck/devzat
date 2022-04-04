@@ -1,7 +1,5 @@
 package shrug
 
-import "devzat/pkg/user"
-
 const (
 	name     = ""
 	argsInfo = ""
@@ -30,6 +28,6 @@ func (c *Command) IsSecret() bool {
 	return false
 }
 
-func (c *Command) Fn(line string, u *user.User) error {
-	u.Room.Broadcast(u.Name, line+` ¯\\\_(ツ)\_/¯`)
+func (c *Command) Fn(linestring, u pkg.User) error {
+	u.Room().Broadcast(u.Name, line+` ¯\\\_(ツ)\_/¯`)
 }

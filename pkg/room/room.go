@@ -1,24 +1,21 @@
 package room
 
 import (
+	"devzat/pkg/interfaces"
+	"devzat/pkg/models"
+	server2 "devzat/pkg/server"
+	"devzat/pkg/user"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
 
-	"devzat/pkg"
-	"devzat/pkg/colors"
-	"devzat/pkg/server"
-	"devzat/pkg/user"
 	"github.com/acarl005/stripansi"
 	"github.com/slack-go/slack"
-)
 
-const (
-	maxLengthRoomName = 30
+	"devzat/pkg/colors"
 )
 
 const (
@@ -26,19 +23,36 @@ const (
 )
 
 type Room struct {
-	*server.Server
-	Name  string
-	Users []*user.User
+	server interfaces.Server
+	name   string
+	Users  []*user.User
 	*colors.Formatter
 	UsersMutex   sync.Mutex
 	slackChan    chan string
 	offlineSlack bool
-	Bot          pkg.Bot
+	bot          interfaces.Bot
 	slack        struct {
 		api     *slack.Client
 		rtm     *slack.RTM
 		channel chan string
 	}
+}
+
+func (r *Room) GetAdmins() (map[string]string, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (r *Room) IsAdmin(user interfaces.User) (bool, error) {
+	return r.Server().IsAdmin(user)
+}
+
+func (r *Room) Server() interfaces.Server {
+	return r.server
+}
+
+func (r *Room) SetServer(s interfaces.Server) {
+	r.server = s
 }
 
 func (r *Room) Broadcast(senderName, msg string) {
@@ -52,13 +66,17 @@ func (r *Room) Broadcast(senderName, msg string) {
 		return
 	}
 
-	slackMsg := fmt.Sprintf("[%s] %s", r.Name, msg)
+	slackMsg := fmt.Sprintf("[%s] %s", r.name, msg)
 
 	if senderName != "" {
-		slackMsg = fmt.Sprintf("[%s] %s: %s", r.Name, senderName, msg)
+		slackMsg = fmt.Sprintf("[%s] %s: %s", r.name, senderName, msg)
 	}
 
 	r.slackChan <- slackMsg
+}
+
+func (r *Room) BotCast(msg string) {
+	r.Broadcast(r.bot.Name(), msg)
 }
 
 func (r *Room) BroadcastNoSlack(senderName, msg string) {
@@ -71,8 +89,9 @@ func (r *Room) BroadcastNoSlack(senderName, msg string) {
 	r.UsersMutex.Lock()
 
 	for i := range r.Users {
-		msg = strings.ReplaceAll(msg, "@"+stripansi.Strip(r.Users[i].Name), r.Users[i].Name)
-		msg = strings.ReplaceAll(msg, `\`+r.Users[i].Name, "@"+stripansi.Strip(r.Users[i].Name)) // allow escaping
+		name := r.Users[i].Name()
+		msg = strings.ReplaceAll(msg, "@"+stripansi.Strip(name), name)
+		msg = strings.ReplaceAll(msg, `\`+name, "@"+stripansi.Strip(name)) // allow escaping
 	}
 
 	for i := range r.Users {
@@ -81,43 +100,49 @@ func (r *Room) BroadcastNoSlack(senderName, msg string) {
 
 	r.UsersMutex.Unlock()
 
-	if r != r.Server.MainRoom {
+	if r.name != r.Server().MainRoom().Name() {
 		return
 	}
 
-	backlogMsg := pkg.BacklogMessage{
+	backlogMsg := models.BacklogMessage{
 		Time:       time.Now(),
 		SenderName: senderName,
 		Text:       msg + "\n",
 	}
 
-	r.Server.Backlog = append(r.Server.Backlog, backlogMsg)
-	if len(r.Server.Backlog) > server.Scrollback {
-		r.Server.Backlog = r.Server.Backlog[len(r.Server.Backlog)-server.Scrollback:]
+	bl := r.Server().Backlogs()
+
+	bl = append(bl, backlogMsg)
+	if len(bl) > server2.Scrollback {
+		bl = bl[len(bl)-server2.Scrollback:]
 	}
+
+	r.Server().SetBacklogs(bl)
 }
 
-// Cleanup deletes a Room if it's empty and isn't the MainRoom Room
+// Cleanup deletes a Room if it's empty and isn't the mainRoom Room
 func (r *Room) Cleanup() {
-	if r != r.Server.MainRoom && len(r.Users) == 0 {
-		delete(r.Server.Rooms, r.Name)
+	if r != r.Server().MainRoom() && len(r.Users) == 0 {
+		r.Server().DeleteRoom(r.name)
 	}
 }
 
-func (r *Room) UserDuplicate(a string) (*user.User, bool) {
+func (r *Room) UserDuplicate(a string) (interfaces.User, bool) {
 	for i := range r.Users {
-		if stripansi.Strip(r.Users[i].Name) == stripansi.Strip(a) {
+		name := r.Users[i].Name()
+		if stripansi.Strip(name) == stripansi.Strip(a) {
 			return r.Users[i], true
 		}
 	}
+
 	return nil, false
 }
 
-func (r *Room) FindUserByName(name string) (*user.User, bool) {
+func (r *Room) FindUserByName(name string) (interfaces.User, bool) {
 	r.UsersMutex.Lock()
 	defer r.UsersMutex.Unlock()
 	for _, u := range r.Users {
-		if stripansi.Strip(u.Name) == name {
+		if stripansi.Strip(u.Name()) == name {
 			return u, true
 		}
 	}
@@ -129,11 +154,11 @@ func (r *Room) PrintUsersInRoom() string {
 
 	for _, us := range r.Users {
 		if isAdmin, _ := r.CheckIsAdmin(us); isAdmin {
-			adminNames = append(adminNames, us.Name)
+			adminNames = append(adminNames, us.Name())
 			continue
 		}
 
-		userNames = append(userNames, us.Name)
+		userNames = append(userNames, us.Name())
 	}
 
 	users := formatName(userNames)
@@ -143,13 +168,13 @@ func (r *Room) PrintUsersInRoom() string {
 	return fromatted
 }
 
-func (r *Room) CheckIsAdmin(u *user.User) (bool, error) {
-	adminList, err := r.Server.GetAdmins()
+func (r *Room) CheckIsAdmin(u interfaces.User) (bool, error) {
+	adminList, err := r.Server().GetAdmins()
 	if err != nil {
 		return false, err
 	}
 
-	_, ok := adminList[u.ID]
+	_, ok := adminList[u.ID()]
 	return ok, nil
 }
 
@@ -160,7 +185,7 @@ func (r *Room) GetSendToSlackChan() chan string {
 
 	if os.IsNotExist(err) {
 		r.offlineSlack = true
-		r.Server.Log.Println("Did not find slackAPI.txt. Enabling offline mode.")
+		r.Server().Log.Println("Did not find slackAPI.txt. Enabling offline mode.")
 	} else if err != nil {
 		panic(err)
 	}
@@ -191,59 +216,11 @@ func (r *Room) GetSendToSlackChan() chan string {
 	return msgs
 }
 
-// runCommands parses a line of raw input from a User and sends a message as
+// ParseUserInput parses a line of raw input from a User and sends a message as
 // required, running any commands the User may have called.
 // It also accepts a boolean indicating if the line of input is from slack, in
 // which case some commands will not be run (such as ./tz and ./exit)
-func (r *Room) RunCommands(line string, u *user.User) error {
-	if r.Server.IsProfane(line) {
-		r.BanUser("devbot [grow up]", u)
-		return nil
-	}
-
-	if line == "" {
-		return nil
-	}
-
-	defer func() { // crash protection
-		if i := recover(); i != nil {
-			botName := u.Room.Server.MainRoom.Bot.Name()
-			u.Room.Server.MainRoom.Broadcast(botName, fmt.Sprintf(fmtRecover, i, debug.Stack()))
-		}
-	}()
-
-	currCmd := strings.Fields(line)[0]
-	if u.Messaging != nil && currCmd != "=" && currCmd != "cd" && currCmd != "exit" && currCmd != "pwd" { // the commands allowed in a private dm room
-		return r.Commands["roomCMD"](line, u)
-	}
-
-	if strings.HasPrefix(line, "=") && !u.IsSlack {
-		return r.Commands["DirectMessage"](strings.TrimSpace(strings.TrimPrefix(line, "=")), u)
-	}
-
-	switch currCmd {
-	case "hang":
-		return r.Commands["Hang"](strings.TrimSpace(strings.TrimPrefix(line, "hang")), u)
-	case "cd":
-		return r.Commands["CMD"](strings.TrimSpace(strings.TrimPrefix(line, "cd")), u)
-	case "shrug":
-		return r.Commands["Shrug"](strings.TrimSpace(strings.TrimPrefix(line, "shrug")), u)
-	}
-
-	if u.IsSlack {
-		u.Room.BroadcastNoSlack(u.Name, line)
-	} else {
-		u.Room.Broadcast(u.Name, line)
-	}
-
-	r.Bot.Chat(line)
-
-	for name, c := range r.Commands {
-		if name == currCmd {
-			return c(strings.TrimSpace(strings.TrimPrefix(line, name)), u)
-		}
-	}
-
+func (r *Room) ParseUserInput(line string, u interfaces.User) error {
 	return nil
 }
 
@@ -251,4 +228,18 @@ func formatName(names []string) string {
 	joined := strings.Join(names, " ")
 
 	return fmt.Sprintf("[%s]", joined)
+}
+
+func (r *Room) AllUsers() []interfaces.User {
+	res := make([]interfaces.User, len(r.Users))
+
+	for idx := range r.Users {
+		res[idx] = r.Users[idx]
+	}
+
+	return res
+}
+
+func (r *Room) Bot() interfaces.Bot {
+	return r.bot
 }

@@ -1,7 +1,5 @@
 package ls
 
-import "devzat/pkg/user"
-
 const (
 	name     = ""
 	argsInfo = ""
@@ -30,20 +28,20 @@ func (c *Command) IsSecret() bool {
 	return false
 }
 
-func (c *Command) Fn(rest string, u *user.User) error {
-	devbot := u.Room.Bot.Name()
+func (c *Command) Fn(rest string, u pkg.User) error {
+	devbot := u.Room().Bot().Name()
 	if len(rest) > 0 && rest[0] == '#' {
 		if r, ok := rooms[rest]; ok {
 			usersList := ""
 			for _, us := range r.users {
 				usersList += us.Name + blue.Paint("/ ")
 			}
-			u.Room.broadcast("", usersList)
+			u.Room().broadcast("", usersList)
 			return
 		}
 	}
 	if rest != "" {
-		u.Room.Broadcast("", "ls: "+rest+" Permission denied")
+		u.Room().Broadcast("", "ls: "+rest+" Permission denied")
 		return
 	}
 	roomList := ""
@@ -51,8 +49,8 @@ func (c *Command) Fn(rest string, u *user.User) error {
 		roomList += blue.Paint(r.Name + "/ ")
 	}
 	usersList := ""
-	for _, us := range u.Room.users {
+	for _, us := range u.Room().users {
 		usersList += us.Name + blue.Paint("/ ")
 	}
-	u.Room.Broadcast("", "README.md "+usersList+roomList)
+	u.Room().Broadcast("", "README.md "+usersList+roomList)
 }

@@ -1,6 +1,8 @@
 package ascii_art
 
-import "devzat/pkg/user"
+import (
+	"devzat/pkg/interfaces"
+)
 
 const (
 	name     = ""
@@ -30,8 +32,10 @@ func (c *Command) IsSecret() bool {
 	return false
 }
 
-func (c *Command) Fn(_ string, u *user.User) error {
-	u.Room.Broadcast("", art)
+func (c *Command) Fn(_ string, u interfaces.User) error {
+	art := "not implemented lol"
+
+	u.Room().Broadcast("", art)
 
 	return nil
 }

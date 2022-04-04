@@ -5,8 +5,6 @@ import (
 
 	chromastyles "github.com/alecthomas/chroma/styles"
 	markdown "github.com/quackduck/go-term-markdown"
-
-	"devzat/pkg/user"
 )
 
 const (
@@ -37,17 +35,17 @@ func (c *Command) IsSecret() bool {
 	return false
 }
 
-func (c *Command) Fn(line string, u *user.User) error {
+func (c *Command) Fn(linestring, u pkg.User) error {
 	if line == "list" {
-		u.Room.Broadcast(devbot, "Available themes: "+strings.Join(chromastyles.Names(), ", "))
+		u.Room().BotCast("Available themes: " + strings.Join(chromastyles.Names(), ", "))
 		return
 	}
 	for _, name := range chromastyles.Names() {
 		if name == line {
 			markdown.CurrentTheme = chromastyles.Get(name)
-			u.Room.Broadcast(devbot, "Theme set to "+name)
+			u.Room().BotCast("Theme set to " + name)
 			return
 		}
 	}
-	u.Room.Broadcast(devbot, "What theme is that? Use theme list to see what's available.")
+	u.Room().BotCast("What theme is that? Use theme list to see what's available.")
 }

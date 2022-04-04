@@ -1,7 +1,5 @@
 package color
 
-import "devzat/pkg/user"
-
 const (
 	name     = ""
 	argsInfo = ""
@@ -30,11 +28,11 @@ func (c *Command) IsSecret() bool {
 	return false
 }
 
-func (c *Command) Fn(rest string, u *user.User) error {
-	devbot := u.Room.Bot.Name()
+func (c *Command) Fn(rest string, u pkg.User) error {
+	devbot := u.Room().Bot().Name()
 	if rest == "which" {
-		u.Room.Broadcast(devbot, "fg: "+u.color+" & bg: "+u.colorBG)
+		u.Room().BotCast("fg: " + u.color + " & bg: " + u.colorBG)
 	} else if err := u.changeColor(rest); err != nil {
-		u.Room.Broadcast(devbot, err.Error())
+		u.Room().BotCast(err.Error())
 	}
 }

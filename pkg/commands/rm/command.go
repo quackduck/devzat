@@ -1,7 +1,5 @@
 package rm
 
-import "devzat/pkg/user"
-
 const (
 	name     = ""
 	argsInfo = ""
@@ -30,11 +28,11 @@ func (c *Command) IsSecret() bool {
 	return false
 }
 
-func (c *Command) Fn(line string, u *user.User) error {
+func (c *Command) Fn(linestring, u pkg.User) error {
 	if line == "" {
-		u.Room.Broadcast("", `usage: rm [-f | -i] [-dPRrvW] file ...
+		u.Room().Broadcast("", `usage: rm [-f | -i] [-dPRrvW] file ...
 unlink file`)
 	} else {
-		u.Room.Broadcast("", "rm: "+line+": Permission denied, sucker")
+		u.Room().Broadcast("", "rm: "+line+": Permission denied, sucker")
 	}
 }

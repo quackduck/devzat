@@ -1,6 +1,8 @@
 package bell
 
-import "devzat/pkg/user"
+import (
+	"devzat/pkg/interfaces"
+)
 
 const (
 	name     = ""
@@ -30,29 +32,30 @@ func (c *Command) IsSecret() bool {
 	return false
 }
 
-func (c *Command) Fn(rest string, u *user.User) error {
-	devbot := u.Room.Bot.Name()
+func (c *Command) Fn(rest string, u interfaces.User) error {
 	switch rest {
 	case "off":
-		u.Bell = false
-		u.PingEverytime = false
-		u.Room.Broadcast("", "bell off (never)")
+		u.SetBell(false)
+		u.SetPingEverytime(false)
+		u.Room().Broadcast("", "bell off (never)")
 	case "on":
-		u.Bell = true
-		u.PingEverytime = false
-		u.Room.Broadcast("", "bell on (pings)")
+		u.SetBell(true)
+		u.SetPingEverytime(false)
+		u.Room().Broadcast("", "bell on (pings)")
 	case "all":
-		u.PingEverytime = true
-		u.Room.Broadcast("", "bell all (every message)")
+		u.SetPingEverytime(true)
+		u.Room().Broadcast("", "bell all (every message)")
 	case "", "status":
-		if u.Bell {
-			u.Room.Broadcast("", "bell on (pings)")
-		} else if u.PingEverytime {
-			u.Room.Broadcast("", "bell all (every message)")
+		if u.Bell() {
+			u.Room().Broadcast("", "bell on (pings)")
+		} else if u.PingEverytime() {
+			u.Room().Broadcast("", "bell all (every message)")
 		} else { // bell is off
-			u.Room.Broadcast("", "bell off (never)")
+			u.Room().Broadcast("", "bell off (never)")
 		}
 	default:
-		u.Room.Broadcast(devbot, "your options are off, on and all")
+		u.Room().BotCast("your options are off, on and all")
 	}
+
+	return nil
 }

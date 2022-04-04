@@ -1,9 +1,11 @@
 package admins
 
-import "devzat/pkg/user"
+import (
+	"devzat/pkg/interfaces"
+)
 
 const (
-	name     = ""
+	name     = "admins"
 	argsInfo = ""
 	info     = ""
 )
@@ -30,8 +32,8 @@ func (c *Command) IsSecret() bool {
 	return false
 }
 
-func (c *Command) Fn(_ string, u *user.User) error {
-	admins, err := u.Room.GetAdmins()
+func (c *Command) Fn(_ string, u interfaces.User) error {
+	admins, err := u.Room().Server().GetAdmins()
 	if err != nil {
 		return err
 	}
@@ -41,7 +43,7 @@ func (c *Command) Fn(_ string, u *user.User) error {
 		msg += admins[i] + ": " + i + "  \n"
 	}
 
-	u.Room.Broadcast(u.Room.Bot.Name(), msg)
+	u.Room().BotCast(msg)
 
 	return nil
 }

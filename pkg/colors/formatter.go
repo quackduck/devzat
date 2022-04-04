@@ -1,7 +1,6 @@
 package colors
 
 import (
-	"devzat/pkg/user"
 	"errors"
 	"fmt"
 	"github.com/alecthomas/chroma"
@@ -192,32 +191,6 @@ func (f *Formatter) Ansi256(r, g, b uint8) *gchalk.Builder {
 
 func (f *Formatter) BgAnsi256(r, g, b uint8) *gchalk.Builder {
 	return f.chalk.WithBgRGB(255/5*r, 255/5*g, 255/5*b)
-}
-
-// Applies color from name
-func (f *Formatter) ChangeColor(u *user.User, colorName string) error {
-	style, err := f.GetStyle(colorName)
-	if err != nil {
-		return err
-	}
-
-	if strings.HasPrefix(colorName, "bg-") {
-		u.Color.Background = style.Name // update bg color
-	} else {
-		u.Color.Foreground = style.Name // update fg color
-	}
-
-	u.Name, _ = f.ApplyColorToData(u.Name, u.Color.Foreground, u.Color.Background) // error can be discarded as it has already been checked earlier
-
-	u.Term.SetPrompt(fmt.Sprintf("%s: ", u.Name))
-
-	// TODO: having savebans here is wildly incoherent, but this was noticed during a refactor.
-	// it stays until i determine something else to do with it.
-	if err = u.Room.Server.SaveBans(); err != nil {
-		return fmt.Errorf("could not save the bans file: %v", err)
-	}
-
-	return nil
 }
 
 func (f *Formatter) ApplyColorToData(data string, color string, colorBG string) (string, error) {

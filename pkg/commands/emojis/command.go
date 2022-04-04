@@ -1,9 +1,5 @@
 package emojis
 
-import (
-	"devzat/pkg/user"
-)
-
 const (
 	name     = "=<user>"
 	argsInfo = "<msg>"
@@ -32,6 +28,6 @@ func (c *Command) IsSecret() bool {
 	return false
 }
 
-func (c *Command) Fn(_ string, u *user.User) error {
-	u.Room.Broadcast(devbot, "Check out https\\://github.com/ikatyang/emoji-cheat-sheet")
+func (c *Command) Fn(_ string, u pkg.User) error {
+	u.Room().BotCast("Check out https\\://github.com/ikatyang/emoji-cheat-sheet")
 }

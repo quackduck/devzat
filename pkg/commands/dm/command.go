@@ -1,10 +1,9 @@
 package dm
 
 import (
+	"devzat/pkg/interfaces"
 	"fmt"
 	"strings"
-
-	"devzat/pkg/user"
 )
 
 const (
@@ -35,8 +34,8 @@ func (c *Command) IsSecret() bool {
 	return false
 }
 
-func (c *Command) Fn(rest string, u *user.User) error {
-	bot := u.Room.Bot
+func (c *Command) Fn(rest string, u interfaces.User) error {
+	bot := u.Room().Bot
 
 	restSplit := strings.Fields(rest)
 	if len(restSplit) < 2 {
@@ -44,14 +43,14 @@ func (c *Command) Fn(rest string, u *user.User) error {
 		return nil
 	}
 
-	peer, ok := u.Room.FindUserByName(restSplit[0])
+	peer, ok := u.Room().FindUserByName(restSplit[0])
 	if !ok {
 		u.Writeln(bot.Name(), "No such person lol, who you wanna dm? (you might be in the wrong room)")
 		return nil
 	}
 
 	msg := strings.TrimSpace(strings.TrimPrefix(rest, restSplit[0]))
-	u.Writeln(peer.Name+" <- ", msg)
+	u.Writeln(peer.Name()+" <- ", msg)
 
 	if u == peer {
 		foreverAlone := []string{
@@ -61,7 +60,7 @@ func (c *Command) Fn(rest string, u *user.User) error {
 			"what an idiot",
 		}
 
-		u.Room.Bot.Respond(foreverAlone, 30)
+		u.Room().Bot.Respond(foreverAlone, 30)
 
 		return nil
 	}

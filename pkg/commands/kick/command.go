@@ -1,7 +1,5 @@
 package kick
 
-import "devzat/pkg/user"
-
 const (
 	name     = ""
 	argsInfo = ""
@@ -30,14 +28,14 @@ func (c *Command) IsSecret() bool {
 	return false
 }
 
-func (c *Command) Fn(line string, u *user.User) error {
-	victim, ok := u.Room.FindUserByName(line)
+func (c *Command) Fn(linestring, u pkg.User) error {
+	victim, ok := u.Room().FindUserByName(line)
 	if !ok {
-		u.Room.Broadcast("", "User not found")
+		u.Room().Broadcast("", "User not found")
 		return
 	}
 	if !checkIsAdmin(u) {
-		u.Room.Broadcast(devbot, "Not authorized")
+		u.Room().BotCast("Not authorized")
 		return
 	}
 	victim.close(victim.Name + red.Paint(" has been kicked by ") + u.Name)

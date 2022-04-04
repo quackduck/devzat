@@ -1,7 +1,5 @@
 package pwd
 
-import "devzat/pkg/user"
-
 const (
 	name     = ""
 	argsInfo = ""
@@ -30,11 +28,11 @@ func (c *Command) IsSecret() bool {
 	return false
 }
 
-func (c *Command) Fn(_ string, u *user.User) error {
-	if u.Messaging != nil {
-		u.Writeln("", u.Messaging.Name)
-		u.Messaging.writeln("", u.Messaging.Name)
+func (c *Command) Fn(_ string, u pkg.User) error {
+	if u.DMTarget != nil {
+		u.Writeln("", u.DMTarget.Name)
+		u.DMTarget.writeln("", u.DMTarget.Name)
 	} else {
-		u.Room.Broadcast("", u.Room.Name)
+		u.Room().Broadcast("", u.Room().Name)
 	}
 }

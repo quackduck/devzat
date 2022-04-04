@@ -1,6 +1,8 @@
 package cmd
 
-import "devzat/pkg/user"
+import (
+	"devzat/pkg/interfaces"
+)
 
 const (
 	name     = ""
@@ -30,6 +32,6 @@ func (c *Command) IsSecret() bool {
 	return false
 }
 
-func (c *Command) Fn(_ string, u *user.User) error {
-	u.Room.Broadcast("", "Commands  \n"+autogenCommands(cmds))
+func (c *Command) Fn(_ string, u interfaces.User) error {
+	u.Room().Broadcast("", "commands  \n"+autogenCommands(cmds))
 }

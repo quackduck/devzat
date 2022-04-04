@@ -1,7 +1,6 @@
 package tz
 
 import (
-	"devzat/pkg/user"
 	"strings"
 	"time"
 )
@@ -34,7 +33,7 @@ func (c *Command) IsSecret() bool {
 	return false
 }
 
-func (c *Command) Fn(tzArg string, u *user.User) error {
+func (c *Command) Fn(tzArgstring, u pkg.User) error {
 	var err error
 	if tzArg == "" {
 		u.timezone = nil
@@ -55,7 +54,7 @@ func (c *Command) Fn(tzArg string, u *user.User) error {
 	}
 	u.timezone, err = time.LoadLocation(tz)
 	if err != nil {
-		u.Room.Broadcast(devbot, "Weird timezone you have there, use the format Continent/City, the usual US timezones (PST, PDT, EST, EDT...) or check nodatime.org/TimeZones!")
+		u.Room().BotCast("Weird timezone you have there, use the format Continent/City, the usual US timezones (PST, PDT, EST, EDT...) or check nodatime.org/TimeZones!")
 		return
 	}
 	if len(tzArgList) == 2 {
@@ -63,5 +62,5 @@ func (c *Command) Fn(tzArg string, u *user.User) error {
 	} else {
 		u.FormatTime24 = false
 	}
-	u.Room.Broadcast(devbot, "Changed your timezone!")
+	u.Room().BotCast("Changed your timezone!")
 }

@@ -1,7 +1,5 @@
 package nick
 
-import "devzat/pkg/user"
-
 const (
 	name     = ""
 	argsInfo = ""
@@ -30,6 +28,6 @@ func (c *Command) IsSecret() bool {
 	return false
 }
 
-func (c *Command) Fn(line string, u *user.User) error {
+func (c *Command) Fn(linestring, u pkg.User) error {
 	u.pickUsername(line) //nolint:errcheck // if reading input fails, the next repl will err out
 }

@@ -1,7 +1,5 @@
 package man
 
-import "devzat/pkg/user"
-
 const (
 	name     = ""
 	argsInfo = ""
@@ -30,18 +28,18 @@ func (c *Command) IsSecret() bool {
 	return false
 }
 
-func (c *Command) Fn(rest string, u *user.User) error {
-	devbot := u.Room.Bot.Name()
+func (c *Command) Fn(rest string, u pkg.User) error {
+	devbot := u.Room().Bot().Name()
 	if rest == "" {
-		u.Room.Broadcast(devbot, "What command do you want help with?")
+		u.Room().BotCast("What command do you want help with?")
 		return
 	}
 
 	for _, c := range allcmds {
 		if c.Name == rest {
-			u.Room.Broadcast(devbot, "Usage: "+c.Name+" "+c.argsInfo+"  \n"+c.info)
+			u.Room().BotCast("Usage: " + c.Name + " " + c.argsInfo + "  \n" + c.info)
 			return
 		}
 	}
-	u.Room.Broadcast("", "This system has been minimized by removing packages and content that are not required on a system that users do not log into.\n\nTo restore this content, including manpages, you can run the 'unminimize' command. You will still need to ensure the 'man-db' package is installed.")
+	u.Room().Broadcast("", "This system has been minimized by removing packages and content that are not required on a system that users do not log into.\n\nTo restore this content, including manpages, you can run the 'unminimize' command. You will still need to ensure the 'man-db' package is installed.")
 }

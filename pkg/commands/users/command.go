@@ -1,7 +1,5 @@
 package users
 
-import "devzat/pkg/user"
-
 const (
 	name     = ""
 	argsInfo = ""
@@ -30,6 +28,6 @@ func (c *Command) IsSecret() bool {
 	return false
 }
 
-func (c *Command) Fn(_ string, u *user.User) error {
-	u.Room.Broadcast("", u.Room.PrintUsersInRoom())
+func (c *Command) Fn(_ string, u pkg.User) error {
+	u.Room().Broadcast("", u.Room().PrintUsersInRoom())
 }

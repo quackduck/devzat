@@ -1,4 +1,4 @@
-package server
+package v2
 
 import (
 	"encoding/json"
@@ -14,11 +14,11 @@ const (
 
 type (
 	AdminID      = string
-	AdminIndo    = string
-	AdminInfoMap = map[AdminID]AdminIndo
+	AdminInfo    = string
+	AdminInfoMap = map[AdminID]AdminInfo
 )
 
-func (s *Server) GetAdmins() (map[AdminID]AdminIndo, error) {
+func (s *Server) GetAdmins() (AdminInfoMap, error) {
 	if _, err := os.Stat(defaultAdminsFileName); err == os.ErrNotExist {
 		return nil, errors.New("make an admins.json file to add admins")
 	}

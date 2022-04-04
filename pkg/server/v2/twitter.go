@@ -1,8 +1,6 @@
-package server
+package v2
 
 import (
-	"devzat/pkg"
-	"devzat/pkg/user"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -13,6 +11,8 @@ import (
 	"github.com/acarl005/stripansi"
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
+
+	"devzat/pkg/util"
 )
 
 var (
@@ -27,12 +27,12 @@ type TwitterCreds struct {
 }
 
 func (s *Server) SendCurrentUsersTwitterMessage() {
-	if s.OfflineTwitter {
+	if s.settings.Twitter.Offline {
 		return
 	}
 
 	// TODO: count all users in all Rooms
-	if len(s.MainRoom.Users) == 0 {
+	if len(s.mainRoom.Users) == 0 {
 		return
 	}
 
@@ -40,7 +40,7 @@ func (s *Server) SendCurrentUsersTwitterMessage() {
 		return
 	}
 	allowTweet = false
-	usersSnapshot := append(make([]*user.User, 0, len(s.MainRoom.Users)), s.MainRoom.Users...)
+	usersSnapshot := append(make([]*user.User, 0, len(s.mainRoom.Users)), s.mainRoom.Users...)
 	areUsersEqual := func(a []*user.User, b []*user.User) bool {
 		if len(a) != len(b) {
 			return false
@@ -55,23 +55,23 @@ func (s *Server) SendCurrentUsersTwitterMessage() {
 	go func() {
 		time.Sleep(time.Second * 60)
 		allowTweet = true
-		if !areUsersEqual(s.MainRoom.Users, usersSnapshot) {
+		if !areUsersEqual(s.mainRoom.Users, usersSnapshot) {
 			return
 		}
 		s.Log.Println("Sending twitter update")
-		names := make([]string, 0, len(s.MainRoom.Users))
-		for _, us := range s.MainRoom.Users {
+		names := make([]string, 0, len(s.mainRoom.Users))
+		for _, us := range s.mainRoom.Users {
 			names = append(names, us.Name)
 		}
-		t, _, err := s.twitterClient.Statuses.Update("People on Devzat rn: "+stripansi.Strip(fmt.Sprint(names))+"\nJoin em with \"ssh devzat.hackclub.com\"\nUptime: "+pkg.PrintPrettyDuration(time.Since(s.startupTime)), nil)
+		t, _, err := s.twitterClient.Statuses.Update("People on Devzat rn: "+stripansi.Strip(fmt.Sprint(names))+"\nJoin em with \"ssh devzat.hackclub.com\"\nUptime: "+util.PrintPrettyDuration(time.Since(s.startupTime)), nil)
 		if err != nil {
 			if !strings.Contains(err.Error(), "twitter: 187 Status is a duplicate.") {
-				s.MainRoom.Broadcast(s.MainRoom.Bot.Name(), "err: "+err.Error())
+				s.mainRoom.Broadcast(s.mainRoom.Bot.Name(), "err: "+err.Error())
 			}
 			s.Log.Println("Got twitter err", err)
 			return
 		}
-		s.MainRoom.Broadcast(s.MainRoom.Bot.Name(), "https\\://twitter.com/"+t.User.ScreenName+"/status/"+t.IDStr)
+		s.mainRoom.Broadcast(s.mainRoom.Bot.Name(), "https\\://twitter.com/"+t.User.ScreenName+"/status/"+t.IDStr)
 	}()
 }
 

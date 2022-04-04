@@ -1,8 +1,8 @@
 package list_bans
 
-import "strconv"
-
-import "devzat/pkg/user"
+import (
+	"strconv"
+)
 
 const (
 	name     = ""
@@ -32,10 +32,10 @@ func (c *Command) IsSecret() bool {
 	return false
 }
 
-func (c *Command) Fn(_ string, u *user.User) error {
+func (c *Command) Fn(_ string, u pkg.User) error {
 	msg := "Printing bans by ID:  \n"
 	for i := 0; i < len(bans); i++ {
 		msg += cyan.Cyan(strconv.Itoa(i+1)) + ". " + bans[i].ID + "  \n"
 	}
-	u.Room.Broadcast(devbot, msg)
+	u.Room().BotCast(msg)
 }

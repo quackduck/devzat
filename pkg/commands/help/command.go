@@ -1,9 +1,5 @@
 package help
 
-import (
-	"devzat/pkg/user"
-)
-
 const defaultHelpFileName = "help.txt"
 
 const defaultHelpMessage = `Welcome to Devzat!
@@ -56,8 +52,8 @@ func (c *Command) IsSecret() bool {
 	return false
 }
 
-func (c *Command) Fn(_ string, u *user.User) error {
-	u.Room.Broadcast("", defaultHelpMessage)
+func (c *Command) Fn(_ string, u pkg.User) error {
+	u.Room().Broadcast("", defaultHelpMessage)
 
 	return nil
 }

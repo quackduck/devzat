@@ -1,7 +1,5 @@
 package cmd_room
 
-import "devzat/pkg/user"
-
 const (
 	name     = ""
 	argsInfo = ""
@@ -30,14 +28,14 @@ func (c *Command) IsSecret() bool {
 	return false
 }
 
-func (c *Command) Fn(line string, u *user.User) error {
-	u.Writeln(u.Messaging.Name+" <- ", line)
-	if u == u.Messaging {
+func (c *Command) Fn(linestring, u pkg.User) error {
+	u.Writeln(u.DMTarget.Name+" <- ", line)
+	if u == u.DMTarget {
 		devbotRespond(u.Room, []string{"You must be really lonely, DMing yourself.",
 			"Don't worry, I won't judge :wink:",
 			"srsly?",
 			"what an idiot"}, 30)
 		return
 	}
-	u.Messaging.writeln(u.Name+" -> ", line)
+	u.DMTarget.writeln(u.Name+" -> ", line)
 }
