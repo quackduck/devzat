@@ -1,15 +1,15 @@
 package tz
 
 import (
-	"devzat/pkg/user"
+	i "devzat/pkg/interfaces"
+	"devzat/pkg/models"
 	"strings"
-	"time"
 )
 
 const (
-	name     = ""
-	argsInfo = ""
-	info     = ""
+	name     = "tz"
+	argsInfo = "<PST|PDT|CST|CDT|EST|EDT|MT>"
+	info     = "set your timezone"
 )
 
 type Command struct{}
@@ -26,21 +26,17 @@ func (c *Command) Info() string {
 	return info
 }
 
-func (c *Command) IsRest() bool {
-	return false
+func (c *Command) Visibility() models.CommandVisibility {
+	return models.CommandVisNormal
 }
 
-func (c *Command) IsSecret() bool {
-	return false
-}
-
-func (c *Command) Fn(tzArg string, u *user.User) error {
-	var err error
-	if tzArg == "" {
-		u.timezone = nil
-		return
+func (c *Command) Fn(line string, u i.User) error {
+	if line == "" {
+		return nil
 	}
-	tzArgList := strings.Fields(tzArg)
+
+	tzArgList := strings.Fields(line)
+
 	tz := tzArgList[0]
 
 	switch strings.ToUpper(tz) {
@@ -53,15 +49,14 @@ func (c *Command) Fn(tzArg string, u *user.User) error {
 	case "MT":
 		tz = "America/Phoenix"
 	}
-	u.timezone, err = time.LoadLocation(tz)
-	if err != nil {
-		u.Room.Broadcast(devbot, "Weird timezone you have there, use the format Continent/City, the usual US timezones (PST, PDT, EST, EDT...) or check nodatime.org/TimeZones!")
-		return
-	}
+
+	u.SetTimeZone(tz)
+
 	if len(tzArgList) == 2 {
-		u.FormatTime24 = tzArgList[1] == "24h"
-	} else {
-		u.FormatTime24 = false
+		u.SetFormatTime24(tzArgList[1] == "24h")
 	}
-	u.Room.Broadcast(devbot, "Changed your timezone!")
+
+	u.Room().BotCast("Changed your timezone")
+
+	return nil
 }

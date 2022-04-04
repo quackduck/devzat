@@ -1,25 +1,35 @@
 package user
 
 import (
-	"devzat/pkg/server"
+	"crypto/sha256"
+	"devzat/pkg/colors"
+	"devzat/pkg/util"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
 	"math"
-	"math/rand"
+	"net"
 	"strings"
 	"sync"
 	"time"
 
-	"devzat/pkg"
-	"devzat/pkg/room"
 	"github.com/acarl005/stripansi"
 	"github.com/gliderlabs/ssh"
 	terminal "github.com/quackduck/term"
+
+	i "devzat/pkg/interfaces"
 )
 
 const (
-	// TODO: kinda hacky DirectMessage detection
+	maxMsgLen         = 5120
+	termCommandClear  = "\033[A\033[2K"
+	userPronounsUnset = "unset"
+	hugeTerminalSize  = 10000
+)
+
+const (
+	// TODO: change this hacky DirectMessage detection bullshit
 	hackDmRecieveDetect = " <- "
 	hackDmSendDetect    = " -> "
 )
@@ -28,85 +38,174 @@ const (
 	fmtUserLeftChatErr = "%v has left the chat because of an error writing to their terminal: %v"
 )
 
-const (
-	randomColor = "random"
-)
+func FromSession(session ssh.Session) (*User, error) {
+	term := terminal.NewTerminal(session, "> ")
 
-const (
-	maxMsgLen = 5120
-)
+	pty, winChan, accepted := session.Pty()
+	if !accepted {
+		return nil, fmt.Errorf("PTY for ssh session not accepted: %v")
+	}
 
-type UserSettings struct {
-	Bell          bool
-	PingEverytime bool
-	IsSlack       bool
-	FormatTime24  bool
+	// disable any formatting done by term
+	if err := term.SetSize(hugeTerminalSize, hugeTerminalSize); err != nil {
+		return nil, fmt.Errorf("could not set term size: %v", err)
+	}
+
+	host, _, errSplitHostPort := net.SplitHostPort(session.RemoteAddr().String())
+	if errSplitHostPort != nil {
+		return nil, fmt.Errorf("could not split host port: %v", errSplitHostPort)
+	}
+
+	toHash := host // If we can't get the public key fall back to the IP.
+	if pubKey := session.PublicKey(); pubKey != nil {
+		toHash = string(pubKey.Marshal())
+	}
+
+	u := &User{
+		session: session,
+		term:    term,
+		window:  pty.Window,
+		id:      util.ShaSum(toHash),
+	}
+
+	u.SetJoinTime(time.Now())
+	u.SetLastSeenTime(u.JoinTime())
+
+	go func() {
+		for u.window = range winChan {
+			/* what is my purpose */
+		}
+	}()
+
+	u.SetBell(true)
+	u.SetPronouns(userPronounsUnset)
+
+	return u, nil
 }
 
 type User struct {
-	Name     string
-	Pronouns []string
-	Session  ssh.Session
-	Term     *terminal.Terminal
+	settings
+	colors.Formatter
+	room     i.Room
+	dmTarget i.User
+	session  ssh.Session
+	window   ssh.Window
+	term     *terminal.Terminal
+	once     sync.Once
+	id       string
+	name     string
+	time     struct {
+		joined, lastSeen time.Time
+		zone             *time.Location
+	}
+	pronouns []string
+	colors   struct{ fg, bg string }
+}
 
-	*room.Room
-	Messaging *User // currently Messaging this User in a DirectMessage
+func (u *User) TimeZone() string {
+	return u.time.zone.String()
+}
 
-	Color struct {
-		Foreground, Background string
+func (u *User) SetTimeZone(s string) {
+	const defaultLocation = "PST"
+
+	l, err := time.LoadLocation(s)
+	if err != nil {
+		l, _ = time.LoadLocation(defaultLocation)
 	}
 
-	ID   string
-	Addr string
+	u.time.zone = l
+}
 
-	Window        ssh.Window
-	closeOnce     sync.Once
-	LastTimestamp time.Time
-	JoinTime      time.Time
-	timezone      *time.Location
+func (u *User) PickUsername(possibleName string) error {
+	if err := u.room.PickUsername(possibleName); err != nil {
+		return err
+	}
 
-	UserSettings
+	u.name = possibleName
+
+	return nil
+}
+
+func (u *User) LastSeenTime() time.Time     { return u.time.lastSeen }
+func (u *User) SetLastSeenTime(t time.Time) { u.time.lastSeen = t }
+
+func (u *User) JoinTime() time.Time     { return u.time.joined }
+func (u *User) SetJoinTime(t time.Time) { u.time.joined = t }
+
+func (u *User) Bell() bool     { return u.settings.Bell }
+func (u *User) SetBell(b bool) { u.settings.Bell = b }
+
+func (u *User) PingEverytime() bool     { return u.settings.Ping }
+func (u *User) SetPingEverytime(b bool) { u.settings.Ping = b }
+
+func (u *User) IsSlack() bool { return u.settings.IsSlack }
+
+func (u *User) FormatTime24() bool     { return u.settings.FmtHour24 }
+func (u *User) SetFormatTime24(b bool) { u.settings.FmtHour24 = b }
+
+func (u *User) DMTarget() i.User        { return u.dmTarget }
+func (u *User) SetDMTarget(user i.User) { u.dmTarget = user }
+
+func (u *User) Session() ssh.Session     { return u.session }
+func (u *User) Term() *terminal.Terminal { return u.term }
+
+func (u *User) ForegroundColor() string { return u.colors.fg }
+func (u *User) SetForegroundColor(s string) error {
+	u.colors.bg = s
+
+	return u.updatePrompt()
+}
+
+func (u *User) BackgroundColor() string { return u.colors.bg }
+func (u *User) SetBackgroundColor(s string) error {
+	u.colors.bg = fmt.Sprintf("%s-%s", "bg", s) // ugly hacky bullshit
+
+	return u.updatePrompt()
+}
+
+func (u *User) updatePrompt() error {
+	updated, err := u.ApplyColorToData(u.Name(), u.colors.fg, u.colors.bg)
+	if err != nil {
+		return nil
+	}
+
+	u.name = updated
+	u.Term().SetPrompt(fmt.Sprintf("%s: ", u.name))
+
+	return nil
+}
+
+func (u *User) IsAdmin() bool {
+	return u.room.Server().IsAdmin(u)
 }
 
 func (u *User) Close(msg string) {
-	u.closeOnce.Do(func() {
-		u.CloseQuietly()
-		go u.Server.SendCurrentUsersTwitterMessage()
-		if time.Since(u.JoinTime) > time.Minute/2 {
-			msg += ". They were online for " + pkg.PrintPrettyDuration(time.Since(u.JoinTime))
+	u.once.Do(func() {
+		go u.Room().Server().SendCurrentUsersTwitterMessage()
+
+		if time.Since(u.time.joined) > time.Minute/2 {
+			msg += ". They were online for " + util.PrintPrettyDuration(time.Since(u.time.joined))
 		}
 
-		u.Room.Broadcast(u.Room.Bot.Name(), msg)
-		u.Room.Users = remove(u.Room.Users, u)
-		u.Room.Cleanup()
+		u.Disconnect()
+		u.Room().BotCast(msg)
+		u.Room().Cleanup()
 	})
 }
 
-func remove(s []*User, a *User) []*User {
-	for j := range s {
-		if s[j] == a {
-			return append(s[:j], s[j+1:]...)
-		}
-	}
-	return s
-}
-
-func (u *User) CloseQuietly() {
-	u.Room.UsersMutex.Lock()
-	u.Room.Users = remove(u.Room.Users, u)
-	u.Room.UsersMutex.Unlock()
-	_ = u.Session.Close()
-}
+func (u *User) Disconnect()   { u.Room().Disconnect(u) }
+func (u *User) CloseQuietly() { _ = u.session.Close() }
 
 func (u *User) Writeln(from string, srcMsg string) {
-	if strings.Contains(srcMsg, u.Name) { // is a ping
+	if strings.Contains(srcMsg, u.name) { // is a ping
 		srcMsg += "\a"
 	}
 
 	srcMsg = strings.ReplaceAll(srcMsg, `\n`, "\n")
 	srcMsg = strings.ReplaceAll(srcMsg, `\`+"\n", `\n`) // let people escape newlines
 
-	dstMsg := strings.TrimSpace(pkg.MarkdownRender(srcMsg, 0, u.Window.Width)) // No sender
+	dstMsg := strings.TrimSpace(util.MarkdownRender(srcMsg, 0, u.window.Width)) // No sender
 	useDmDetectionHack := strings.HasSuffix(from, hackDmRecieveDetect) || strings.HasSuffix(from, hackDmSendDetect)
 
 	if from != "" {
@@ -118,182 +217,141 @@ func (u *User) Writeln(from string, srcMsg string) {
 			fmtMsg = "%s%s\a"
 		}
 
-		rendered := pkg.MarkdownRender(srcMsg, renderWidth, u.Window.Width)
+		rendered := util.MarkdownRender(srcMsg, renderWidth, u.window.Width)
 		rendered = strings.TrimSpace(rendered)
 		dstMsg = fmt.Sprintf(fmtMsg, from, rendered)
 	}
 
-	if time.Since(u.LastTimestamp) > time.Minute {
-		if u.timezone == nil {
-			u.RWriteln(pkg.PrintPrettyDuration(time.Since(u.JoinTime)) + " in")
+	if time.Since(u.time.lastSeen) > time.Minute {
+		if u.time.zone == nil {
+			u.RWriteln(util.PrintPrettyDuration(time.Since(u.time.joined)) + " in")
 		} else {
-			if u.FormatTime24 {
-				u.RWriteln(time.Now().In(u.timezone).Format("15:04"))
+			if u.settings.FmtHour24 {
+				u.RWriteln(time.Now().In(u.time.zone).Format("15:04"))
 			} else {
-				u.RWriteln(time.Now().In(u.timezone).Format("3:04 pm"))
+				u.RWriteln(time.Now().In(u.time.zone).Format("3:04 pm"))
 			}
 		}
 
-		u.LastTimestamp = time.Now()
+		u.time.lastSeen = time.Now()
 	}
 
-	if u.PingEverytime && from != u.Name {
+	if u.settings.Ping && from != u.name {
 		dstMsg += "\a"
 	}
 
-	if !u.Bell {
+	if !u.settings.Bell {
 		dstMsg = strings.ReplaceAll(dstMsg, "\a", "")
 	}
 
-	_, err := u.Term.Write([]byte(dstMsg + "\n"))
+	_, err := u.Term().Write([]byte(dstMsg + "\n"))
 	if err != nil {
-		u.Close(fmt.Sprintf(fmtUserLeftChatErr, u.Name, err))
+		u.Close(fmt.Sprintf(fmtUserLeftChatErr, u.name, err))
 	}
 }
 
 func (u *User) RWriteln(msg string) {
-	if u.Window.Width-lenString(msg) > 0 {
-		u.Term.Write([]byte(strings.Repeat(" ", u.Window.Width-lenString(msg)) + msg + "\n"))
-	} else {
-		u.Term.Write([]byte(msg + "\n"))
+	line := []byte(msg + "\n")
+
+	if u.window.Width-lenString(msg) > 0 {
+		line = []byte(strings.Repeat(" ", u.window.Width-lenString(msg)) + msg + "\n")
 	}
+
+	_, _ = u.Term().Write(line)
 }
 
-func (u *User) PickUsername(possibleName string) error {
-	oldName := u.Name
-	err := u.PickUsernameQuietly(possibleName)
-	if err != nil {
-		return err
-	}
-	if stripansi.Strip(u.Name) != stripansi.Strip(oldName) && stripansi.Strip(u.Name) != possibleName { // did the Name change, and is it not what the User entered?
-		botName := u.Room.Bot.Name()
-		u.Room.Broadcast(botName, oldName+" is now called "+u.Name)
-	}
-	return nil
+func (u *User) Addr() string {
+	return u.session.LocalAddr().String()
 }
 
-func (u *User) PickUsernameQuietly(possibleName string) error {
-	possibleName = cleanName(possibleName)
-	var err error
-	for {
-		if possibleName == "" {
-		} else if strings.HasPrefix(possibleName, "#") || possibleName == "botName" {
-			u.Writeln("", "Your username is invalid. Pick a different one:")
-		} else if otherUser, dup := u.Room.UserDuplicate(possibleName); dup {
-			if otherUser == u {
-				break // allow selecting the same Name as before
-			}
-			u.Writeln("", "Your username is already in use. Pick a different one:")
-		} else {
-			possibleName = cleanName(possibleName)
-			break
-		}
+func (u *User) ID() string {
+	h := sha256.Sum256([]byte(fmt.Sprintf("%s:%s", u.name, u.Nick())))
+	return hex.EncodeToString(h[:])
+}
 
-		u.Term.SetPrompt("> ")
-		possibleName, err = u.Term.ReadLine()
-		if err != nil {
-			return err
-		}
-		possibleName = cleanName(possibleName)
+func (u *User) Room() i.Room {
+	return u.room
+}
+
+func (u *User) SetRoom(room i.Room) {
+	room.Join(u)
+	u.room = room
+}
+
+func (u *User) Name() string {
+	return u.name
+}
+
+func (u *User) Nick() string {
+	if u.settings.Nick == "" {
+		u.settings.Nick = u.name
 	}
 
-	if u.Room.Server.IsProfane(possibleName) {
-		u.Server.BanUser("DevBot [grow up]", u)
-		return errors.New(u.Name + "'s username contained a bad word")
+	return u.settings.Nick
+}
+
+func (u *User) SetNick(s string) error {
+	if u.room.Server().IsProfane(s) {
+		return errors.New("nickname can not contain profanity")
 	}
 
-	u.Name = possibleName
-	//u.InitColor()
-
-	if rand.Float64() <= 0.4 { // 40% chance of being a random Color
-		// changeColor also sets prompt
-		_ = u.Room.ChangeColor(u, randomColor) //nolint:errcheck // we know "random" is a valid Color
-		return nil
-	}
-
-	styles := u.Room.Styles.Normal
-	colorName := styles[rand.Intn(len(styles))].Name
-	_ = u.Room.ChangeColor(u, colorName) //nolint:errcheck // we know this is a valid Color
+	u.settings.Nick = s
 
 	return nil
 }
 
-// removes arrows, spaces and non-ascii-printable characters
-func cleanName(name string) string {
-	s := ""
-	name = strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(
-		strings.TrimSpace(strings.Split(name, "\n")[0]), // use one trimmed line
-		"<-", ""),
-		"->", ""),
-		" ", "-")
-	if len([]rune(name)) > 27 {
-		name = string([]rune(name)[:27])
-	}
-	for i := 0; i < len(name); i++ {
-		if 33 <= name[i] && name[i] <= 126 { // ascii printables only: '!' to '~'
-			s += string(name[i])
-		}
-	}
-	return s
+func (u *User) ChangeColor(colorName string) error {
+	return u.room.Server().SetUserColor(u, colorName)
+}
+
+func (u *User) Pronouns() []string {
+	return append(make([]string, 0), u.settings.Pronouns...)
+}
+
+func (u *User) SetPronouns(pronouns ...string) {
+	u.settings.Pronouns = pronouns
 }
 
 func (u *User) DisplayPronouns() string {
-	result := ""
-	for i := 0; i < len(u.Pronouns); i++ {
-		str, _ := u.Room.ApplyColorToData(u.Pronouns[i], u.Color.Foreground, u.Color.Background)
-		result += "/" + str
-	}
-	if result == "" {
-		return result
-	}
-	return result[1:]
-}
-
-func (u *User) ChangeRoom(r *room.Room) {
-	if u.Room == r {
-		return
+	if len(u.settings.Pronouns) < 1 {
+		return ""
 	}
 
-	blue := u.Room.Colors.Blue
+	const fmtConcat = "%s/%s"
 
-	u.Room.Users = remove(u.Room.Users, u)
-	u.Room.Broadcast("", u.Name+" is joining "+blue.Paint(r.Name)) // tell the old room
-	u.Room.Cleanup()
-	u.Room = r
-
-	if _, dup := u.Room.UserDuplicate(u.Name); dup {
-		_ = u.PickUsername("") //nolint:errcheck // if reading input failed the next repl will err out
+	concat := u.settings.Pronouns[0]
+	for _, pronoun := range u.settings.Pronouns {
+		concat = fmt.Sprintf(fmtConcat, concat, pronoun)
 	}
 
-	u.Room.Users = append(u.Room.Users, u)
-	botName := u.Room.Bot.Name()
-	u.Room.Broadcast(botName, u.Name+" has joined "+blue.Paint(u.Room.Name))
+	return fmt.Sprintf("(%s)", concat)
 }
 
 func (u *User) Repl() {
 	for {
-		line, err := u.Term.ReadLine()
+		line, err := u.Term().ReadLine()
 		if err == io.EOF {
-			u.Close(u.Name + " has left the chat")
+			u.Close(u.name + " has left the chat")
 			return
 		}
+
 		line += "\n"
 		hasNewlines := false
-		//oldPrompt := u.Name + ": "
+
 		for err == terminal.ErrPasteIndicator {
 			hasNewlines = true
-			//u.Term.SetPrompt(strings.Repeat(" ", lenString(u.Name)+2))
-			u.Term.SetPrompt("")
+			//u.Term().SetPrompt(strings.Repeat(" ", lenString(u.name)+2))
+			u.Term().SetPrompt("")
 			additionalLine := ""
-			additionalLine, err = u.Term.ReadLine()
+			additionalLine, err = u.Term().ReadLine()
 			additionalLine = strings.ReplaceAll(additionalLine, `\n`, `\\n`)
 			//additionalLine = strings.ReplaceAll(additionalLine, "\t", strings.Repeat(" ", 8))
 			line += additionalLine + "\n"
 		}
 
 		if err != nil {
-			u.Room.Server.Log.Println(u.Name, err)
-			u.Close(u.Name + " has left the chat due to an error: " + err.Error())
+			u.room.Server().Log().Println(u.name, err)
+			u.Close(u.name + " has left the chat due to an error: " + err.Error())
 			return
 		}
 
@@ -302,57 +360,35 @@ func (u *User) Repl() {
 		}
 
 		line = strings.TrimSpace(line)
-		u.Term.SetPrompt(u.Name + ": ")
+		u.Term().SetPrompt(u.name + ": ")
 
-		//fmt.Println("window", u.Window)
 		if hasNewlines {
-			u.calculateLinesTaken(u.Name+": "+line, u.Window.Width)
+			u.calculateLinesTaken(u.name+": "+line, u.window.Width)
 		} else {
-			u.Term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(lenString(u.Name+line)+2)/(float64(u.Window.Width))))))) // basically, ceil(length of line divided by term width)
+			// basically, ceil(length of line divided by term width)
+			cmdRepeat := int(math.Ceil(float64(lenString(u.name+line)+2) / (float64(u.window.Width))))
+			_, _ = u.Term().Write([]byte(strings.Repeat(termCommandClear, cmdRepeat)))
 		}
-		//u.Term.Write([]byte(strings.Repeat("\033[A\033[2K", calculateLinesTaken(u.Name+": "+line, u.Window.Width))))
 
 		if line == "" {
 			continue
 		}
 
-		u.Room.Server.AntiSpamMessages[u.ID]++
-		time.AfterFunc(5*time.Second, func() {
-			u.Room.Server.AntiSpamMessages[u.ID]--
-		})
+		u.room.Server().Antispam(u)
 
-		if u.Room.Server.AntiSpamMessages[u.ID] >= 30 {
-			botName := u.Room.Bot.Name()
-			u.Room.Broadcast(botName, u.Name+", stop spamming or you could get banned.")
-		}
+		line = u.room.ReplaceSlackEmoji(line)
 
-		if u.Room.Server.AntiSpamMessages[u.ID] >= 50 {
-			if !u.Room.Server.BansContains(u.Addr, u.ID) {
-				u.Room.Server.Bans = append(u.Room.Server.Bans, server.Ban{Addr: u.Addr, ID: u.ID})
-				_ = u.Room.Server.SaveBans()
-			}
-
-			botName := u.Room.Bot.Name()
-			u.Writeln(botName, "anti-spam triggered")
-			u.Close(u.Room.Colors.Red.Paint(u.Name + " has been banned for spamming"))
-
-			return
-		}
-
-		line = u.Room.Server.ReplaceSlackEmoji(line)
-
-		_ = u.Room.RunCommands(line, u)
+		_ = u.room.ParseUserInput(line, u)
 	}
 }
 
-// may contain a bug ("may" because it could be the terminal's fault)
 func (u *User) calculateLinesTaken(str string, width int) {
-	str = stripansi.Strip(str)
-	//fmt.Println("`"+str+"`", "width", width)
 	pos := 0
-	//lines := 1
-	_, _ = u.Term.Write([]byte("\033[A\033[2K"))
+	str = stripansi.Strip(str)
 	currLine := ""
+
+	_, _ = u.Term().Write([]byte(termCommandClear))
+
 	for _, c := range str {
 		pos++
 		currLine += string(c)
@@ -361,14 +397,8 @@ func (u *User) calculateLinesTaken(str string, width int) {
 		}
 		if c == '\n' || pos > width {
 			pos = 1
-			//lines++
-			_, _ = u.Term.Write([]byte("\033[A\033[2K"))
-		}
-		//fmt.Println(string(c), "`"+currLine+"`", "pos", pos, "lines", lines)
-	}
-	//return lines
-}
 
-func lenString(a string) int {
-	return len([]rune(stripansi.Strip(a)))
+			_, _ = u.Term().Write([]byte(termCommandClear))
+		}
+	}
 }

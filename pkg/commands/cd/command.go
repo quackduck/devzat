@@ -1,18 +1,40 @@
 package cd
 
 import (
+	"devzat/pkg/interfaces"
+	"devzat/pkg/models"
+	"fmt"
 	"sort"
 	"strings"
-	"sync"
-
-	"devzat/pkg/room"
-	"devzat/pkg/user"
 )
 
 const (
-	name     = ""
-	argsInfo = ""
-	info     = ""
+	name     = "cd"
+	argsInfo = "#room|user"
+	info     = "Join #room, DM user or run cd to see a list"
+)
+
+const (
+	maxLengthRoomName = 30
+)
+
+const (
+	parent     = ".."
+	roomPrefix = "#"
+	noArgs     = ""
+)
+
+const (
+	fmtUserLeftChat    = "%s has left private chat"
+	fmtRoomNameTooLong = "room name lengths are limited, so I'm shortening it to %s."
+	fmtJoinPrivateChat = "Now in DMs with %s. To leave use cd .."
+
+	msgUserNotFound   = "No such person, who do you want to dm? (you might be in the wrong room)"
+	msgEmptyNameGiven = "You think people have empty names?"
+)
+
+const (
+	argTargetUserName = iota
 )
 
 type Command struct{}
@@ -29,77 +51,100 @@ func (c *Command) Info() string {
 	return info
 }
 
-func (c *Command) IsRest() bool {
-	return false
+func (c *Command) Visibility() models.CommandVisibility {
+	return models.CommandVisNormal
 }
 
-func (c *Command) IsSecret() bool {
-	return false
+func (c *Command) Fn(strArgs string, u interfaces.User) error {
+	argv := strings.Fields(strArgs)
+
+	if u.DMTarget() != nil {
+		if earlyReturn := fnExitPrivateChat(u, strArgs); earlyReturn {
+			return nil
+		}
+	}
+
+	if strArgs == parent {
+		fnReturnMainRoom(u)
+		return nil
+	}
+
+	if strings.HasPrefix(strArgs, roomPrefix) {
+		fnChangeRoom(u, strArgs)
+		return nil
+	}
+
+	if strArgs == noArgs {
+		fnPrintAllRoomsAndUserCounts(u)
+		return nil
+	}
+
+	fnStartPrivateChat(u, argv[argTargetUserName])
+
+	return nil
 }
 
-func (c *Command) Fn(rest string, u *user.User) error {
-	devbot := u.Room.Bot.Name()
-	if u.Messaging != nil {
-		u.Messaging = nil
-		u.Writeln(devbot, "Left private chat")
-		if rest == "" || rest == ".." {
-			return
-		}
-	}
+func fnExitPrivateChat(u interfaces.User, strArgs string) (returnEarly bool) {
+	u.SetDMTarget(nil)
+	u.Room().BotCast(fmt.Sprintf(fmtUserLeftChat, u.Name()))
 
-	if rest == ".." { // cd back into the main room
-		if u.Room != u.Room.Server.MainRoom {
-			u.ChangeRoom(u.Room.Server.MainRoom)
-		}
+	return strArgs == "" || strArgs == ".."
+}
+
+func fnReturnMainRoom(u interfaces.User) {
+	if u.Room() == u.Room().Server().MainRoom() {
 		return
 	}
 
-	if strings.HasPrefix(rest, "#") {
-		u.Room.Broadcast(u.Name, "cd "+rest)
-		if len(rest) > maxLengthRoomName {
-			rest = rest[0:maxLengthRoomName]
-			u.Room.Broadcast(devbot, "room name lengths are limited, so I'm shortening it to "+rest+".")
-		}
-		if v, ok := rooms[rest]; ok {
-			u.ChangeRoom(v)
-		} else {
-			rooms[rest] = &room.Room{rest, make([]*user.User, 0, 10), sync.Mutex{}}
-			u.ChangeRoom(rooms[rest])
-		}
+	u.SetRoom(u.Room().Server().MainRoom())
+}
+
+func fnChangeRoom(u interfaces.User, strArgs string) {
+	if len(strArgs) > maxLengthRoomName {
+		strArgs = strArgs[0:maxLengthRoomName]
+		u.Room().BotCast(fmt.Sprintf(fmtRoomNameTooLong, strArgs))
+	}
+
+	command := fmt.Sprintf("%s %s", name, strArgs)
+	u.Room().Broadcast(u.Name(), command)
+}
+
+func fnPrintAllRoomsAndUserCounts(u interfaces.User) {
+	rooms := u.Room().Server().AllRooms()
+	names := make([]string, len(rooms))
+
+	for _, room := range rooms {
+		names = append(names, room.Name())
+	}
+
+	sortByUserCount := func(i, j int) bool {
+		return len(rooms[i].AllUsers()) > len(rooms[j].AllUsers())
+	}
+
+	sort.Slice(names, sortByUserCount)
+
+	roomsInfo := ""
+	blue := u.Room().Colors().Blue
+	for _, room := range names {
+		roomsInfo += blue.Paint(room) + ": " + u.Room().PrintUsers() + "  \n"
+	}
+
+	u.Room().Broadcast(u.Name(), name)
+	u.Room().Broadcast("", "Rooms and users  \n"+strings.TrimSpace(roomsInfo))
+}
+
+func fnStartPrivateChat(u interfaces.User, target string) {
+	if len(target) == 0 {
+		u.Room().BotCast(msgEmptyNameGiven)
 		return
 	}
 
-	if rest == "" {
-		u.Room.Broadcast(u.Name, "cd "+rest)
-		type kv struct {
-			roomName   string
-			numOfUsers int
-		}
-		var ss []kv
-		for k, v := range rooms {
-			ss = append(ss, kv{k, len(v.users)})
-		}
-
-		sort.Slice(ss, func(i, j int) bool {
-			return ss[i].numOfUsers > ss[j].numOfUsers
-		})
-		roomsInfo := ""
-		for _, room := range ss {
-			roomsInfo += blue.Paint(room.roomName) + ": " + u.Room.PrintUsersInRoom() + "  \n"
-		}
-		u.Room.Broadcast("", "Rooms and users  \n"+strings.TrimSpace(roomsInfo))
-		return
-	}
-	name := strings.Fields(rest)[0]
-	if len(name) == 0 {
-		u.Writeln(devbot, "You think people have empty names?")
-		return
-	}
-	peer, ok := u.Room.FindUserByName(name)
+	peer, ok := u.Room().FindUserByName(target)
 	if !ok {
-		u.Writeln(devbot, "No such person lol, who do you want to dm? (you might be in the wrong room)")
+		u.Room().BotCast(msgUserNotFound)
 		return
 	}
-	u.Messaging = peer
-	u.Writeln(devbot, "Now in DMs with "+peer.Name+". To leave use cd ..")
+
+	u.SetDMTarget(peer)
+	u.Room().BotCast(fmt.Sprintf(fmtJoinPrivateChat, peer.Name()))
 }

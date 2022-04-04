@@ -1,11 +1,15 @@
 package ascii_art
 
-import "devzat/pkg/user"
+import (
+	"devzat/pkg/interfaces"
+	"devzat/pkg/models"
+	"math/rand"
+)
 
 const (
-	name     = ""
+	name     = "art"
 	argsInfo = ""
-	info     = ""
+	info     = "Show some ascii art"
 )
 
 type Command struct{}
@@ -22,16 +26,35 @@ func (c *Command) Info() string {
 	return info
 }
 
-func (c *Command) IsRest() bool {
-	return false
+func (c *Command) Visibility() models.CommandVisibility {
+	return models.CommandVisLow
 }
 
-func (c *Command) IsSecret() bool {
-	return false
-}
+const lolNotImplemented = `
+⠀⠀⠀⠀⠀⠀⠚⠛⠔⠄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠄⠄⠈⢊⠄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⣀⠈⠍⡅⠆⠪⠄⣀⣀⡠⣀⣀⣠⡤⣀⡠⣤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⢀⠤⣮⠲⣿⠿⠦⣠⣴⣿⠘⣻⣧⣤⡠⠛⠛⢄⠐⠑⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⢠⠾⠵⠧⠟⠬⠭⣵⣶⣿⣻⡿⠠⠭⠝⣻⡥⠔⠪⡙⢠⣶⡕⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠈⢘⠟⣗⣠⠀⠀⠙⠛⠛⠉⠀⠀⡐⢫⣉⡍⠂⠀⣋⢿⣿⠏⡇⠀⠀⠀⠀⢀⠔⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠧⣫⣄⠀⠉⠆⠀⠀⠀⠀⠀⠠⠋⠀⢀⣤⡑⡀⠻⣢⠀⣶⠈⣆⠔⠒⠲⠕⡇⣇⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⢃⠻⠗⠀⢀⠌⡀⡀⠀⠀⠀⠠⡀⠀⠘⠿⡣⠁⠀⡇⠓⠙⣁⠃⠀⠀⡠⠃⢡⣞⢳⡑⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠁⠲⣒⠥⠊⡸⠀⠀⠀⠀⠀⠘⠋⠭⠑⠊⠆⡔⠘⢢⢹⣿⡤⠔⣾⣿⢿⡘⠖⣱⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⢏⣀⣠⠔⠁⡆⠀⠀⢀⣠⣤⣤⣤⠀⠀⠀⠀⠀⠸⢌⡍⠚⣾⢌⡇⠈⣿⣿⣿⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⡇⠀⠀⠀⡠⣾⠿⠛⣋⣉⠭⠄⠀⢴⣿⠿⠆⠀⠸⣀⡒⢪⢌⠀⢹⠿⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⢇⠀⢀⠊⠭⠔⠚⠭⢀⡀⠀⠀⠀⠀⠀⠀⠘⠛⠀⠀⣘⣂⠾⠂⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠢⠌⠀⠀⠀⠀⠰⡿⣿⣿⡏⠉⠉⠉⠉⠉⠩⣿⢻⣿⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣮⣮⢄⠁⠀⠀⠀⠀⠀⠀⠀⡌⣆⠀⢀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣷⣿⠀⠀⠀⠀⠀⠀⠀⠈⠒⠨⣽⣿⠆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⡿⠋⠀⠀⠀⠀⠀⠀⠀⠀
+`
 
-func (c *Command) Fn(_ string, u *user.User) error {
-	u.Room.Broadcast("", art)
+func (c *Command) Fn(_ string, u interfaces.User) error {
+	art := []string{
+		lolNotImplemented,
+	}
+
+	u.Room().Broadcast("", art[rand.Intn(len(art))])
 
 	return nil
 }

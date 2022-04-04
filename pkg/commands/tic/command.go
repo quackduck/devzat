@@ -8,13 +8,14 @@ import (
 	"github.com/jwalton/gchalk"
 	"github.com/shurcooL/tictactoe"
 
-	"devzat/pkg/user"
+	i "devzat/pkg/interfaces"
+	"devzat/pkg/models"
 )
 
 const (
 	name     = "tic"
 	argsInfo = ""
-	info     = ""
+	info     = "start a game of tic tac toe"
 )
 
 type state = struct {
@@ -38,17 +39,11 @@ func (c *Command) Info() string {
 	return info
 }
 
-func (c *Command) IsRest() bool {
-	return false
+func (c *Command) Visibility() models.CommandVisibility {
+	return models.CommandVisNormal
 }
 
-func (c *Command) IsSecret() bool {
-	return false
-}
-
-func (c *Command) Fn(rest string, u *user.User) error {
-	devbot := u.Room.Bot.Name()
-
+func (c *Command) Fn(rest string, u i.User) error {
 	if c.state == nil {
 		c.state = make(map[string]*state)
 	}
@@ -56,33 +51,33 @@ func (c *Command) Fn(rest string, u *user.User) error {
 	s := c.getState(u)
 
 	if rest == "" {
-		u.Room.Broadcast(devbot, "Starting a new game of Tic Tac Toe! The first player is always X.")
-		u.Room.Broadcast(devbot, "Play using tic <cell num>")
+		u.Room().BotCast("Starting a new game of Tic Tac Toe! The first player is always X.")
+		u.Room().BotCast("Play using tic <cell num>")
 		s.currentPlayer = tictactoe.X
 		s.Board = new(tictactoe.Board)
-		u.Room.Broadcast(devbot, "```\n"+" 1 │ 2 │ 3\n───┼───┼───\n 4 │ 5 │ 6\n───┼───┼───\n 7 │ 8 │ 9\n"+"\n```")
+		u.Room().BotCast("```\n" + " 1 │ 2 │ 3\n───┼───┼───\n 4 │ 5 │ 6\n───┼───┼───\n 7 │ 8 │ 9\n" + "\n```")
 		return nil
 	}
 
 	m, err := strconv.Atoi(rest)
 	if err != nil {
-		u.Room.Broadcast(devbot, "Make sure you're using a number lol")
+		u.Room().BotCast("Make sure you're using a number lol")
 		return nil
 	}
 
 	if m < 1 || m > 9 {
-		u.Room.Broadcast(devbot, "Moves are numbers between 1 and 9!")
+		u.Room().BotCast("Moves are numbers between 1 and 9!")
 		return nil
 	}
 
 	err = s.Board.Apply(tictactoe.Move(m-1), s.currentPlayer)
 
 	if err != nil {
-		u.Room.Broadcast(devbot, err.Error())
+		u.Room().BotCast(err.Error())
 		return nil
 	}
 
-	u.Room.Broadcast(devbot, "```\n"+tttPrint(s.Board.Cells)+"\n```")
+	u.Room().BotCast("```\n" + tttPrint(s.Board.Cells) + "\n```")
 	if s.currentPlayer == tictactoe.X {
 		s.currentPlayer = tictactoe.O
 	} else {
@@ -90,7 +85,7 @@ func (c *Command) Fn(rest string, u *user.User) error {
 	}
 
 	if !(s.Board.Condition() == tictactoe.NotEnd) {
-		u.Room.Broadcast(devbot, s.Board.Condition().String())
+		u.Room().BotCast(s.Board.Condition().String())
 		s.currentPlayer = tictactoe.X
 		s.Board = new(tictactoe.Board)
 	}
@@ -98,12 +93,12 @@ func (c *Command) Fn(rest string, u *user.User) error {
 	return nil
 }
 
-func (c *Command) getState(u *user.User) *state {
-	if c.state[u.Room.Name] == nil {
-		c.state[u.Room.Name] = &state{}
+func (c *Command) getState(u i.User) *state {
+	if c.state[u.Room().Name()] == nil {
+		c.state[u.Room().Name()] = &state{}
 	}
 
-	return c.state[u.Room.Name]
+	return c.state[u.Room().Name()]
 }
 
 func tttPrint(cells [9]tictactoe.State) string {

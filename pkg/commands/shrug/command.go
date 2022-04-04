@@ -1,11 +1,15 @@
 package shrug
 
-import "devzat/pkg/user"
+import (
+	i "devzat/pkg/interfaces"
+	"devzat/pkg/models"
+	"fmt"
+)
 
 const (
-	name     = ""
-	argsInfo = ""
-	info     = ""
+	name     = "shrug"
+	argsInfo = "[message]"
+	info     = `¯\_(ツ)_/¯`
 )
 
 type Command struct{}
@@ -22,14 +26,13 @@ func (c *Command) Info() string {
 	return info
 }
 
-func (c *Command) IsRest() bool {
-	return false
+func (c *Command) Visibility() models.CommandVisibility {
+	return models.CommandVisNormal
 }
 
-func (c *Command) IsSecret() bool {
-	return false
-}
+func (c *Command) Fn(line string, u i.User) error {
+	const fmtShrug = `%s ¯\_(ツ)_/¯`
+	u.Room().Broadcast(u.Name(), fmt.Sprintf(fmtShrug, line))
 
-func (c *Command) Fn(line string, u *user.User) error {
-	u.Room.Broadcast(u.Name, line+` ¯\\\_(ツ)\_/¯`)
+	return nil
 }

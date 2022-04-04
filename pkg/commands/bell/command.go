@@ -1,11 +1,23 @@
 package bell
 
-import "devzat/pkg/user"
+import (
+	"devzat/pkg/interfaces"
+	"devzat/pkg/models"
+	"strings"
+)
 
 const (
 	name     = ""
-	argsInfo = ""
-	info     = ""
+	argsInfo = "[on|off|all]"
+	info     = "ANSI bell on pings (on), never (off) or for every message (all)"
+)
+
+type bellLevel = int
+
+const (
+	off bellLevel = iota
+	on
+	all
 )
 
 type Command struct{}
@@ -22,37 +34,39 @@ func (c *Command) Info() string {
 	return info
 }
 
-func (c *Command) IsRest() bool {
-	return false
+func (c *Command) Visibility() models.CommandVisibility {
+	return models.CommandVisNormal
 }
 
-func (c *Command) IsSecret() bool {
-	return false
-}
-
-func (c *Command) Fn(rest string, u *user.User) error {
-	devbot := u.Room.Bot.Name()
-	switch rest {
-	case "off":
-		u.Bell = false
-		u.PingEverytime = false
-		u.Room.Broadcast("", "bell off (never)")
-	case "on":
-		u.Bell = true
-		u.PingEverytime = false
-		u.Room.Broadcast("", "bell on (pings)")
-	case "all":
-		u.PingEverytime = true
-		u.Room.Broadcast("", "bell all (every message)")
-	case "", "status":
-		if u.Bell {
-			u.Room.Broadcast("", "bell on (pings)")
-		} else if u.PingEverytime {
-			u.Room.Broadcast("", "bell all (every message)")
-		} else { // bell is off
-			u.Room.Broadcast("", "bell off (never)")
-		}
-	default:
-		u.Room.Broadcast(devbot, "your options are off, on and all")
+func (c *Command) Fn(rest string, u interfaces.User) error {
+	lookup := map[string]bellLevel{
+		"off": off,
+		"on":  on,
+		"all": all,
 	}
+
+	switch lookup[strings.ToLower(rest)] {
+	case off:
+		u.SetBell(false)
+		u.SetPingEverytime(false)
+		u.Room().Broadcast("", "bell off (never)")
+	case on:
+		u.SetBell(true)
+		u.SetPingEverytime(false)
+		u.Room().Broadcast("", "bell on (pings)")
+	case all:
+		u.SetPingEverytime(true)
+		u.Room().Broadcast("", "bell all (every message)")
+	default:
+		if u.Bell() {
+			u.Room().Broadcast("", "bell on (pings)")
+		} else if u.PingEverytime() {
+			u.Room().Broadcast("", "bell all (every message)")
+		} else { // bell is off
+			u.Room().Broadcast("", "bell off (never)")
+		}
+		u.Room().BotCast("your options are off, on and all")
+	}
+
+	return nil
 }

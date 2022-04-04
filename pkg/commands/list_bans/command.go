@@ -1,13 +1,15 @@
 package list_bans
 
-import "strconv"
-
-import "devzat/pkg/user"
+import (
+	i "devzat/pkg/interfaces"
+	"devzat/pkg/models"
+	"strconv"
+)
 
 const (
-	name     = ""
+	name     = "lsbans"
 	argsInfo = ""
-	info     = ""
+	info     = "List banned IDs"
 )
 
 type Command struct{}
@@ -24,18 +26,20 @@ func (c *Command) Info() string {
 	return info
 }
 
-func (c *Command) IsRest() bool {
-	return false
+func (c *Command) Visibility() models.CommandVisibility {
+	return models.CommandVisNormal
 }
 
-func (c *Command) IsSecret() bool {
-	return false
-}
+func (c *Command) Fn(_ string, u i.User) error {
+	bans := u.Room().Server().GetBanList()
 
-func (c *Command) Fn(_ string, u *user.User) error {
 	msg := "Printing bans by ID:  \n"
 	for i := 0; i < len(bans); i++ {
+		cyan := u.Room().Colors().Yellow
 		msg += cyan.Cyan(strconv.Itoa(i+1)) + ". " + bans[i].ID + "  \n"
 	}
-	u.Room.Broadcast(devbot, msg)
+
+	u.Room().BotCast(msg)
+
+	return nil
 }

@@ -1,13 +1,15 @@
 package exit
 
 import (
-	"devzat/pkg/user"
+	i "devzat/pkg/interfaces"
+	"devzat/pkg/models"
+	"fmt"
 )
 
 const (
-	name     = "=<user>"
-	argsInfo = "<msg>"
-	info     = "DirectMessage <User> with <msg>"
+	name     = "exit"
+	argsInfo = ""
+	info     = "leave the chat"
 )
 
 type Command struct{}
@@ -24,14 +26,13 @@ func (c *Command) Info() string {
 	return info
 }
 
-func (c *Command) IsRest() bool {
-	return false
+func (c *Command) Visibility() models.CommandVisibility {
+	return models.CommandVisNormal
 }
 
-func (c *Command) IsSecret() bool {
-	return false
-}
+func (c *Command) Fn(_ string, u i.User) error {
+	hasLeft := u.Room().Colors().Red.Paint("has left the chat")
+	u.Close(fmt.Sprintf("%s %s", u.Name(), hasLeft))
 
-func (c *Command) Fn(_ string, u *user.User) error {
-	u.Close(u.Name + red.Paint(" has left the chat"))
+	return nil
 }

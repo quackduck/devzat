@@ -1,11 +1,14 @@
 package users
 
-import "devzat/pkg/user"
+import (
+	i "devzat/pkg/interfaces"
+	"devzat/pkg/models"
+)
 
 const (
-	name     = ""
+	name     = "users"
 	argsInfo = ""
-	info     = ""
+	info     = "List users"
 )
 
 type Command struct{}
@@ -22,14 +25,12 @@ func (c *Command) Info() string {
 	return info
 }
 
-func (c *Command) IsRest() bool {
-	return false
+func (c *Command) Visibility() models.CommandVisibility {
+	return models.CommandVisNormal
 }
 
-func (c *Command) IsSecret() bool {
-	return false
-}
+func (c *Command) Fn(_ string, u i.User) error {
+	u.Room().Broadcast("", u.Room().PrintUsers())
 
-func (c *Command) Fn(_ string, u *user.User) error {
-	u.Room.Broadcast("", u.Room.PrintUsersInRoom())
+	return nil
 }

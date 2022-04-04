@@ -1,9 +1,12 @@
 package clear
 
-import "devzat/pkg/user"
+import (
+	"devzat/pkg/interfaces"
+	"devzat/pkg/models"
+)
 
 const (
-	name     = ""
+	Name     = "clear"
 	argsInfo = ""
 	info     = ""
 )
@@ -11,7 +14,7 @@ const (
 type Command struct{}
 
 func (c *Command) Name() string {
-	return name
+	return Name
 }
 
 func (c *Command) ArgsInfo() string {
@@ -22,16 +25,12 @@ func (c *Command) Info() string {
 	return info
 }
 
-func (c *Command) IsRest() bool {
-	return false
+func (c *Command) Visibility() models.CommandVisibility {
+	return models.CommandVisNormal
 }
 
-func (c *Command) IsSecret() bool {
-	return false
-}
-
-func (c *Command) Fn(_ string, u *user.User) error {
-	_, err := u.Term.Write([]byte("\033[H\033[2J"))
+func (c *Command) Fn(_ string, u interfaces.User) error {
+	_, err := u.Term().Write([]byte("\033[H\033[2J"))
 
 	return err
 }

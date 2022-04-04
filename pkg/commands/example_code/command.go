@@ -1,13 +1,15 @@
 package example_code
 
 import (
-	"devzat/pkg/user"
+	i "devzat/pkg/interfaces"
+	"devzat/pkg/models"
+	"fmt"
 )
 
 const (
-	name     = "=<user>"
-	argsInfo = "<msg>"
-	info     = "DirectMessage <User> with <msg>"
+	name     = "eg-code"
+	argsInfo = "[big]"
+	info     = "Example syntax-highlighted code"
 )
 
 type Command struct{}
@@ -24,18 +26,21 @@ func (c *Command) Info() string {
 	return info
 }
 
-func (c *Command) IsRest() bool {
-	return false
+func (c *Command) Visibility() models.CommandVisibility {
+	return models.CommandVisNormal
 }
 
-func (c *Command) IsSecret() bool {
-	return false
-}
+func (c *Command) Fn(line string, u i.User) error {
+	const fmtCode = "```%s```"
+	msg := ""
 
-func (c *Command) Fn(line string, u *user.User) error {
-	if line == "big" {
-		u.Room.Broadcast(devbot, "```go\npackage MainRoom\n\nimport \"fmt\"\n\nfunc sum(nums ...int) {\n    fmt.Print(nums, \" \")\n    total := 0\n    for _, num := range nums {\n        total += num\n    }\n    fmt.Println(total)\n}\n\nfunc MainRoom() {\n\n    sum(1, 2)\n    sum(1, 2, 3)\n\n    nums := []int{1, 2, 3, 4}\n    sum(nums...)\n}\n```")
-		return
+	switch line {
+	case "big":
+		msg = fmt.Sprintf(fmtCode, exampleBig)
+	default:
+		msg = fmt.Sprintf(fmtCode, exampleSmall)
 	}
-	u.Room.Broadcast(devbot, "\n```go\npackage MainRoom\nimport \"fmt\"\nfunc MainRoom() {\n   fmt.Println(\"Example!\")\n}\n```")
+
+	u.Room().BotCast(msg)
+	return nil
 }

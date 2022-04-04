@@ -1,7 +1,6 @@
 package colors
 
 import (
-	"devzat/pkg/user"
 	"errors"
 	"fmt"
 	"github.com/alecthomas/chroma"
@@ -25,16 +24,7 @@ func NewFormatter() *Formatter {
 
 type Formatter struct {
 	chalk  *gchalk.Builder
-	Colors struct {
-		Green   *gchalk.Builder
-		Red     *gchalk.Builder
-		Cyan    *gchalk.Builder
-		Magenta *gchalk.Builder
-		Yellow  *gchalk.Builder
-		Orange  *gchalk.Builder
-		Blue    *gchalk.Builder
-		White   *gchalk.Builder
-	}
+	colors Colors
 	Styles struct {
 		Normal []*Style
 		Secret []*Style
@@ -42,28 +32,19 @@ type Formatter struct {
 }
 
 func (f *Formatter) Init() {
+	f.chalk = gchalk.New(gchalk.ForceLevel(gchalk.LevelAnsi256))
+	f.colors.init()
 	markdown.CurrentTheme = chromastyles.ParaisoDark
 	f.initChromaStyles()
 
-	f.chalk = gchalk.New(gchalk.ForceLevel(gchalk.LevelAnsi256))
-
-	f.Colors.Green = f.Ansi256(1, 5, 1)
-	f.Colors.Red = f.Ansi256(5, 1, 1)
-	f.Colors.Cyan = f.Ansi256(1, 5, 5)
-	f.Colors.Magenta = f.Ansi256(5, 1, 5)
-	f.Colors.Yellow = f.Ansi256(5, 5, 1)
-	f.Colors.Orange = f.Ansi256(5, 3, 0)
-	f.Colors.Blue = f.Ansi256(0, 3, 5)
-	f.Colors.White = f.Ansi256(5, 5, 5)
-
 	f.Styles.Normal = []*Style{
-		{White, f.buildStyle(f.Colors.White)},
-		{Red, f.buildStyle(f.Colors.Red)},
+		{White, f.buildStyle(f.colors.White)},
+		{Red, f.buildStyle(f.colors.Red)},
 		{Coral, f.buildStyle(f.Ansi256(5, 2, 2))},
-		{Green, f.buildStyle(f.Colors.Green)},
+		{Green, f.buildStyle(f.colors.Green)},
 		{Sky, f.buildStyle(f.Ansi256(3, 5, 5))},
-		{Cyan, f.buildStyle(f.Colors.Cyan)},
-		{Magenta, f.buildStyle(f.Colors.Magenta)},
+		{Cyan, f.buildStyle(f.colors.Cyan)},
+		{Magenta, f.buildStyle(f.colors.Magenta)},
 		{Pink, f.buildStyle(f.Ansi256(5, 3, 4))},
 		{Rose, f.buildStyle(f.Ansi256(5, 0, 2))},
 		{Cranberry, f.buildStyle(f.Ansi256(3, 0, 1))},
@@ -71,9 +52,9 @@ func (f *Formatter) Init() {
 		{Fire, f.buildStyle(f.Ansi256(5, 2, 0))},
 		{PastelGreen, f.buildStyle(f.Ansi256(0, 5, 3))},
 		{Olive, f.buildStyle(f.Ansi256(4, 5, 1))},
-		{Yellow, f.buildStyle(f.Colors.Yellow)},
-		{Orange, f.buildStyle(f.Colors.Orange)},
-		{Blue, f.buildStyle(f.Colors.Blue)},
+		{Yellow, f.buildStyle(f.colors.Yellow)},
+		{Orange, f.buildStyle(f.colors.Orange)},
+		{Blue, f.buildStyle(f.colors.Blue)},
 	}
 
 	f.Styles.Secret = []*Style{
@@ -95,14 +76,14 @@ func (f *Formatter) Init() {
 		{Agender, f.makeFlag([]string{"#333333", "#BCC5C6", "#FFFFFF", "#B5F582", "#FFFFFF", "#BCC5C6", "#333333"})},
 		{Rainbow, func(a string) string {
 			rainbow := []*gchalk.Builder{
-				f.Colors.Red,
-				f.Colors.Orange,
-				f.Colors.Yellow,
-				f.Colors.Green,
-				f.Colors.Cyan,
-				f.Colors.Blue,
+				f.colors.Red,
+				f.colors.Orange,
+				f.colors.Yellow,
+				f.colors.Green,
+				f.colors.Cyan,
+				f.colors.Blue,
 				f.Ansi256(2, 2, 5),
-				f.Colors.Magenta,
+				f.colors.Magenta,
 			}
 			return f.ApplyRainbow(rainbow, a)
 		}}}
@@ -192,32 +173,6 @@ func (f *Formatter) Ansi256(r, g, b uint8) *gchalk.Builder {
 
 func (f *Formatter) BgAnsi256(r, g, b uint8) *gchalk.Builder {
 	return f.chalk.WithBgRGB(255/5*r, 255/5*g, 255/5*b)
-}
-
-// Applies color from name
-func (f *Formatter) ChangeColor(u *user.User, colorName string) error {
-	style, err := f.GetStyle(colorName)
-	if err != nil {
-		return err
-	}
-
-	if strings.HasPrefix(colorName, "bg-") {
-		u.Color.Background = style.Name // update bg color
-	} else {
-		u.Color.Foreground = style.Name // update fg color
-	}
-
-	u.Name, _ = f.ApplyColorToData(u.Name, u.Color.Foreground, u.Color.Background) // error can be discarded as it has already been checked earlier
-
-	u.Term.SetPrompt(fmt.Sprintf("%s: ", u.Name))
-
-	// TODO: having savebans here is wildly incoherent, but this was noticed during a refactor.
-	// it stays until i determine something else to do with it.
-	if err = u.Room.Server.SaveBans(); err != nil {
-		return fmt.Errorf("could not save the bans file: %v", err)
-	}
-
-	return nil
 }
 
 func (f *Formatter) ApplyColorToData(data string, color string, colorBG string) (string, error) {
@@ -345,4 +300,17 @@ func (f *Formatter) GetStyle(name string) (*Style, error) {
 		}
 		return colors
 	}(), ", ") + "  \nMake your own colors using hex (#A0FFFF, etc) or RGB values from 0 to 5 (for example, `color 530`, a pretty nice Orange). Set bg color like this: color bg-530; remove bg color with color bg-off.\nThere's also a few secret colors :)")
+}
+
+func (f *Formatter) GetStyleNames() []string {
+	names := make([]string, 0)
+	for _, style := range f.Styles.Normal {
+		names = append(names, style.Name)
+	}
+
+	return names
+}
+
+func (f *Formatter) Colors() Colors {
+	return f.colors
 }

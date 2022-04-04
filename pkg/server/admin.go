@@ -1,6 +1,7 @@
 package server
 
 import (
+	i "devzat/pkg/interfaces"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,11 +15,11 @@ const (
 
 type (
 	AdminID      = string
-	AdminIndo    = string
-	AdminInfoMap = map[AdminID]AdminIndo
+	AdminInfo    = string
+	AdminInfoMap = map[AdminID]AdminInfo
 )
 
-func (s *Server) GetAdmins() (map[AdminID]AdminIndo, error) {
+func (s *Server) GetAdmins() (AdminInfoMap, error) {
 	if _, err := os.Stat(defaultAdminsFileName); err == os.ErrNotExist {
 		return nil, errors.New("make an admins.json file to add admins")
 	}
@@ -35,4 +36,37 @@ func (s *Server) GetAdmins() (map[AdminID]AdminIndo, error) {
 	}
 
 	return adminsList, nil
+}
+
+func (s *Server) GiveAdmin(user i.User) error {
+	if s.adminsMap == nil {
+		s.adminsMap = make(adminsMap)
+	}
+
+	if _, alreadyAdmin := s.adminsMap[user.ID()]; alreadyAdmin {
+		return fmt.Errorf("user '%s' is already an admin", user.Name())
+	}
+
+	s.adminsMap[user.ID()] = nil
+
+	return nil
+}
+
+func (s *Server) RevokeAdmin(user i.User) error {
+	if s.adminsMap == nil {
+		s.adminsMap = make(adminsMap)
+	}
+
+	if _, isAdmin := s.adminsMap[user.ID()]; !isAdmin {
+		return fmt.Errorf("user '%s' is not an admin", user.Name())
+	}
+
+	delete(s.adminsMap, user.ID())
+
+	return nil
+}
+
+func (s *Server) IsAdmin(user i.User) bool {
+	_, found := s.adminsMap[user.Name()]
+	return found
 }

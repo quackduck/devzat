@@ -1,18 +1,18 @@
 package theme
 
 import (
+	i "devzat/pkg/interfaces"
+	"devzat/pkg/models"
 	"strings"
 
 	chromastyles "github.com/alecthomas/chroma/styles"
 	markdown "github.com/quackduck/go-term-markdown"
-
-	"devzat/pkg/user"
 )
 
 const (
-	name     = ""
-	argsInfo = ""
-	info     = ""
+	name     = "theme"
+	argsInfo = "<list|name>"
+	info     = "list or set the markdown theme"
 )
 
 type Command struct{}
@@ -29,25 +29,30 @@ func (c *Command) Info() string {
 	return info
 }
 
-func (c *Command) IsRest() bool {
-	return false
+func (c *Command) Visibility() models.CommandVisibility {
+	return models.CommandVisSecret
 }
 
-func (c *Command) IsSecret() bool {
-	return false
-}
-
-func (c *Command) Fn(line string, u *user.User) error {
+func (c *Command) Fn(line string, u i.User) error {
 	if line == "list" {
-		u.Room.Broadcast(devbot, "Available themes: "+strings.Join(chromastyles.Names(), ", "))
-		return
+		u.Room().BotCast("Available themes: " + strings.Join(chromastyles.Names(), ", "))
+		return nil
 	}
-	for _, name := range chromastyles.Names() {
-		if name == line {
-			markdown.CurrentTheme = chromastyles.Get(name)
-			u.Room.Broadcast(devbot, "Theme set to "+name)
-			return
+
+	if !u.IsAdmin() {
+		u.Room().BotCast("Not authorized")
+		return nil
+	}
+
+	for _, cnames := range chromastyles.Names() {
+		if cnames == line {
+			markdown.CurrentTheme = chromastyles.Get(cnames)
+			u.Room().BotCast("Theme set to " + cnames)
+			return nil
 		}
 	}
-	u.Room.Broadcast(devbot, "What theme is that? Use theme list to see what's available.")
+
+	u.Room().BotCast("What theme is that? Use theme list to see what's available.")
+
+	return nil
 }

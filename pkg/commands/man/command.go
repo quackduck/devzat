@@ -1,11 +1,15 @@
 package man
 
-import "devzat/pkg/user"
+import (
+	i "devzat/pkg/interfaces"
+	"devzat/pkg/models"
+	"fmt"
+)
 
 const (
-	name     = ""
-	argsInfo = ""
-	info     = ""
+	name     = "man"
+	argsInfo = "<command>"
+	info     = "show usage info for a command"
 )
 
 type Command struct{}
@@ -22,26 +26,25 @@ func (c *Command) Info() string {
 	return info
 }
 
-func (c *Command) IsRest() bool {
-	return false
+func (c *Command) Visibility() models.CommandVisibility {
+	return models.CommandVisNormal
 }
 
-func (c *Command) IsSecret() bool {
-	return false
-}
+func (c *Command) Fn(line string, u i.User) error {
+	const fmtUsage = "Usage: %s %s\n%s\n"
 
-func (c *Command) Fn(rest string, u *user.User) error {
-	devbot := u.Room.Bot.Name()
-	if rest == "" {
-		u.Room.Broadcast(devbot, "What command do you want help with?")
-		return
+	if line == "" {
+		u.Room().BotCast("What command do you want help with?")
+
+		return nil
 	}
 
-	for _, c := range allcmds {
-		if c.Name == rest {
-			u.Room.Broadcast(devbot, "Usage: "+c.Name+" "+c.argsInfo+"  \n"+c.info)
-			return
+	for _, command := range u.Room().Server().Commands() {
+		if command.Name() == line {
+			u.Room().BotCast(fmt.Sprintf(fmtUsage, command.Name(), command.ArgsInfo(), command.Info()))
+			return nil
 		}
 	}
-	u.Room.Broadcast("", "This system has been minimized by removing packages and content that are not required on a system that users do not log into.\n\nTo restore this content, including manpages, you can run the 'unminimize' command. You will still need to ensure the 'man-db' package is installed.")
+
+	return nil
 }

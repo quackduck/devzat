@@ -1,11 +1,15 @@
 package admins
 
-import "devzat/pkg/user"
+import (
+	"devzat/pkg/interfaces"
+	"devzat/pkg/models"
+	"fmt"
+)
 
 const (
-	name     = ""
+	name     = "admins"
 	argsInfo = ""
-	info     = ""
+	info     = "Print the ID (hashed key) for all admins"
 )
 
 type Command struct{}
@@ -22,26 +26,30 @@ func (c *Command) Info() string {
 	return info
 }
 
-func (c *Command) IsRest() bool {
-	return false
+func (c *Command) Visibility() models.CommandVisibility {
+	return models.CommandVisNormal
 }
 
-func (c *Command) IsSecret() bool {
-	return false
-}
+const (
+	fmtConcat = "%s%s"
+	fmtAdmin  = "%s: %s\n"
+)
 
-func (c *Command) Fn(_ string, u *user.User) error {
-	admins, err := u.Room.GetAdmins()
+func (c *Command) Fn(_ string, u interfaces.User) error {
+	admins, err := u.Room().Server().GetAdmins()
 	if err != nil {
 		return err
 	}
 
-	msg := "Admins:  \n"
-	for i := range admins {
-		msg += admins[i] + ": " + i + "  \n"
+	strAdmins := ""
+	for adminName := range admins {
+		line := fmt.Sprintf(fmtAdmin, admins[adminName], adminName)
+		strAdmins = fmt.Sprintf(fmtConcat, strAdmins, line)
 	}
 
-	u.Room.Broadcast(u.Room.Bot.Name(), msg)
+	msg := fmt.Sprintf("Admins:\n%s", strAdmins)
+
+	u.Room().BotCast(msg)
 
 	return nil
 }

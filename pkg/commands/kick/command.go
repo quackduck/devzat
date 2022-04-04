@@ -1,11 +1,15 @@
 package kick
 
-import "devzat/pkg/user"
+import (
+	i "devzat/pkg/interfaces"
+	"devzat/pkg/models"
+	"fmt"
+)
 
 const (
-	name     = ""
-	argsInfo = ""
-	info     = ""
+	name     = "kick"
+	argsInfo = "<user>"
+	info     = "kick a user from chat"
 )
 
 type Command struct{}
@@ -22,23 +26,26 @@ func (c *Command) Info() string {
 	return info
 }
 
-func (c *Command) IsRest() bool {
-	return false
+func (c *Command) Visibility() models.CommandVisibility {
+	return models.CommandVisNormal
 }
 
-func (c *Command) IsSecret() bool {
-	return false
-}
+func (c *Command) Fn(line string, u i.User) error {
+	if !u.IsAdmin() {
+		u.Room().BotCast("Not authorized")
+		return nil
+	}
 
-func (c *Command) Fn(line string, u *user.User) error {
-	victim, ok := u.Room.FindUserByName(line)
+	victim, ok := u.Room().FindUserByName(line)
 	if !ok {
-		u.Room.Broadcast("", "User not found")
-		return
+		u.Room().Broadcast("", "User not found")
+		return nil
 	}
-	if !checkIsAdmin(u) {
-		u.Room.Broadcast(devbot, "Not authorized")
-		return
-	}
-	victim.close(victim.Name + red.Paint(" has been kicked by ") + u.Name)
+
+	wasKickedBy := fmt.Sprintf("has been kicked by %s", u.Name())
+	wasKickedBy = u.Room().Colors().Red.Paint(wasKickedBy)
+	msg := fmt.Sprintf("%s %s", victim.Name(), wasKickedBy)
+	victim.Close(msg)
+
+	return nil
 }

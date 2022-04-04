@@ -1,11 +1,14 @@
 package nick
 
-import "devzat/pkg/user"
+import (
+	i "devzat/pkg/interfaces"
+	"devzat/pkg/models"
+)
 
 const (
-	name     = ""
-	argsInfo = ""
-	info     = ""
+	name     = "nick"
+	argsInfo = "<foobar>"
+	info     = "set your nickname (no profanity)"
 )
 
 type Command struct{}
@@ -22,14 +25,10 @@ func (c *Command) Info() string {
 	return info
 }
 
-func (c *Command) IsRest() bool {
-	return false
+func (c *Command) Visibility() models.CommandVisibility {
+	return models.CommandVisNormal
 }
 
-func (c *Command) IsSecret() bool {
-	return false
-}
-
-func (c *Command) Fn(line string, u *user.User) error {
-	u.pickUsername(line) //nolint:errcheck // if reading input fails, the next repl will err out
+func (c *Command) Fn(line string, u i.User) error {
+	return u.SetNick(line)
 }

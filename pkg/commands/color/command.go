@@ -1,9 +1,13 @@
 package color
 
-import "devzat/pkg/user"
+import (
+	i "devzat/pkg/interfaces"
+	"devzat/pkg/models"
+	"fmt"
+)
 
 const (
-	name     = ""
+	name     = "color"
 	argsInfo = ""
 	info     = ""
 )
@@ -22,19 +26,23 @@ func (c *Command) Info() string {
 	return info
 }
 
-func (c *Command) IsRest() bool {
-	return false
+func (c *Command) Visibility() models.CommandVisibility {
+	return models.CommandVisHidden
 }
 
-func (c *Command) IsSecret() bool {
-	return false
-}
+func (c *Command) Fn(line string, u i.User) error {
+	if line == "which" {
+		fmtMsg := "fg: %s & bg: %s"
+		msg := fmt.Sprintf(fmtMsg, u.ForegroundColor(), u.BackgroundColor())
 
-func (c *Command) Fn(rest string, u *user.User) error {
-	devbot := u.Room.Bot.Name()
-	if rest == "which" {
-		u.Room.Broadcast(devbot, "fg: "+u.color+" & bg: "+u.colorBG)
-	} else if err := u.changeColor(rest); err != nil {
-		u.Room.Broadcast(devbot, err.Error())
+		u.Room().BotCast(msg)
+
+		return nil
 	}
+
+	if err := u.ChangeColor(line); err != nil {
+		u.Room().BotCast(err.Error())
+	}
+
+	return nil
 }

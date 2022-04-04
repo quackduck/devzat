@@ -1,47 +1,71 @@
 package server
 
 import (
-	"devzat/pkg"
-	"devzat/pkg/user"
+	i "devzat/pkg/interfaces"
 	"encoding/json"
 	"fmt"
+	"github.com/dghubble/oauth1"
 	"io/ioutil"
-	"os"
 	"strings"
 	"time"
 
+	"devzat/pkg/util"
 	"github.com/acarl005/stripansi"
 	"github.com/dghubble/go-twitter/twitter"
-	"github.com/dghubble/oauth1"
 )
 
-var (
-	allowTweet = true
+const (
+	defaultTwitterConfigFile = "twitter-creds.json"
 )
 
-type TwitterCreds struct {
-	ConsumerKey       string
-	ConsumerSecret    string
-	AccessToken       string
-	AccessTokenSecret string
+type twitterIntegration struct {
+	allowTweet bool
+	client     *twitter.Client
+	creds      struct {
+		ConsumerKey       string
+		ConsumerSecret    string
+		AccessToken       string
+		AccessTokenSecret string
+	}
+}
+
+func (t *twitterIntegration) init() error {
+	t.allowTweet = true
+
+	d, err := ioutil.ReadFile(defaultTwitterConfigFile)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(d, &t.creds)
+	if err != nil {
+		return err
+	}
+
+	config := oauth1.NewConfig(t.creds.ConsumerKey, t.creds.ConsumerSecret)
+	token := oauth1.NewToken(t.creds.AccessToken, t.creds.AccessTokenSecret)
+	httpClient := config.Client(oauth1.NoContext, token)
+
+	t.client = twitter.NewClient(httpClient)
+
+	return nil
 }
 
 func (s *Server) SendCurrentUsersTwitterMessage() {
-	if s.OfflineTwitter {
+	usersInMain := s.mainRoom.AllUsers()
+	numUsersInMain := len(usersInMain)
+
+	if numUsersInMain == 0 {
 		return
 	}
 
-	// TODO: count all users in all Rooms
-	if len(s.MainRoom.Users) == 0 {
+	if !s.twitter.allowTweet {
 		return
 	}
 
-	if !allowTweet {
-		return
-	}
-	allowTweet = false
-	usersSnapshot := append(make([]*user.User, 0, len(s.MainRoom.Users)), s.MainRoom.Users...)
-	areUsersEqual := func(a []*user.User, b []*user.User) bool {
+	s.twitter.allowTweet = false
+	usersSnapshot := append(make([]i.User, 0, numUsersInMain), usersInMain...)
+	areUsersEqual := func(a []i.User, b []i.User) bool {
 		if len(a) != len(b) {
 			return false
 		}
@@ -52,50 +76,30 @@ func (s *Server) SendCurrentUsersTwitterMessage() {
 		}
 		return true
 	}
+
 	go func() {
 		time.Sleep(time.Second * 60)
-		allowTweet = true
-		if !areUsersEqual(s.MainRoom.Users, usersSnapshot) {
+		s.twitter.allowTweet = true
+
+		if areUsersEqual(s.mainRoom.AllUsers(), usersSnapshot) {
 			return
 		}
-		s.Log.Println("Sending twitter update")
-		names := make([]string, 0, len(s.MainRoom.Users))
-		for _, us := range s.MainRoom.Users {
-			names = append(names, us.Name)
+
+		s.Log().Println("Sending twitter update")
+		names := make([]string, 0, len(s.MainRoom().AllUsers()))
+		for _, us := range s.MainRoom().AllUsers() {
+			names = append(names, us.Name())
 		}
-		t, _, err := s.twitterClient.Statuses.Update("People on Devzat rn: "+stripansi.Strip(fmt.Sprint(names))+"\nJoin em with \"ssh devzat.hackclub.com\"\nUptime: "+pkg.PrintPrettyDuration(time.Since(s.startupTime)), nil)
+
+		t, _, err := s.twitter.client.Statuses.Update("People on Devzat rn: "+stripansi.Strip(fmt.Sprint(names))+"\nJoin em with \"ssh devzat.hackclub.com\"\nUptime: "+util.PrintPrettyDuration(time.Since(s.startupTime)), nil)
 		if err != nil {
 			if !strings.Contains(err.Error(), "twitter: 187 Status is a duplicate.") {
-				s.MainRoom.Broadcast(s.MainRoom.Bot.Name(), "err: "+err.Error())
+				s.mainRoom.Broadcast(s.mainRoom.Bot().Name(), "err: "+err.Error())
 			}
-			s.Log.Println("Got twitter err", err)
+			s.Log().Println("Got twitter err", err)
 			return
 		}
-		s.MainRoom.Broadcast(s.MainRoom.Bot.Name(), "https\\://twitter.com/"+t.User.ScreenName+"/status/"+t.IDStr)
+
+		s.mainRoom.Broadcast(s.mainRoom.Bot().Name(), "https\\://twitter.com/"+t.User.ScreenName+"/status/"+t.IDStr)
 	}()
-}
-
-func (s *Server) loadTwitterClient() {
-	d, err := ioutil.ReadFile("twitter-creds.json")
-
-	if os.IsNotExist(err) {
-		s.OfflineTwitter = true
-		s.Log.Println("Did not find twitter-creds.json. Enabling offline mode.")
-	} else if err != nil {
-		panic(err)
-	}
-
-	if s.OfflineTwitter {
-		return
-	}
-
-	twitterCreds := new(TwitterCreds)
-	err = json.Unmarshal(d, twitterCreds)
-	if err != nil {
-		panic(err)
-	}
-	config := oauth1.NewConfig(twitterCreds.ConsumerKey, twitterCreds.ConsumerSecret)
-	token := oauth1.NewToken(twitterCreds.AccessToken, twitterCreds.AccessTokenSecret)
-	httpClient := config.Client(oauth1.NoContext, token)
-	s.twitterClient = twitter.NewClient(httpClient)
 }
