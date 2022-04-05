@@ -26,9 +26,7 @@ import (
 )
 
 var (
-	port        = 22
-	scrollback  = 16
-	profilePort = 5555
+	scrollback = 16
 
 	mainRoom         = &room{"#main", make([]*user, 0, 10), sync.Mutex{}}
 	rooms            = map[string]*room{mainRoom.name: mainRoom}
@@ -93,7 +91,7 @@ type backlogMessage struct {
 // TODO: have a web dashboard that shows logs
 func main() {
 	go func() {
-		err := http.ListenAndServe(fmt.Sprintf(":%d", profilePort), nil)
+		err := http.ListenAndServe(fmt.Sprintf(":%d", Config.ProfilePort), nil)
 		if err != nil {
 			l.Println(err)
 		}
@@ -130,26 +128,17 @@ func main() {
 		u.repl()
 	})
 	var err error
-	if os.Getenv("PORT") != "" {
-		port, err = strconv.Atoi(os.Getenv("PORT"))
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-	}
 
-	fmt.Printf("Starting chat server on port %d and profiling on port %d\n", port, profilePort)
+	fmt.Printf("Starting chat server on port %d and profiling on port %d\n", Config.Port, Config.ProfilePort)
 	go getMsgsFromSlack()
 	go func() {
-		if port == 22 {
-			fmt.Println("Also starting chat server on port 443")
-			err := ssh.ListenAndServe(":443", nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"))
-			if err != nil {
-				fmt.Println(err)
-			}
+		fmt.Println("Also starting chat server on port", Config.AltPort)
+		err := ssh.ListenAndServe(fmt.Sprintf(":%d", Config.AltPort), nil, ssh.HostKeyFile(Config.KeyFile))
+		if err != nil {
+			fmt.Println(err)
 		}
 	}()
-	err = ssh.ListenAndServe(fmt.Sprintf(":%d", port), nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"), ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
+	err = ssh.ListenAndServe(fmt.Sprintf(":%d", Config.Port), nil, ssh.HostKeyFile(Config.KeyFile), ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
 		return true // allow all keys, this lets us hash pubkeys later
 	}))
 	if err != nil {

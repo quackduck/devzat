@@ -5,10 +5,12 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
+	"strconv"
 )
 
 type config struct {
-	SSHPort     int    `yaml:"ssh_port"`
+	Port        int    `yaml:"port"`
+	AltPort     int    `yaml:"alt_port"`
 	ProfilePort int    `yaml:"profile_port"`
 	DataDir     string `yaml:"data_dir"`
 	KeyFile     string `yaml:"key_file"`
@@ -47,10 +49,11 @@ var (
 	// TODO: use this config!!
 
 	Config = config{ // first stores default config
-		SSHPort:     2221,
+		Port:        2221,
+		AltPort:     8080,
 		ProfilePort: 5555,
-		DataDir:     "./devzat-data",
-		KeyFile:     "./devzat-sshkey",
+		DataDir:     "devzat-data",
+		KeyFile:     "devzat-sshkey",
 
 		IntegrationConfig: "",
 	}
@@ -91,6 +94,11 @@ func init() {
 	err = yaml.UnmarshalStrict(d, &Config)
 	errCheck(err)
 	fmt.Println("Config loaded from " + cfgFile)
+
+	if os.Getenv("PORT") != "" {
+		Config.Port, err = strconv.Atoi(os.Getenv("PORT"))
+		errCheck(err)
+	}
 
 	if Config.IntegrationConfig != "" {
 		d, err = ioutil.ReadFile(Config.IntegrationConfig)
