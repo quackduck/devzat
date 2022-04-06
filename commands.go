@@ -249,14 +249,39 @@ func devmonkCMD(line string, u *user) {
 	start := time.Now()
 	line, err := u.term.ReadLine()
 	if err == term.ErrPasteIndicator { // TODO: doesn't work for some reason?
-		u.room.broadcast("devbot", "SMH did you know that "+u.name+" tried to cheat in a typing game?")
+		u.room.broadcast(devbot, "SMH did you know that "+u.name+" tried to cheat in a typing game?")
 		return
 	}
 	dur := time.Since(start)
-	u.room.broadcast("devbot", "Okay "+u.name+", you typed that in "+dur.Truncate(time.Second/10).String()+" so your speed is "+
+
+	accuracy := 100.0
+	// analyze correctness
+	if line != text {
+		wrongWords := 0
+		correct := strings.Fields(line)
+		test := strings.Fields(text)
+		if len(correct) > len(test) {
+			wrongWords += len(correct) - len(test)
+			correct = correct[:len(test)]
+		} else {
+			wrongWords += len(test) - len(correct)
+			test = test[:len(correct)]
+		}
+		for i := 0; i < len(correct); i++ {
+			if correct[i] != test[i] {
+				wrongWords++
+			}
+		}
+		accuracy -= 100 * float64(wrongWords) / float64(len(test))
+		if accuracy < 0.0 {
+			accuracy = 0.0
+		}
+	}
+
+	u.room.broadcast(devbot, "Okay "+u.name+", you typed that in "+dur.Truncate(time.Second/10).String()+" so your speed is "+
 		strconv.FormatFloat(
 			float64(len(strings.Fields(text)))/dur.Minutes(), 'f', 1, 64,
-		)+" wpm",
+		)+" wpm"+" with accuracy "+strconv.FormatFloat(accuracy, 'f', 1, 64)+"%",
 	)
 }
 
