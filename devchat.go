@@ -35,8 +35,7 @@ var (
 	idsInMinToTimes  = make(map[string]int, 10) // TODO: maybe add some IP-based factor to disallow rapid key-gen attempts
 	antispamMessages = make(map[string]int)
 
-	logfile, _  = os.OpenFile("log.txt", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0666)
-	l           = log.New(io.MultiWriter(logfile, os.Stdout), "", log.Ldate|log.Ltime|log.Lshortfile)
+	l           *log.Logger
 	devbot      = "" // initialized in main
 	startupTime = time.Now()
 )
@@ -90,6 +89,12 @@ type backlogMessage struct {
 
 // TODO: have a web dashboard that shows logs
 func main() {
+	logfile, err := os.OpenFile(Config.DataDir+"/log.txt", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		l.Println(err)
+		return
+	}
+	l = log.New(io.MultiWriter(logfile, os.Stdout), "", log.Ldate|log.Ltime|log.Lshortfile)
 	go func() {
 		err := http.ListenAndServe(fmt.Sprintf(":%d", Config.ProfilePort), nil)
 		if err != nil {
@@ -127,7 +132,6 @@ func main() {
 		}()
 		u.repl()
 	})
-	var err error
 
 	fmt.Printf("Starting chat server on port %d and profiling on port %d\n", Config.Port, Config.ProfilePort)
 	go getMsgsFromSlack()

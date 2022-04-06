@@ -46,8 +46,6 @@ type slackInfo struct {
 }
 
 var (
-	// TODO: use this config!!
-
 	Config = config{ // first stores default config
 		Port:        2221,
 		AltPort:     8080,
@@ -94,6 +92,9 @@ func init() {
 	err = yaml.UnmarshalStrict(d, &Config)
 	errCheck(err)
 	fmt.Println("Config loaded from " + cfgFile)
+
+	err = os.MkdirAll(Config.DataDir, 0755)
+	errCheck(err)
 
 	if os.Getenv("PORT") != "" {
 		Config.Port, err = strconv.Atoi(os.Getenv("PORT"))
