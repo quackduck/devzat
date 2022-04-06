@@ -5,6 +5,7 @@ import (
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
+	"math/rand"
 	"runtime/debug"
 	"sort"
 	"strconv"
@@ -15,6 +16,7 @@ import (
 	"github.com/alecthomas/chroma"
 	chromastyles "github.com/alecthomas/chroma/styles"
 	markdown "github.com/quackduck/go-term-markdown"
+	"github.com/quackduck/term"
 	"github.com/shurcooL/tictactoe"
 )
 
@@ -39,6 +41,7 @@ var (
 		{"clear", clearCMD, "", "Clear the screen"},
 		{"hang", hangCMD, "<char|word>", "Play hangman"}, // won't actually run, here just to show in docs
 		{"tic", ticCMD, "<cell num>", "Play tic tac toe!"},
+		{"devmonk", devmonkCMD, "", "Test your typing speed"},
 		{"cd", cdCMD, "#room|user", "Join #room, DM user or run cd to see a list"}, // won't actually run, here just to show in docs
 		{"tz", tzCMD, "<zone> [24h]", "Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h"},
 		{"nick", nickCMD, "<name>", "Change your username"},
@@ -234,6 +237,27 @@ func dmRoomCMD(line string, u *user) {
 		return
 	}
 	u.messaging.writeln(u.name+" -> ", line)
+}
+
+// named devmonk at the request of a certain ced
+func devmonkCMD(line string, u *user) {
+	sentences := []string{"I really want to go to work, but I am too sick to drive.", "The fence was confused about whether it was supposed to keep things in or keep things out.", "He found the end of the rainbow and was surprised at what he found there.", "He had concluded that pigs must be able to fly in Hog Heaven.", "I just wanted to tell you I could see the love you have for your child by the way you look at her.", "We will not allow you to bring your pet armadillo along.", "The father died during childbirth.", "I covered my friend in baby oil.", "Cursive writing is the best way to build a race track.", "My Mum tries to be cool by saying that she likes all the same things that I do.", "The sky is clear; the stars are twinkling.", "Flash photography is best used in full sunlight.", "The rusty nail stood erect, angled at a 45-degree angle, just waiting for the perfect barefoot to come along.", "People keep telling me \"orange\" but I still prefer \"pink\".", "Peanut butter and jelly caused the elderly lady to think about her past.", "She always had an interesting perspective on why the world must be flat.", "People who insist on picking their teeth with their elbows are so annoying!", "Joe discovered that traffic cones make excellent megaphones.", "They say people remember important moments in their life well, yet no one even remembers their own birth.", "Purple is the best city in the forest.", "The book is in front of the table.", "Everyone was curious about the large white blimp that appeared overnight.", "He wondered if she would appreciate his toenail collection.", "Situps are a terrible way to end your day.", "He barked orders at his daughters but they just stared back with amusement.", "She couldn't decide of the glass was half empty or half full so she drank it.", "It caught him off guard that space smelled of seared steak.", "There are few things better in life than a slice of pie.", "After exploring the abandoned building, he started to believe in ghosts.", "This is a Japanese doll.", "I've never seen a more beautiful brandy glass filled with wine.", "Don't piss in my garden and tell me you're trying to help my plants grow.", "She looked at the masterpiece hanging in the museum but all she could think is that her five-year-old could do better.", "Nobody loves a pig wearing lipstick.", "She always speaks to him in a loud voice.", "The teens wondered what was kept in the red shed on the far edge of the school grounds.", "I'll have you know I've written over fifty novels", "He didn't understand why the bird wanted to ride the bicycle.", "Potato wedges probably are not best for relationships.", "Baby wipes are made of chocolate stardust.", "Lucifer was surprised at the amount of life at Death Valley.", "She was too busy always talking about what she wanted to do to actually do any of it.", "The sudden rainstorm washed crocodiles into the ocean.", "I used to live in my neighbor's fishpond, but the aesthetic wasn't to my taste.", "He kept telling himself that one day it would all somehow make sense.", "The random sentence generator generated a random sentence about a random sentence.", "The reservoir water level continued to lower while we enjoyed our long shower.", "A song can make or ruin a person’s day if they let it get to them.", "He stomped on his fruit loops and thus became a cereal killer.", "I know many children ask for a pony, but I wanted a bicycle with rockets strapped to it."}
+	text := sentences[rand.Intn(len(sentences))]
+	u.writeln("devbot", "Okay type this text: \n\n> "+text)
+	u.term.SetPrompt("> ")
+	defer u.term.SetPrompt(u.name + ": ")
+	start := time.Now()
+	line, err := u.term.ReadLine()
+	if err == term.ErrPasteIndicator { // TODO: doesn't work for some reason?
+		u.room.broadcast("devbot", "SMH did you know that "+u.name+" tried to cheat in a typing game?")
+		return
+	}
+	dur := time.Since(start)
+	u.room.broadcast("devbot", "Okay "+u.name+", you typed that in "+dur.Truncate(time.Second/10).String()+" so your speed is "+
+		strconv.FormatFloat(
+			float64(len(strings.Fields(text)))/dur.Minutes(), 'f', 1, 64,
+		)+" wpm",
+	)
 }
 
 func ticCMD(rest string, u *user) {
