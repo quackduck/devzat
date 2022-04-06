@@ -115,8 +115,10 @@ func main() {
 			l.Println("Broadcast taking too long, exiting server early.")
 			os.Exit(4)
 		})
-		universeBroadcast(devbot, "Server going down! This is probably because it is being updated. Try joining back immediately.  \n"+
-			"If you still can't join, try joining back in 2 minutes. If you _still_ can't join, make an issue at github.com/quackduck/devzat/issues")
+		for _, r := range rooms {
+			r.broadcast(devbot, "Server going down! This is probably because it is being updated. Try joining back immediately.  \n"+
+				"If you still can't join, try joining back in 2 minutes. If you _still_ can't join, make an issue at github.com/quackduck/devzat/issues")
+		}
 		os.Exit(0)
 	}()
 	ssh.Handle(func(s ssh.Session) {
@@ -147,12 +149,6 @@ func main() {
 	}))
 	if err != nil {
 		fmt.Println(err)
-	}
-}
-
-func universeBroadcast(senderName, msg string) {
-	for _, r := range rooms {
-		r.broadcast(senderName, msg)
 	}
 }
 
@@ -205,8 +201,6 @@ func autocompleteCallback(u *user, line string, pos int, key rune) (string, int,
 		if toAdd != "" {
 			return line + toAdd, pos + len(toAdd), true
 		}
-		//return line + toAdd + " ", pos + len(toAdd) + 1, true
-
 	}
 	return "", pos, false
 }
@@ -229,7 +223,7 @@ func userMentionAutocomplete(u *user, words []string) string {
 	return ""
 }
 
-func roomAutocomplete(u *user, words []string) string {
+func roomAutocomplete(_ *user, words []string) string {
 	// trying to refer to a room?
 	if len(words) > 0 && words[len(words)-1][0] == '#' {
 		// don't slice the # off, since the room name includes it
@@ -547,7 +541,6 @@ func (u *user) repl() {
 
 		u.term.SetPrompt(u.name + ": ")
 
-		//fmt.Println("window", u.win)
 		if hasNewlines {
 			calculateLinesTaken(u, u.name+": "+line, u.win.Width)
 		} else {

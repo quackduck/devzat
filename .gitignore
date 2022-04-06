@@ -16,3 +16,4 @@ twitter-creds.json.bak
 devzat-creds.yml
 devzat-sshkey
 admins.json
+*.bak
