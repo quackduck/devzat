@@ -9,11 +9,12 @@ import (
 )
 
 type config struct {
-	Port        int    `yaml:"port"`
-	AltPort     int    `yaml:"alt_port"`
-	ProfilePort int    `yaml:"profile_port"`
-	DataDir     string `yaml:"data_dir"`
-	KeyFile     string `yaml:"key_file"`
+	Port        int               `yaml:"port"`
+	AltPort     int               `yaml:"alt_port"`
+	ProfilePort int               `yaml:"profile_port"`
+	DataDir     string            `yaml:"data_dir"`
+	KeyFile     string            `yaml:"key_file"`
+	Admins      map[string]string `yaml:"admins"`
 
 	IntegrationConfig string `yaml:"integration_config"`
 }

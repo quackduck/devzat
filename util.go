@@ -6,7 +6,6 @@ import (
 	_ "embed"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"math"
 	"math/rand"
@@ -20,25 +19,8 @@ import (
 )
 
 var (
-	art    = getASCIIArt()
-	admins = getAdmins()
+	art = getASCIIArt()
 )
-
-func getAdmins() map[string]string {
-	data, err := ioutil.ReadFile(Config.DataDir + "/admins.json")
-	if err != nil {
-		fmt.Println("Error reading admins.json: " + err.Error() + ". Make an admins.json file to add admins.")
-		return nil
-	}
-	var adminsList map[string]string // id to info
-	err = json.Unmarshal(data, &adminsList)
-	if err != nil {
-		fmt.Println("Error in admins.json formatting.")
-		return nil
-	}
-	fmt.Println(adminsList)
-	return adminsList
-}
 
 func getASCIIArt() string {
 	b, _ := ioutil.ReadFile(Config.DataDir + "/art.txt")
@@ -85,7 +67,7 @@ func autogenCommands(cmds []cmd) string {
 
 // check if a user is an admin
 func auth(u *user) bool {
-	_, ok := admins[u.id]
+	_, ok := Config.Admins[u.id]
 	return ok
 }
 
