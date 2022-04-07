@@ -6,12 +6,12 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"math/rand"
+	"os"
 	"runtime/debug"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
-	"os"
 	"time"
 
 	"github.com/alecthomas/chroma"
