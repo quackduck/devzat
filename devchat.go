@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"math"
 	"math/rand"
@@ -510,62 +509,50 @@ func (u *user) displayPronouns() string {
 func (u *user) savePrefs() error {
 	oldname := u.Name
 	u.Name = stripansi.Strip(u.Name)
-	saved, err := json.Marshal(u)
+	data, err := json.Marshal(u)
 	u.Name = oldname
 	if err != nil {
 		return err
 	}
-	save := filepath.Join(Config.DataDir, "/devzat")
-	err = os.Mkdir(save, 0755)
-	if err != nil {
-		return err
-	}
-	save = filepath.Join(save, u.id)
-
-	f, err := os.Create(save)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	_, err = f.Write(saved)
-	if err != nil {
-		return err
-	}
+	saveTo := filepath.Join(Config.DataDir, "user-prefs")
+	os.MkdirAll(saveTo, 0755)
+	saveTo = filepath.Join(saveTo, u.id+".json")
+	os.WriteFile(saveTo, data, 0644)
 	return nil
 }
 
 func (u *user) loadPrefs() error {
-	save := filepath.Join(Config.DataDir, "/devzat", u.id)
+	save := filepath.Join(Config.DataDir, "user-prefs", u.id+".json")
 
-	contents, err := ioutil.ReadFile(save)
+	data, err := os.ReadFile(save)
 	if err != nil {
 		return err
 	}
 
-	export := user{}
-	err = json.Unmarshal(contents, &export)
+	temp := user{}
+	err = json.Unmarshal(data, &temp)
 	if err != nil {
 		return err
 	}
 
-	if !export.Autoload {
+	if !temp.Autoload {
 		fmt.Println("Not loading")
 		return nil
 	}
 
-	err = u.pickUsername(export.Name)
+	err = u.pickUsername(temp.Name)
 	if err != nil {
 		return err
 	}
-	u.Pronouns = export.Pronouns
-	u.Bell = export.Bell
-	u.PingEverytime = export.PingEverytime
-	u.FormatTime24 = export.FormatTime24
+	u.Pronouns = temp.Pronouns
+	u.Bell = temp.Bell
+	u.PingEverytime = temp.PingEverytime
+	u.FormatTime24 = temp.FormatTime24
 	// u.Color = export.Colo
-	u.ColorBG = export.ColorBG
-	u.Timezone = export.Timezone
-	u.Autoload = export.Autoload
-	err = u.changeColor(export.Color)
+	u.ColorBG = temp.ColorBG
+	u.Timezone = temp.Timezone
+	u.Autoload = temp.Autoload
+	err = u.changeColor(temp.Color)
 	if err != nil {
 		return err
 	}
