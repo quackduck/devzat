@@ -223,7 +223,10 @@ func clearCMD(_ string, u *user) {
 	u.term.Write([]byte("\033[H\033[2J"))
 }
 
-func usersCMD(_ string, u *user) {
+func usersCMD(rest string, u *user) {
+	if rest != "" {
+		return
+	}
 	u.room.broadcast("", printUsersInRoom(u.room))
 }
 
@@ -321,7 +324,10 @@ func ticCMD(rest string, u *user) {
 	}
 }
 
-func exitCMD(_ string, u *user) {
+func exitCMD(rest string, u *user) {
+	if rest != "" {
+		return
+	}
 	u.close(u.name + red.Paint(" has left the chat"))
 }
 
@@ -553,7 +559,10 @@ func colorCMD(rest string, u *user) {
 	}
 }
 
-func adminsCMD(_ string, u *user) {
+func adminsCMD(rest string, u *user) {
+	if rest != "" {
+		return
+	}
 	msg := "Admins:  \n"
 	for i := range Config.Admins {
 		msg += Config.Admins[i] + ": " + i + "  \n"
@@ -561,7 +570,10 @@ func adminsCMD(_ string, u *user) {
 	u.room.broadcast(devbot, msg)
 }
 
-func peopleCMD(_ string, u *user) {
+func peopleCMD(rest string, u *user) {
+	if rest != "" {
+		return
+	}
 	u.room.broadcast("", `
 **Hack Club members**  
 Zach Latta     - Founder of Hack Club  
@@ -599,7 +611,10 @@ Harsh           @harshb__
 **And many more have joined!**`)
 }
 
-func helpCMD(_ string, u *user) {
+func helpCMD(rest string, u *user) {
+	if rest != "" {
+		return
+	}
 	u.room.broadcast("", `Welcome to Devzat! Devzat is chat over SSH: github.com/quackduck/devzat  
 Because there's SSH apps on all platforms, even on mobile, you can join from anywhere.
 
@@ -747,11 +762,17 @@ func pronounsCMD(line string, u *user) {
 	u.room.broadcast(devbot, u.name+" now goes by "+u.displayPronouns())
 }
 
-func emojisCMD(_ string, u *user) {
+func emojisCMD(rest string, u *user) {
+	if rest != "" {
+		return
+	}
 	u.room.broadcast(devbot, "Check out https\\://github.com/ikatyang/emoji-cheat-sheet")
 }
 
-func commandsRestCMD(_ string, u *user) {
+func commandsRestCMD(rest string, u *user) {
+	if rest != "" {
+		return
+	}
 	u.room.broadcast("", "The rest  \n"+autogenCommands(cmdsRest))
 }
 
