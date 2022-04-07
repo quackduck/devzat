@@ -1,10 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"strings"
 	"time"
 
@@ -14,20 +11,12 @@ import (
 )
 
 var (
-	client     = loadTwitterClient()
+	client     *twitter.Client
 	allowTweet = true
 )
 
-// Credentials stores Twitter creds
-type Credentials struct {
-	ConsumerKey       string
-	ConsumerSecret    string
-	AccessToken       string
-	AccessTokenSecret string
-}
-
 func sendCurrentUsersTwitterMessage() {
-	if offlineTwitter {
+	if Integrations.Twitter == nil {
 		return
 	}
 	// TODO: count all users in all rooms
@@ -73,28 +62,13 @@ func sendCurrentUsersTwitterMessage() {
 	}()
 }
 
-func loadTwitterClient() *twitter.Client {
-	d, err := ioutil.ReadFile("twitter-creds.json")
-
-	if os.IsNotExist(err) {
-		offlineTwitter = true
-		l.Println("Did not find twitter-creds.json. Enabling offline mode.")
-	} else if err != nil {
-		panic(err)
+func twitterInit() { // called by init() in config.go
+	if Integrations.Twitter == nil {
+		return
 	}
 
-	if offlineTwitter {
-		return nil
-	}
-
-	twitterCreds := new(Credentials)
-	err = json.Unmarshal(d, twitterCreds)
-	if err != nil {
-		panic(err)
-	}
-	config := oauth1.NewConfig(twitterCreds.ConsumerKey, twitterCreds.ConsumerSecret)
-	token := oauth1.NewToken(twitterCreds.AccessToken, twitterCreds.AccessTokenSecret)
+	config := oauth1.NewConfig(Integrations.Twitter.ConsumerKey, Integrations.Twitter.ConsumerSecret)
+	token := oauth1.NewToken(Integrations.Twitter.AccessToken, Integrations.Twitter.AccessTokenSecret)
 	httpClient := config.Client(oauth1.NoContext, token)
-	t := twitter.NewClient(httpClient)
-	return t
+	client = twitter.NewClient(httpClient)
 }

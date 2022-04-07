@@ -6,7 +6,6 @@ import (
 	_ "embed"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"math"
 	"math/rand"
@@ -20,29 +19,13 @@ import (
 )
 
 var (
-	art    = getASCIIArt()
-	admins = getAdmins()
+	art = getASCIIArt()
 )
 
-func getAdmins() map[string]string {
-	data, err := ioutil.ReadFile("admins.json")
-	if err != nil {
-		fmt.Println("Error reading admins.json:", err, ". Make an admins.json file to add admins.")
-		return nil
-	}
-	var adminsList map[string]string // id to info
-	err = json.Unmarshal(data, &adminsList)
-	if err != nil {
-		fmt.Println("Error in admins.json formatting.")
-		return nil
-	}
-	return adminsList
-}
-
 func getASCIIArt() string {
-	b, _ := ioutil.ReadFile("art.txt")
+	b, _ := ioutil.ReadFile(Config.DataDir + "/art.txt")
 	if b == nil {
-		return "sowwy, no art was found, please slap your developer and tell em to add an art.txt file"
+		return "sorry, no art was found, please slap your developer and tell em to add a " + Config.DataDir + "/art.txt file"
 	}
 	return string(b)
 }
@@ -84,7 +67,7 @@ func autogenCommands(cmds []cmd) string {
 
 // check if a user is an admin
 func auth(u *user) bool {
-	_, ok := admins[u.id]
+	_, ok := Config.Admins[u.id]
 	return ok
 }
 
@@ -145,35 +128,35 @@ func userDuplicate(r *room, a string) (*user, bool) {
 }
 
 func saveBans() {
-	f, err := os.Create("bans.json")
+	f, err := os.Create(Config.DataDir + "/bans.json")
 	if err != nil {
 		l.Println(err)
 		return
 	}
+	defer f.Close()
 	j := json.NewEncoder(f)
 	j.SetIndent("", "   ")
 	err = j.Encode(bans)
 	if err != nil {
-		rooms["#main"].broadcast(devbot, "error saving bans: "+err.Error())
+		mainRoom.broadcast(devbot, "error saving bans: "+err.Error())
 		l.Println(err)
 		return
 	}
-	f.Close()
 }
 
 func readBans() {
-	f, err := os.Open("bans.json")
+	f, err := os.Open(Config.DataDir + "/bans.json")
 	if err != nil && !os.IsNotExist(err) { // if there is an error and it is not a "file does not exist" error
 		l.Println(err)
 		return
 	}
+	defer f.Close()
 	err = json.NewDecoder(f).Decode(&bans)
 	if err != nil {
-		rooms["#main"].broadcast(devbot, "error reading bans: "+err.Error())
+		mainRoom.broadcast(devbot, "error reading bans: "+err.Error())
 		l.Println(err)
 		return
 	}
-	f.Close()
 }
 
 func findUserByName(r *room, name string) (*user, bool) {

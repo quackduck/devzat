@@ -29,12 +29,7 @@ import (
 )
 
 var (
-	port        = 22
-	scrollback  = 16
-	profilePort = 5555
-	// should this instance run offline? (should it not connect to slack or twitter?)
-	offlineSlack   = os.Getenv("DEVZAT_OFFLINE_SLACK") != ""
-	offlineTwitter = os.Getenv("DEVZAT_OFFLINE_TWITTER") != ""
+	scrollback = 16
 
 	mainRoom         = &room{"#main", make([]*user, 0, 10), sync.Mutex{}}
 	rooms            = map[string]*room{mainRoom.name: mainRoom}
@@ -43,8 +38,7 @@ var (
 	idsInMinToTimes  = make(map[string]int, 10) // TODO: maybe add some IP-based factor to disallow rapid key-gen attempts
 	antispamMessages = make(map[string]int)
 
-	logfile, _  = os.OpenFile("log.txt", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0666)
-	l           = log.New(io.MultiWriter(logfile, os.Stdout), "", log.Ldate|log.Ltime|log.Lshortfile)
+	l           *log.Logger
 	devbot      = "" // initialized in main
 	startupTime = time.Now()
 )
@@ -100,8 +94,14 @@ type backlogMessage struct {
 
 // TODO: have a web dashboard that shows logs
 func main() {
+	logfile, err := os.OpenFile(Config.DataDir+"/log.txt", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		l.Println(err)
+		return
+	}
+	l = log.New(io.MultiWriter(logfile, os.Stdout), "", log.Ldate|log.Ltime|log.Lshortfile)
 	go func() {
-		err := http.ListenAndServe(fmt.Sprintf(":%d", profilePort), nil)
+		err := http.ListenAndServe(fmt.Sprintf(":%d", Config.ProfilePort), nil)
 		if err != nil {
 			l.Println(err)
 		}
@@ -120,8 +120,10 @@ func main() {
 			l.Println("Broadcast taking too long, exiting server early.")
 			os.Exit(4)
 		})
-		universeBroadcast(devbot, "Server going down! This is probably because it is being updated. Try joining back immediately.  \n"+
-			"If you still can't join, try joining back in 2 minutes. If you _still_ can't join, make an issue at github.com/quackduck/devzat/issues")
+		for _, r := range rooms {
+			r.broadcast(devbot, "Server going down! This is probably because it is being updated. Try joining back immediately.  \n"+
+				"If you still can't join, try joining back in 2 minutes. If you _still_ can't join, make an issue at github.com/quackduck/devzat/issues")
+		}
 		os.Exit(0)
 	}()
 	ssh.Handle(func(s ssh.Session) {
@@ -137,43 +139,21 @@ func main() {
 		}()
 		u.repl()
 	})
-	var err error
-	if os.Getenv("PORT") != "" {
-		port, err = strconv.Atoi(os.Getenv("PORT"))
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-	}
 
-	// Check for global offline for backwards compatibility
-	if os.Getenv("DEVZAT_OFFLINE") != "" {
-		offlineSlack = true
-		offlineTwitter = true
-	}
-
-	fmt.Printf("Starting chat server on port %d and profiling on port %d\n", port, profilePort)
+	fmt.Printf("Starting chat server on port %d and profiling on port %d\n", Config.Port, Config.ProfilePort)
 	go getMsgsFromSlack()
 	go func() {
-		if port == 22 {
-			fmt.Println("Also starting chat server on port 443")
-			err = ssh.ListenAndServe(":443", nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"))
-			if err != nil {
-				fmt.Println(err)
-			}
+		fmt.Println("Also starting chat server on port", Config.AltPort)
+		err := ssh.ListenAndServe(fmt.Sprintf(":%d", Config.AltPort), nil, ssh.HostKeyFile(Config.KeyFile))
+		if err != nil {
+			fmt.Println(err)
 		}
 	}()
-	err = ssh.ListenAndServe(fmt.Sprintf(":%d", port), nil, ssh.HostKeyFile(os.Getenv("HOME")+"/.ssh/id_rsa"), ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
+	err = ssh.ListenAndServe(fmt.Sprintf(":%d", Config.Port), nil, ssh.HostKeyFile(Config.KeyFile), ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
 		return true // allow all keys, this lets us hash pubkeys later
 	}))
 	if err != nil {
 		fmt.Println(err)
-	}
-}
-
-func universeBroadcast(senderName, msg string) {
-	for _, r := range rooms {
-		r.broadcast(senderName, msg)
 	}
 }
 
@@ -226,8 +206,6 @@ func autocompleteCallback(u *user, line string, pos int, key rune) (string, int,
 		if toAdd != "" {
 			return line + toAdd, pos + len(toAdd), true
 		}
-		//return line + toAdd + " ", pos + len(toAdd) + 1, true
-
 	}
 	return "", pos, false
 }
@@ -250,7 +228,7 @@ func userMentionAutocomplete(u *user, words []string) string {
 	return ""
 }
 
-func roomAutocomplete(u *user, words []string) string {
+func roomAutocomplete(_ *user, words []string) string {
 	// trying to refer to a room?
 	if len(words) > 0 && words[len(words)-1][0] == '#' {
 		// don't slice the # off, since the room name includes it
@@ -657,7 +635,6 @@ func (u *user) repl() {
 
 		u.term.SetPrompt(u.Name + ": ")
 
-		//fmt.Println("window", u.win)
 		if hasNewlines {
 			calculateLinesTaken(u, u.Name+": "+line, u.win.Width)
 		} else {
@@ -719,7 +696,7 @@ func replaceSlackEmoji(input string) string {
 
 // accepts a ':' separated list of emoji
 func fetchEmoji(names []string) string {
-	if offlineSlack {
+	if Integrations.Slack == nil {
 		return ""
 	}
 	result := ""
@@ -730,7 +707,7 @@ func fetchEmoji(names []string) string {
 }
 
 func fetchEmojiSingle(name string) string {
-	if offlineSlack {
+	if Integrations.Slack == nil {
 		return ""
 	}
 	r, err := http.Get("https://e.benjaminsmith.dev/" + name)

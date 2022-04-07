@@ -3,8 +3,6 @@ package main
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"io/ioutil"
-	"os"
 	"strconv"
 	"strings"
 
@@ -14,14 +12,13 @@ import (
 )
 
 var (
-	slackChan      = getSendToSlackChan()
-	slackChannelID = "C01T5J557AA" // todo: generalize
-	api            *slack.Client
-	rtm            *slack.RTM
+	slackChan chan string
+	api       *slack.Client
+	rtm       *slack.RTM
 )
 
 func getMsgsFromSlack() {
-	if offlineSlack {
+	if Integrations.Slack == nil {
 		return
 	}
 
@@ -40,7 +37,7 @@ func getMsgsFromSlack() {
 			if !strings.HasPrefix(text, "./hide") {
 				h := sha1.Sum([]byte(u.ID))
 				i, _ := strconv.ParseInt(hex.EncodeToString(h[:2]), 16, 0) // two bytes as an int
-				uslack.Name = yellow.Paint("HC ") + (styles[int(i)%len(styles)]).apply(strings.Fields(u.RealName)[0])
+				uslack.Name = yellow.Paint(Integrations.Slack.Prefix+" ") + (styles[int(i)%len(styles)]).apply(strings.Fields(u.RealName)[0])
 				uslack.isSlack = true
 				runCommands(text, uslack)
 			}
@@ -53,36 +50,23 @@ func getMsgsFromSlack() {
 	}
 }
 
-func getSendToSlackChan() chan string {
-	slackAPI, err := ioutil.ReadFile("slackAPI.txt")
-
-	if os.IsNotExist(err) {
-		offlineSlack = true
-		l.Println("Did not find slackAPI.txt. Enabling offline mode.")
-	} else if err != nil {
-		panic(err)
-	}
-
-	if offlineSlack {
-		msgs := make(chan string, 2)
+func slackInit() { // called by init() in config.go
+	if Integrations.Slack == nil {
+		slackChan = make(chan string, 2)
 		go func() {
-			for range msgs {
+			for range slackChan {
 			}
 		}()
-		return msgs
+		return
 	}
 
-	api = slack.New(string(slackAPI))
+	api = slack.New(Integrations.Slack.Token)
 	rtm = api.NewRTM()
-	msgs := make(chan string, 100)
+	slackChan = make(chan string, 100)
 	go func() {
-		for msg := range msgs {
+		for msg := range slackChan {
 			msg = strings.ReplaceAll(stripansi.Strip(msg), `\n`, "\n")
-			//if strings.HasPrefix(msg, "sshchat: ") { // just in case
-			//	continue
-			//}
-			rtm.SendMessage(rtm.NewOutgoingMessage(msg, slackChannelID))
+			rtm.SendMessage(rtm.NewOutgoingMessage(msg, Integrations.Slack.ChannelID))
 		}
 	}()
-	return msgs
 }
