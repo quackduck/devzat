@@ -23,7 +23,7 @@ While you can use the same key pair that your user account has, it is recommende
 
 Devzat listens on port 2221 for new SSH connections by default. Users can now join using `ssh -p 2221 <server-hostname>`.
 
-Set the environment variable `PORT` to a different port number or edit your config to change what port Devzat listens for SSH connections on.
+Set the environment variable `PORT` to a different port number or edit your config to change what port Devzat listens for SSH connections on. Users would then run `ssh -p <port> <server-hostname>` to join.
 
 ## Configuration
 
@@ -33,27 +33,21 @@ The default location Devzat looks for a config file is `devzat-config.yml` in th
 
 An example config file:
 ```yaml
-port: 2221 # what port to host a server on ($PORT overrides this)
-alt_port: 443 # an alternate port to avoid firewalls
-profile_port: 5555 # what port to host profiling on (unimportant)
-data_dir: devzat-data # where to store data such as bans and logs
-key_file: devzat-sshkey # where the SSH private key is stored
-integration_config: devzat-integrations.yml # where an integration config is stored (optional)
-admins: # a list of admin IDs and notes about them
-  1eab2de20e41abed903ab2f22e7ff56dc059666dbe2ebbce07a8afeece8d0424: 'Shok: school'
-  7f0ee4cba8c8d886d654820c4ea09090dc12be00746b9a64b73faab3f83a85c6: 'Benjamin Smith: hackclub, github.com/Merlin04'
-  09db0042df8c48488e034cd03dfd30dc61a7db35cd7bb8964cd246b958adc1b9: 'Arcade Wise: hackclub, github.com/l3gacyb3ta'
-  12a9f108e7420460864de3d46610f722e69c80b2ac2fb1e2ada34aa952bbd73e: 'jmw: github.com/ciearius'
-  15a0a99e4ece5e7a169a0b7df8df87c7a7805207681df908f92052d3d4103287: 'Emma Trzupek: t0rchedf3rn (RHS)'
-  41fb7ecb8c216491cbe682f2a4c2964db6a9297f74ae48f0ec8bece1089ffec3: 'Leo, gh: GrandWasTaken, added cause idk'
-  111d1c193354309b040854a74aeb15c985d1fbe4390128dd035fe5407c71f2fd: 'elitedino: github.com/elitedino'
-  2433e7c03997d13f9117ded9e36cd2d23bddc4d588b8717c4619bedeb3b7e9ad: '@epic: github.com/TAG-Epic'
-  ac416b02c106e7407e8e53e74b40d96d6f7c11e365c285a8ab825c219f443dcd: 'Tommy Pujol: hackclub'
-  c90cf5ea8a9bf831a9024ecfd9876a7116a2382653a9ce84a6d80b4dcfa2f979: 'cole: github.com/ColeDrain'
+# what port to host a server on ($PORT overrides this)
+port: 2221
+# an alternate port to avoid firewalls
+alt_port: 443
+# what port to host profiling on (unimportant)
+profile_port: 5555
+# where to store data such as bans and logs
+data_dir: devzat-data
+# where the SSH private key is stored
+key_file: devzat-sshkey
+# where an integration config is stored (optional)
+integration_config: devzat-integrations.yml
+# a list of admin IDs and notes about them
+admins:
   d6acd2f5c5a8ef95563883032ef0b7c0239129b2d3672f964e5711b5016e05f5: 'Arkaeriit: github.com/Arkaeriit'
-  e9d47bb4522345d019086d0ed48da8ce491a491923a44c59fd6bfffe6ea73317: 'Arav Narula: twitter'
-  f5c7f9826b6e143f6e9c3920767680f503f259570f121138b2465bb2b052a85d: 'Ella Xu: hackclub'
-  f466ac6b6be43ba8efbac8406a34cf68f6843f2b79119a82726e4ad6e770ec7d: 'electronoob: electronoob.com'
   ff7d1586cdecb9fbd9fcd4c9548522493c29172bc3121d746c83b28993bd723e: 'Ishan Goel: quackduck'
 ```
 
