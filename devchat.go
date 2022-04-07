@@ -58,7 +58,6 @@ type room struct {
 	usersMutex sync.Mutex
 }
 
-// don't forget to update savePrefs() and loadPrefs() if you change this!
 type user struct {
 	Name     string
 	Pronouns []string
@@ -365,7 +364,10 @@ func cleanupRoom(r *room) {
 func (u *user) close(msg string) {
 	u.closeOnce.Do(func() {
 		u.closeQuietly()
-		u.savePrefs()//nolint:errcheck // if it fails, what can we do? The sessions isn't clean
+		err := u.savePrefs()
+		if err != nil {
+			l.Println(err) // not much else we can do
+		}
 		go sendCurrentUsersTwitterMessage()
 		if time.Since(u.joinTime) > time.Minute/2 {
 			msg += ". They were online for " + printPrettyDuration(time.Since(u.joinTime))
@@ -513,19 +515,10 @@ func (u *user) savePrefs() error {
 	if err != nil {
 		return err
 	}
-	devzatDataDir := os.Getenv("DEVZAT_DATA_DIR")
-	if devzatDataDir == "" {
-		devzatDataDir = os.Getenv("XDG_DATA_DIR")
-
-		if devzatDataDir == "" {
-			// According to XDG, this is the default if it's unset
-			devzatDataDir = filepath.Join(os.Getenv("HOME"), ".local", "share")
-		}
-	}
-	save := filepath.Join(devzatDataDir, "/devzat")
+	save := filepath.Join(Config.DataDir, "/devzat")
 	err = os.Mkdir(save, 0755)
 	if err != nil {
-		return err;
+		return err
 	}
 	save = filepath.Join(save, u.id)
 
@@ -542,15 +535,7 @@ func (u *user) savePrefs() error {
 }
 
 func (u *user) loadPrefs() error {
-	devzatDataDir := os.Getenv("DEVZAT_DATA_DIR")
-	if devzatDataDir == "" {
-		devzatDataDir = os.Getenv("XDG_DATA_DIR")
-		if devzatDataDir == "" {
-			devzatDataDir = filepath.Join(os.Getenv("HOME"), ".local", "share")
-		}
-	}
-
-	save := filepath.Join(devzatDataDir, "/devzat", u.id)
+	save := filepath.Join(Config.DataDir, "/devzat", u.id)
 
 	contents, err := ioutil.ReadFile(save)
 	if err != nil {
