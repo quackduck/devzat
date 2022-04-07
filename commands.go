@@ -249,11 +249,11 @@ func devmonkCMD(_ string, u *user) {
 	text := sentences[rand.Intn(len(sentences))]
 	u.writeln(devbot, "Okay type this text: \n\n> "+text)
 	u.term.SetPrompt("> ")
-	defer u.term.SetPrompt(u.name + ": ")
+	defer u.term.SetPrompt(u.Name + ": ")
 	start := time.Now()
 	line, err := u.term.ReadLine()
 	if err == term.ErrPasteIndicator { // TODO: doesn't work for some reason?
-		u.room.broadcast(devbot, "SMH did you know that "+u.name+" tried to cheat in a typing game?")
+		u.room.broadcast(devbot, "SMH did you know that "+u.Name+" tried to cheat in a typing game?")
 		return
 	}
 	dur := time.Since(start)
@@ -282,7 +282,7 @@ func devmonkCMD(_ string, u *user) {
 		}
 	}
 
-	u.room.broadcast(devbot, "Okay "+u.name+", you typed that in "+dur.Truncate(time.Second/10).String()+" so your speed is "+
+	u.room.broadcast(devbot, "Okay "+u.Name+", you typed that in "+dur.Truncate(time.Second/10).String()+" so your speed is "+
 		strconv.FormatFloat(
 			float64(len(strings.Fields(text)))/dur.Minutes(), 'f', 1, 64,
 		)+" wpm"+" with accuracy "+strconv.FormatFloat(accuracy, 'f', 1, 64)+"%",
