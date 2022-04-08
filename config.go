@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-type config struct {
+type ConfigType struct {
 	Port        int               `yaml:"port"`
 	AltPort     int               `yaml:"alt_port"`
 	ProfilePort int               `yaml:"profile_port"`
@@ -18,25 +18,25 @@ type config struct {
 	IntegrationConfig string `yaml:"integration_config"`
 }
 
-// integrations stores information needed by integrations.
+// IntegrationsType stores information needed by integrations.
 // Code that uses this should check if fields are nil.
-type integrations struct {
+type IntegrationsType struct {
 	// Twitter stores the information needed for the Twitter integration.
 	// Check if it is enabled by checking if Twitter is nil.
-	Twitter *twitterInfo `yaml:"twitter"`
+	Twitter *TwitterInfo `yaml:"twitter"`
 	// Slack stores the information needed for the Slack integration.
 	// Check if it is enabled by checking if Slack is nil.
-	Slack *slackInfo `yaml:"slack"`
+	Slack *SlackInfo `yaml:"slack"`
 }
 
-type twitterInfo struct {
+type TwitterInfo struct {
 	ConsumerKey       string `yaml:"consumer_key"`
 	ConsumerSecret    string `yaml:"consumer_secret"`
 	AccessToken       string `yaml:"access_token"`
 	AccessTokenSecret string `yaml:"access_token_secret"`
 }
 
-type slackInfo struct {
+type SlackInfo struct {
 	// Token is the Slack API token
 	Token string `yaml:"token"`
 	// Channel is the Slack channel to post to
@@ -46,7 +46,7 @@ type slackInfo struct {
 }
 
 var (
-	Config = config{ // first stores default config
+	Config = ConfigType{ // first stores default config
 		Port:        2221,
 		AltPort:     8080,
 		ProfilePort: 5555,
@@ -56,7 +56,7 @@ var (
 		IntegrationConfig: "",
 	}
 
-	Integrations = integrations{
+	Integrations = IntegrationsType{
 		Twitter: nil,
 		Slack:   nil,
 	}

@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	art = getASCIIArt()
+	Art = getASCIIArt()
 )
 
 func getASCIIArt() string {
@@ -30,7 +30,7 @@ func getASCIIArt() string {
 	return string(b)
 }
 
-func printUsersInRoom(r *room) string {
+func printUsersInRoom(r *Room) string {
 	names := ""
 	admins := ""
 	for _, us := range r.users {
@@ -55,7 +55,7 @@ func lenString(a string) int {
 	return len([]rune(stripansi.Strip(a)))
 }
 
-func autogenCommands(cmds []cmd) string {
+func autogenCommands(cmds []CMD) string {
 	b := new(bytes.Buffer)
 	w := tabwriter.NewWriter(b, 0, 0, 2, ' ', 0)
 	for _, cmd := range cmds {
@@ -65,8 +65,8 @@ func autogenCommands(cmds []cmd) string {
 	return b.String()
 }
 
-// check if a user is an admin
-func auth(u *user) bool {
+// check if a User is an admin
+func auth(u *User) bool {
 	_, ok := Config.Admins[u.id]
 	return ok
 }
@@ -117,8 +117,8 @@ func mdRender(a string, beforeMessageLen int, lineWidth int) string {
 	return strings.Join(split, "\n")
 }
 
-// Returns true and the user with the same name if the username is taken, false and nil otherwise
-func userDuplicate(r *room, a string) (*user, bool) {
+// Returns true and the User with the same name if the username is taken, false and nil otherwise
+func userDuplicate(r *Room, a string) (*User, bool) {
 	for i := range r.users {
 		if stripansi.Strip(r.users[i].Name) == stripansi.Strip(a) {
 			return r.users[i], true
@@ -130,16 +130,16 @@ func userDuplicate(r *room, a string) (*user, bool) {
 func saveBans() {
 	f, err := os.Create(Config.DataDir + string(os.PathSeparator) + "bans.json")
 	if err != nil {
-		l.Println(err)
+		Log.Println(err)
 		return
 	}
 	defer f.Close()
 	j := json.NewEncoder(f)
 	j.SetIndent("", "   ")
-	err = j.Encode(bans)
+	err = j.Encode(Bans)
 	if err != nil {
-		mainRoom.broadcast(devbot, "error saving bans: "+err.Error())
-		l.Println(err)
+		MainRoom.broadcast(Devbot, "error saving bans: "+err.Error())
+		Log.Println(err)
 		return
 	}
 }
@@ -147,19 +147,19 @@ func saveBans() {
 func readBans() {
 	f, err := os.Open(Config.DataDir + string(os.PathSeparator) + "bans.json")
 	if err != nil && !os.IsNotExist(err) { // if there is an error and it is not a "file does not exist" error
-		l.Println(err)
+		Log.Println(err)
 		return
 	}
 	defer f.Close()
-	err = json.NewDecoder(f).Decode(&bans)
+	err = json.NewDecoder(f).Decode(&Bans)
 	if err != nil {
-		mainRoom.broadcast(devbot, "error reading bans: "+err.Error())
-		l.Println(err)
+		MainRoom.broadcast(Devbot, "error reading bans: "+err.Error())
+		Log.Println(err)
 		return
 	}
 }
 
-func findUserByName(r *room, name string) (*user, bool) {
+func findUserByName(r *Room, name string) (*User, bool) {
 	r.usersMutex.Lock()
 	defer r.usersMutex.Unlock()
 	for _, u := range r.users {
@@ -170,7 +170,7 @@ func findUserByName(r *room, name string) (*user, bool) {
 	return nil, false
 }
 
-func remove(s []*user, a *user) []*user {
+func remove(s []*User, a *User) []*User {
 	for j := range s {
 		if s[j] == a {
 			return append(s[:j], s[j+1:]...)
@@ -179,7 +179,7 @@ func remove(s []*user, a *user) []*user {
 	return s
 }
 
-func devbotChat(room *room, line string) {
+func devbotChat(room *Room, line string) {
 	if strings.Contains(line, "devbot") {
 		if strings.Contains(line, "how are you") || strings.Contains(line, "how you") {
 			devbotRespond(room, []string{"How are _you_",
@@ -256,12 +256,12 @@ func devbotChat(room *room, line string) {
 	}
 }
 
-func devbotRespond(room *room, messages []string, chance int) {
+func devbotRespond(room *Room, messages []string, chance int) {
 	if chance == 100 || chance > rand.Intn(100) {
 		go func() {
 			time.Sleep(time.Second / 2)
 			pick := messages[rand.Intn(len(messages))]
-			room.broadcast(devbot, pick)
+			room.broadcast(Devbot, pick)
 		}()
 	}
 }

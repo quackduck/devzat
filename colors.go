@@ -16,7 +16,7 @@ import (
 func makeFlag(colors []string) func(a string) string {
 	flag := make([]*gchalk.Builder, len(colors))
 	for i := range colors {
-		flag[i] = chalk.WithHex(colors[i])
+		flag[i] = Chalk.WithHex(colors[i])
 	}
 	return func(a string) string {
 		return applyRainbow(flag, a)
@@ -34,23 +34,23 @@ func applyRainbow(rainbow []*gchalk.Builder, a string) string {
 }
 
 var (
-	chalk   = gchalk.New(gchalk.ForceLevel(gchalk.LevelAnsi256))
-	green   = ansi256(1, 5, 1)
-	red     = ansi256(5, 1, 1)
-	cyan    = ansi256(1, 5, 5)
-	magenta = ansi256(5, 1, 5)
-	yellow  = ansi256(5, 5, 1)
-	orange  = ansi256(5, 3, 0)
-	blue    = ansi256(0, 3, 5)
-	white   = ansi256(5, 5, 5)
-	styles  = []*style{
-		{"white", buildStyle(white)},
-		{"red", buildStyle(red)},
+	Chalk   = gchalk.New(gchalk.ForceLevel(gchalk.LevelAnsi256))
+	Green   = ansi256(1, 5, 1)
+	Red     = ansi256(5, 1, 1)
+	Cyan    = ansi256(1, 5, 5)
+	Magenta = ansi256(5, 1, 5)
+	Yellow  = ansi256(5, 5, 1)
+	Orange  = ansi256(5, 3, 0)
+	Blue    = ansi256(0, 3, 5)
+	White   = ansi256(5, 5, 5)
+	Styles  = []*Style{
+		{"white", buildStyle(White)},
+		{"red", buildStyle(Red)},
 		{"coral", buildStyle(ansi256(5, 2, 2))},
-		{"green", buildStyle(green)},
+		{"green", buildStyle(Green)},
 		{"sky", buildStyle(ansi256(3, 5, 5))},
-		{"cyan", buildStyle(cyan)},
-		{"magenta", buildStyle(magenta)},
+		{"cyan", buildStyle(Cyan)},
+		{"magenta", buildStyle(Magenta)},
 		{"pink", buildStyle(ansi256(5, 3, 4))},
 		{"rose", buildStyle(ansi256(5, 0, 2))},
 		{"cranberry", buildStyle(ansi256(3, 0, 1))},
@@ -58,16 +58,16 @@ var (
 		{"fire", buildStyle(ansi256(5, 2, 0))},
 		{"pastel green", buildStyle(ansi256(0, 5, 3))},
 		{"olive", buildStyle(ansi256(4, 5, 1))},
-		{"yellow", buildStyle(yellow)},
-		{"orange", buildStyle(orange)},
-		{"blue", buildStyle(blue)}}
-	secretStyles = []*style{
-		{"ukraine", buildStyle(chalk.WithHex("#005bbb").WithBgHex("#ffd500"))},
-		{"easter", buildStyle(chalk.WithRGB(255, 51, 255).WithBgRGB(255, 255, 0))},
-		{"baby", buildStyle(chalk.WithRGB(255, 51, 255).WithBgRGB(102, 102, 255))},
-		{"hacker", buildStyle(chalk.WithRGB(0, 255, 0).WithBgRGB(0, 0, 0))},
-		{"l33t", buildStyleNoStrip(chalk.WithBgBrightBlack())},
-		{"whiten", buildStyleNoStrip(chalk.WithBgWhite())},
+		{"yellow", buildStyle(Yellow)},
+		{"orange", buildStyle(Orange)},
+		{"blue", buildStyle(Blue)}}
+	SecretStyles = []*Style{
+		{"ukraine", buildStyle(Chalk.WithHex("#005bbb").WithBgHex("#ffd500"))},
+		{"easter", buildStyle(Chalk.WithRGB(255, 51, 255).WithBgRGB(255, 255, 0))},
+		{"baby", buildStyle(Chalk.WithRGB(255, 51, 255).WithBgRGB(102, 102, 255))},
+		{"hacker", buildStyle(Chalk.WithRGB(0, 255, 0).WithBgRGB(0, 0, 0))},
+		{"l33t", buildStyleNoStrip(Chalk.WithBgBrightBlack())},
+		{"whiten", buildStyleNoStrip(Chalk.WithBgWhite())},
 		{"trans", makeFlag([]string{"#55CDFC", "#F7A8B8", "#FFFFFF", "#F7A8B8", "#55CDFC"})},
 		{"gay", makeFlag([]string{"#FF0018", "#FFA52C", "#FFFF41", "#008018", "#0000F9", "#86007D"})},
 		{"lesbian", makeFlag([]string{"#D62E02", "#FD9855", "#FFFFFF", "#D161A2", "#A20160"})},
@@ -79,7 +79,7 @@ var (
 		{"genderfluid", makeFlag([]string{"#FE75A1", "#FFFFFF", "#BE18D6", "#333333", "#333EBC"})},
 		{"agender", makeFlag([]string{"#333333", "#BCC5C6", "#FFFFFF", "#B5F582", "#FFFFFF", "#BCC5C6", "#333333"})},
 		{"rainbow", func(a string) string {
-			rainbow := []*gchalk.Builder{red, orange, yellow, green, cyan, blue, ansi256(2, 2, 5), magenta}
+			rainbow := []*gchalk.Builder{Red, Orange, Yellow, Green, Cyan, Blue, ansi256(2, 2, 5), Magenta}
 			return applyRainbow(rainbow, a)
 		}}}
 )
@@ -88,7 +88,7 @@ func init() {
 	markdown.CurrentTheme = chromastyles.ParaisoDark
 }
 
-type style struct {
+type Style struct {
 	name  string
 	apply func(string) string
 }
@@ -107,15 +107,15 @@ func buildStyleNoStrip(c *gchalk.Builder) func(string) string {
 
 // with r, g and b values from 0 to 5
 func ansi256(r, g, b uint8) *gchalk.Builder {
-	return chalk.WithRGB(255/5*r, 255/5*g, 255/5*b)
+	return Chalk.WithRGB(255/5*r, 255/5*g, 255/5*b)
 }
 
 func bgAnsi256(r, g, b uint8) *gchalk.Builder {
-	return chalk.WithBgRGB(255/5*r, 255/5*g, 255/5*b)
+	return Chalk.WithBgRGB(255/5*r, 255/5*g, 255/5*b)
 }
 
 // Applies color from name
-func (u *user) changeColor(colorName string) error {
+func (u *User) changeColor(colorName string) error {
 	style, err := getStyle(colorName)
 	if err != nil {
 		return err
@@ -151,7 +151,7 @@ func applyColorToData(data string, color string, colorBG string) (string, error)
 
 // Sets either the foreground or the background with a random color if the
 // given name is correct.
-func getRandomColor(name string) *style {
+func getRandomColor(name string) *Style {
 	var foreground bool
 	if name == "random" {
 		foreground = true
@@ -164,32 +164,32 @@ func getRandomColor(name string) *style {
 	g := rand.Intn(6)
 	b := rand.Intn(6)
 	if foreground {
-		return &style{fmt.Sprintf("%03d", r*100+g*10+b), buildStyle(ansi256(uint8(r), uint8(g), uint8(b)))}
+		return &Style{fmt.Sprintf("%03d", r*100+g*10+b), buildStyle(ansi256(uint8(r), uint8(g), uint8(b)))}
 	}
-	return &style{fmt.Sprintf("bg-%03d", r*100+g*10+b), buildStyleNoStrip(bgAnsi256(uint8(r), uint8(g), uint8(b)))}
+	return &Style{fmt.Sprintf("bg-%03d", r*100+g*10+b), buildStyleNoStrip(bgAnsi256(uint8(r), uint8(g), uint8(b)))}
 }
 
 // If the input is a named style, returns it. Otherwise, returns nil.
-func getNamedColor(name string) *style {
-	for i := range styles {
-		if styles[i].name == name {
-			return styles[i]
+func getNamedColor(name string) *Style {
+	for i := range Styles {
+		if Styles[i].name == name {
+			return Styles[i]
 		}
 	}
-	for i := range secretStyles {
-		if secretStyles[i].name == name {
-			return secretStyles[i]
+	for i := range SecretStyles {
+		if SecretStyles[i].name == name {
+			return SecretStyles[i]
 		}
 	}
 	return nil
 }
 
-func getCustomColor(name string) (*style, error) {
+func getCustomColor(name string) (*Style, error) {
 	if strings.HasPrefix(name, "#") {
-		return &style{name, buildStyle(chalk.WithHex(name))}, nil
+		return &Style{name, buildStyle(Chalk.WithHex(name))}, nil
 	}
 	if strings.HasPrefix(name, "bg-#") {
-		return &style{name, buildStyleNoStrip(chalk.WithBgHex(strings.TrimPrefix(name, "bg-")))}, nil
+		return &Style{name, buildStyleNoStrip(Chalk.WithBgHex(strings.TrimPrefix(name, "bg-")))}, nil
 	}
 	if len(name) == 3 || len(name) == 6 {
 		rgbCode := name
@@ -205,9 +205,9 @@ func getCustomColor(name string) (*style, error) {
 				return nil, errors.New("custom colors have values from 0 to 5 smh")
 			}
 			if strings.HasPrefix(name, "bg-") {
-				return &style{name, buildStyleNoStrip(bgAnsi256(uint8(r), uint8(g), uint8(b)))}, nil
+				return &Style{name, buildStyleNoStrip(bgAnsi256(uint8(r), uint8(g), uint8(b)))}, nil
 			}
-			return &style{name, buildStyle(ansi256(uint8(r), uint8(g), uint8(b)))}, nil
+			return &Style{name, buildStyle(ansi256(uint8(r), uint8(g), uint8(b)))}, nil
 		}
 		return nil, err
 	}
@@ -215,20 +215,20 @@ func getCustomColor(name string) (*style, error) {
 }
 
 // Turns name into a style (defaults to nil)
-func getStyle(name string) (*style, error) {
+func getStyle(name string) (*Style, error) {
 	randomColor := getRandomColor(name)
 	if randomColor != nil {
 		return randomColor, nil
 	}
 	if name == "bg-off" {
-		return &style{"bg-off", func(a string) string { return a }}, nil // Used to remove one's background
+		return &Style{"bg-off", func(a string) string { return a }}, nil // Used to remove one's background
 	}
 	namedColor := getNamedColor(name)
 	if namedColor != nil {
 		return namedColor, nil
 	}
 	if strings.HasPrefix(name, "#") {
-		return &style{name, buildStyle(chalk.WithHex(name))}, nil
+		return &Style{name, buildStyle(Chalk.WithHex(name))}, nil
 	}
 	customColor, err := getCustomColor(name)
 	if err != nil {
@@ -237,15 +237,15 @@ func getStyle(name string) (*style, error) {
 	if customColor != nil {
 		return customColor, nil
 	}
-	//s, err := chalk.WithStyle(strings.Split(name, "-")...)
+	//s, err := Chalk.WithStyle(strings.Split(name, "-")...)
 	//if err == nil {
 	//	return &style{name, buildStyle(s)}, nil
 	//}
 
 	return nil, errors.New("Which color? Choose from random, " + strings.Join(func() []string {
-		colors := make([]string, 0, len(styles))
-		for i := range styles {
-			colors = append(colors, styles[i].name)
+		colors := make([]string, 0, len(Styles))
+		for i := range Styles {
+			colors = append(colors, Styles[i].name)
 		}
 		return colors
 	}(), ", ") + "  \nMake your own colors using hex (#A0FFFF, etc) or RGB values from 0 to 5 (for example, `color 530`, a pretty nice orange). Set bg color like this: color bg-530; remove bg color with color bg-off.\nThere's also a few secret colors :)")

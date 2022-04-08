@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	slackChan chan string
-	api       *slack.Client
-	rtm       *slack.RTM
+	SlackChan chan string
+	API       *slack.Client
+	RTM       *slack.RTM
 )
 
 func getMsgsFromSlack() {
@@ -22,10 +22,10 @@ func getMsgsFromSlack() {
 		return
 	}
 
-	go rtm.ManageConnection()
-	uslack := new(user)
-	uslack.room = mainRoom
-	for msg := range rtm.IncomingEvents {
+	go RTM.ManageConnection()
+	uslack := new(User)
+	uslack.room = MainRoom
+	for msg := range RTM.IncomingEvents {
 		switch ev := msg.Data.(type) {
 		case *slack.MessageEvent:
 			msg := ev.Msg
@@ -33,18 +33,18 @@ func getMsgsFromSlack() {
 			if msg.SubType != "" {
 				break // We're only handling normal messages.
 			}
-			u, _ := api.GetUserInfo(msg.User)
+			u, _ := API.GetUserInfo(msg.User)
 			if !strings.HasPrefix(text, "./hide") {
 				h := sha1.Sum([]byte(u.ID))
 				i, _ := strconv.ParseInt(hex.EncodeToString(h[:2]), 16, 0) // two bytes as an int
-				uslack.Name = yellow.Paint(Integrations.Slack.Prefix+" ") + (styles[int(i)%len(styles)]).apply(strings.Fields(u.RealName)[0])
+				uslack.Name = Yellow.Paint(Integrations.Slack.Prefix+" ") + (Styles[int(i)%len(Styles)]).apply(strings.Fields(u.RealName)[0])
 				uslack.isSlack = true
 				runCommands(text, uslack)
 			}
 		case *slack.ConnectedEvent:
-			l.Println("Connected to Slack")
+			Log.Println("Connected to Slack")
 		case *slack.InvalidAuthEvent:
-			l.Println("Invalid token")
+			Log.Println("Invalid token")
 			return
 		}
 	}
@@ -52,21 +52,21 @@ func getMsgsFromSlack() {
 
 func slackInit() { // called by init() in config.go
 	if Integrations.Slack == nil {
-		slackChan = make(chan string, 2)
+		SlackChan = make(chan string, 2)
 		go func() {
-			for range slackChan {
+			for range SlackChan {
 			}
 		}()
 		return
 	}
 
-	api = slack.New(Integrations.Slack.Token)
-	rtm = api.NewRTM()
-	slackChan = make(chan string, 100)
+	API = slack.New(Integrations.Slack.Token)
+	RTM = API.NewRTM()
+	SlackChan = make(chan string, 100)
 	go func() {
-		for msg := range slackChan {
+		for msg := range SlackChan {
 			msg = strings.ReplaceAll(stripansi.Strip(msg), `\n`, "\n")
-			rtm.SendMessage(rtm.NewOutgoingMessage(msg, Integrations.Slack.ChannelID))
+			RTM.SendMessage(RTM.NewOutgoingMessage(msg, Integrations.Slack.ChannelID))
 		}
 	}()
 }
