@@ -60,7 +60,7 @@ var (
 		{"art", asciiArtCMD, "", "Show some panda art"},
 		{"pwd", pwdCMD, "", "Show your current room"},
 		//		{"sixel", sixelCMD, "<png url>", "Render an image in high quality"},
-		{"shrug", shrugCMD, "", `¯\\_(ツ)_/¯`}, // won't actually run, here just to show in docs
+		{"shrug", shrugCMD, "", `¯\\\_(ツ)\_/¯`}, // won't actually run, here just to show in docs
 		{"autoload", autoloadCMD, "on|off", "enable autoloading of preferences"},
 		{"save", saveCMD, "", "save"},
 		{"load", loadCMD, "", "load"}}
