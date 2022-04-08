@@ -6,7 +6,6 @@ import (
 	_ "embed"
 	"encoding/hex"
 	"encoding/json"
-	"io/ioutil"
 	"math"
 	"math/rand"
 	"os"
@@ -23,7 +22,7 @@ var (
 )
 
 func getASCIIArt() string {
-	b, _ := ioutil.ReadFile(Config.DataDir + "/art.txt")
+	b, _ := os.ReadFile(Config.DataDir + "/art.txt")
 	if b == nil {
 		return "sorry, no art was found, please slap your developer and tell em to add a " + Config.DataDir + "/art.txt file"
 	}

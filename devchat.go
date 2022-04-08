@@ -471,7 +471,7 @@ func (u *user) pickUsername(possibleName string) error {
 	return nil
 }
 
-// pickUsernameQuietly is like pickUsername but does not
+// pickUsernameQuietly is like pickUsername but does not broadcast a name change notification.
 func (u *user) pickUsernameQuietly(possibleName string) error {
 	possibleName = cleanName(possibleName)
 	var err error

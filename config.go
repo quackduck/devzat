@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"os"
 	"strconv"
 )
@@ -88,7 +87,7 @@ func init() {
 		}
 		errCheck(err)
 	}
-	d, err := ioutil.ReadFile(cfgFile)
+	d, err := os.ReadFile(cfgFile)
 	errCheck(err)
 	err = yaml.UnmarshalStrict(d, &Config)
 	errCheck(err)
@@ -103,7 +102,7 @@ func init() {
 	}
 
 	if Config.IntegrationConfig != "" {
-		d, err = ioutil.ReadFile(Config.IntegrationConfig)
+		d, err = os.ReadFile(Config.IntegrationConfig)
 		errCheck(err)
 		err = yaml.UnmarshalStrict(d, &Integrations)
 		errCheck(err)
