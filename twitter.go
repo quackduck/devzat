@@ -48,7 +48,7 @@ func sendCurrentUsersTwitterMessage() {
 		l.Println("Sending twitter update")
 		names := make([]string, 0, len(mainRoom.users))
 		for _, us := range mainRoom.users {
-			names = append(names, us.name)
+			names = append(names, us.Name)
 		}
 		t, _, err := client.Statuses.Update("People on Devzat rn: "+stripansi.Strip(fmt.Sprint(names))+"\nJoin em with \"ssh devzat.hackclub.com\"\nUptime: "+printPrettyDuration(time.Since(startupTime)), nil)
 		if err != nil {

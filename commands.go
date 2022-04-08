@@ -60,7 +60,10 @@ var (
 		{"art", asciiArtCMD, "", "Show some panda art"},
 		{"pwd", pwdCMD, "", "Show your current room"},
 		//		{"sixel", sixelCMD, "<png url>", "Render an image in high quality"},
-		{"shrug", shrugCMD, "", `¯\\\_(ツ)\_/¯`}} // won't actually run, here just to show in docs
+		{"shrug", shrugCMD, "", `¯\\\_(ツ)\_/¯`}, // won't actually run, here just to show in docs
+		{"autoload", autoloadCMD, "on|off", "enable autoloading of preferences"},
+		{"save", saveCMD, "", "save"},
+		{"load", loadCMD, "", "load"}}
 	secretCMDs = []cmd{
 		{"ls", lsCMD, "???", "???"},
 		{"cat", catCMD, "???", "???"},
@@ -120,9 +123,9 @@ func runCommands(line string, u *user) {
 	}
 
 	if u.isSlack {
-		u.room.broadcastNoSlack(u.name, line)
+		u.room.broadcastNoSlack(u.Name, line)
 	} else {
-		u.room.broadcast(u.name, line)
+		u.room.broadcast(u.Name, line)
 	}
 
 	devbotChat(u.room, line)
@@ -165,7 +168,7 @@ func dmCMD(rest string, u *user) {
 		return
 	}
 	msg := strings.TrimSpace(strings.TrimPrefix(rest, restSplit[0]))
-	u.writeln(peer.name+" <- ", msg)
+	u.writeln(peer.Name+" <- ", msg)
 	if u == peer {
 		devbotRespond(u.room, []string{"You must be really lonely, DMing yourself.",
 			"Don't worry, I won't judge :wink:",
@@ -173,22 +176,22 @@ func dmCMD(rest string, u *user) {
 			"what an idiot"}, 30)
 		return
 	}
-	peer.writeln(u.name+" -> ", msg)
+	peer.writeln(u.Name+" -> ", msg)
 }
 
 func hangCMD(rest string, u *user) {
 	if len(rest) > 1 {
 		if !u.isSlack {
-			u.writeln(u.name, "hang "+rest)
+			u.writeln(u.Name, "hang "+rest)
 			u.writeln(devbot, "(that word won't show dw)")
 		}
 		hangGame = &hangman{rest, 15, " "} // default value of guesses so empty space is given away
-		u.room.broadcast(devbot, u.name+" has started a new game of Hangman! Guess letters with hang <letter>")
+		u.room.broadcast(devbot, u.Name+" has started a new game of Hangman! Guess letters with hang <letter>")
 		u.room.broadcast(devbot, "```\n"+hangPrint(hangGame)+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```")
 		return
 	}
 	if !u.isSlack {
-		u.room.broadcast(u.name, "hang "+rest)
+		u.room.broadcast(u.Name, "hang "+rest)
 	}
 	if strings.Trim(hangGame.word, hangGame.guesses) == "" {
 		u.room.broadcast(devbot, "The game has ended. Start a new game with hang <word>")
@@ -228,7 +231,7 @@ func usersCMD(_ string, u *user) {
 }
 
 func dmRoomCMD(line string, u *user) {
-	u.writeln(u.messaging.name+" <- ", line)
+	u.writeln(u.messaging.Name+" <- ", line)
 	if u == u.messaging {
 		devbotRespond(u.room, []string{"You must be really lonely, DMing yourself.",
 			"Don't worry, I won't judge :wink:",
@@ -236,7 +239,7 @@ func dmRoomCMD(line string, u *user) {
 			"what an idiot"}, 30)
 		return
 	}
-	u.messaging.writeln(u.name+" -> ", line)
+	u.messaging.writeln(u.Name+" -> ", line)
 }
 
 // named devmonk at the request of a certain ced
@@ -245,11 +248,11 @@ func devmonkCMD(_ string, u *user) {
 	text := sentences[rand.Intn(len(sentences))]
 	u.writeln(devbot, "Okay type this text: \n\n> "+text)
 	u.term.SetPrompt("> ")
-	defer u.term.SetPrompt(u.name + ": ")
+	defer u.term.SetPrompt(u.Name + ": ")
 	start := time.Now()
 	line, err := u.term.ReadLine()
 	if err == term.ErrPasteIndicator { // TODO: doesn't work for some reason?
-		u.room.broadcast(devbot, "SMH did you know that "+u.name+" tried to cheat in a typing game?")
+		u.room.broadcast(devbot, "SMH did you know that "+u.Name+" tried to cheat in a typing game?")
 		return
 	}
 	dur := time.Since(start)
@@ -278,7 +281,7 @@ func devmonkCMD(_ string, u *user) {
 		}
 	}
 
-	u.room.broadcast(devbot, "Okay "+u.name+", you typed that in "+dur.Truncate(time.Second/10).String()+" so your speed is "+
+	u.room.broadcast(devbot, "Okay "+u.Name+", you typed that in "+dur.Truncate(time.Second/10).String()+" so your speed is "+
 		strconv.FormatFloat(
 			float64(len(strings.Fields(text)))/dur.Minutes(), 'f', 1, 64,
 		)+" wpm"+" with accuracy "+strconv.FormatFloat(accuracy, 'f', 1, 64)+"%",
@@ -322,26 +325,26 @@ func ticCMD(rest string, u *user) {
 }
 
 func exitCMD(_ string, u *user) {
-	u.close(u.name + red.Paint(" has left the chat"))
+	u.close(u.Name + red.Paint(" has left the chat"))
 }
 
 func bellCMD(rest string, u *user) {
 	switch rest {
 	case "off":
-		u.bell = false
-		u.pingEverytime = false
+		u.Bell = false
+		u.PingEverytime = false
 		u.room.broadcast("", "bell off (never)")
 	case "on":
-		u.bell = true
-		u.pingEverytime = false
+		u.Bell = true
+		u.PingEverytime = false
 		u.room.broadcast("", "bell on (pings)")
 	case "all":
-		u.pingEverytime = true
+		u.PingEverytime = true
 		u.room.broadcast("", "bell all (every message)")
 	case "", "status":
-		if u.bell {
+		if u.Bell {
 			u.room.broadcast("", "bell on (pings)")
-		} else if u.pingEverytime {
+		} else if u.PingEverytime {
 			u.room.broadcast("", "bell all (every message)")
 		} else { // bell is off
 			u.room.broadcast("", "bell off (never)")
@@ -360,14 +363,14 @@ func cdCMD(rest string, u *user) {
 		}
 	}
 	if rest == ".." { // cd back into the main room
-		u.room.broadcast(u.name, "cd "+rest)
+		u.room.broadcast(u.Name, "cd "+rest)
 		if u.room != mainRoom {
 			u.changeRoom(mainRoom)
 		}
 		return
 	}
 	if strings.HasPrefix(rest, "#") {
-		u.room.broadcast(u.name, "cd "+rest)
+		u.room.broadcast(u.Name, "cd "+rest)
 		if len(rest) > maxLengthRoomName {
 			rest = rest[0:maxLengthRoomName]
 			u.room.broadcast(devbot, "Room name lengths are limited, so I'm shortening it to "+rest+".")
@@ -381,7 +384,7 @@ func cdCMD(rest string, u *user) {
 		return
 	}
 	if rest == "" {
-		u.room.broadcast(u.name, "cd "+rest)
+		u.room.broadcast(u.Name, "cd "+rest)
 		type kv struct {
 			roomName   string
 			numOfUsers int
@@ -411,13 +414,13 @@ func cdCMD(rest string, u *user) {
 		return
 	}
 	u.messaging = peer
-	u.writeln(devbot, "Now in DMs with "+peer.name+". To leave use cd ..")
+	u.writeln(devbot, "Now in DMs with "+peer.Name+". To leave use cd ..")
 }
 
 func tzCMD(tzArg string, u *user) {
 	var err error
 	if tzArg == "" {
-		u.timezone = nil
+		u.Timezone = nil
 		return
 	}
 	tzArgList := strings.Fields(tzArg)
@@ -432,15 +435,16 @@ func tzCMD(tzArg string, u *user) {
 	case "MT":
 		tz = "America/Phoenix"
 	}
-	u.timezone, err = time.LoadLocation(tz)
+	loc, err := time.LoadLocation(tz)
+	u.Timezone = (*timeLocation)(loc)
 	if err != nil {
 		u.room.broadcast(devbot, "Weird timezone you have there, use the format Continent/City, the usual US timezones (PST, PDT, EST, EDT...) or check nodatime.org/TimeZones!")
 		return
 	}
 	if len(tzArgList) == 2 {
-		u.formatTime24 = tzArgList[1] == "24h"
+		u.FormatTime24 = tzArgList[1] == "24h"
 	} else {
-		u.formatTime24 = false
+		u.FormatTime24 = false
 	}
 	u.room.broadcast(devbot, "Changed your timezone!")
 }
@@ -516,20 +520,20 @@ func banCMD(line string, u *user) {
 			return
 		}
 		bans = append(bans, ban{victim.addr, victim.id})
-		victim.close(victim.name + " has been banned by " + u.name + " for " + dur.String())
+		victim.close(victim.Name + " has been banned by " + u.Name + " for " + dur.String())
 		go func(id string) {
 			time.Sleep(dur)
 			unbanIDorIP(id)
 		}(victim.id) // evaluate id now, call unban with that value later
 		return
 	}
-	banUser(u.name, victim)
+	banUser(u.Name, victim)
 }
 
 func banUser(banner string, victim *user) {
 	bans = append(bans, ban{victim.addr, victim.id})
 	saveBans()
-	victim.close(victim.name + " has been banned by " + banner)
+	victim.close(victim.Name + " has been banned by " + banner)
 }
 
 func kickCMD(line string, u *user) {
@@ -542,12 +546,12 @@ func kickCMD(line string, u *user) {
 		u.room.broadcast(devbot, "Not authorized")
 		return
 	}
-	victim.close(victim.name + red.Paint(" has been kicked by ") + u.name)
+	victim.close(victim.Name + red.Paint(" has been kicked by ") + u.Name)
 }
 
 func colorCMD(rest string, u *user) {
 	if rest == "which" {
-		u.room.broadcast(devbot, "fg: "+u.color+" & bg: "+u.colorBG)
+		u.room.broadcast(devbot, "fg: "+u.Color+" & bg: "+u.ColorBG)
 	} else if err := u.changeColor(rest); err != nil {
 		u.room.broadcast(devbot, err.Error())
 	}
@@ -713,15 +717,15 @@ func asciiArtCMD(_ string, u *user) {
 
 func pwdCMD(_ string, u *user) {
 	if u.messaging != nil {
-		u.writeln("", u.messaging.name)
-		u.messaging.writeln("", u.messaging.name)
+		u.writeln("", u.messaging.Name)
+		u.messaging.writeln("", u.messaging.Name)
 	} else {
 		u.room.broadcast("", u.room.name)
 	}
 }
 
 func shrugCMD(line string, u *user) {
-	u.room.broadcast(u.name, line+` ¯\\\_(ツ)\_/¯`)
+	u.room.broadcast(u.Name, line+` ¯\\_(ツ)_/¯`)
 }
 
 func pronounsCMD(line string, u *user) {
@@ -738,13 +742,13 @@ func pronounsCMD(line string, u *user) {
 			u.room.broadcast(devbot, "Who's that?")
 			return
 		}
-		u.room.broadcast(devbot, victim.name+"'s pronouns are "+victim.displayPronouns())
+		u.room.broadcast(devbot, victim.Name+"'s pronouns are "+victim.displayPronouns())
 		return
 	}
 
-	u.pronouns = strings.Fields(strings.ReplaceAll(strings.ToLower(line), "\n", ""))
-	//u.changeColor(u.color) // refresh pronouns
-	u.room.broadcast(devbot, u.name+" now goes by "+u.displayPronouns())
+	u.Pronouns = strings.Fields(strings.ReplaceAll(strings.ToLower(line), "\n", ""))
+	//u.changeColor(u.Color) // refresh pronouns
+	u.room.broadcast(devbot, u.Name+" now goes by "+u.displayPronouns())
 }
 
 func emojisCMD(_ string, u *user) {
@@ -775,7 +779,7 @@ func lsCMD(rest string, u *user) {
 		if r, ok := rooms[rest]; ok {
 			usersList := ""
 			for _, us := range r.users {
-				usersList += us.name + blue.Paint("/ ")
+				usersList += us.Name + blue.Paint("/ ")
 			}
 			u.room.broadcast("", usersList)
 			return
@@ -791,11 +795,44 @@ func lsCMD(rest string, u *user) {
 	}
 	usersList := ""
 	for _, us := range u.room.users {
-		usersList += us.name + blue.Paint("/ ")
+		usersList += us.Name + blue.Paint("/ ")
 	}
 	u.room.broadcast("", "README.md "+usersList+roomList)
 }
 
 func commandsCMD(_ string, u *user) {
 	u.room.broadcast("", "Commands  \n"+autogenCommands(cmds))
+}
+
+func autoloadCMD(arg string, u *user) {
+	if arg == "on" {
+		u.Autoload = true
+	} else if arg == "off" {
+		u.Autoload = false
+	} else if arg == "" {
+		var status string
+		if u.Autoload {
+			status = "on"
+		} else {
+			status = "off"
+		}
+		u.room.broadcast("", "autoload "+status)
+	} else {
+		u.room.broadcast(devbot, "your options are off or on")
+	}
+}
+func saveCMD(_ string, u *user) {
+	err := u.savePrefs()
+	if err != nil {
+		u.room.broadcast(devbot, "An error occurred while saving: "+err.Error())
+		l.Println("error while saving user data:", err.Error())
+	}
+
+}
+func loadCMD(_ string, u *user) {
+	err := u.loadPrefs()
+	if err != nil {
+		u.room.broadcast(devbot, "An error occurred while loading: "+err.Error())
+		l.Println("error while loading user data:", err.Error())
+	}
 }

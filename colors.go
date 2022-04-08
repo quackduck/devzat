@@ -121,18 +121,18 @@ func (u *user) changeColor(colorName string) error {
 		return err
 	}
 	if strings.HasPrefix(colorName, "bg-") {
-		u.colorBG = style.name // update bg color
+		u.ColorBG = style.name // update bg color
 	} else {
-		u.color = style.name // update fg color
+		u.Color = style.name // update fg color
 	}
 
 	//if colorName == "random" {
 	//	u.room.broadcast("", "You're now using "+u.color)
 	//}
 
-	u.name, _ = applyColorToData(u.name, u.color, u.colorBG) // error can be discarded as it has already been checked earlier
+	u.Name, _ = applyColorToData(u.Name, u.Color, u.ColorBG) // error can be discarded as it has already been checked earlier
 
-	u.term.SetPrompt(u.name + ": ")
+	u.term.SetPrompt(u.Name + ": ")
 	saveBans()
 	return nil
 }

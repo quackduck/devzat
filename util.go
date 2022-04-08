@@ -35,10 +35,10 @@ func printUsersInRoom(r *room) string {
 	admins := ""
 	for _, us := range r.users {
 		if auth(us) {
-			admins += us.name + " "
+			admins += us.Name + " "
 			continue
 		}
-		names += us.name + " "
+		names += us.Name + " "
 	}
 	if len(names) > 0 {
 		names = names[:len(names)-1] // cut extra space at the end
@@ -120,7 +120,7 @@ func mdRender(a string, beforeMessageLen int, lineWidth int) string {
 // Returns true and the user with the same name if the username is taken, false and nil otherwise
 func userDuplicate(r *room, a string) (*user, bool) {
 	for i := range r.users {
-		if stripansi.Strip(r.users[i].name) == stripansi.Strip(a) {
+		if stripansi.Strip(r.users[i].Name) == stripansi.Strip(a) {
 			return r.users[i], true
 		}
 	}
@@ -163,7 +163,7 @@ func findUserByName(r *room, name string) (*user, bool) {
 	r.usersMutex.Lock()
 	defer r.usersMutex.Unlock()
 	for _, u := range r.users {
-		if stripansi.Strip(u.name) == name {
+		if stripansi.Strip(u.Name) == name {
 			return u, true
 		}
 	}
