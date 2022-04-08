@@ -27,7 +27,6 @@ type PluginClient interface {
 	RegisterCmd(ctx context.Context, in *CmdDef, opts ...grpc.CallOption) (Plugin_RegisterCmdClient, error)
 	// Commands a plugin can call
 	SendMessage(ctx context.Context, in *Message, opts ...grpc.CallOption) (*MessageRes, error)
-	SendImage(ctx context.Context, in *Image, opts ...grpc.CallOption) (*ImageRes, error)
 	MiddlewareEditMessage(ctx context.Context, in *MiddlewareMessage, opts ...grpc.CallOption) (*MiddlewareEditMessageRes, error)
 	// Have to name it that to avoid colliding with the RPC method name
 	MiddlewareDone(ctx context.Context, in *MiddlewareDoneMessage, opts ...grpc.CallOption) (*MiddlewareDoneRes, error)
@@ -89,7 +88,7 @@ func (c *pluginClient) RegisterCmd(ctx context.Context, in *CmdDef, opts ...grpc
 }
 
 type Plugin_RegisterCmdClient interface {
-	Recv() (*CmdInvokation, error)
+	Recv() (*CmdInvocation, error)
 	grpc.ClientStream
 }
 
@@ -97,8 +96,8 @@ type pluginRegisterCmdClient struct {
 	grpc.ClientStream
 }
 
-func (x *pluginRegisterCmdClient) Recv() (*CmdInvokation, error) {
-	m := new(CmdInvokation)
+func (x *pluginRegisterCmdClient) Recv() (*CmdInvocation, error) {
+	m := new(CmdInvocation)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -108,15 +107,6 @@ func (x *pluginRegisterCmdClient) Recv() (*CmdInvokation, error) {
 func (c *pluginClient) SendMessage(ctx context.Context, in *Message, opts ...grpc.CallOption) (*MessageRes, error) {
 	out := new(MessageRes)
 	err := c.cc.Invoke(ctx, "/plugin.Plugin/SendMessage", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *pluginClient) SendImage(ctx context.Context, in *Image, opts ...grpc.CallOption) (*ImageRes, error) {
-	out := new(ImageRes)
-	err := c.cc.Invoke(ctx, "/plugin.Plugin/SendImage", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +140,6 @@ type PluginServer interface {
 	RegisterCmd(*CmdDef, Plugin_RegisterCmdServer) error
 	// Commands a plugin can call
 	SendMessage(context.Context, *Message) (*MessageRes, error)
-	SendImage(context.Context, *Image) (*ImageRes, error)
 	MiddlewareEditMessage(context.Context, *MiddlewareMessage) (*MiddlewareEditMessageRes, error)
 	// Have to name it that to avoid colliding with the RPC method name
 	MiddlewareDone(context.Context, *MiddlewareDoneMessage) (*MiddlewareDoneRes, error)
@@ -169,9 +158,6 @@ func (UnimplementedPluginServer) RegisterCmd(*CmdDef, Plugin_RegisterCmdServer) 
 }
 func (UnimplementedPluginServer) SendMessage(context.Context, *Message) (*MessageRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendMessage not implemented")
-}
-func (UnimplementedPluginServer) SendImage(context.Context, *Image) (*ImageRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SendImage not implemented")
 }
 func (UnimplementedPluginServer) MiddlewareEditMessage(context.Context, *MiddlewareMessage) (*MiddlewareEditMessageRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MiddlewareEditMessage not implemented")
@@ -222,7 +208,7 @@ func _Plugin_RegisterCmd_Handler(srv interface{}, stream grpc.ServerStream) erro
 }
 
 type Plugin_RegisterCmdServer interface {
-	Send(*CmdInvokation) error
+	Send(*CmdInvocation) error
 	grpc.ServerStream
 }
 
@@ -230,7 +216,7 @@ type pluginRegisterCmdServer struct {
 	grpc.ServerStream
 }
 
-func (x *pluginRegisterCmdServer) Send(m *CmdInvokation) error {
+func (x *pluginRegisterCmdServer) Send(m *CmdInvocation) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -248,24 +234,6 @@ func _Plugin_SendMessage_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PluginServer).SendMessage(ctx, req.(*Message))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Plugin_SendImage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Image)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PluginServer).SendImage(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/plugin.Plugin/SendImage",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PluginServer).SendImage(ctx, req.(*Image))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -316,10 +284,6 @@ var Plugin_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendMessage",
 			Handler:    _Plugin_SendMessage_Handler,
-		},
-		{
-			MethodName: "SendImage",
-			Handler:    _Plugin_SendImage_Handler,
 		},
 		{
 			MethodName: "MiddlewareEditMessage",

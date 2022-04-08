@@ -1,6 +1,7 @@
 package main
 
 import (
+	pb "devchat/plugin"
 	"fmt"
 	_ "image/gif"
 	_ "image/jpeg"
@@ -107,6 +108,19 @@ func runCommands(line string, u *user) {
 		return
 	}
 
+	// Now we know it is not a DM, so this is a safe place to add the hook for sending the event to plugins
+	if len(listeners[pb.EventType_SEND].nonMiddleware) > 0 {
+		for _, l := range listeners[pb.EventType_SEND].nonMiddleware {
+			l <- &pb.Event_SendEvent{
+				SendEvent: &pb.SendEvent{
+					Room: u.room.name,
+					From: u.name,
+					Msg:  line,
+				},
+			}
+		}
+	}
+
 	switch currCmd {
 	case "hang":
 		hangCMD(strings.TrimSpace(strings.TrimPrefix(line, "hang")), u)
@@ -127,9 +141,20 @@ func runCommands(line string, u *user) {
 
 	devbotChat(u.room, line)
 
+	args := strings.TrimSpace(strings.TrimPrefix(line, currCmd))
+
+	if pluginCmd, ok := pluginCmds[currCmd]; ok {
+		pluginCmd.c <- &pb.CmdInvocation{
+			Room: u.room.name,
+			From: u.name,
+			Args: args,
+		}
+		return
+	}
+
 	for _, c := range allcmds {
 		if c.name == currCmd {
-			c.run(strings.TrimSpace(strings.TrimPrefix(line, c.name)), u)
+			c.run(args, u)
 			return
 		}
 	}

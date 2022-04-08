@@ -7,11 +7,10 @@ package plugin;
 service Plugin {
   // Events are implemented through a stream that is held open
   rpc RegisterListener(Listener) returns (stream Event);
-  rpc RegisterCmd(CmdDef) returns (stream CmdInvokation);
+  rpc RegisterCmd(CmdDef) returns (stream CmdInvocation);
 
   // Commands a plugin can call
   rpc SendMessage(Message) returns (MessageRes);
-  rpc SendImage(Image) returns (ImageRes);
   rpc MiddlewareEditMessage(MiddlewareMessage) returns (MiddlewareEditMessageRes);
   // Have to name it that to avoid colliding with the RPC method name
   rpc MiddlewareDone(MiddlewareDoneMessage) returns (MiddlewareDoneRes);
@@ -35,9 +34,14 @@ message Listener {
   optional bool once = 3;
 }
 
+message TestEvent {
+  string thing = 1;
+}
+
 message Event {
   oneof event {
     SendEvent send_event = 1;
+    TestEvent other_event = 2;
   }
 }
 
@@ -45,13 +49,14 @@ message Event {
 
 message CmdDef {
   string name = 1;
-  string usage = 2;
+  string argsInfo = 2;
+  string info = 3;
 }
 
-message CmdInvokation {
+message CmdInvocation {
   string room = 1;
   string from = 2;
-  repeated string args = 3;
+  string args = 3;
 }
 
 /* SendMessage */
@@ -64,22 +69,6 @@ message Message {
 }
 
 message MessageRes {}
-
-/* SendImage */
-
-message Image {
-  enum ImageSrcType {
-    FILE = 0;
-    URL = 1;
-    B64 = 2;
-  }
-
-  string room = 1;
-  ImageSrcType src_type = 2;
-  string src = 3;
-}
-
-message ImageRes {}
 
 /* MiddlewareEditMessage */
 

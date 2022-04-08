@@ -1,6 +1,7 @@
 package main
 
 import (
+	pb "devchat/plugin"
 	_ "embed"
 	"errors"
 	"fmt"
@@ -144,7 +145,7 @@ func main() {
 			fmt.Println(err)
 		}
 	}()
-	go startPluginServer(/* TODO*/ 5556)
+	go startPluginServer( /* TODO*/ 5556)
 	err = ssh.ListenAndServe(fmt.Sprintf(":%d", Config.Port), nil, ssh.HostKeyFile(Config.KeyFile), ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
 		return true // allow all keys, this lets us hash pubkeys later
 	}))
@@ -517,6 +518,29 @@ func (u *user) repl() {
 			u.close(u.name + " has left the chat")
 			return
 		}
+
+		// Middleware hook
+		if len(listeners[pb.EventType_SEND].middleware.channels) > 0 {
+			for _, m := range listeners[pb.EventType_SEND].middleware.channels {
+				m <- &pb.Event_SendEvent{
+					SendEvent: &pb.SendEvent{
+						Room: u.room.name,
+						From: u.name,
+						Msg:  line,
+					},
+				}
+				for {
+					res := <-listeners[pb.EventType_SEND].middleware.res
+					switch res.(type) {
+					case *pb.MiddlewareMessage:
+						line = *res.(*pb.MiddlewareMessage).Msg
+					case *pb.MiddlewareDoneMessage:
+						break
+					}
+				}
+			}
+		}
+
 		line += "\n"
 		hasNewlines := false
 		//oldPrompt := u.name + ": "
