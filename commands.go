@@ -459,7 +459,11 @@ func idCMD(line string, u *user) {
 }
 
 func nickCMD(line string, u *user) {
+	oldColor := u.color
+	oldBg := u.colorBG
 	u.pickUsername(line) //nolint:errcheck // if reading input fails, the next repl will err out
+	u.color = oldColor
+	u.colorBG = oldBg
 }
 
 func listBansCMD(_ string, u *user) {
