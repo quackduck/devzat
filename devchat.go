@@ -339,7 +339,7 @@ func newUser(s ssh.Session) *user {
 
 	err := u.loadPrefs() // since we are loading for the first time, respect the saved value
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Could not load user: %v\n", err)
+		l.Println("Could not load user:", err)
 	}
 	mainRoom.usersMutex.Lock()
 	mainRoom.users = append(mainRoom.users, u)
@@ -537,10 +537,13 @@ func (u *user) savePrefs() error {
 		return err
 	}
 	saveTo := filepath.Join(Config.DataDir, "user-prefs")
-	os.MkdirAll(saveTo, 0755)
+	err = os.MkdirAll(saveTo, 0755)
+	if err != nil {
+		return err
+	}
 	saveTo = filepath.Join(saveTo, u.id+".json")
-	os.WriteFile(saveTo, data, 0644)
-	return nil
+	err = os.WriteFile(saveTo, data, 0644)
+	return err
 }
 
 func (u *user) loadPrefs() error {
@@ -551,7 +554,7 @@ func (u *user) loadPrefs() error {
 		return err
 	}
 
-	oldUser := *u
+	oldUser := *u //nolint:copylocks // we may need that exact lock value later on
 
 	// temp := user{}
 	err = json.Unmarshal(data, u) // won't overwrite private fields

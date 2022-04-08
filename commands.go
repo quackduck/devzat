@@ -6,7 +6,6 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"math/rand"
-	"os"
 	"runtime/debug"
 	"sort"
 	"strconv"
@@ -811,13 +810,13 @@ func autoloadCMD(arg string, u *user) {
 	} else if arg == "off" {
 		u.Autoload = false
 	} else if arg == "" {
-		var aload string
+		var status string
 		if u.Autoload {
-			aload = "on"
+			status = "on"
 		} else {
-			aload = "off"
+			status = "off"
 		}
-		u.room.broadcast("", u.Name+" has autoload "+aload)
+		u.room.broadcast("", "autoload "+status)
 	} else {
 		u.room.broadcast("", "usage: autoload on|off")
 	}
@@ -826,7 +825,7 @@ func saveCMD(_ string, u *user) {
 	err := u.savePrefs()
 	if err != nil {
 		u.room.broadcast(devbot, "An error occurred while saving: "+err.Error())
-		fmt.Fprintf(os.Stderr, "error while saving user data: %v\n", err)
+		l.Println("error while saving user data:", err.Error())
 	}
 
 }
@@ -834,6 +833,6 @@ func loadCMD(_ string, u *user) {
 	err := u.loadPrefs()
 	if err != nil {
 		u.room.broadcast(devbot, "An error occurred while loading: "+err.Error())
-		fmt.Fprintf(os.Stderr, "error while loading user data: %v\n", err)
+		l.Println("error while loading user data:", err.Error())
 	}
 }
