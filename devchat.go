@@ -81,7 +81,29 @@ type user struct {
 	closeOnce     sync.Once
 	lastTimestamp time.Time
 	joinTime      time.Time
-	Timezone      *time.Location
+	Timezone      *timeLocation
+}
+
+// timeLocation is an alias of time.Location and is used to properly implement MarshalJSON and UnmarshalJSON
+type timeLocation time.Location
+
+func (t *timeLocation) MarshalJSON() ([]byte, error) {
+	loc := (*time.Location)(t)
+	return json.Marshal(loc.String())
+}
+
+func (t *timeLocation) UnmarshalJSON(data []byte) error {
+	name := ""
+	err := json.Unmarshal(data, &name)
+	if err != nil {
+		return err
+	}
+	loc, err := time.LoadLocation(name)
+	if err != nil {
+		return err
+	}
+	*t = timeLocation(*loc)
+	return nil
 }
 
 type backlogMessage struct {
@@ -407,9 +429,9 @@ func (u *user) writeln(senderName string, msg string) {
 			u.rWriteln(printPrettyDuration(time.Since(u.joinTime)) + " in")
 		} else {
 			if u.FormatTime24 {
-				u.rWriteln(time.Now().In(u.Timezone).Format("15:04"))
+				u.rWriteln(time.Now().In((*time.Location)(u.Timezone)).Format("15:04"))
 			} else {
-				u.rWriteln(time.Now().In(u.Timezone).Format("3:04 pm"))
+				u.rWriteln(time.Now().In((*time.Location)(u.Timezone)).Format("3:04 pm"))
 			}
 		}
 		u.lastTimestamp = time.Now()

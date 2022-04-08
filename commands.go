@@ -436,7 +436,8 @@ func tzCMD(tzArg string, u *user) {
 	case "MT":
 		tz = "America/Phoenix"
 	}
-	u.Timezone, err = time.LoadLocation(tz)
+	loc, err := time.LoadLocation(tz)
+	u.Timezone = (*timeLocation)(loc)
 	if err != nil {
 		u.room.broadcast(devbot, "Weird timezone you have there, use the format Continent/City, the usual US timezones (PST, PDT, EST, EDT...) or check nodatime.org/TimeZones!")
 		return
