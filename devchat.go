@@ -114,7 +114,7 @@ type backlogMessage struct {
 
 // TODO: have a web dashboard that shows logs
 func main() {
-	logfile, err := os.OpenFile(Config.DataDir+"/log.txt", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0666)
+	logfile, err := os.OpenFile(Config.DataDir+string(os.PathSeparator)+"log.txt", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
 		l.Println(err)
 		return

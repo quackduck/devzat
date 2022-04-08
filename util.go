@@ -22,9 +22,10 @@ var (
 )
 
 func getASCIIArt() string {
-	b, _ := os.ReadFile(Config.DataDir + "/art.txt")
+	sep := string(os.PathSeparator)
+	b, _ := os.ReadFile(Config.DataDir + sep + "art.txt")
 	if b == nil {
-		return "sorry, no art was found, please slap your developer and tell em to add a " + Config.DataDir + "/art.txt file"
+		return "sorry, no art was found, please slap your developer and tell em to add a " + Config.DataDir + sep + "art.txt file"
 	}
 	return string(b)
 }
@@ -127,7 +128,7 @@ func userDuplicate(r *room, a string) (*user, bool) {
 }
 
 func saveBans() {
-	f, err := os.Create(Config.DataDir + "/bans.json")
+	f, err := os.Create(Config.DataDir + string(os.PathSeparator) + "bans.json")
 	if err != nil {
 		l.Println(err)
 		return
@@ -144,7 +145,7 @@ func saveBans() {
 }
 
 func readBans() {
-	f, err := os.Open(Config.DataDir + "/bans.json")
+	f, err := os.Open(Config.DataDir + string(os.PathSeparator) + "bans.json")
 	if err != nil && !os.IsNotExist(err) { // if there is an error and it is not a "file does not exist" error
 		l.Println(err)
 		return
