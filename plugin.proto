@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+option go_package = "github.com/quackduck/devzat/main";
+
+package plugin;
+
+service Plugin {
+  // Events are implemented through a stream that is held open
+  rpc RegisterListener(Listener) returns (stream Event);
+  rpc RegisterCmd(CmdDef) returns (stream CmdInvokation);
+
+  // Commands a plugin can call
+  rpc SendMessage(Message) returns (MessageRes);
+  rpc SendImage(Image) returns (ImageRes);
+  rpc MiddlewareEditMessage(MiddlewareMessage) returns (MiddlewareEditMessageRes);
+  // Have to name it that to avoid colliding with the RPC method name
+  rpc MiddlewareDone(MiddlewareDoneMessage) returns (MiddlewareDoneRes);
+}
+
+/* RegisterListener */
+
+enum EventType {
+  SEND = 0;
+}
+
+message SendEvent {
+  string from = 1;
+  string msg = 2;
+}
+
+message Listener {
+  EventType event = 1;
+  optional bool middleware = 2;
+  optional bool once = 3;
+}
+
+message Event {
+  oneof event {
+    SendEvent send_event = 1;
+  }
+}
+
+/* RegisterCmd */
+
+message CmdDef {
+  string name = 1;
+  string usage = 2;
+}
+
+message CmdInvokation {
+  string from = 1;
+  repeated string args = 2;
+}
+
+/* SendMessage */
+
+message Message {
+  optional string from = 1;
+  string msg = 2;
+  optional bool ephemeral = 3;
+}
+
+message MessageRes {}
+
+/* SendImage */
+
+message Image {
+  enum ImageSrcType {
+    FILE = 0;
+    URL = 1;
+    B64 = 2;
+  }
+
+  ImageSrcType src_type = 1;
+  string src = 2;
+}
+
+message ImageRes {}
+
+/* MiddlewareEditMessage */
+
+message MiddlewareMessage {
+  optional string msg = 1;
+}
+
+message MiddlewareEditMessageRes {}
+
+/* MiddlewareDone */
+
+message MiddlewareDoneMessage {}
+
+message MiddlewareDoneRes {}
