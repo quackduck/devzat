@@ -529,35 +529,38 @@ func (u *user) loadPrefs() error {
 		return err
 	}
 
-	temp := user{}
-	err = json.Unmarshal(data, &temp)
+	oldUser := *u
+
+	// temp := user{}
+	err = json.Unmarshal(data, u) // won't overwrite private fields
 	if err != nil {
 		return err
 	}
 
-	if !temp.Autoload {
+	if !u.Autoload {
 		fmt.Println("Not loading")
+		u = &oldUser
 		return nil
 	}
 
-	err = u.pickUsername(temp.Name)
+	newName := u.Name
+	u.Name = oldUser.Name
+
+	newColor, newColorBG := u.Color, u.ColorBG // needed because pickUsername changes these. TODO: stop it from doing that
+
+	err = u.pickUsername(newName)
 	if err != nil {
 		return err
 	}
-	u.Pronouns = temp.Pronouns
-	u.Bell = temp.Bell
-	u.PingEverytime = temp.PingEverytime
-	u.FormatTime24 = temp.FormatTime24
-	// u.Color = export.Colo
-	u.ColorBG = temp.ColorBG
-	u.Timezone = temp.Timezone
-	u.Autoload = temp.Autoload
-	err = u.changeColor(temp.Color)
+	err = u.changeColor(newColor)
+	if err != nil {
+		return err
+	}
+	err = u.changeColor(newColorBG)
 	if err != nil {
 		return err
 	}
 	return nil
-
 }
 
 func (u *user) changeRoom(r *room) {
