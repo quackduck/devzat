@@ -80,28 +80,38 @@ type User struct {
 	closeOnce     sync.Once
 	lastTimestamp time.Time
 	joinTime      time.Time
-	Timezone      *TimeLocation
+	Timezone      *time.Location
 }
 
-// TimeLocation is an alias of time.Location and is used to properly implement MarshalJSON and UnmarshalJSON
-type TimeLocation time.Location
-
-func (t *TimeLocation) MarshalJSON() ([]byte, error) {
-	loc := (*time.Location)(t)
-	return json.Marshal(loc.String())
+func (u *User) MarshalJSON() ([]byte, error) {
+	type Alias User
+	return json.Marshal(&struct {
+		*Alias
+		Timezone string
+	}{
+		Alias:    (*Alias)(u),
+		Timezone: u.Timezone.String(),
+	})
 }
 
-func (t *TimeLocation) UnmarshalJSON(data []byte) error {
-	name := ""
-	err := json.Unmarshal(data, &name)
-	if err != nil {
+func (u *User) UnmarshalJSON(data []byte) error {
+	type Alias User
+	var v struct {
+		*Alias
+		Timezone string
+	}
+	v.Alias = (*Alias)(u)
+	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
-	loc, err := time.LoadLocation(name)
-	if err != nil {
-		return err
+	*u = User(*v.Alias) //nolint:govet // complains about copying a lock but this is the old value anyway so we're fine
+	if v.Timezone != "" {
+		loc, err := time.LoadLocation(v.Timezone)
+		if err != nil {
+			return err
+		}
+		u.Timezone = loc
 	}
-	*t = TimeLocation(*loc)
 	return nil
 }
 
