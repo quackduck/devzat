@@ -1,6 +1,6 @@
 *.DS_Store
 .vscode
-/devchat
+/devzat
 .idea
 /dist
 slackAPI.txt*

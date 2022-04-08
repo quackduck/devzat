@@ -18,7 +18,7 @@ While you can use the same key pair that your user account has, it is recommende
 ## Usage
 
 ```shell
-./devchat # use without "./" for a global binary
+./devzat # use without "./" for a global binary
 ```
 
 Devzat listens on port 2221 for new SSH connections by default. Users can now join using `ssh -p 2221 <server-hostname>`.
