@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "github.com/quackduck/devzat/main";
+option go_package = "github.com/quackduck/devzat/plugin";
 
 package plugin;
 
@@ -24,8 +24,9 @@ enum EventType {
 }
 
 message SendEvent {
-  string from = 1;
-  string msg = 2;
+  string room = 1;
+  string from = 2;
+  string msg = 3;
 }
 
 message Listener {
@@ -48,16 +49,18 @@ message CmdDef {
 }
 
 message CmdInvokation {
-  string from = 1;
-  repeated string args = 2;
+  string room = 1;
+  string from = 2;
+  repeated string args = 3;
 }
 
 /* SendMessage */
 
 message Message {
-  optional string from = 1;
-  string msg = 2;
-  optional bool ephemeral = 3;
+  string room = 1;
+  optional string from = 2;
+  string msg = 3;
+  optional string ephemeral_to = 4;
 }
 
 message MessageRes {}
@@ -71,8 +74,9 @@ message Image {
     B64 = 2;
   }
 
-  ImageSrcType src_type = 1;
-  string src = 2;
+  string room = 1;
+  ImageSrcType src_type = 2;
+  string src = 3;
 }
 
 message ImageRes {}
