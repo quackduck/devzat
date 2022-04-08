@@ -554,7 +554,7 @@ func (u *user) loadPrefs() error {
 		return err
 	}
 
-	oldUser := *u //nolint:copylocks // we may need that exact lock value later on
+	oldUser := *u //nolint:govet // complains because of a lock copy. We may need that exact lock value later on
 
 	// temp := user{}
 	err = json.Unmarshal(data, u) // won't overwrite private fields
