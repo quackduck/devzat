@@ -818,7 +818,7 @@ func autoloadCMD(arg string, u *user) {
 		}
 		u.room.broadcast("", "autoload "+status)
 	} else {
-		u.room.broadcast("", "usage: autoload on|off")
+		u.room.broadcast(devbot, "your options are off or on")
 	}
 }
 func saveCMD(_ string, u *user) {
