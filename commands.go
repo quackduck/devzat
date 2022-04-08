@@ -717,7 +717,6 @@ func asciiArtCMD(_ string, u *User) {
 func pwdCMD(_ string, u *User) {
 	if u.messaging != nil {
 		u.writeln("", u.messaging.Name)
-		u.messaging.writeln("", u.messaging.Name)
 	} else {
 		u.room.broadcast("", u.room.name)
 	}
