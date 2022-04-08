@@ -133,7 +133,6 @@ func (u *User) changeColor(colorName string) error {
 	u.Name, _ = applyColorToData(u.Name, u.Color, u.ColorBG) // error can be discarded as it has already been checked earlier
 
 	u.term.SetPrompt(u.Name + ": ")
-	saveBans()
 	return nil
 }
 
