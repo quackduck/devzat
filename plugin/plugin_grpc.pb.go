@@ -23,13 +23,10 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PluginClient interface {
 	// Events are implemented through a stream that is held open
-	RegisterListener(ctx context.Context, in *Listener, opts ...grpc.CallOption) (Plugin_RegisterListenerClient, error)
+	RegisterListener(ctx context.Context, opts ...grpc.CallOption) (Plugin_RegisterListenerClient, error)
 	RegisterCmd(ctx context.Context, in *CmdDef, opts ...grpc.CallOption) (Plugin_RegisterCmdClient, error)
 	// Commands a plugin can call
 	SendMessage(ctx context.Context, in *Message, opts ...grpc.CallOption) (*MessageRes, error)
-	MiddlewareEditMessage(ctx context.Context, in *MiddlewareMessage, opts ...grpc.CallOption) (*MiddlewareEditMessageRes, error)
-	// Have to name it that to avoid colliding with the RPC method name
-	MiddlewareDone(ctx context.Context, in *MiddlewareDoneMessage, opts ...grpc.CallOption) (*MiddlewareDoneRes, error)
 }
 
 type pluginClient struct {
@@ -40,28 +37,27 @@ func NewPluginClient(cc grpc.ClientConnInterface) PluginClient {
 	return &pluginClient{cc}
 }
 
-func (c *pluginClient) RegisterListener(ctx context.Context, in *Listener, opts ...grpc.CallOption) (Plugin_RegisterListenerClient, error) {
+func (c *pluginClient) RegisterListener(ctx context.Context, opts ...grpc.CallOption) (Plugin_RegisterListenerClient, error) {
 	stream, err := c.cc.NewStream(ctx, &Plugin_ServiceDesc.Streams[0], "/plugin.Plugin/RegisterListener", opts...)
 	if err != nil {
 		return nil, err
 	}
 	x := &pluginRegisterListenerClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
 	return x, nil
 }
 
 type Plugin_RegisterListenerClient interface {
+	Send(*ListenerClientData) error
 	Recv() (*Event, error)
 	grpc.ClientStream
 }
 
 type pluginRegisterListenerClient struct {
 	grpc.ClientStream
+}
+
+func (x *pluginRegisterListenerClient) Send(m *ListenerClientData) error {
+	return x.ClientStream.SendMsg(m)
 }
 
 func (x *pluginRegisterListenerClient) Recv() (*Event, error) {
@@ -113,36 +109,15 @@ func (c *pluginClient) SendMessage(ctx context.Context, in *Message, opts ...grp
 	return out, nil
 }
 
-func (c *pluginClient) MiddlewareEditMessage(ctx context.Context, in *MiddlewareMessage, opts ...grpc.CallOption) (*MiddlewareEditMessageRes, error) {
-	out := new(MiddlewareEditMessageRes)
-	err := c.cc.Invoke(ctx, "/plugin.Plugin/MiddlewareEditMessage", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *pluginClient) MiddlewareDone(ctx context.Context, in *MiddlewareDoneMessage, opts ...grpc.CallOption) (*MiddlewareDoneRes, error) {
-	out := new(MiddlewareDoneRes)
-	err := c.cc.Invoke(ctx, "/plugin.Plugin/MiddlewareDone", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // PluginServer is the server API for Plugin service.
 // All implementations must embed UnimplementedPluginServer
 // for forward compatibility
 type PluginServer interface {
 	// Events are implemented through a stream that is held open
-	RegisterListener(*Listener, Plugin_RegisterListenerServer) error
+	RegisterListener(Plugin_RegisterListenerServer) error
 	RegisterCmd(*CmdDef, Plugin_RegisterCmdServer) error
 	// Commands a plugin can call
 	SendMessage(context.Context, *Message) (*MessageRes, error)
-	MiddlewareEditMessage(context.Context, *MiddlewareMessage) (*MiddlewareEditMessageRes, error)
-	// Have to name it that to avoid colliding with the RPC method name
-	MiddlewareDone(context.Context, *MiddlewareDoneMessage) (*MiddlewareDoneRes, error)
 	mustEmbedUnimplementedPluginServer()
 }
 
@@ -150,7 +125,7 @@ type PluginServer interface {
 type UnimplementedPluginServer struct {
 }
 
-func (UnimplementedPluginServer) RegisterListener(*Listener, Plugin_RegisterListenerServer) error {
+func (UnimplementedPluginServer) RegisterListener(Plugin_RegisterListenerServer) error {
 	return status.Errorf(codes.Unimplemented, "method RegisterListener not implemented")
 }
 func (UnimplementedPluginServer) RegisterCmd(*CmdDef, Plugin_RegisterCmdServer) error {
@@ -158,12 +133,6 @@ func (UnimplementedPluginServer) RegisterCmd(*CmdDef, Plugin_RegisterCmdServer) 
 }
 func (UnimplementedPluginServer) SendMessage(context.Context, *Message) (*MessageRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendMessage not implemented")
-}
-func (UnimplementedPluginServer) MiddlewareEditMessage(context.Context, *MiddlewareMessage) (*MiddlewareEditMessageRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method MiddlewareEditMessage not implemented")
-}
-func (UnimplementedPluginServer) MiddlewareDone(context.Context, *MiddlewareDoneMessage) (*MiddlewareDoneRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method MiddlewareDone not implemented")
 }
 func (UnimplementedPluginServer) mustEmbedUnimplementedPluginServer() {}
 
@@ -179,15 +148,12 @@ func RegisterPluginServer(s grpc.ServiceRegistrar, srv PluginServer) {
 }
 
 func _Plugin_RegisterListener_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(Listener)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(PluginServer).RegisterListener(m, &pluginRegisterListenerServer{stream})
+	return srv.(PluginServer).RegisterListener(&pluginRegisterListenerServer{stream})
 }
 
 type Plugin_RegisterListenerServer interface {
 	Send(*Event) error
+	Recv() (*ListenerClientData, error)
 	grpc.ServerStream
 }
 
@@ -197,6 +163,14 @@ type pluginRegisterListenerServer struct {
 
 func (x *pluginRegisterListenerServer) Send(m *Event) error {
 	return x.ServerStream.SendMsg(m)
+}
+
+func (x *pluginRegisterListenerServer) Recv() (*ListenerClientData, error) {
+	m := new(ListenerClientData)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 func _Plugin_RegisterCmd_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -238,42 +212,6 @@ func _Plugin_SendMessage_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Plugin_MiddlewareEditMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MiddlewareMessage)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PluginServer).MiddlewareEditMessage(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/plugin.Plugin/MiddlewareEditMessage",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PluginServer).MiddlewareEditMessage(ctx, req.(*MiddlewareMessage))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Plugin_MiddlewareDone_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MiddlewareDoneMessage)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PluginServer).MiddlewareDone(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/plugin.Plugin/MiddlewareDone",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PluginServer).MiddlewareDone(ctx, req.(*MiddlewareDoneMessage))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // Plugin_ServiceDesc is the grpc.ServiceDesc for Plugin service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -285,20 +223,13 @@ var Plugin_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "SendMessage",
 			Handler:    _Plugin_SendMessage_Handler,
 		},
-		{
-			MethodName: "MiddlewareEditMessage",
-			Handler:    _Plugin_MiddlewareEditMessage_Handler,
-		},
-		{
-			MethodName: "MiddlewareDone",
-			Handler:    _Plugin_MiddlewareDone_Handler,
-		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "RegisterListener",
 			Handler:       _Plugin_RegisterListener_Handler,
 			ServerStreams: true,
+			ClientStreams: true,
 		},
 		{
 			StreamName:    "RegisterCmd",

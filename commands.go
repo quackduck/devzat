@@ -18,6 +18,7 @@ import (
 	chromastyles "github.com/alecthomas/chroma/styles"
 	markdown "github.com/quackduck/go-term-markdown"
 	"github.com/quackduck/term"
+	lo "github.com/samber/lo"
 	"github.com/shurcooL/tictactoe"
 )
 
@@ -792,6 +793,12 @@ func manCMD(rest string, u *user) {
 			return
 		}
 	}
+	// Plugin commands
+	if c, ok := pluginCmds[rest]; ok {
+		u.room.broadcast(devbot, "Usage: "+rest+" "+c.argsInfo+"  \n"+c.info)
+		return
+	}
+
 	u.room.broadcast("", "This system has been minimized by removing packages and content that are not required on a system that users do not log into.\n\nTo restore this content, including manpages, you can run the 'unminimize' command. You will still need to ensure the 'man-db' package is installed.")
 }
 
@@ -822,5 +829,16 @@ func lsCMD(rest string, u *user) {
 }
 
 func commandsCMD(_ string, u *user) {
-	u.room.broadcast("", "Commands  \n"+autogenCommands(cmds))
+	u.room.broadcast("", "Commands  \n"+autogenCommands(
+		append(cmds, lo.Map[lo.Entry[string, cmdInst], cmd](
+			lo.Entries[string, cmdInst](pluginCmds),
+			func(pCmd lo.Entry[string, cmdInst], _ int) cmd {
+				return cmd{
+					name:     pCmd.Key,
+					info:     cmdInst(pCmd.Value).info,
+					argsInfo: cmdInst(pCmd.Value).argsInfo,
+				}
+			},
+		)...),
+	))
 }

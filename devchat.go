@@ -520,8 +520,8 @@ func (u *user) repl() {
 		}
 
 		// Middleware hook
-		if len(listeners[pb.EventType_SEND].middleware.channels) > 0 {
-			for _, m := range listeners[pb.EventType_SEND].middleware.channels {
+		if len(listeners[pb.EventType_SEND].middleware) > 0 {
+			for _, m := range listeners[pb.EventType_SEND].middleware {
 				m <- &pb.Event_SendEvent{
 					SendEvent: &pb.SendEvent{
 						Room: u.room.name,
@@ -529,15 +529,8 @@ func (u *user) repl() {
 						Msg:  line,
 					},
 				}
-				for {
-					res := <-listeners[pb.EventType_SEND].middleware.res
-					switch res.(type) {
-					case *pb.MiddlewareMessage:
-						line = *res.(*pb.MiddlewareMessage).Msg
-					case *pb.MiddlewareDoneMessage:
-						break
-					}
-				}
+				res := (<-m).(*pb.ListenerClientData_Response).Response.Res.(*pb.MiddlewareResponse_Send).Send
+				line = *res.Msg
 			}
 		}
 

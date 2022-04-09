@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"io"
 	"net"
 )
 
@@ -14,59 +15,99 @@ type pluginServer struct {
 	pb.UnimplementedPluginServer
 }
 
-type middlewareCollection struct {
-	channels []chan pb.IsEvent_Event
-	res      chan pb.MiddlewareRes
-}
-
+// Since pb.MiddlewareChannelMessage includes pb.IsEvent_Event, we'll just use that
 type listenerCollection struct {
-	nonMiddleware []chan pb.IsEvent_Event
-	middleware    middlewareCollection
+	nonMiddleware []chan pb.MiddlewareChannelMessage
+	middleware    []chan pb.MiddlewareChannelMessage
 }
 
-var listeners = map[pb.EventType]listenerCollection{
+var listeners = map[pb.EventType]*listenerCollection{
 	pb.EventType_SEND: {
-		nonMiddleware: make([]chan pb.IsEvent_Event, 0, 4),
-		middleware: middlewareCollection{
-			channels: make([]chan pb.IsEvent_Event, 0, 4),
-			res:      make(chan pb.MiddlewareRes),
-		},
+		nonMiddleware: make([]chan pb.MiddlewareChannelMessage, 0, 4),
+		middleware:    make([]chan pb.MiddlewareChannelMessage, 0, 4),
 	},
 }
 
-func (s *pluginServer) RegisterListener(listener *pb.Listener, stream pb.Plugin_RegisterListenerServer) error {
-	var thisCollection []chan pb.IsEvent_Event
-	var thisIndex int
-	if entry, ok := listeners[listener.Event]; ok {
-		if listener.Middleware != nil && *listener.Middleware {
-			thisCollection = entry.middleware.channels
-			entry.middleware.channels = append(thisCollection, make(chan pb.IsEvent_Event))
-			defer func() {
-				entry.middleware.channels = append(entry.middleware.channels[:thisIndex], entry.middleware.channels[thisIndex+1:]...)
-			}()
-		} else {
-			thisCollection = entry.nonMiddleware
-			entry.nonMiddleware = append(thisCollection, make(chan pb.IsEvent_Event))
-			defer func() {
-				entry.nonMiddleware = append(entry.nonMiddleware[:thisIndex], entry.nonMiddleware[thisIndex+1:]...)
-			}()
-		}
+func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer) error {
+	initialData, err := stream.Recv()
+	if err == io.EOF {
+		return nil
 	}
-	thisIndex = len(thisCollection) - 1
+	if err != nil {
+		return err
+	}
+
+	listener := initialData.GetListener()
+	if listener == nil {
+		return status.Errorf(codes.InvalidArgument, "First message must be a listener")
+	}
+
+	var c *chan pb.MiddlewareChannelMessage
+	isMiddleware := listener.Middleware != nil && *listener.Middleware
+	isOnce := listener.Once != nil && *listener.Once
+	if entry, ok := listeners[listener.Event]; ok {
+		var channelCollection *[]chan pb.MiddlewareChannelMessage
+
+		if isMiddleware {
+			channelCollection = &entry.middleware
+		} else {
+			channelCollection = &entry.nonMiddleware
+		}
+
+		*channelCollection = append(*channelCollection, make(chan pb.MiddlewareChannelMessage))
+		c = &(*channelCollection)[len(*channelCollection)-1]
+		thisIndex := len(*channelCollection) - 1
+		defer func() {
+			*channelCollection = append((*channelCollection)[:thisIndex], (*channelCollection)[thisIndex+1:]...)
+		}()
+	}
 
 	for {
-		message := <-thisCollection[thisIndex]
+		fmt.Println("waiting for message on channel")
+		message := <-*c
+		fmt.Println("got message")
 
 		switch listener.Event {
 		case pb.EventType_SEND:
+			fmt.Println("Sending message on stream")
+
 			err := stream.Send(&pb.Event{
-				Event: message,
+				Event: message.(*pb.Event_SendEvent),
 			})
 			if err != nil {
 				return err
 			}
+			if isMiddleware {
+				mwRes, err := stream.Recv()
+
+				// If something goes wrong, make sure the goroutine sending the message doesn't block on waiting for a response
+				sendNilResponse := func() {
+					*c <- &pb.ListenerClientData_Response{
+						Response: &pb.MiddlewareResponse{
+							Res: nil,
+						},
+					}
+				}
+
+				if err != nil {
+					sendNilResponse()
+					return err
+				}
+
+				switch data := mwRes.Data.(type) {
+				case *pb.ListenerClientData_Listener:
+					sendNilResponse()
+					return status.Errorf(codes.InvalidArgument, "Middleware returned a listener instead of a response")
+				case *pb.ListenerClientData_Response:
+					*c <- data
+				}
+			}
 		default:
 			return status.Errorf(codes.Unimplemented, "unimplemented")
+		}
+
+		if isOnce {
+			break
 		}
 	}
 
@@ -112,20 +153,6 @@ func (s *pluginServer) SendMessage(ctx context.Context, msg *pb.Message) (*pb.Me
 	}
 	r.broadcast(msg.GetFrom(), msg.Msg)
 	return &pb.MessageRes{}, nil
-}
-
-func (s *pluginServer) MiddlewareEditMessage(ctx context.Context, msg *pb.MiddlewareMessage) (*pb.MiddlewareEditMessageRes, error) {
-	// TODO: this should somehow be a response (two-way stream?) from the plugin, not a separate method (because this lets another plugin edit the message)
-
-	listeners[pb.EventType_SEND].middleware.res <- msg
-
-	return &pb.MiddlewareEditMessageRes{}, nil
-}
-
-func (s *pluginServer) MiddlewareDone(ctx context.Context, msg *pb.MiddlewareDoneMessage) (*pb.MiddlewareDoneRes, error) {
-	listeners[pb.EventType_SEND].middleware.res <- msg
-
-	return &pb.MiddlewareDoneRes{}, nil
 }
 
 func newPluginServer() *pluginServer {

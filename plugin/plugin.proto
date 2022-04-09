@@ -6,14 +6,11 @@ package plugin;
 
 service Plugin {
   // Events are implemented through a stream that is held open
-  rpc RegisterListener(Listener) returns (stream Event);
+  rpc RegisterListener(stream ListenerClientData) returns (stream Event);
   rpc RegisterCmd(CmdDef) returns (stream CmdInvocation);
 
   // Commands a plugin can call
   rpc SendMessage(Message) returns (MessageRes);
-  rpc MiddlewareEditMessage(MiddlewareMessage) returns (MiddlewareEditMessageRes);
-  // Have to name it that to avoid colliding with the RPC method name
-  rpc MiddlewareDone(MiddlewareDoneMessage) returns (MiddlewareDoneRes);
 }
 
 /* RegisterListener */
@@ -28,21 +25,33 @@ message SendEvent {
   string msg = 3;
 }
 
+message ListenerClientData {
+  oneof data {
+    Listener listener = 1;
+    MiddlewareResponse response = 2;
+  }
+}
+
 message Listener {
   EventType event = 1;
   optional bool middleware = 2;
   optional bool once = 3;
 }
 
-message TestEvent {
-  string thing = 1;
-}
-
 message Event {
   oneof event {
     SendEvent send_event = 1;
-    TestEvent other_event = 2;
   }
+}
+
+message MiddlewareResponse {
+  oneof res {
+    MiddlewareSendResponse send = 1;
+  }
+}
+
+message MiddlewareSendResponse {
+  optional string msg = 1;
 }
 
 /* RegisterCmd */
@@ -69,17 +78,3 @@ message Message {
 }
 
 message MessageRes {}
-
-/* MiddlewareEditMessage */
-
-message MiddlewareMessage {
-  optional string msg = 1;
-}
-
-message MiddlewareEditMessageRes {}
-
-/* MiddlewareDone */
-
-message MiddlewareDoneMessage {}
-
-message MiddlewareDoneRes {}
