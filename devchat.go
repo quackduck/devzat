@@ -525,7 +525,7 @@ func (u *user) repl() {
 				m <- &pb.Event_Send{
 					Send: &pb.SendEvent{
 						Room: u.room.name,
-						From: u.name,
+						From: stripansi.Strip(u.name),
 						Msg:  line,
 					},
 				}

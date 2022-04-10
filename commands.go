@@ -3,6 +3,8 @@ package main
 import (
 	pb "devchat/plugin"
 	"fmt"
+	"github.com/acarl005/stripansi"
+	"github.com/samber/lo"
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
@@ -18,7 +20,6 @@ import (
 	chromastyles "github.com/alecthomas/chroma/styles"
 	markdown "github.com/quackduck/go-term-markdown"
 	"github.com/quackduck/term"
-	lo "github.com/samber/lo"
 	"github.com/shurcooL/tictactoe"
 )
 
@@ -115,7 +116,7 @@ func runCommands(line string, u *user) {
 			l <- &pb.Event_Send{
 				Send: &pb.SendEvent{
 					Room: u.room.name,
-					From: u.name,
+					From: stripansi.Strip(u.name),
 					Msg:  line,
 				},
 			}
@@ -147,7 +148,7 @@ func runCommands(line string, u *user) {
 	if pluginCmd, ok := pluginCmds[currCmd]; ok {
 		pluginCmd.c <- &pb.CmdInvocation{
 			Room: u.room.name,
-			From: u.name,
+			From: stripansi.Strip(u.name),
 			Args: args,
 		}
 		return
@@ -829,6 +830,21 @@ func lsCMD(rest string, u *user) {
 }
 
 func commandsCMD(_ string, u *user) {
+	// For some reason the for loops didn't work so I'm using the lo library
+	// Make a combined cmds slice that includes the pluginCmds
+
+	//newCmds := make([]cmd, 0, len(cmds) + len(pluginCmds))
+	//for _, c := range cmds {
+	//	newCmds = append(newCmds, c)
+	//}
+	//for n, c := range pluginCmds {
+	//	newCmds = append(newCmds, cmd{
+	//		name: n,
+	//		info: c.info,
+	//		argsInfo: c.argsInfo,
+	//	})
+	//}
+
 	u.room.broadcast("", "Commands  \n"+autogenCommands(
 		append(cmds, lo.Map[lo.Entry[string, cmdInst], cmd](
 			lo.Entries[string, cmdInst](pluginCmds),

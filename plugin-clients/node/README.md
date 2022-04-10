@@ -33,7 +33,7 @@ type Message = {
     from?: string | null, // The name of the user sending the message (defaults to the bot's name),
                           // can be set to null to not have any name attached to the message
     msg: string, // Message text (in Markdown)
-    ephemeralTo?: string // TODO not implemented
+    ephemeralTo?: string // Username of user to send the message to (if not set, the message will be visible by all users in the room)
 }
 ```
 

@@ -59,9 +59,14 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 
 		*channelCollection = append(*channelCollection, make(chan pb.MiddlewareChannelMessage))
 		c = &(*channelCollection)[len(*channelCollection)-1]
-		thisIndex := len(*channelCollection) - 1
 		defer func() {
-			*channelCollection = append((*channelCollection)[:thisIndex], (*channelCollection)[thisIndex+1:]...)
+			// Remove the channel from the channelCollection where the channel is equal to c
+			for i, channel := range *channelCollection {
+				if channel == *c {
+					*channelCollection = append((*channelCollection)[:i], (*channelCollection)[i+1:]...)
+					break
+				}
+			}
 		}()
 	}
 
@@ -151,15 +156,20 @@ func (s *pluginServer) RegisterCmd(def *pb.CmdDef, stream pb.Plugin_RegisterCmdS
 }
 
 func (s *pluginServer) SendMessage(ctx context.Context, msg *pb.Message) (*pb.MessageRes, error) {
-	if msg.EphemeralTo != nil {
-		// TODO send an ephemeral message
-		return nil, status.Errorf(codes.Unimplemented, "unimplemented")
+	fmt.Println(msg)
+	if msg.GetEphemeralTo() != "" {
+		u, success := findUserByName(rooms[msg.Room], *msg.EphemeralTo)
+		if !success {
+			return nil, status.Errorf(codes.NotFound, "Could not find user %s", *msg.EphemeralTo)
+		}
+		u.writeln(msg.GetFrom(), msg.Msg)
+	} else {
+		r := rooms[msg.Room]
+		if r == nil {
+			return nil, status.Errorf(codes.InvalidArgument, "Room does not exist")
+		}
+		r.broadcast(msg.GetFrom(), msg.Msg)
 	}
-	r := rooms[msg.Room]
-	if r == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Room does not exist")
-	}
-	r.broadcast(msg.GetFrom(), msg.Msg)
 	return &pb.MessageRes{}, nil
 }
 

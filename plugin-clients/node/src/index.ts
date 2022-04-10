@@ -51,7 +51,8 @@ export default class Plugin {
     return new Promise((resolve, reject) => {
       this.stub.sendMessage({
         ...message,
-        from: message.from === undefined ? this.name : message.from === null ? undefined : message.from
+        from: message.from === undefined ? this.name : message.from === null ? undefined : message.from,
+        ephemeral_to: message.ephemeralTo
       }, (err: grpc.ServiceError | null, res: MessageRes) => {
         if (err) {
           reject(err);
