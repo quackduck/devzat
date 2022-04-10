@@ -69,7 +69,6 @@ type User struct {
 	PingEverytime bool
 	isSlack       bool
 	FormatTime24  bool
-	Autoload      bool
 
 	Color   string
 	ColorBG string
@@ -294,7 +293,6 @@ func newUser(s ssh.Session) *User {
 		term:          term,
 		ColorBG:       "bg-off",
 		Bell:          true,
-		Autoload:      false,
 		id:            shasum(toHash),
 		addr:          host,
 		win:           w,
@@ -560,21 +558,17 @@ func (u *User) loadPrefs() error {
 
 	data, err := os.ReadFile(save)
 	if err != nil {
+		if os.IsNotExist(err) { // new user, nothing saved yet
+			return nil
+		}
 		return err
 	}
 
 	oldUser := *u //nolint:govet // complains because of a lock copy. We may need that exact lock value later on
 
-	// temp := User{}
 	err = json.Unmarshal(data, u) // won't overwrite private fields
 	if err != nil {
 		return err
-	}
-
-	if !u.Autoload {
-		fmt.Println("Not loading")
-		u = &oldUser
-		return nil
 	}
 
 	newName := u.Name

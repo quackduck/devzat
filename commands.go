@@ -61,9 +61,7 @@ var (
 		{"pwd", pwdCMD, "", "Show your current room"},
 		//		{"sixel", sixelCMD, "<png url>", "Render an image in high quality"},
 		{"shrug", shrugCMD, "", `¯\\\_(ツ)\_/¯`}, // won't actually run, here just to show in docs
-		{"autoload", autoloadCMD, "on|off", "enable autoloading of preferences"},
-		{"save", saveCMD, "", "save"},
-		{"load", loadCMD, "", "load"}}
+	}
 	SecretCMDs = []CMD{
 		{"ls", lsCMD, "???", "???"},
 		{"cat", catCMD, "???", "???"},
@@ -800,37 +798,4 @@ func lsCMD(rest string, u *User) {
 
 func commandsCMD(_ string, u *User) {
 	u.room.broadcast("", "Commands  \n"+autogenCommands(MainCMDs))
-}
-
-func autoloadCMD(arg string, u *User) {
-	if arg == "on" {
-		u.Autoload = true
-	} else if arg == "off" {
-		u.Autoload = false
-	} else if arg == "" {
-		var status string
-		if u.Autoload {
-			status = "on"
-		} else {
-			status = "off"
-		}
-		u.room.broadcast("", "autoload "+status)
-	} else {
-		u.room.broadcast(Devbot, "your options are off or on")
-	}
-}
-func saveCMD(_ string, u *User) {
-	err := u.savePrefs()
-	if err != nil {
-		u.room.broadcast(Devbot, "An error occurred while saving: "+err.Error())
-		Log.Println("error while saving user data:", err.Error())
-	}
-
-}
-func loadCMD(_ string, u *User) {
-	err := u.loadPrefs()
-	if err != nil {
-		u.room.broadcast(Devbot, "An error occurred while loading: "+err.Error())
-		Log.Println("error while loading user data:", err.Error())
-	}
 }
