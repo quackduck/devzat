@@ -72,7 +72,7 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 			fmt.Println("Sending message on stream")
 
 			err := stream.Send(&pb.Event{
-				Event: message.(*pb.Event_SendEvent),
+				Event: message.(*pb.Event_Send),
 			})
 			if err != nil {
 				return err

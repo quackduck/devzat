@@ -522,15 +522,17 @@ func (u *user) repl() {
 		// Middleware hook
 		if len(listeners[pb.EventType_SEND].middleware) > 0 {
 			for _, m := range listeners[pb.EventType_SEND].middleware {
-				m <- &pb.Event_SendEvent{
-					SendEvent: &pb.SendEvent{
+				m <- &pb.Event_Send{
+					Send: &pb.SendEvent{
 						Room: u.room.name,
 						From: u.name,
 						Msg:  line,
 					},
 				}
 				res := (<-m).(*pb.ListenerClientData_Response).Response.Res.(*pb.MiddlewareResponse_Send).Send
-				line = *res.Msg
+				if res.Msg != nil {
+					line = *res.Msg
+				}
 			}
 		}
 

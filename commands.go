@@ -112,8 +112,8 @@ func runCommands(line string, u *user) {
 	// Now we know it is not a DM, so this is a safe place to add the hook for sending the event to plugins
 	if len(listeners[pb.EventType_SEND].nonMiddleware) > 0 {
 		for _, l := range listeners[pb.EventType_SEND].nonMiddleware {
-			l <- &pb.Event_SendEvent{
-				SendEvent: &pb.SendEvent{
+			l <- &pb.Event_Send{
+				Send: &pb.SendEvent{
 					Room: u.room.name,
 					From: u.name,
 					Msg:  line,

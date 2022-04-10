@@ -40,7 +40,7 @@ message Listener {
 
 message Event {
   oneof event {
-    SendEvent send_event = 1;
+    SendEvent send = 1;
   }
 }
 

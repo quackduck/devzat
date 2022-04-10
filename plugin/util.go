@@ -18,7 +18,7 @@ type MiddlewareChannelMessage interface {
 }
 
 // Members of IsEvent_Event
-func (*Event_SendEvent) _MiddlewareChannelMessage() {}
+func (*Event_Send) _MiddlewareChannelMessage() {}
 
 // Members of isListenerClientData_Data
 func (*ListenerClientData_Listener) _MiddlewareChannelMessage() {}

@@ -1,12 +1,9 @@
 import Devzat from "../dist";
 
-const plugin = new Devzat("localhost:5556");
-
-// setInterval(() => plugin.sendMessage({
-//     from: "Test bot",
-//     room: "#main",
-//     msg: "Hello world!"
-// }), 4000);
+const plugin = new Devzat({
+    address: "localhost:5556",
+    name: "Demo bot"
+});
 
 plugin.onMessageSend({
     middleware: true,
@@ -14,5 +11,29 @@ plugin.onMessageSend({
 }, message => {
     console.log("new message!", message.msg);
 
-    return message.msg + " TESTING";
+    if(!message.msg.startsWith("demo-bot ")) {
+        return message.msg + " TESTING";
+    }
+});
+
+plugin.onMessageSend({
+    middleware: false,
+    once: true
+}, message => {
+    console.log("got a message once", message.msg);
+});
+
+plugin.command({
+    name: "demo-bot",
+    argsInfo: "<msg | \"send-test\">",
+    info: "Ping the demo bot"
+}, invocation => {
+    if(invocation.args === "send-test") {
+        setInterval(() => plugin.sendMessage({
+            room: "#main",
+            msg: "Hello world!"
+        }), 4000);
+        return "Set interval!";
+    }
+    return `Hello, ${invocation.from}! You said: ${invocation.args}`;
 })
