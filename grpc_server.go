@@ -31,7 +31,7 @@ var listeners = map[pb.EventType]*listenerCollection{
 }
 
 func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer) error {
-	fmt.Println("Registering listener")
+	l.Println("[gRPC] Registering event listener")
 	initialData, err := stream.Recv()
 	if err == io.EOF {
 		return nil
@@ -61,7 +61,6 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 		c = &(*channelCollection)[len(*channelCollection)-1]
 		thisIndex := len(*channelCollection) - 1
 		defer func() {
-			fmt.Println("Cleaning up closed listener")
 			*channelCollection = append((*channelCollection)[:thisIndex], (*channelCollection)[thisIndex+1:]...)
 		}()
 	}
@@ -89,7 +88,6 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 			}
 
 			if err != nil {
-				fmt.Println("Error sending message event:", err)
 				if isMiddleware {
 					sendNilResponse()
 				}
@@ -132,7 +130,7 @@ type cmdInst struct {
 var pluginCmds = map[string]cmdInst{}
 
 func (s *pluginServer) RegisterCmd(def *pb.CmdDef, stream pb.Plugin_RegisterCmdServer) error {
-	fmt.Println("Registering command")
+	l.Printf("[gRPC] Registering command with name %s", def.Name)
 	pluginCmds[def.Name] = cmdInst{
 		argsInfo: def.ArgsInfo,
 		info:     def.Info,
@@ -173,7 +171,7 @@ func newPluginServer() *pluginServer {
 func startPluginServer(port uint32) {
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
 	if err != nil {
-		l.Fatalf("Failed to listen for plugin server: %v", err)
+		l.Fatalf("[gRPC] Failed to listen for plugin server: %v", err)
 	}
 	var opts []grpc.ServerOption
 	opts = append(opts, grpc.KeepaliveParams(keepalive.ServerParameters{
@@ -182,6 +180,6 @@ func startPluginServer(port uint32) {
 	// TODO: add TLS if configured
 	grpcServer := grpc.NewServer(opts...)
 	pb.RegisterPluginServer(grpcServer, newPluginServer())
-	l.Printf("Plugin server started on port %d\n", port)
+	l.Printf("[gRPC] Plugin server started on port %d\n", port)
 	grpcServer.Serve(lis)
 }
