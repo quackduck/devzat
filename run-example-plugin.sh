@@ -1,0 +1,1 @@
+npx esno plugin-clients/node/example/index.ts

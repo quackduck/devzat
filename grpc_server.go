@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/status"
 	"io"
 	"net"
+	"time"
 )
 
 type pluginServer struct {
@@ -29,6 +31,7 @@ var listeners = map[pb.EventType]*listenerCollection{
 }
 
 func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer) error {
+	fmt.Println("Registering listener")
 	initialData, err := stream.Recv()
 	if err == io.EOF {
 		return nil
@@ -58,36 +61,42 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 		c = &(*channelCollection)[len(*channelCollection)-1]
 		thisIndex := len(*channelCollection) - 1
 		defer func() {
+			fmt.Println("Cleaning up closed listener")
 			*channelCollection = append((*channelCollection)[:thisIndex], (*channelCollection)[thisIndex+1:]...)
 		}()
 	}
 
 	for {
-		fmt.Println("waiting for message on channel")
 		message := <-*c
-		fmt.Println("got message")
 
 		switch listener.Event {
 		case pb.EventType_SEND:
-			fmt.Println("Sending message on stream")
-
 			err := stream.Send(&pb.Event{
 				Event: message.(*pb.Event_Send),
 			})
+
+			// If something goes wrong, make sure the goroutine sending the message doesn't block on waiting for a response
+			sendNilResponse := func() {
+				*c <- &pb.ListenerClientData_Response{
+					Response: &pb.MiddlewareResponse{
+						Res: &pb.MiddlewareResponse_Send{
+							Send: &pb.MiddlewareSendResponse{
+								Msg: nil,
+							},
+						},
+					},
+				}
+			}
+
 			if err != nil {
+				fmt.Println("Error sending message event:", err)
+				if isMiddleware {
+					sendNilResponse()
+				}
 				return err
 			}
 			if isMiddleware {
 				mwRes, err := stream.Recv()
-
-				// If something goes wrong, make sure the goroutine sending the message doesn't block on waiting for a response
-				sendNilResponse := func() {
-					*c <- &pb.ListenerClientData_Response{
-						Response: &pb.MiddlewareResponse{
-							Res: nil,
-						},
-					}
-				}
 
 				if err != nil {
 					sendNilResponse()
@@ -123,6 +132,7 @@ type cmdInst struct {
 var pluginCmds = map[string]cmdInst{}
 
 func (s *pluginServer) RegisterCmd(def *pb.CmdDef, stream pb.Plugin_RegisterCmdServer) error {
+	fmt.Println("Registering command")
 	pluginCmds[def.Name] = cmdInst{
 		argsInfo: def.ArgsInfo,
 		info:     def.Info,
@@ -166,6 +176,9 @@ func startPluginServer(port uint32) {
 		l.Fatalf("Failed to listen for plugin server: %v", err)
 	}
 	var opts []grpc.ServerOption
+	opts = append(opts, grpc.KeepaliveParams(keepalive.ServerParameters{
+		Time: time.Second * 10,
+	}))
 	// TODO: add TLS if configured
 	grpcServer := grpc.NewServer(opts...)
 	pb.RegisterPluginServer(grpcServer, newPluginServer())

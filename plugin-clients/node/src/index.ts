@@ -63,73 +63,108 @@ export default class Plugin {
   }
 
   onMessageSend(listener: Listener, callback: (event: SendEvent) => string | void | Promise<string> | Promise<void>): () => void {
-    const call: grpc.ClientDuplexStream<plugin_pb.ListenerClientData.AsObject, plugin_pb.Event.AsObject> = this.stub.registerListener();
-    let callCancel = call.cancel;
+    let callCancel: () => void;
 
-    call.on("data", async (e: plugin_pb.Event.AsObject) => {
-      if(!e.send) throw new Error("Event listener gRPC stream received incorrect event type");
-      const res = await callback(e.send);
-      if(!listener.middleware) {
-        if(res === undefined) return; else throw new Error("Event callback returned a value but the listener wasn't marked as middleware");
-      }
-      call.write({
-        response: {
-          send: {
-            msg: res as string | undefined
+    let attemptingReconnect = false;
+    const attemptReconnect = () => {
+      if(attemptingReconnect) return;
+      attemptingReconnect = true;
+      console.log("Command invocation listener stream ended, reconnecting");
+      setTimeout(() => {
+        connect();
+        attemptingReconnect = false;
+      }, 1000);
+    };
+
+    const connect = () => {
+      const call: grpc.ClientDuplexStream<plugin_pb.ListenerClientData.AsObject, plugin_pb.Event.AsObject> = this.stub.registerListener();
+
+      call.on("data", async (e: plugin_pb.Event.AsObject) => {
+        if(!e.send) throw new Error("Event listener gRPC stream received incorrect event type");
+        const res = await callback(e.send);
+        if(!listener.middleware) {
+          if(res === undefined) return; else throw new Error("Event callback returned a value but the listener wasn't marked as middleware");
+        }
+        call.write({
+          response: {
+            send: {
+              msg: res as string | undefined
+            }
           }
+        });
+      });
+
+      call.on("error", e => {
+        if((e as any).code === grpc.status.UNAVAILABLE || (e as any).code === grpc.status.CANCELLED) {
+          // The client got disconnected from the server
+          attemptReconnect();
+        } else throw e;
+      });
+
+      call.on("end", () => {
+        if(!listener.once) {
+          // the stream was supposed to still be open, so reconnect
+          attemptReconnect()
+        }
+      })
+
+      call.write({
+        listener: {
+          ...listener,
+          event: 0 /* EventType.SEND */
         }
       });
-    });
+    };
 
-    call.on("error", e => {
-      throw e;
-    });
-
-    call.on("end", () => {
-      if(!listener.once) {
-        // the stream was supposed to still be open, so reconnect
-        console.log("Message send event listener stream ended, reconnecting");
-        // I'm not sure if the recursion will cause problems, if it does I need to reevaluate how I am doing this
-        callCancel = this.onMessageSend(listener, callback);
-      }
-    })
-
-    call.write({
-      listener: {
-        ...listener,
-        event: 0 /* EventType.SEND */
-      }
-    });
+    connect();
 
     return () => callCancel();
   }
 
   command(command: CmdDef, callback: (event: CmdInvocation) => string | undefined | Message | Promise<string> | Promise<undefined> | Promise<Message>): () => void {
-    const call: grpc.ClientReadableStream<plugin_pb.CmdInvocation.AsObject> = this.stub.registerCmd(command);
-    let callCancel = call.cancel;
+    let callCancel: () => void;
 
-    call.on("data", async (e: plugin_pb.CmdInvocation.AsObject) => {
-      const res = await callback(e);
-
-      if(res !== undefined) {
-        // For convenience, reply to the command invocation with the callback's return value
-        await this.sendMessage(typeof res === "string" ? {
-          msg: res,
-          room: e.room
-        } : res);
-      }
-    });
-
-    call.on("error", e => {
-      throw e;
-    });
-
-    call.on("end", () => {
-      // the stream was supposed to still be open, so reconnect
+    let attemptingReconnect = false;
+    const attemptReconnect = () => {
+      if(attemptingReconnect) return;
+      attemptingReconnect = true;
       console.log("Command invocation listener stream ended, reconnecting");
-      // I'm not sure if the recursion will cause problems, if it does I need to reevaluate how I am doing this
-      callCancel = this.command(command, callback);
-    });
+      setTimeout(() => {
+        connect();
+        attemptingReconnect = false;
+      }, 1000);
+    };
+
+    const connect = () => {
+      const call: grpc.ClientReadableStream<plugin_pb.CmdInvocation.AsObject> = this.stub.registerCmd(command);
+      callCancel = call.cancel;
+
+      call.on("data", async (e: plugin_pb.CmdInvocation.AsObject) => {
+        const res = await callback(e);
+
+        if(res !== undefined) {
+          // For convenience, reply to the command invocation with the callback's return value
+          await this.sendMessage(typeof res === "string" ? {
+            msg: res,
+            room: e.room
+          } : res);
+        }
+      });
+
+      call.on("error", e => {
+        if((e as any).code === grpc.status.UNAVAILABLE || (e as any).code === grpc.status.CANCELLED) {
+          // The client got disconnected from the server
+          attemptReconnect();
+        } else throw e;
+      });
+
+      call.on("end", () => {
+        // the stream was supposed to still be open, so reconnect
+        attemptReconnect();
+      });
+    };
+
+    connect();
 
     return () => callCancel();
   }
