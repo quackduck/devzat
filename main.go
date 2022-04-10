@@ -125,7 +125,7 @@ type backlogMessage struct {
 func main() {
 	logfile, err := os.OpenFile(Config.DataDir+string(os.PathSeparator)+"log.txt", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
-		Log.Println(err)
+		fmt.Println(err) // can't log yet so just print
 		return
 	}
 	Log = log.New(io.MultiWriter(logfile, os.Stdout), "", log.Ldate|log.Ltime|log.Lshortfile)
