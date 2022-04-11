@@ -56,6 +56,8 @@ type Room struct {
 	usersMutex sync.Mutex
 }
 
+// User represents a user connected to the SSH server.
+// Exported fields represent ones saved to disk. (see also: User.savePrefs())
 type User struct {
 	Name     string
 	Pronouns []string
