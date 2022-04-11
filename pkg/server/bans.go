@@ -77,6 +77,8 @@ func (s *Server) ReadBans() error {
 		if errCreate := s.makeDefaultBansFile(fp); errCreate != nil {
 			return errCreate
 		}
+
+		f, _ = os.Open(fp) // use that file, we just made it
 	}
 
 	data, err := ioutil.ReadAll(f)

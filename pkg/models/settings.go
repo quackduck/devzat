@@ -1,12 +1,10 @@
 package models
 
 import (
-	"devzat/pkg"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
+	"reflect"
 )
 
 const (
@@ -14,57 +12,22 @@ const (
 )
 
 type ServerSettings struct {
-	Antispam    AntispamSettings `json:"antispam"`
-	Slack       SlackSettings    `json:"slack"`
-	Twitter     TwitterSettings  `json:"twitter"`
-	Port        int              `json:"port"`
-	ProfilePort int              `json:"profilePort"`
-	Scrollback  int              `json:"scrollbackHistory"`
-	dir         string
-	cfgFileName string
-}
-
-const (
-	antispamDefaultWindow      = time.Second * 5
-	antispamDefaultLimitWarn   = 30
-	antispamDefaultLimitBan    = 50
-	antispamDefaultBanDuration = time.Minute * 5
-)
-
-type AntispamSettings struct {
-	Window      time.Duration `json:"window"`
-	LimitWarn   int           `json:"limitWarn"`
-	LimitBan    int           `json:"limitBan"`
-	BanDuration time.Duration `json:"BanDuration"`
-}
-
-type SlackSettings struct {
-	Offline bool `json:"offline"`
-}
-
-type TwitterSettings struct {
-	Offline bool `json:"offline"`
+	Antispam AntispamSettings
+	Slack    SlackSettings
+	Twitter  TwitterSettings
+	Runtime  runtimeSettings
 }
 
 func (ss *ServerSettings) Init() error {
-	// should this instance run offline? (should it not connect to slack or twitter?)
-	ss.Slack.Offline = os.Getenv(pkg.EnvOfflineSlack) != "true"
-	ss.Twitter.Offline = os.Getenv(pkg.EnvOfflineTwitter) != "true"
-
-	ss.Antispam.Window = antispamDefaultWindow
-	ss.Antispam.LimitWarn = antispamDefaultLimitWarn
-	ss.Antispam.LimitBan = antispamDefaultLimitBan
-	ss.Antispam.BanDuration = antispamDefaultBanDuration
-
-	return nil
+	return ss.FromEnv()
 }
 
 func (ss *ServerSettings) ConfigDir() string {
-	if ss.dir == "" {
+	if ss.Runtime.ConfigDir == "" {
 		ss.setDefaultCfgDir()
 	}
 
-	return ss.dir
+	return ss.Runtime.ConfigDir
 }
 
 func (ss *ServerSettings) SetConfigDir(d string) {
@@ -74,25 +37,25 @@ func (ss *ServerSettings) SetConfigDir(d string) {
 		return
 	}
 
-	ss.dir = d
+	ss.Runtime.ConfigDir = d
 
 	ss.ensureConfigDirExists() // make sure it exists
 }
 
 func (ss *ServerSettings) ensureConfigDirExists() {
-	_ = os.MkdirAll(ss.dir, os.ModePerm)
+	_ = os.MkdirAll(ss.Runtime.ConfigDir, os.ModePerm)
 }
 
 func (ss *ServerSettings) setDefaultCfgDir() {
 	cfgDir, _ := os.UserConfigDir()
-	ss.dir = filepath.Join(cfgDir, configDirName)
+	ss.Runtime.ConfigDir = filepath.Join(cfgDir, configDirName)
 }
 
-func (ss *ServerSettings) ConfigFileName() string        { return ss.cfgFileName }
-func (ss *ServerSettings) SetConfigFileName(name string) { ss.cfgFileName = name }
+func (ss *ServerSettings) ConfigFileName() string        { return ss.Runtime.COnfigFile }
+func (ss *ServerSettings) SetConfigFileName(name string) { ss.Runtime.COnfigFile = name }
 
 func (ss *ServerSettings) GetConfigFile() (*os.File, error) {
-	cfgFilePath := filepath.Join(ss.dir, ss.cfgFileName)
+	cfgFilePath := filepath.Join(ss.Runtime.ConfigDir, ss.Runtime.COnfigFile)
 
 	if _, err := os.Stat(cfgFilePath); os.IsNotExist(err) {
 		if errNew := ss.SaveConfigFile(); err != nil {
@@ -111,13 +74,48 @@ func (ss *ServerSettings) GetConfigFile() (*os.File, error) {
 }
 
 func (ss *ServerSettings) SaveConfigFile() error {
-	path := filepath.Join(ss.dir, ss.cfgFileName)
-	_ = os.MkdirAll(ss.dir, 0777)
+	path := filepath.Join(ss.Runtime.ConfigDir, ss.Runtime.COnfigFile)
+	_ = os.MkdirAll(ss.Runtime.ConfigDir, 0777)
 
-	data, err := json.MarshalIndent(ss, "", "  ")
-	if err != nil {
-		return fmt.Errorf("could not marshal config file data: %v", err)
+	return os.WriteFile(path, []byte(ss.String()), 0777)
+}
+
+func dump(cfg interface{}) string {
+	c := reflect.ValueOf(cfg)
+	t := c.Type()
+
+	fmtStr := "%s\n%s"
+	str := ""
+
+	for i := 0; i < c.NumField(); i++ {
+		key, found := t.Field(i).Tag.Lookup("env")
+		if !found {
+			continue
+		}
+
+		// TODO handle printing slices with custom separators
+		// see hack below
+		_, isMulti := t.Field(i).Tag.Lookup("envSeparator")
+
+		def := t.Field(i).Tag.Get("envDefault")
+
+		if c.Field(i).Kind() == reflect.Struct {
+			continue
+		}
+
+		val := fmt.Sprintf("%v", c.Field(i).Interface())
+		fmtLine := "%s=%s"
+
+		// HACK: only prints default for things that are slices
+		// we need to format the reflected string slice here
+		if val == def || val == "" || val == "0" || val == "0s" || isMulti {
+			val = def
+			fmtLine = "# %s=%s"
+		}
+
+		line := fmt.Sprintf(fmtLine, key, val)
+		str = fmt.Sprintf(fmtStr, str, line)
 	}
 
-	return os.WriteFile(path, data, 0777)
+	return str
 }

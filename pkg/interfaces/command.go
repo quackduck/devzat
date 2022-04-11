@@ -6,7 +6,7 @@ type CommandFunc = func(rest string, u User) error
 
 type Command interface {
 	Name() string
-	Fn(rest string, u User) error
+	Fn(strArgs string, u User) error
 	ArgsInfo() string
 	Info() string
 	Visibility() models.CommandVisibility

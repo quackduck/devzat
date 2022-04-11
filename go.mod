@@ -6,6 +6,7 @@ require (
 	github.com/TwiN/go-away v1.6.1
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/alecthomas/chroma v0.10.0
+	github.com/caarlos0/env/v6 v6.9.1
 	github.com/dghubble/go-twitter v0.0.0-20220319054129-995614af6514
 	github.com/dghubble/oauth1 v0.7.1
 	github.com/gliderlabs/ssh v0.3.3

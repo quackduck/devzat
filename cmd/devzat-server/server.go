@@ -49,7 +49,7 @@ const (
 
 const (
 	appName     = "devzat-server"
-	cfgFileName = "config.json"
+	cfgFileName = "config.env"
 )
 
 // DevzatServer is a wrapper with extra methods that we only use here
@@ -68,7 +68,6 @@ func (srv *DevzatServer) Init() error {
 	srv.SetConfigDir(filepath.Join(cfgDir, appName))
 	srv.SetConfigFileName(cfgFileName)
 
-	// init the underlying server impl
 	if errInit := srv.Server.Init(); errInit != nil {
 		return fmt.Errorf(fmtErrInit, errInit)
 	}
@@ -77,16 +76,15 @@ func (srv *DevzatServer) Init() error {
 		return fmt.Errorf("could not save config file: %v", errConfig)
 	}
 
-	srv.Port = defaultPort
-	srv.Scrollback = defaultScrollback
-	srv.ProfilePort = defaultProfilePort
-
-	// parse any cli flags
+	srv.Runtime.Port = defaultPort
+	srv.Runtime.Scrollback = defaultScrollback
+	srv.Runtime.ProfilePort = defaultProfilePort
+	
 	if errParse := srv.parseOptions(); errParse != nil {
 		return fmt.Errorf(fmtErrParse, errParse)
 	}
 
-	fmt.Printf(fmtProfiling, srv.Port, srv.ProfilePort)
+	fmt.Printf(fmtProfiling, srv.Runtime.Port, srv.Runtime.ProfilePort)
 
 	// our threads
 	go srv.dwellHttpServe() // TODO: have a web dashboard that shows logs
@@ -121,7 +119,7 @@ func (srv *DevzatServer) dwellGracefulShutdown() {
 func (srv *DevzatServer) sshRun() {
 	pubKey := os.Getenv("HOME") + defaultSshPubKeyFile
 	options := ssh.HostKeyFile(pubKey)
-	strPort := fmt.Sprintf(":%d", srv.Port)
+	strPort := fmt.Sprintf(":%d", srv.Runtime.Port)
 
 	ssh.Handle(srv.makeUserConnectionFunc())
 
@@ -133,7 +131,7 @@ func (srv *DevzatServer) sshRun() {
 }
 
 func (srv *DevzatServer) sshServeOn443(options ssh.Option) {
-	if srv.Port != 22 {
+	if srv.Runtime.Port != 22 {
 		return
 	}
 
@@ -147,7 +145,7 @@ func (srv *DevzatServer) sshServeOn443(options ssh.Option) {
 func (srv *DevzatServer) parseOptions() (err error) {
 	envPort := os.Getenv(pkg.EnvServerPort)
 	if envPort != "" {
-		if srv.Port, err = strconv.Atoi(envPort); err != nil {
+		if srv.Runtime.Port, err = strconv.Atoi(envPort); err != nil {
 			return fmt.Errorf("could not parse server port option: %v", err)
 		}
 	}
@@ -193,7 +191,7 @@ func (srv *DevzatServer) makeUserConnectionFunc() func(ssh.Session) {
 }
 
 func (srv *DevzatServer) dwellHttpServe() {
-	if err := http.ListenAndServe(fmt.Sprintf(":%d", srv.ProfilePort), nil); err != nil {
+	if err := http.ListenAndServe(fmt.Sprintf(":%d", srv.Runtime.ProfilePort), nil); err != nil {
 		fmt.Println(err)
 	}
 }
