@@ -1,7 +1,6 @@
 package main
 
 import (
-	"devzat/pkg/server"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -16,6 +15,7 @@ import (
 	"github.com/gliderlabs/ssh"
 
 	"devzat/pkg"
+	"devzat/pkg/server"
 )
 
 const (
@@ -65,13 +65,13 @@ func (srv *DevzatServer) Init() error {
 		return fmt.Errorf("could not find config dir: %v", err)
 	}
 
+	srv.SetConfigDir(filepath.Join(cfgDir, appName))
+	srv.SetConfigFileName(cfgFileName)
+
 	// init the underlying server impl
 	if errInit := srv.Server.Init(); errInit != nil {
 		return fmt.Errorf(fmtErrInit, errInit)
 	}
-
-	srv.SetConfigDir(filepath.Join(cfgDir, appName))
-	srv.SetConfigFileName(cfgFileName)
 
 	if errConfig := srv.SaveConfigFile(); errConfig != nil {
 		return fmt.Errorf("could not save config file: %v", errConfig)

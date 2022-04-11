@@ -25,9 +25,9 @@ type ServerSettings struct {
 }
 
 const (
+	antispamDefaultWindow      = time.Second * 5
 	antispamDefaultLimitWarn   = 30
 	antispamDefaultLimitBan    = 50
-	antispamDefaultWindow      = time.Second * 5
 	antispamDefaultBanDuration = time.Minute * 5
 )
 
@@ -48,8 +48,13 @@ type TwitterSettings struct {
 
 func (ss *ServerSettings) Init() error {
 	// should this instance run offline? (should it not connect to slack or twitter?)
-	ss.Slack.Offline = os.Getenv(pkg.EnvOfflineSlack) != ""
-	ss.Twitter.Offline = os.Getenv(pkg.EnvOfflineTwitter) != ""
+	ss.Slack.Offline = os.Getenv(pkg.EnvOfflineSlack) != "true"
+	ss.Twitter.Offline = os.Getenv(pkg.EnvOfflineTwitter) != "true"
+
+	ss.Antispam.Window = antispamDefaultWindow
+	ss.Antispam.LimitWarn = antispamDefaultLimitWarn
+	ss.Antispam.LimitBan = antispamDefaultLimitBan
+	ss.Antispam.BanDuration = antispamDefaultBanDuration
 
 	return nil
 }
@@ -63,12 +68,19 @@ func (ss *ServerSettings) ConfigDir() string {
 }
 
 func (ss *ServerSettings) SetConfigDir(d string) {
-	if _, err := filepath.Abs(d); err == nil || d == "" {
+	// handle default case if incoming path is not good
+	if _, err := filepath.Abs(d); err != nil || d == "" {
 		ss.setDefaultCfgDir()
 		return
 	}
 
 	ss.dir = d
+
+	ss.ensureConfigDirExists() // make sure it exists
+}
+
+func (ss *ServerSettings) ensureConfigDirExists() {
+	_ = os.MkdirAll(ss.dir, os.ModePerm)
 }
 
 func (ss *ServerSettings) setDefaultCfgDir() {
