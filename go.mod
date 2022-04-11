@@ -1,8 +1,9 @@
 module devzat
 
-go 1.18
+go 1.17
 
 require (
+	github.com/TwiN/go-away v1.6.1
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/alecthomas/chroma v0.10.0
 	github.com/dghubble/go-twitter v0.0.0-20220319054129-995614af6514
@@ -11,13 +12,13 @@ require (
 	github.com/jwalton/gchalk v1.2.1
 	github.com/quackduck/go-term-markdown v0.13.0
 	github.com/quackduck/term v0.0.0-20220217011143-d10974b5f140
+	github.com/rs/zerolog v1.26.1
 	github.com/shurcooL/tictactoe v0.0.0-20210613024444-e573ff1376a3
 	github.com/slack-go/slack v0.10.2
 )
 
 require (
 	github.com/MichaelMure/go-term-text v0.3.1 // indirect
-	github.com/TwiN/go-away v1.6.1 // indirect
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
 	github.com/cenkalti/backoff/v4 v4.1.2 // indirect
 	github.com/dghubble/sling v1.4.0 // indirect
@@ -35,10 +36,9 @@ require (
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/mattn/go-runewidth v0.0.12 // indirect
 	github.com/rivo/uniseg v0.1.0 // indirect
-	github.com/soniakeys/quant v1.0.0 // indirect
-	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e // indirect
+	golang.org/x/crypto v0.0.0-20211215165025-cf75a172585e // indirect
 	golang.org/x/image v0.0.0-20191206065243-da761ea9ff43 // indirect
-	golang.org/x/net v0.0.0-20210521195947-fe42d452be8f // indirect
+	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d // indirect
 	golang.org/x/sys v0.0.0-20211004093028-2c5d950f24ef // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
