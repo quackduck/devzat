@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/keepalive"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"io"
 	"net"
@@ -72,6 +73,13 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 
 	for {
 		message := <-*c
+
+		// If the message is somehow a *pb.ListenerClientData_Response, it means somehow the last message we sent
+		// wasn't consumed, which means the plugin was probably disconnected (at least I think)
+		switch message.(type) {
+		case *pb.ListenerClientData_Response:
+			return status.Errorf(codes.Unavailable, "Plugin disconnected")
+		}
 
 		switch listener.Event {
 		case pb.EventType_SEND:
@@ -156,7 +164,6 @@ func (s *pluginServer) RegisterCmd(def *pb.CmdDef, stream pb.Plugin_RegisterCmdS
 }
 
 func (s *pluginServer) SendMessage(ctx context.Context, msg *pb.Message) (*pb.MessageRes, error) {
-	fmt.Println(msg)
 	if msg.GetEphemeralTo() != "" {
 		u, success := findUserByName(rooms[msg.Room], *msg.EphemeralTo)
 		if !success {
@@ -178,15 +185,65 @@ func newPluginServer() *pluginServer {
 	return s
 }
 
-func startPluginServer(port uint32) {
+func authorize(ctx context.Context) error {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return status.Errorf(codes.Unauthenticated, "Missing metadata")
+	}
+
+	values := md["authorization"]
+	if len(values) == 0 {
+		return status.Errorf(codes.Unauthenticated, "Missing authorization header")
+	}
+
+	token := values[0]
+	if token != "Bearer "+Config.PluginToken {
+		return status.Errorf(codes.Unauthenticated, "Invalid authorization header")
+	}
+
+	return nil
+}
+
+func unaryInterceptor(
+	ctx context.Context,
+	req interface{},
+	info *grpc.UnaryServerInfo,
+	handler grpc.UnaryHandler,
+) (interface{}, error) {
+	err := authorize(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return handler(ctx, req)
+}
+
+func streamInterceptor(
+	srv interface{},
+	stream grpc.ServerStream,
+	info *grpc.StreamServerInfo,
+	handler grpc.StreamHandler,
+) error {
+	err := authorize(stream.Context())
+	if err != nil {
+		return err
+	}
+
+	return handler(srv, stream)
+}
+
+func startPluginServer(port int) {
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
 	if err != nil {
 		l.Fatalf("[gRPC] Failed to listen for plugin server: %v", err)
 	}
-	var opts []grpc.ServerOption
-	opts = append(opts, grpc.KeepaliveParams(keepalive.ServerParameters{
-		Time: time.Second * 10,
-	}))
+	opts := []grpc.ServerOption{
+		grpc.UnaryInterceptor(unaryInterceptor),
+		grpc.StreamInterceptor(streamInterceptor),
+		grpc.KeepaliveParams(keepalive.ServerParameters{
+			Time: time.Second * 10,
+		}),
+	}
 	// TODO: add TLS if configured
 	grpcServer := grpc.NewServer(opts...)
 	pb.RegisterPluginServer(grpcServer, newPluginServer())

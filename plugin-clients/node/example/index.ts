@@ -2,7 +2,8 @@ import Devzat from "../dist";
 
 const plugin = new Devzat({
     address: "localhost:5556",
-    name: "Demo bot"
+    name: "Demo bot",
+    token: process.env.DEVZAT_TOKEN
 });
 
 plugin.onMessageSend({

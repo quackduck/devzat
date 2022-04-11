@@ -12,6 +12,8 @@ type config struct {
 	Port        int               `yaml:"port"`
 	AltPort     int               `yaml:"alt_port"`
 	ProfilePort int               `yaml:"profile_port"`
+	PluginPort  int               `yaml:"plugin_port"`
+	PluginToken string            `yaml:"plugin_token"`
 	DataDir     string            `yaml:"data_dir"`
 	KeyFile     string            `yaml:"key_file"`
 	Admins      map[string]string `yaml:"admins"`
@@ -51,6 +53,8 @@ var (
 		Port:        2221,
 		AltPort:     8080,
 		ProfilePort: 5555,
+		PluginPort:  5556,
+		PluginToken: "REPLACE_ME_WITH_RANDOM_STRING",
 		DataDir:     "devzat-data",
 		KeyFile:     "devzat-sshkey",
 

@@ -36,12 +36,26 @@ export default class Plugin {
   stub: Stub
   name?: string
 
-  constructor({ address, creds = grpc.credentials.createInsecure(), name }: {
+  constructor({ address, token, name }: {
     address: string,
-    creds?: grpc.ChannelCredentials,
+    token: string,
     name?: string
   }) {
-    this.stub = new (plugin.Plugin as grpc.ServiceClientConstructor)(address, creds) as Stub;
+    const interceptor = function(options: grpc.CallOptions, nextCall: Function) {
+      return new grpc.InterceptingCall(nextCall(options), {
+        start: function(metadata: grpc.Metadata, listener: object, next: Function) {
+          metadata.set("authorization", "Bearer " + token);
+          next(metadata, listener);
+        }
+      });
+    };
+
+    const interceptor_providers: grpc.InterceptorProvider[] = [
+      () => interceptor
+    ];
+    this.stub = new (plugin.Plugin as grpc.ServiceClientConstructor)(address, grpc.credentials.createInsecure(), {
+      interceptor_providers
+    }) as Stub;
     this.name = name;
   }
 
