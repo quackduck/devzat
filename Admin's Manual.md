@@ -2,6 +2,7 @@
 
 This document is for those who want to manage a self-hosted Devzat server.
 
+Feel free to make a [new issue](https://github.com/quackduck/devzat/issues) if something doesn't work.
 
 ## Installation
 ```shell
@@ -18,7 +19,7 @@ While you can use the same key pair that your user account has, it is recommende
 ## Usage
 
 ```shell
-./devchat # use without "./" for a global binary
+./devzat # use without "./" for a global binary
 ```
 
 Devzat listens on port 2221 for new SSH connections by default. Users can now join using `ssh -p 2221 <server-hostname>`.
@@ -81,7 +82,7 @@ Now make a new file at that path. This is your integration config file.
 
 #### Using the Slack integration
 
-Devzat supports a bridge to Slack. You'll need Slack bot token so Devzat can post to and receive messages from Slack. Follow the guide [here](https://api.slack.com/authentication/basics) to get your token and add a Slack app to your workspace. Ensure it has read and write scopes. (feel free to make a [new issue](/issues) if something doesn't work).
+Devzat supports a bridge to Slack. You'll need Slack bot token so Devzat can post to and receive messages from Slack. Follow the guide [here](https://api.slack.com/authentication/basics) to get your token and add a Slack app to your workspace. Ensure it has read and write scopes.
 
 Add your bot token to your integration config file. The `prefix` key defines what messages from Slack rendered in Devzat will be prefixed with. Find the channel ID of the channel you want to bridge to with a right-click on it in Slack.
 

@@ -1,4 +1,4 @@
-module devchat
+module devzat
 
 go 1.18
 
