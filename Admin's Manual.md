@@ -39,6 +39,10 @@ port: 2221
 alt_port: 443
 # what port to host profiling on (unimportant)
 profile_port: 5555
+# port to host plugin API on
+plugin_port: 5556
+# random string plugins should provide to authenticate with the plugin API
+plugin_token: <random string>
 # where to store data such as bans and logs
 data_dir: devzat-data
 # where the SSH private key is stored
