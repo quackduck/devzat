@@ -27,13 +27,15 @@ func (s *Server) NewUser(session ssh.Session) (i.User, error) {
 		return nil, fmt.Errorf("could not set user background color: %v", err)
 	}
 
-	s.Log().Printf("Connected %v [%v]", u.Name(), u.ID())
+	s.Info().Msgf("Connected %v [%v]", u.Name(), u.ID())
 
 	if s.BansContains(u.Addr(), u.ID()) {
+		s.Info().Msgf("banned user '%s'@'%s' tried to connect", u.ID(), u.Addr())
+
 		banResponse := fmt.Sprintf(fmtDefaultBannedLoginResponse, u.ID())
 		botName := s.mainRoom.Bot().Name()
 
-		s.Log().Printf("Rejected %v [%v]", u.Name(), u.Addr())
+		s.Info().Msgf("Rejected %v [%v]", u.Name(), u.Addr())
 		u.Writeln(botName, banResponse)
 
 		u.CloseQuietly()
@@ -81,7 +83,7 @@ func (s *Server) NewUser(session ssh.Session) (i.User, error) {
 	}
 
 	if err := u.Room().PickUsername(session.User()); err != nil { // User exited or had some error
-		s.Log().Println(err)
+		s.Error().Err(err)
 		return nil, session.Close()
 	}
 
@@ -101,7 +103,7 @@ func (s *Server) NewUser(session ssh.Session) (i.User, error) {
 		u.Writeln("", s.Colors().Green.Paint("Welcome to the chat. There are", strconv.Itoa(len(currentUsers)-1), "more users"))
 	}
 
-	s.mainRoom.BotCast(fmt.Sprintf("%s has joined the chat", u.Name))
+	s.mainRoom.BotCast(fmt.Sprintf("%s has joined the chat", u.Name()))
 
 	return u, nil
 }
@@ -164,9 +166,14 @@ func (s *Server) UserDuplicate(a string) (i.User, bool) {
 	return nil, false
 }
 
-func (s *Server) FindUserByName(name string) (i.User, bool) {
-	//TODO implement me
-	panic("implement me")
+func (s *Server) FindUserByName(name string) (user i.User, found bool) {
+	for _, u := range s.AllUsers() {
+		if u.Name() == name {
+			return u, true
+		}
+	}
+
+	return nil, false
 }
 
 func (s *Server) PrintUsers() string {

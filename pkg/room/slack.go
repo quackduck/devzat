@@ -60,10 +60,10 @@ func (r *Room) GetMsgsFromSlack() {
 			}
 
 		case *slack.ConnectedEvent:
-			r.Server().Log().Println("Connected to Slack")
+			r.Server().Log().Info().Msg("Connected to Slack")
 			return
 		case *slack.InvalidAuthEvent:
-			r.Server().Log().Println("Invalid token")
+			r.Server().Log().Info().Msg("Invalid token")
 			return
 		}
 	}

@@ -22,8 +22,8 @@ func New(name string) i.Room {
 		name = fmt.Sprintf("%s%s", roomPrefix, name)
 	}
 
+	r.name = name
 	r.users = make([]i.User, 0, usersInitSize)
-
 	r.Formatter = colors.NewFormatter()
 
 	return r

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -33,7 +34,7 @@ type banManagement struct {
 func (bm *banManagement) init(s *Server) error {
 	bm.bans = make([]models.Ban, 0, defaultBansSize)
 	if err := s.ReadBans(); err != nil {
-		return fmt.Errorf("could not read bans: %s", err)
+		return fmt.Errorf("could not read bans file: %s", err)
 	}
 
 	return nil
@@ -47,7 +48,7 @@ func (bm *banManagement) GetBanList() []models.Ban {
 func (s *Server) SaveBans() error {
 	f, err := os.Create(defaultBansFile)
 	if err != nil {
-		s.Log().Println(err)
+		s.Error().Err(err)
 		return fmt.Errorf("could not create banList file: %v", err)
 	}
 
@@ -56,7 +57,7 @@ func (s *Server) SaveBans() error {
 
 	if err = j.Encode(defaultBansSize); err != nil {
 		s.MainRoom().BotCast("error saving banList: " + err.Error())
-		s.Log().Println(err)
+		s.Error().Err(err)
 
 		return err
 	}
@@ -65,22 +66,44 @@ func (s *Server) SaveBans() error {
 }
 
 func (s *Server) ReadBans() error {
-	f, err := os.Open(defaultBansFile)
-	if err != nil && os.IsNotExist(err) {
-		// if there is an error and it is not a "file does not exist" error
-		s.Log().Println(err)
-		return nil
+	fp := filepath.Join(s.ConfigDir(), defaultBansFile)
+
+	f, err := os.Open(fp)
+	if err != nil && !os.IsNotExist(err) {
+		return err
 	}
 
-	if errJson := json.Unmarshal(ioutil.ReadAll(f)); errJson != nil {
+	if os.IsNotExist(err) {
+		if errCreate := s.makeDefaultBansFile(fp); errCreate != nil {
+			return errCreate
+		}
+	}
+
+	data, err := ioutil.ReadAll(f)
+	if err != nil {
+		return err
+	}
+
+	if errJson := json.Unmarshal(data, &s.bans); errJson != nil {
 		msg := fmt.Sprintf("error decoding json: %v", errJson)
 
-		s.Log().Println(msg)
+		s.Info().Msg(msg)
 
 		return errJson
 	}
 
 	return f.Close()
+}
+
+func (s *Server) makeDefaultBansFile(path string) error {
+	f, errCreate := os.Create(path)
+	if errCreate != nil {
+		return errCreate
+	}
+
+	_, _ = f.WriteString("[]")
+
+	return nil
 }
 
 // BansContains reports if the addr or id is found in the bans list

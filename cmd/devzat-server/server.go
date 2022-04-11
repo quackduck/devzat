@@ -42,7 +42,7 @@ const (
 
 const (
 	defaultSshPubKeyFile = "/.ssh/id_rsa"
-	defaultPort          = 22
+	defaultPort          = 34450
 	defaultScrollback    = 16
 	defaultProfilePort   = 5555
 )
@@ -60,18 +60,21 @@ type DevzatServer struct {
 func (srv *DevzatServer) Init() error {
 	rand.Seed(time.Now().Unix())
 
-	cfgdir, err := os.UserConfigDir()
+	cfgDir, err := os.UserConfigDir()
 	if err != nil {
 		return fmt.Errorf("could not find config dir: %v", err)
 	}
 
-	srv.SetConfigDir(filepath.Join(cfgdir, appName))
-	srv.SetConfigFileName(cfgFileName)
-	srv.SaveConfigFile()
-
 	// init the underlying server impl
-	if err := srv.Server.Init(); err != nil {
-		return fmt.Errorf(fmtErrInit, err)
+	if errInit := srv.Server.Init(); errInit != nil {
+		return fmt.Errorf(fmtErrInit, errInit)
+	}
+
+	srv.SetConfigDir(filepath.Join(cfgDir, appName))
+	srv.SetConfigFileName(cfgFileName)
+
+	if errConfig := srv.SaveConfigFile(); errConfig != nil {
+		return fmt.Errorf("could not save config file: %v", errConfig)
 	}
 
 	srv.Port = defaultPort
@@ -79,17 +82,17 @@ func (srv *DevzatServer) Init() error {
 	srv.ProfilePort = defaultProfilePort
 
 	// parse any cli flags
-	if err := srv.parseOptions(); err != nil {
-		return fmt.Errorf(fmtErrParse, err)
+	if errParse := srv.parseOptions(); errParse != nil {
+		return fmt.Errorf(fmtErrParse, errParse)
 	}
 
 	fmt.Printf(fmtProfiling, srv.Port, srv.ProfilePort)
 
 	// our threads
 	go srv.dwellHttpServe() // TODO: have a web dashboard that shows logs
-	go srv.dwellGracefulShutdown()
 	go srv.sshRun()
-	go srv.GetMsgsFromSlack()
+	//	go srv.GetMsgsFromSlack()
+	srv.dwellGracefulShutdown()
 
 	return nil
 }
@@ -102,10 +105,9 @@ func (srv *DevzatServer) dwellGracefulShutdown() {
 	fmt.Println("Shutting down...")
 
 	_ = srv.SaveBans()
-	_ = srv.LogFile().Close()
 
 	time.AfterFunc(time.Second, func() {
-		srv.Log().Println("Broadcast taking too long, exiting server early.")
+		srv.Info().Msg("Broadcast taking too long, exiting server early.")
 		os.Exit(errCodeBroadcastTimeout)
 	})
 
@@ -167,12 +169,13 @@ func (srv *DevzatServer) makeUserConnectionFunc() func(ssh.Session) {
 	return func(s ssh.Session) {
 		u, err := srv.NewUserFromSSH(s)
 		if err != nil {
-			srv.Log().Printf("could not create user: %v", err)
+			srv.Info().Msgf("could not create user: %v", err)
 
 			return
 		}
 
 		if u == nil {
+			srv.Info().Msg("user is nil, closing session")
 			_ = s.Close()
 
 			return
@@ -180,9 +183,8 @@ func (srv *DevzatServer) makeUserConnectionFunc() func(ssh.Session) {
 
 		defer func() { // crash protection
 			if i := recover(); i != nil {
-				botName := srv.MainRoom().Bot().Name()
-
-				srv.MainRoom().Broadcast(botName, fmt.Sprintf(fmtRecover, i, debug.Stack()))
+				srv.Warn().Msgf("error recovered: %v, %v", i, debug.Stack())
+				srv.MainRoom().BotCast(fmt.Sprintf(fmtRecover, i, debug.Stack()))
 			}
 		}()
 

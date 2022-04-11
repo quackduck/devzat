@@ -55,10 +55,10 @@ func (s *Server) GetMsgsFromSlack() {
 			}
 
 		case *slack.ConnectedEvent:
-			s.Log().Println("Connected to Slack")
+			s.Info().Msg("Connected to Slack")
 			return
 		case *slack.InvalidAuthEvent:
-			s.Log().Println("Invalid token")
+			s.Info().Msg("Invalid token")
 			return
 		}
 	}
@@ -71,9 +71,9 @@ func (s *Server) GetSendToSlackChan() chan string {
 
 	if os.IsNotExist(err) {
 		s.Slack.Offline = true
-		s.Log().Println("Did not find slackAPI.txt. Enabling offline mode.")
+		s.Info().Msg("Did not find slackAPI.txt. Enabling offline mode.")
 	} else if err != nil {
-		panic(err)
+		s.Fatal().Err(err)
 	}
 
 	if s.Slack.Offline {

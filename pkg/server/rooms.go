@@ -15,8 +15,9 @@ type roomManagement struct {
 }
 
 func (rm *roomManagement) init(s *Server) error {
-	s.AddRoom(room.New(defaultMainRoomName))
-	rm.mainRoom = s.rooms[defaultMainRoomName]
+	firstRoom := room.New(defaultMainRoomName)
+	s.AddRoom(firstRoom)
+	rm.mainRoom = s.rooms[firstRoom.Name()]
 
 	return nil
 }
@@ -33,7 +34,7 @@ func (s *Server) ChangeRoom(u i.User, roomName string) {
 	r.SetServer(s)
 	u.SetRoom(r)
 
-	if !s.serverSettings.Twitter.Offline {
+	if !s.ServerSettings.Twitter.Offline {
 		go s.SendCurrentUsersTwitterMessage()
 	}
 }

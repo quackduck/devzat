@@ -102,7 +102,7 @@ func (r *Room) Kick(user i.User, reason string) {
 
 func (r *Room) Disconnect(user i.User) {
 	if r.Name() == r.Server().MainRoom().Name() {
-		user.Disconnect()
+		user.CloseQuietly()
 
 		return
 	}

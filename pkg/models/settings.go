@@ -1,4 +1,4 @@
-package server
+package models
 
 import (
 	"devzat/pkg"
@@ -9,10 +9,14 @@ import (
 	"time"
 )
 
-type serverSettings struct {
-	Antispam    antispamSettings `json:"antispam"`
-	Slack       slackSettings    `json:"slack"`
-	Twitter     twitterSettings  `json:"twitter"`
+const (
+	configDirName = "devzat"
+)
+
+type ServerSettings struct {
+	Antispam    AntispamSettings `json:"antispam"`
+	Slack       SlackSettings    `json:"slack"`
+	Twitter     TwitterSettings  `json:"twitter"`
 	Port        int              `json:"port"`
 	ProfilePort int              `json:"profilePort"`
 	Scrollback  int              `json:"scrollbackHistory"`
@@ -27,22 +31,22 @@ const (
 	antispamDefaultBanDuration = time.Minute * 5
 )
 
-type antispamSettings struct {
+type AntispamSettings struct {
 	Window      time.Duration `json:"window"`
 	LimitWarn   int           `json:"limitWarn"`
 	LimitBan    int           `json:"limitBan"`
 	BanDuration time.Duration `json:"BanDuration"`
 }
 
-type slackSettings struct {
+type SlackSettings struct {
 	Offline bool `json:"offline"`
 }
 
-type twitterSettings struct {
+type TwitterSettings struct {
 	Offline bool `json:"offline"`
 }
 
-func (ss *serverSettings) init() error {
+func (ss *ServerSettings) Init() error {
 	// should this instance run offline? (should it not connect to slack or twitter?)
 	ss.Slack.Offline = os.Getenv(pkg.EnvOfflineSlack) != ""
 	ss.Twitter.Offline = os.Getenv(pkg.EnvOfflineTwitter) != ""
@@ -50,13 +54,32 @@ func (ss *serverSettings) init() error {
 	return nil
 }
 
-func (ss *serverSettings) ConfigDir() string     { return ss.dir }
-func (ss *serverSettings) SetConfigDir(d string) { ss.dir = d }
+func (ss *ServerSettings) ConfigDir() string {
+	if ss.dir == "" {
+		ss.setDefaultCfgDir()
+	}
 
-func (ss *serverSettings) ConfigFileName() string        { return ss.cfgFileName }
-func (ss *serverSettings) SetConfigFileName(name string) { ss.cfgFileName = name }
+	return ss.dir
+}
 
-func (ss *serverSettings) GetConfigFile() (*os.File, error) {
+func (ss *ServerSettings) SetConfigDir(d string) {
+	if _, err := filepath.Abs(d); err == nil || d == "" {
+		ss.setDefaultCfgDir()
+		return
+	}
+
+	ss.dir = d
+}
+
+func (ss *ServerSettings) setDefaultCfgDir() {
+	cfgDir, _ := os.UserConfigDir()
+	ss.dir = filepath.Join(cfgDir, configDirName)
+}
+
+func (ss *ServerSettings) ConfigFileName() string        { return ss.cfgFileName }
+func (ss *ServerSettings) SetConfigFileName(name string) { ss.cfgFileName = name }
+
+func (ss *ServerSettings) GetConfigFile() (*os.File, error) {
 	cfgFilePath := filepath.Join(ss.dir, ss.cfgFileName)
 
 	if _, err := os.Stat(cfgFilePath); os.IsNotExist(err) {
@@ -75,7 +98,7 @@ func (ss *serverSettings) GetConfigFile() (*os.File, error) {
 	return f, err
 }
 
-func (ss *serverSettings) SaveConfigFile() error {
+func (ss *ServerSettings) SaveConfigFile() error {
 	path := filepath.Join(ss.dir, ss.cfgFileName)
 	_ = os.MkdirAll(ss.dir, 0777)
 

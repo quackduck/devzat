@@ -52,6 +52,7 @@ func (t *twitterIntegration) init() error {
 }
 
 func (s *Server) SendCurrentUsersTwitterMessage() {
+	return
 	usersInMain := s.mainRoom.AllUsers()
 	numUsersInMain := len(usersInMain)
 
@@ -85,7 +86,7 @@ func (s *Server) SendCurrentUsersTwitterMessage() {
 			return
 		}
 
-		s.Log().Println("Sending twitter update")
+		s.Info().Msg("Sending twitter update")
 		names := make([]string, 0, len(s.MainRoom().AllUsers()))
 		for _, us := range s.MainRoom().AllUsers() {
 			names = append(names, us.Name())
@@ -96,7 +97,7 @@ func (s *Server) SendCurrentUsersTwitterMessage() {
 			if !strings.Contains(err.Error(), "twitter: 187 Status is a duplicate.") {
 				s.mainRoom.Broadcast(s.mainRoom.Bot().Name(), "err: "+err.Error())
 			}
-			s.Log().Println("Got twitter err", err)
+			s.Error().Msgf("Got twitter err: %v", err)
 			return
 		}
 

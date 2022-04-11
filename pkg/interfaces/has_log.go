@@ -2,10 +2,11 @@ package interfaces
 
 import (
 	"io"
-	"log"
+
+	"github.com/rs/zerolog"
 )
 
 type hasLog interface {
-	Log() *log.Logger
+	Log() *zerolog.Logger
 	LogFile() io.WriteCloser
 }

@@ -1,14 +1,18 @@
 package server
 
 import (
-	"devzat/pkg/bot"
 	"fmt"
+	"io"
 	"os"
 	"time"
 
+	goaway "github.com/TwiN/go-away"
+	"github.com/rs/zerolog"
+
+	"devzat/pkg/bot"
 	"devzat/pkg/colors"
 	i "devzat/pkg/interfaces"
-	goaway "github.com/TwiN/go-away"
+	"devzat/pkg/models"
 )
 
 type adminsMap = map[string]interface{} // we just use the map for lookup
@@ -17,14 +21,16 @@ type Server struct {
 	goaway.ProfanityDetector
 	colors.Formatter
 
+	configDir   string
 	startupTime time.Time
 	bot         i.Bot
+	logFile     io.WriteCloser
+	zerolog.Logger
 
 	adminsMap
 
 	commandRegistry
-	serverSettings
-	serverLogs
+	models.ServerSettings
 	chatHistory
 	roomManagement
 	banManagement
@@ -37,7 +43,7 @@ func (s *Server) Init() error {
 	s.startupTime = time.Now()
 	s.adminsMap = make(adminsMap)
 
-	if err := s.serverLogs.init(); err != nil {
+	if err := s.initLogs(); err != nil {
 		return fmt.Errorf("could not init server logging: %s", err)
 	}
 
@@ -50,7 +56,7 @@ func (s *Server) Init() error {
 	s.commandRegistry.init()
 	s.Formatter.Init()
 
-	if err := s.serverSettings.init(); err != nil {
+	if err := s.ServerSettings.Init(); err != nil {
 		return fmt.Errorf("could not init server settings: %s", err)
 	}
 
@@ -60,6 +66,7 @@ func (s *Server) Init() error {
 
 	b := &bot.DevBot{}
 	b.SetRoom(s.mainRoom)
+	s.mainRoom.SetBot(b)
 	if err := b.Init(); err != nil {
 		return fmt.Errorf("there was an error initializing the bot: %v", err)
 	}
@@ -67,10 +74,10 @@ func (s *Server) Init() error {
 	s.SetBot(b)
 	s.bot.SetRoom(s.mainRoom)
 
-	if !s.serverSettings.Twitter.Offline {
+	if !s.ServerSettings.Twitter.Offline {
 		if err := s.twitter.init(); err != nil && os.IsNotExist(err) {
-			s.serverSettings.Twitter.Offline = true
-			s.Log().Println("Did not find twitter-creds.json. Enabling offline mode.")
+			s.ServerSettings.Twitter.Offline = true
+			s.Info().Msg("Did not find twitter-creds.json. Enabling offline mode.")
 		} else if err != nil {
 			return err
 		}

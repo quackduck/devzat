@@ -66,6 +66,7 @@ func FromSession(session ssh.Session) (*User, error) {
 		term:    term,
 		window:  pty.Window,
 		id:      util.ShaSum(toHash),
+		name:    session.User(),
 	}
 
 	u.SetJoinTime(time.Now())
@@ -350,7 +351,7 @@ func (u *User) Repl() {
 		}
 
 		if err != nil {
-			u.room.Server().Log().Println(u.name, err)
+			u.room.Server().Log().Info().Msgf(u.name, err)
 			u.Close(u.name + " has left the chat due to an error: " + err.Error())
 			return
 		}

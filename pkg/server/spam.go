@@ -30,11 +30,11 @@ func (s *Server) Antispam(u i.User) {
 		s.userLoginSpamCounts[uid]--
 	})
 
-	if s.userLoginSpamCounts[uid] >= s.serverSettings.Antispam.LimitBan {
+	if s.userLoginSpamCounts[uid] >= s.ServerSettings.Antispam.LimitBan {
 		botName := u.Room().Bot().Name()
 
 		if !s.BansContains(u.Addr(), uid) {
-			s.BanUserForDuration(botName, u, s.serverSettings.Antispam.BanDuration)
+			s.BanUserForDuration(botName, u, s.ServerSettings.Antispam.BanDuration)
 			_ = s.SaveBans()
 		}
 
@@ -44,7 +44,7 @@ func (s *Server) Antispam(u i.User) {
 		return
 	}
 
-	if s.userLoginSpamCounts[uid] >= s.serverSettings.Antispam.LimitWarn {
+	if s.userLoginSpamCounts[uid] >= s.ServerSettings.Antispam.LimitWarn {
 		u.Room().BotCast(fmt.Sprintf(fmtWarning, u.Name()))
 	}
 }
