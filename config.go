@@ -65,7 +65,7 @@ var (
 func init() {
 	cfgFile := os.Getenv("DEVZAT_CONFIG")
 	if cfgFile == "" {
-		cfgFile = "devzat-config.yml"
+		cfgFile = "devzat.yml"
 	}
 
 	errCheck := func(err error) {
