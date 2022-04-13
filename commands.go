@@ -418,7 +418,7 @@ func cdCMD(rest string, u *User) {
 func tzCMD(tzArg string, u *User) {
 	var err error
 	if tzArg == "" {
-		u.Timezone = nil
+		u.Timezone.Location = nil
 		return
 	}
 	tzArgList := strings.Fields(tzArg)
@@ -433,7 +433,7 @@ func tzCMD(tzArg string, u *User) {
 	case "MT":
 		tz = "America/Phoenix"
 	}
-	u.Timezone, err = time.LoadLocation(tz)
+	u.Timezone.Location, err = time.LoadLocation(tz)
 	if err != nil {
 		u.room.broadcast(Devbot, "Weird timezone you have there, use the format Continent/City, the usual US timezones (PST, PDT, EST, EDT...) or check nodatime.org/TimeZones!")
 		return

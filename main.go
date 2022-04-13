@@ -81,39 +81,28 @@ type User struct {
 	closeOnce     sync.Once
 	lastTimestamp time.Time
 	joinTime      time.Time
-	Timezone      *time.Location
+	Timezone      tz
 }
 
-func (u *User) MarshalJSON() ([]byte, error) {
-	type Alias User
-	return json.Marshal(&struct {
-		*Alias
-		Timezone string
-	}{
-		Alias:    (*Alias)(u),
-		Timezone: u.Timezone.String(),
-	})
+type tz struct {
+	*time.Location
 }
 
-func (u *User) UnmarshalJSON(data []byte) error {
-	type Alias User
-	var v struct {
-		*Alias
-		Timezone string
-	}
-	v.Alias = (*Alias)(u)
-	if err := json.Unmarshal(data, &v); err != nil {
+func (t *tz) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err != nil {
 		return err
 	}
-	*u = User(*v.Alias) //nolint:govet // complains about copying a lock but this is the old value anyway so we're fine
-	if v.Timezone != "" {
-		loc, err := time.LoadLocation(v.Timezone)
-		if err != nil {
-			return err
-		}
-		u.Timezone = loc
+	loc, err := time.LoadLocation(s)
+	if err != nil {
+		return err
 	}
+	t.Location = loc
 	return nil
+}
+
+func (t *tz) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.Location.String())
 }
 
 type backlogMessage struct {
@@ -434,13 +423,13 @@ func (u *User) writeln(senderName string, msg string) {
 		msg = strings.TrimSpace(mdRender(msg, 0, u.win.Width)) // No sender
 	}
 	if time.Since(u.lastTimestamp) > time.Minute {
-		if u.Timezone == nil {
+		if u.Timezone.Location == nil {
 			u.rWriteln(printPrettyDuration(time.Since(u.joinTime)) + " in")
 		} else {
 			if u.FormatTime24 {
-				u.rWriteln(time.Now().In((*time.Location)(u.Timezone)).Format("15:04"))
+				u.rWriteln(time.Now().In(u.Timezone.Location).Format("15:04"))
 			} else {
-				u.rWriteln(time.Now().In((*time.Location)(u.Timezone)).Format("3:04 pm"))
+				u.rWriteln(time.Now().In(u.Timezone.Location).Format("3:04 pm"))
 			}
 		}
 		u.lastTimestamp = time.Now()
