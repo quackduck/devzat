@@ -93,6 +93,10 @@ func (t *tz) UnmarshalJSON(b []byte) error {
 	if err := json.Unmarshal(b, &s); err != nil {
 		return err
 	}
+	if s == "" { // empty string means timezone agnostic format
+		t.Location = nil
+		return nil
+	}
 	loc, err := time.LoadLocation(s)
 	if err != nil {
 		return err
@@ -102,6 +106,9 @@ func (t *tz) UnmarshalJSON(b []byte) error {
 }
 
 func (t *tz) MarshalJSON() ([]byte, error) {
+	if t.Location == nil {
+		return json.Marshal("")
+	}
 	return json.Marshal(t.Location.String())
 }
 
