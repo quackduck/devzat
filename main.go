@@ -336,6 +336,15 @@ func newUser(s ssh.Session) *User {
 		}
 	}
 
+	if rand.Float64() <= 0.4 { // 40% chance of being a random color
+		u.changeColor("random") //nolint:errcheck // we know "random" is a valid color
+	} else {
+		u.changeColor(Styles[rand.Intn(len(Styles))].name) //nolint:errcheck // we know this is a valid color
+	}
+	if rand.Float64() <= 0.1 { // 10% chance of a random bg color
+		u.changeColor("bg-random") //nolint:errcheck // we know "bg-random" is a valid color
+	}
+
 	if err := u.pickUsernameQuietly(s.User()); err != nil { // User exited or had some error
 		Log.Println(err)
 		s.Close()
@@ -507,17 +516,8 @@ func (u *User) pickUsernameQuietly(possibleName string) error {
 		return errors.New(u.Name + "'s username contained a bad word")
 	}
 
-	u.Name = possibleName
-
-	if rand.Float64() <= 0.1 { // 10% chance of a random bg color
-		// changeColor also sets prompt
-		defer u.changeColor("bg-random") //nolint:errcheck // we know "bg-random" is a valid color
-	}
-	if rand.Float64() <= 0.4 { // 40% chance of being a random color
-		u.changeColor("random") //nolint:errcheck // we know "random" is a valid color
-		return nil
-	}
-	u.changeColor(Styles[rand.Intn(len(Styles))].name) //nolint:errcheck // we know this is a valid color
+	u.Name, _ = applyColorToData(possibleName, u.Color, u.ColorBG) //nolint:errcheck // we haven't changed the color so we know it's valid
+	u.term.SetPrompt(u.Name + ": ")
 	return nil
 }
 
