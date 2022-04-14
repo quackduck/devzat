@@ -2,7 +2,3 @@
 
 protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative ./plugin/plugin.proto
 echo "Generated Go code for protobuf"
-cd plugin-clients/node
-./compile-protobuf.sh
-echo "Generated Node client code for protobuf"
-cd ../..
