@@ -4,7 +4,7 @@
 
 Where are the devs at? Devzat!
 
-Devzat is chat over SSH. Because there's SSH apps on all platforms (even your phone) you can connect to Devzat on any device!
+Devzat is a custom SSH server that takes you to a chat instead of a shell prompt. Because there's SSH apps on all platforms (even on phones) you can connect to Devzat on any device!
 
 ![image](https://user-images.githubusercontent.com/38882631/115499526-a4d70280-a280-11eb-8723-817f54eccf3e.png)
 
@@ -31,7 +31,6 @@ If you add this to `~/.ssh/config`:
 ```ssh
 Host chat
     HostName devzat.hackclub.com
-    User yourNickNameHere
 ```
 
 You'll be able to join with just:
@@ -41,9 +40,15 @@ ssh chat
 
 We also have a Slack bridge! If you're on the [Hack Club](https://hackclub.com) Slack, check out the `#ssh-chat-bridge` channel!
 
-### Public key
+Feel free to make a [new issue](https://github.com/quackduck/devzat/issues) if something doesn't work.
 
-Devzat uses public keys to identify users. If you are denied access - `foo@devzat.hackclub.com: Permission denied (publickey)` - you should generate an ssh key pair with the command `ssh-keygen` or login on port 443: `ssh devzat.hackclub.com -p 443`.
+### Permission denied?
+
+Devzat uses public keys to identify users. If you are denied access: `foo@devzat.hackclub.com: Permission denied (publickey)` try logging in on port 443, which does not require a key, using `ssh devzat.hackclub.com -p 443`.
+
+Reasons for this
+* You may not have an SSH key pair. Generate one with the command `ssh-keygen` if this is the case. (you can usually check by making sure a file of this form: `~/.ssh/id_*` exists)
+* If you already have a keypair, and you still get this error, it might be because the server does not yet support RSA SHA-2 signatures. Follow issue progress here: [#77](https://github.com/quackduck/devzat/issues/77).
 
 ### Help
 
@@ -70,24 +75,25 @@ Thanks to Caleb Denio for lending his server!
 ### Commands
 ```text
 Commands
-   =<user>   <msg>               DM <user> with <msg>
-   users                         List users
-   color     <color>             Change your name's color
-   exit                          Leave the chat
-   help                          Show help
-   man       <cmd>               Get help for a specific command
-   emojis                        See a list of emojis
-   bell      on|off|all          ANSI bell on pings (on), never (off) or for every message (all)
-   clear                         Clear the screen
-   hang      <char|word>         Play hangman
-   tic       <cell num>          Play tic tac toe!
-   cd        #room|user          Join #room, DM user or run cd to see a list
-   tz        <zone> [24h]        Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h
-   nick      <name>              Change your username
-   pronouns  <@user|pronoun...>  Set your pronouns or get another user's
-   theme     <theme>|list        Change the syntax highlighting theme
-   rest                          Uncommon commands list
-   cmds                          Show this message
+   =<user>   <msg>           DM <user> with <msg>
+   users                     List users
+   color     <color>         Change your name's color
+   exit                      Leave the chat
+   help                      Show help
+   man       <cmd>           Get help for a specific command
+   emojis                    See a list of emojis
+   bell      on|off|all      ANSI bell on pings (on), never (off) or for every message (all)
+   clear                     Clear the screen
+   hang      <char|word>     Play hangman
+   tic       <cell num>      Play tic tac toe!
+   devmonk                   Test your typing speed
+   cd        #room|user      Join #room, DM user or run cd to see a list
+   tz        <zone> [24h]    Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h
+   nick      <name>          Change your username
+   pronouns  @user|pronouns  Set your pronouns or get another user's
+   theme     <theme>|list    Change the syntax highlighting theme
+   rest                      Uncommon commands list
+   cmds                      Show this message
 ```
 ```
 The rest
