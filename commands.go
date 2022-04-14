@@ -337,6 +337,7 @@ func bellCMD(rest string, u *User) {
 		u.PingEverytime = false
 		u.room.broadcast("", "bell on (pings)")
 	case "all":
+		u.Bell = true
 		u.PingEverytime = true
 		u.room.broadcast("", "bell all (every message)")
 	case "", "status":
