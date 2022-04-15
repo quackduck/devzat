@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"os"
 	"strconv"
+
+	"gopkg.in/yaml.v2"
 )
 
 type ConfigType struct {

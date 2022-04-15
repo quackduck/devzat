@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "github.com/quackduck/devzat/plugin";
+option go_package = "devzat/plugin";
 
 package plugin;
 
