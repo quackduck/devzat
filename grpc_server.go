@@ -4,14 +4,15 @@ import (
 	"context"
 	pb "devchat/plugin"
 	"fmt"
+	"io"
+	"net"
+	"time"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"io"
-	"net"
-	"time"
 )
 
 type pluginServer struct {
@@ -32,7 +33,7 @@ var listeners = map[pb.EventType]*listenerCollection{
 }
 
 func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer) error {
-	l.Println("[gRPC] Registering event listener")
+	Log.Println("[gRPC] Registering event listener")
 	initialData, err := stream.Recv()
 	if err == io.EOF {
 		return nil
@@ -143,7 +144,7 @@ type cmdInst struct {
 var pluginCmds = map[string]cmdInst{}
 
 func (s *pluginServer) RegisterCmd(def *pb.CmdDef, stream pb.Plugin_RegisterCmdServer) error {
-	l.Printf("[gRPC] Registering command with name %s", def.Name)
+	Log.Printf("[gRPC] Registering command with name %s", def.Name)
 	pluginCmds[def.Name] = cmdInst{
 		argsInfo: def.ArgsInfo,
 		info:     def.Info,
@@ -165,13 +166,13 @@ func (s *pluginServer) RegisterCmd(def *pb.CmdDef, stream pb.Plugin_RegisterCmdS
 
 func (s *pluginServer) SendMessage(ctx context.Context, msg *pb.Message) (*pb.MessageRes, error) {
 	if msg.GetEphemeralTo() != "" {
-		u, success := findUserByName(rooms[msg.Room], *msg.EphemeralTo)
+		u, success := findUserByName(Rooms[msg.Room], *msg.EphemeralTo)
 		if !success {
 			return nil, status.Errorf(codes.NotFound, "Could not find user %s", *msg.EphemeralTo)
 		}
 		u.writeln(msg.GetFrom(), msg.Msg)
 	} else {
-		r := rooms[msg.Room]
+		r := Rooms[msg.Room]
 		if r == nil {
 			return nil, status.Errorf(codes.InvalidArgument, "Room does not exist")
 		}
@@ -235,7 +236,7 @@ func streamInterceptor(
 func startPluginServer(port int) {
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
 	if err != nil {
-		l.Fatalf("[gRPC] Failed to listen for plugin server: %v", err)
+		Log.Fatalf("[gRPC] Failed to listen for plugin server: %v", err)
 	}
 	opts := []grpc.ServerOption{
 		grpc.UnaryInterceptor(unaryInterceptor),
@@ -247,6 +248,6 @@ func startPluginServer(port int) {
 	// TODO: add TLS if configured
 	grpcServer := grpc.NewServer(opts...)
 	pb.RegisterPluginServer(grpcServer, newPluginServer())
-	l.Printf("[gRPC] Plugin server started on port %d\n", port)
+	Log.Printf("[gRPC] Plugin server started on port %d\n", port)
 	grpcServer.Serve(lis)
 }
