@@ -1,10 +1,7 @@
 package main
 
 import (
-	pb "devchat/plugin"
 	"fmt"
-	"github.com/acarl005/stripansi"
-	"github.com/samber/lo"
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
@@ -16,6 +13,9 @@ import (
 	"sync"
 	"time"
 
+	pb "devzat/plugin"
+
+	"github.com/acarl005/stripansi"
 	"github.com/alecthomas/chroma"
 	chromastyles "github.com/alecthomas/chroma/styles"
 	markdown "github.com/quackduck/go-term-markdown"
@@ -117,7 +117,7 @@ func runCommands(line string, u *User) {
 			l <- &pb.Event_Send{
 				Send: &pb.SendEvent{
 					Room: u.room.name,
-					From: stripansi.Strip(u.name),
+					From: stripansi.Strip(u.Name),
 					Msg:  line,
 				},
 			}
@@ -149,7 +149,7 @@ func runCommands(line string, u *User) {
 	if pluginCmd, ok := pluginCmds[currCmd]; ok {
 		pluginCmd.c <- &pb.CmdInvocation{
 			Room: u.room.name,
-			From: stripansi.Strip(u.name),
+			From: stripansi.Strip(u.Name),
 			Args: args,
 		}
 		return
@@ -796,7 +796,7 @@ func manCMD(rest string, u *User) {
 	}
 	// Plugin commands
 	if c, ok := pluginCmds[rest]; ok {
-		u.room.broadcast(devbot, "Usage: "+rest+" "+c.argsInfo+"  \n"+c.info)
+		u.room.broadcast(Devbot, "Usage: "+rest+" "+c.argsInfo+"  \n"+c.info)
 		return
 	}
 
@@ -829,32 +829,15 @@ func lsCMD(rest string, u *User) {
 	u.room.broadcast("", "README.md "+usersList+roomList)
 }
 
-func commandsCMD(_ string, u *user) {
-	// For some reason the for loops didn't work so I'm using the lo library
-	// Make a combined cmds slice that includes the pluginCmds
+func commandsCMD(_ string, u *User) {
+	newCMDs := append(make([]CMD, 0, len(MainCMDs)+len(pluginCmds)), MainCMDs...)
+	for n, c := range pluginCmds {
+		newCMDs = append(newCMDs, CMD{
+			name:     n,
+			info:     c.info,
+			argsInfo: c.argsInfo,
+		})
+	}
 
-	//newCmds := make([]cmd, 0, len(cmds) + len(pluginCmds))
-	//for _, c := range cmds {
-	//	newCmds = append(newCmds, c)
-	//}
-	//for n, c := range pluginCmds {
-	//	newCmds = append(newCmds, cmd{
-	//		name: n,
-	//		info: c.info,
-	//		argsInfo: c.argsInfo,
-	//	})
-	//}
-
-	u.room.broadcast("", "Commands  \n"+autogenCommands(
-		append(MainCMDs, lo.Map[lo.Entry[string, cmdInst], cmd](
-			lo.Entries[string, cmdInst](pluginCmds),
-			func(pCmd lo.Entry[string, cmdInst], _ int) cmd {
-				return cmd{
-					name:     pCmd.Key,
-					info:     cmdInst(pCmd.Value).info,
-					argsInfo: cmdInst(pCmd.Value).argsInfo,
-				}
-			},
-		)...),
-	))
+	u.room.broadcast("", "Commands  \n"+autogenCommands(newCMDs))
 }
