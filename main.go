@@ -22,6 +22,8 @@ import (
 	"syscall"
 	"time"
 
+	pb "devchat/plugin"
+
 	"github.com/acarl005/stripansi"
 	"github.com/gliderlabs/ssh"
 	terminal "github.com/quackduck/term"
@@ -613,6 +615,24 @@ func (u *User) repl() {
 			u.close(u.Name + " has left the chat")
 			return
 		}
+
+		// Middleware hook
+		if len(listeners[pb.EventType_SEND].middleware) > 0 {
+			for _, m := range listeners[pb.EventType_SEND].middleware {
+				m <- &pb.Event_Send{
+					Send: &pb.SendEvent{
+						Room: u.room.name,
+						From: stripansi.Strip(u.name),
+						Msg:  line,
+					},
+				}
+				res := (<-m).(*pb.ListenerClientData_Response).Response.Res.(*pb.MiddlewareResponse_Send).Send
+				if res.Msg != nil {
+					line = *res.Msg
+				}
+			}
+		}
+
 		line += "\n"
 		hasNewlines := false
 		//oldPrompt := u.Name + ": "
