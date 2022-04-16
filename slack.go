@@ -3,11 +3,12 @@ package main
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"os"
 	"strconv"
 	"strings"
 
 	"github.com/acarl005/stripansi"
-
+	"github.com/quackduck/term"
 	"github.com/slack-go/slack"
 )
 
@@ -24,6 +25,9 @@ func getMsgsFromSlack() {
 
 	go RTM.ManageConnection()
 	uslack := new(User)
+	uslack.isSlack = true
+	devnull, _ := os.OpenFile(os.DevNull, os.O_RDWR, 0)
+	uslack.term = term.NewTerminal(devnull, "")
 	uslack.room = MainRoom
 	for msg := range RTM.IncomingEvents {
 		switch ev := msg.Data.(type) {
@@ -38,7 +42,6 @@ func getMsgsFromSlack() {
 				h := sha1.Sum([]byte(u.ID))
 				i, _ := strconv.ParseInt(hex.EncodeToString(h[:2]), 16, 0) // two bytes as an int
 				uslack.Name = Yellow.Paint(Integrations.Slack.Prefix+" ") + (Styles[int(i)%len(Styles)]).apply(strings.Fields(u.RealName)[0])
-				uslack.isSlack = true
 				runCommands(text, uslack)
 			}
 		case *slack.ConnectedEvent:
