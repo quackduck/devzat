@@ -30,7 +30,7 @@ Set the environment variable `PORT` to a different port number or edit your conf
 
 Devzat writes the default config file if one isn't found, so you do not need to make one before using Devzat. 
 
-The default location Devzat looks for a config file is `devzat-config.yml` in the current directory. Alternatively, it uses the path set in the `DEVZAT_CONFIG` environment variable.
+The default location Devzat looks for a config file is `devzat.yml` in the current directory. Alternatively, it uses the path set in the `DEVZAT_CONFIG` environment variable.
 
 An example config file:
 ```yaml

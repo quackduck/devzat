@@ -3,7 +3,6 @@ package main
 import (
 	_ "embed"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -56,6 +55,8 @@ type Room struct {
 	usersMutex sync.Mutex
 }
 
+// User represents a user connected to the SSH server.
+// Exported fields represent ones saved to disk. (see also: User.savePrefs())
 type User struct {
 	Name     string
 	Pronouns []string
@@ -79,39 +80,35 @@ type User struct {
 	closeOnce     sync.Once
 	lastTimestamp time.Time
 	joinTime      time.Time
-	Timezone      *time.Location
+	Timezone      tz
 }
 
-func (u *User) MarshalJSON() ([]byte, error) {
-	type Alias User
-	return json.Marshal(&struct {
-		*Alias
-		Timezone string
-	}{
-		Alias:    (*Alias)(u),
-		Timezone: u.Timezone.String(),
-	})
+type tz struct {
+	*time.Location
 }
 
-func (u *User) UnmarshalJSON(data []byte) error {
-	type Alias User
-	var v struct {
-		*Alias
-		Timezone string
-	}
-	v.Alias = (*Alias)(u)
-	if err := json.Unmarshal(data, &v); err != nil {
+func (t *tz) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err != nil {
 		return err
 	}
-	*u = User(*v.Alias) //nolint:govet // complains about copying a lock but this is the old value anyway so we're fine
-	if v.Timezone != "" {
-		loc, err := time.LoadLocation(v.Timezone)
-		if err != nil {
-			return err
-		}
-		u.Timezone = loc
+	if s == "" { // empty string means timezone agnostic format
+		t.Location = nil
+		return nil
 	}
+	loc, err := time.LoadLocation(s)
+	if err != nil {
+		return err
+	}
+	t.Location = loc
 	return nil
+}
+
+func (t *tz) MarshalJSON() ([]byte, error) {
+	if t.Location == nil {
+		return json.Marshal("")
+	}
+	return json.Marshal(t.Location.String())
 }
 
 type backlogMessage struct {
@@ -339,6 +336,15 @@ func newUser(s ssh.Session) *User {
 		}
 	}
 
+	if rand.Float64() <= 0.4 { // 40% chance of being a random color
+		u.changeColor("random") //nolint:errcheck // we know "random" is a valid color
+	} else {
+		u.changeColor(Styles[rand.Intn(len(Styles))].name) //nolint:errcheck // we know this is a valid color
+	}
+	if rand.Float64() <= 0.1 { // 10% chance of a random bg color
+		u.changeColor("bg-random") //nolint:errcheck // we know "bg-random" is a valid color
+	}
+
 	if err := u.pickUsernameQuietly(s.User()); err != nil { // User exited or had some error
 		Log.Println(err)
 		s.Close()
@@ -433,13 +439,13 @@ func (u *User) writeln(senderName string, msg string) {
 		msg = strings.TrimSpace(mdRender(msg, 0, u.win.Width)) // No sender
 	}
 	if time.Since(u.lastTimestamp) > time.Minute {
-		if u.Timezone == nil {
+		if u.Timezone.Location == nil {
 			u.rWriteln(printPrettyDuration(time.Since(u.joinTime)) + " in")
 		} else {
 			if u.FormatTime24 {
-				u.rWriteln(time.Now().In((*time.Location)(u.Timezone)).Format("15:04"))
+				u.rWriteln(time.Now().In(u.Timezone.Location).Format("15:04"))
 			} else {
-				u.rWriteln(time.Now().In((*time.Location)(u.Timezone)).Format("3:04 pm"))
+				u.rWriteln(time.Now().In(u.Timezone.Location).Format("3:04 pm"))
 			}
 		}
 		u.lastTimestamp = time.Now()
@@ -505,22 +511,10 @@ func (u *User) pickUsernameQuietly(possibleName string) error {
 		possibleName = cleanName(possibleName)
 	}
 
-	if detectBadWords(possibleName) { // sadly this is necessary
-		banUser("devbot [grow up]", u)
-		return errors.New(u.Name + "'s username contained a bad word")
-	}
+	possibleName = rmBadWords(possibleName)
 
-	u.Name = possibleName
-
-	if rand.Float64() <= 0.1 { // 10% chance of a random bg color
-		// changeColor also sets prompt
-		defer u.changeColor("bg-random") //nolint:errcheck // we know "bg-random" is a valid color
-	}
-	if rand.Float64() <= 0.4 { // 40% chance of being a random color
-		u.changeColor("random") //nolint:errcheck // we know "random" is a valid color
-		return nil
-	}
-	u.changeColor(Styles[rand.Intn(len(Styles))].name) //nolint:errcheck // we know this is a valid color
+	u.Name, _ = applyColorToData(possibleName, u.Color, u.ColorBG) //nolint:errcheck // we haven't changed the color so we know it's valid
+	u.term.SetPrompt(u.Name + ": ")
 	return nil
 }
 

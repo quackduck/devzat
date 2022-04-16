@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"crypto/sha256"
 	_ "embed"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	goaway "github.com/TwiN/go-away"
 	"math"
 	"math/rand"
 	"os"
@@ -269,4 +271,20 @@ func devbotRespond(room *Room, messages []string, chance int) {
 func shasum(s string) string {
 	h := sha256.Sum256([]byte(s))
 	return hex.EncodeToString(h[:])
+}
+
+func rmBadWords(text string) string {
+	return goaway.Censor(text)
+}
+
+func init() {
+	okayIshWords := []string{"ZnVjaw==", "Y3JhcA==", "c2hpdA=="} // base 64 encoded okay-ish swears
+	for i, word := range goaway.DefaultProfanities {
+		for _, okayIshWord := range okayIshWords {
+			okayIshWordb, _ := base64.StdEncoding.DecodeString(okayIshWord)
+			if word == string(okayIshWordb) {
+				goaway.DefaultProfanities = append(goaway.DefaultProfanities[:i], goaway.DefaultProfanities[i+1:]...)
+			}
+		}
+	}
 }

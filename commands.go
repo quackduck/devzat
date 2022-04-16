@@ -85,10 +85,7 @@ func init() {
 // It also accepts a boolean indicating if the line of input is from slack, in
 // which case some commands will not be run (such as ./tz and ./exit)
 func runCommands(line string, u *User) {
-	if detectBadWords(line) {
-		banUser("devbot [grow up]", u)
-		return
-	}
+	line = rmBadWords(line)
 
 	if line == "" {
 		return
@@ -143,24 +140,6 @@ func runCommands(line string, u *User) {
 			return
 		}
 	}
-}
-
-// TODO: replacing with asterisks could be faster
-func detectBadWords(text string) bool {
-	text = strings.ToLower(text)
-	badWords := []string{"nigger", "faggot", "tranny", "trannies"} // TODO: add more, it's sad that this is necessary, but the internet is harsh
-	badWKillWords := []string{"tranny", "trannies", "transgender", "gay", "muslim", "jew"}
-	for _, word := range badWords {
-		if strings.Contains(text, word) {
-			return true
-		}
-	}
-	for _, word := range badWKillWords {
-		if strings.Contains(text, word) && (strings.Contains(text, "kill") || strings.Contains(text, "death") || strings.Contains(text, "dead") || strings.Contains(text, "murder")) {
-			return true
-		}
-	}
-	return false
 }
 
 func dmCMD(rest string, u *User) {
@@ -346,13 +325,14 @@ func bellCMD(rest string, u *User) {
 		u.PingEverytime = false
 		u.room.broadcast("", "bell on (pings)")
 	case "all":
+		u.Bell = true
 		u.PingEverytime = true
 		u.room.broadcast("", "bell all (every message)")
 	case "", "status":
-		if u.Bell {
-			u.room.broadcast("", "bell on (pings)")
-		} else if u.PingEverytime {
+		if u.PingEverytime {
 			u.room.broadcast("", "bell all (every message)")
+		} else if u.Bell {
+			u.room.broadcast("", "bell on (pings)")
 		} else { // bell is off
 			u.room.broadcast("", "bell off (never)")
 		}
@@ -427,7 +407,7 @@ func cdCMD(rest string, u *User) {
 func tzCMD(tzArg string, u *User) {
 	var err error
 	if tzArg == "" {
-		u.Timezone = nil
+		u.Timezone.Location = nil
 		return
 	}
 	tzArgList := strings.Fields(tzArg)
@@ -442,7 +422,7 @@ func tzCMD(tzArg string, u *User) {
 	case "MT":
 		tz = "America/Phoenix"
 	}
-	u.Timezone, err = time.LoadLocation(tz)
+	u.Timezone.Location, err = time.LoadLocation(tz)
 	if err != nil {
 		u.room.broadcast(Devbot, "Weird timezone you have there, use the format Continent/City, the usual US timezones (PST, PDT, EST, EDT...) or check nodatime.org/TimeZones!")
 		return
