@@ -13,9 +13,6 @@ import (
 	"sync"
 	"time"
 
-	pb "devzat/plugin"
-
-	"github.com/acarl005/stripansi"
 	"github.com/alecthomas/chroma"
 	chromastyles "github.com/alecthomas/chroma/styles"
 	markdown "github.com/quackduck/go-term-markdown"
@@ -112,17 +109,7 @@ func runCommands(line string, u *User) {
 	}
 
 	// Now we know it is not a DM, so this is a safe place to add the hook for sending the event to plugins
-	if len(listeners[pb.EventType_SEND].nonMiddleware) > 0 {
-		for _, l := range listeners[pb.EventType_SEND].nonMiddleware {
-			l <- &pb.Event_Send{
-				Send: &pb.SendEvent{
-					Room: u.room.name,
-					From: stripansi.Strip(u.Name),
-					Msg:  line,
-				},
-			}
-		}
-	}
+	sendMessageToPlugins(line, u)
 
 	switch currCmd {
 	case "hang":
@@ -146,12 +133,7 @@ func runCommands(line string, u *User) {
 
 	args := strings.TrimSpace(strings.TrimPrefix(line, currCmd))
 
-	if pluginCmd, ok := pluginCmds[currCmd]; ok {
-		pluginCmd.c <- &pb.CmdInvocation{
-			Room: u.room.name,
-			From: stripansi.Strip(u.Name),
-			Args: args,
-		}
+	if runPluginCMDs(u, currCmd, args) {
 		return
 	}
 
@@ -795,7 +777,7 @@ func manCMD(rest string, u *User) {
 		}
 	}
 	// Plugin commands
-	if c, ok := pluginCmds[rest]; ok {
+	if c, ok := pluginCMDs[rest]; ok {
 		u.room.broadcast(Devbot, "Usage: "+rest+" "+c.argsInfo+"  \n"+c.info)
 		return
 	}
@@ -830,14 +812,13 @@ func lsCMD(rest string, u *User) {
 }
 
 func commandsCMD(_ string, u *User) {
-	newCMDs := append(make([]CMD, 0, len(MainCMDs)+len(pluginCmds)), MainCMDs...)
-	for n, c := range pluginCmds {
-		newCMDs = append(newCMDs, CMD{
+	plugins := make([]CMD, 0, len(pluginCMDs))
+	for n, c := range pluginCMDs {
+		plugins = append(plugins, CMD{
 			name:     n,
 			info:     c.info,
 			argsInfo: c.argsInfo,
 		})
 	}
-
-	u.room.broadcast("", "Commands  \n"+autogenCommands(newCMDs))
+	u.room.broadcast("", "Commands  \n"+autogenCommands(append(MainCMDs, plugins...)))
 }

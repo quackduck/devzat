@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/acarl005/stripansi"
 	"io"
 	"net"
 	"time"
@@ -142,20 +143,20 @@ type cmdInst struct {
 	c        chan *pb.CmdInvocation
 }
 
-var pluginCmds = map[string]cmdInst{}
+var pluginCMDs = map[string]cmdInst{}
 
 func (s *pluginServer) RegisterCmd(def *pb.CmdDef, stream pb.Plugin_RegisterCmdServer) error {
 	Log.Printf("[gRPC] Registering command with name %s", def.Name)
-	pluginCmds[def.Name] = cmdInst{
+	pluginCMDs[def.Name] = cmdInst{
 		argsInfo: def.ArgsInfo,
 		info:     def.Info,
 		c:        make(chan *pb.CmdInvocation),
 	}
 
-	defer delete(pluginCmds, def.Name)
+	defer delete(pluginCMDs, def.Name)
 
 	for {
-		invocation := <-pluginCmds[def.Name].c
+		invocation := <-pluginCMDs[def.Name].c
 		err := stream.Send(invocation)
 		if err != nil {
 			return err
@@ -251,4 +252,50 @@ func startPluginServer(port int) {
 	pb.RegisterPluginServer(grpcServer, newPluginServer())
 	Log.Printf("[gRPC] Plugin server started on port %d\n", port)
 	grpcServer.Serve(lis)
+}
+
+func runPluginCMDs(u *User, currCmd string, args string) (found bool) {
+	if pluginCmd, ok := pluginCMDs[currCmd]; ok {
+		pluginCmd.c <- &pb.CmdInvocation{
+			Room: u.room.name,
+			From: stripansi.Strip(u.Name),
+			Args: args,
+		}
+		return true
+	}
+	return false
+}
+
+func sendMessageToPlugins(line string, u *User) {
+	if len(listeners[pb.EventType_SEND].nonMiddleware) > 0 {
+		for _, l := range listeners[pb.EventType_SEND].nonMiddleware {
+			l <- &pb.Event_Send{
+				Send: &pb.SendEvent{
+					Room: u.room.name,
+					From: stripansi.Strip(u.Name),
+					Msg:  line,
+				},
+			}
+		}
+	}
+}
+
+func getMiddlewareResult(u *User, line string) string {
+	// Middleware hook
+	if len(listeners[pb.EventType_SEND].middleware) > 0 {
+		for _, m := range listeners[pb.EventType_SEND].middleware {
+			m <- &pb.Event_Send{
+				Send: &pb.SendEvent{
+					Room: u.room.name,
+					From: stripansi.Strip(u.Name),
+					Msg:  line,
+				},
+			}
+			res := (<-m).(*pb.ListenerClientData_Response).Response.Res.(*pb.MiddlewareResponse_Send).Send
+			if res.Msg != nil {
+				line = *res.Msg
+			}
+		}
+	}
+	return line
 }
