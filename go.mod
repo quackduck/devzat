@@ -3,6 +3,7 @@ module devzat
 go 1.17
 
 require (
+	github.com/TwiN/go-away v1.6.1
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/alecthomas/chroma v0.10.0
 	github.com/dghubble/go-twitter v0.0.0-20220413154426-14d8abde2e80
