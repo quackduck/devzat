@@ -3,7 +3,6 @@ package main
 import (
 	_ "embed"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -511,10 +510,7 @@ func (u *User) pickUsernameQuietly(possibleName string) error {
 		possibleName = cleanName(possibleName)
 	}
 
-	if detectBadWords(possibleName) { // sadly this is necessary
-		banUser("devbot [grow up]", u)
-		return errors.New(u.Name + "'s username contained a bad word")
-	}
+	possibleName = rmBadWords(possibleName)
 
 	u.Name, _ = applyColorToData(possibleName, u.Color, u.ColorBG) //nolint:errcheck // we haven't changed the color so we know it's valid
 	u.term.SetPrompt(u.Name + ": ")

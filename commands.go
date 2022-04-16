@@ -85,10 +85,7 @@ func init() {
 // It also accepts a boolean indicating if the line of input is from slack, in
 // which case some commands will not be run (such as ./tz and ./exit)
 func runCommands(line string, u *User) {
-	if detectBadWords(line) {
-		banUser("devbot [grow up]", u)
-		return
-	}
+	line = rmBadWords(line)
 
 	if line == "" {
 		return
@@ -134,24 +131,6 @@ func runCommands(line string, u *User) {
 			return
 		}
 	}
-}
-
-// TODO: replacing with asterisks could be faster
-func detectBadWords(text string) bool {
-	text = strings.ToLower(text)
-	badWords := []string{"nigger", "faggot", "tranny", "trannies"} // TODO: add more, it's sad that this is necessary, but the internet is harsh
-	badWKillWords := []string{"tranny", "trannies", "transgender", "gay", "muslim", "jew"}
-	for _, word := range badWords {
-		if strings.Contains(text, word) {
-			return true
-		}
-	}
-	for _, word := range badWKillWords {
-		if strings.Contains(text, word) && (strings.Contains(text, "kill") || strings.Contains(text, "death") || strings.Contains(text, "dead") || strings.Contains(text, "murder")) {
-			return true
-		}
-	}
-	return false
 }
 
 func dmCMD(rest string, u *User) {
