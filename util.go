@@ -274,12 +274,14 @@ func shasum(s string) string {
 	return hex.EncodeToString(h[:])
 }
 
+var detector = goaway.NewProfanityDetector().WithSanitizeSpaces(false)
+
 func rmBadWords(text string) string {
-	return goaway.Censor(text)
+	return detector.Censor(text)
 }
 
 func init() {
-	okayIshWords := []string{"ZnVjaw==", "Y3JhcA==", "c2hpdA==", "YXJzZQ=="} // base 64 encoded okay-ish swears
+	okayIshWords := []string{"ZnVjaw==", "Y3JhcA==", "c2hpdA==", "YXJzZQ==", "YXNz", "YnV0dA=="} // base 64 encoded okay-ish swears
 	for i, word := range goaway.DefaultProfanities {
 		for _, okayIshWord := range okayIshWords {
 			okayIshWordb, _ := base64.StdEncoding.DecodeString(okayIshWord)
