@@ -1,7 +1,7 @@
 github.com/MichaelMure/go-term-text v0.3.1 h1:Kw9kZanyZWiCHOYu9v/8pWEgDQ6UVN9/ix2Vd2zzWf0=
 github.com/MichaelMure/go-term-text v0.3.1/go.mod h1:QgVjAEDUnRMlzpS6ky5CGblux7ebeiLnuy9dAaFZu8o=
-github.com/TwiN/go-away v1.6.1 h1:JnPoFDZgQxj1dxWuTtu40FIDwbq3h0eCiHL+juAYvl4=
-github.com/TwiN/go-away v1.6.1/go.mod h1:cQt5vCHAcyP9CzAh6ORZ9eJXWg4VTWjwTyDI5hB3sn0=
+github.com/TwiN/go-away v1.6.2 h1:pCj5LP4LLxPVLsLQAOfcDIxBG8Jn775xfd0EtB6SZZY=
+github.com/TwiN/go-away v1.6.2/go.mod h1:xjsrzCf4AhmoK9y+nMr8vTC9kqh/8vd89sbVjzo/Kao=
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d h1:licZJFw2RwpHMqeKTCYkitsPqHNxTmd4SNR5r94FGM8=
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d/go.mod h1:asat636LX7Bqt5lYEZ27JNDcqxfjdBQuJ/MM4CN/Lzo=
 github.com/alecthomas/assert v0.0.0-20170929043011-405dbfeb8e38/go.mod h1:r7bzyVFMNntcxPZXK3/+KdruV1H5KSlyVY0gc+NgInI=
