@@ -321,7 +321,7 @@ func newUser(s ssh.Session) *User {
 	}
 
 	clearCMD("", u) // always clear the screen on connect
-	valentines(u)
+	holidaysCheck(u)
 
 	if len(Backlog) > 0 {
 		lastStamp := Backlog[0].timestamp
@@ -376,14 +376,70 @@ func newUser(s ssh.Session) *User {
 	return u
 }
 
-func valentines(u *User) {
-	if time.Now().Month() == time.February && (time.Now().Day() == 14 || time.Now().Day() == 15 || time.Now().Day() == 13) {
-		// TODO: add a few more random images
-		u.writeln("", "![❤️](https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/160/apple/81/heavy-black-heart_2764.png)")
-		//u.term.Write([]byte("\u001B[A\u001B[2K\u001B[A\u001B[2K")) // delete last line of rendered markdown
+func holidaysCheck(u *User) {
+
+	currentMonth := time.Now().Month()
+	today := time.Now().Day()
+
+	sleepAndClear := func() {
 		time.Sleep(time.Second)
-		// clear screen
 		clearCMD("", u)
+	}
+
+	// TEST
+	if currentMonth == time.April {
+		// TODO: add a few more random images
+		u.writeln("", "![❤️ - Valentine's Day](https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/60/apple/81/heavy-black-heart_2764.png)")
+		sleepAndClear()
+	}
+
+	// VALENTINE'S DAY
+	if currentMonth == time.February && (today == 14 || today == 15 || today == 13) {
+		// TODO: add a few more random images
+		u.writeln("", "![❤️ - Valentine's Day](https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/60/apple/81/heavy-black-heart_2764.png)")
+		sleepAndClear()
+	}
+
+	// ST. PATRICK'S DAY
+	if currentMonth == time.March && today == 17 {
+		u.writeln("", "![☘️ - St. Patrick's Day](https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/60/apple/325/shamrock_2618-fe0f.png)")
+		sleepAndClear()
+	}
+
+	// EARTH DAY
+	if currentMonth == time.April && today == 22 {
+		u.writeln("", "![🌎 - Earth Day](https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/60/apple/325/globe-showing-americas_1f30e.png)")
+		sleepAndClear()
+	}
+
+		// MOTHER'S DAY
+	if currentMonth == time.May && today == 8 {
+		u.writeln("", "![👩 - Mother's Day](https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/60/apple/325/woman_1f469.png)")
+		sleepAndClear()
+	}
+
+	// FATHER'S DAY
+	if currentMonth == time.June && today == 19 {
+		u.writeln("", "![👨 - Father's Day](https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/60/apple/325/man_1f468.png)")
+		sleepAndClear()
+	}
+
+	// GRANDPARENT'S DAY
+	if currentMonth == time.October && today == 2 {
+		u.writeln("", "![👴 - Grandparent's Day](https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/60/apple/325/old-man_1f474.png)")
+		sleepAndClear()
+	}
+
+	// HALLOWEEN
+	if currentMonth == time.October && today == 31 {
+		u.writeln("", "![🎃 - Halloween](https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/60/apple/325/jack-o-lantern_1f383.png)")
+		sleepAndClear()
+	}
+
+	// CHRISTMAS
+	if currentMonth == time.December && (today == 25) {
+		u.writeln("", "![🎅 - Merry Christmas!](https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/60/apple/325/santa-claus_1f385.png)")
+		sleepAndClear()
 	}
 }
 
