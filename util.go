@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
-	goaway "github.com/TwiN/go-away"
 	"math"
 	"math/rand"
 	"os"
@@ -15,6 +14,7 @@ import (
 	"text/tabwriter"
 	"time"
 
+	goaway "github.com/TwiN/go-away"
 	"github.com/acarl005/stripansi"
 	markdown "github.com/quackduck/go-term-markdown"
 )
@@ -101,6 +101,7 @@ func printPrettyDuration(d time.Duration) string {
 }
 
 func mdRender(a string, beforeMessageLen int, lineWidth int) string {
+	a = strings.ReplaceAll(a, "https://", "https\\://")
 	if strings.Contains(a, "![") && strings.Contains(a, "](") {
 		lineWidth = int(math.Min(float64(lineWidth/2), 200)) // max image width is 200
 	}
@@ -273,18 +274,54 @@ func shasum(s string) string {
 	return hex.EncodeToString(h[:])
 }
 
+var detector = goaway.NewProfanityDetector().WithSanitizeSpaces(false)
+
 func rmBadWords(text string) string {
-	return goaway.Censor(text)
+	return detector.Censor(text)
 }
 
 func init() {
-	okayIshWords := []string{"ZnVjaw==", "Y3JhcA==", "c2hpdA=="} // base 64 encoded okay-ish swears
+	okayIshWords := []string{"ZnVjaw==", "Y3JhcA==", "c2hpdA==", "YXJzZQ==", "YXNz", "YnV0dA=="} // base 64 encoded okay-ish swears
 	for i, word := range goaway.DefaultProfanities {
 		for _, okayIshWord := range okayIshWords {
 			okayIshWordb, _ := base64.StdEncoding.DecodeString(okayIshWord)
 			if word == string(okayIshWordb) {
 				goaway.DefaultProfanities = append(goaway.DefaultProfanities[:i], goaway.DefaultProfanities[i+1:]...)
 			}
+		}
+	}
+}
+
+func holidaysCheck(u *User) {
+
+	currentMonth := time.Now().Month()
+	today := time.Now().Day()
+
+	type holiday struct {
+		month time.Month
+		day   int
+		name  string
+		image string
+	}
+
+	holidayList := []holiday{
+		{time.February, 14, "❤️ - Valentine's Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/81/heavy-black-heart_2764.png"},
+		{time.March, 17, "☘️ - St. Patrick's Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/shamrock_2618-fe0f.png"},
+		{time.April, 22, "🌎 - Earth Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/globe-showing-americas_1f30e.png"},
+		{time.May, 8, "👩 - Mother's Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/woman_1f469.png"},
+		{time.June, 19, "👨 - Father's Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/man_1f468.png"},
+		{time.September, 11, "👴 - Grandparents' Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/old-woman_1f475.png"},
+		{time.October, 31, "🎃 - Halloween", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/jack-o-lantern_1f383.png"},
+		{time.December, 25, "🎅 - Christmas", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/santa-claus_1f385.png"},
+		{time.December, 31, "🍾 - New Year's Eve", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/bottle-with-popping-cork_1f37e.png"},
+	}
+
+	for _, h := range holidayList {
+		if currentMonth == h.month && today == h.day {
+			u.writeln("", "!["+h.name+"]("+h.image+")")
+			time.Sleep(time.Second)
+			clearCMD("", u)
+			break
 		}
 	}
 }
