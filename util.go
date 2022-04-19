@@ -15,7 +15,6 @@ import (
 	"time"
 
 	goaway "github.com/TwiN/go-away"
-
 	"github.com/acarl005/stripansi"
 	markdown "github.com/quackduck/go-term-markdown"
 )
@@ -306,14 +305,15 @@ func holidaysCheck(u *User) {
 	}
 
 	holidayList := []holiday{
-		{time.February, 14, "❤️ - Valentine's Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/60/apple/81/heavy-black-heart_2764.png"},
-		{time.March, 17, "☘️ - St. Patrick's Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/60/apple/325/shamrock_2618-fe0f.png"},
-		{time.April, 22, "🌎 - Earth Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/60/apple/325/globe-showing-americas_1f30e.png"},
-		{time.May, 8, "👩 - Mother's Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/60/apple/325/woman_1f469.png"},
-		{time.June, 19, "👨 - Father's Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/60/apple/325/man_1f468.png"},
-		{time.October, 2, "👴 - Grandparent's Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/60/apple/325/old-man_1f474.png"},
-		{time.October, 31, "🎃 - Halloween", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/60/apple/325/jack-o-lantern_1f383.png"},
-		{time.December, 25, "🎅 - Merry Christmas!", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/60/apple/325/santa-claus_1f385.png"},
+		{time.February, 14, "❤️ - Valentine's Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/81/heavy-black-heart_2764.png"},
+		{time.March, 17, "☘️ - St. Patrick's Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/shamrock_2618-fe0f.png"},
+		{time.April, 22, "🌎 - Earth Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/globe-showing-americas_1f30e.png"},
+		{time.May, 8, "👩 - Mother's Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/woman_1f469.png"},
+		{time.June, 19, "👨 - Father's Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/man_1f468.png"},
+		{time.September, 11, "👴 - Grandparents' Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/old-woman_1f475.png"},
+		{time.October, 31, "🎃 - Halloween", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/jack-o-lantern_1f383.png"},
+		{time.December, 25, "🎅 - Christmas", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/santa-claus_1f385.png"},
+		{time.December, 31, "🍾 - New Years' Eve", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/bottle-with-popping-cork_1f37e.png"},
 	}
 
 	for _, h := range holidayList {
