@@ -386,13 +386,6 @@ func holidaysCheck(u *User) {
 		clearCMD("", u)
 	}
 
-	// TEST
-	if currentMonth == time.April {
-		// TODO: add a few more random images
-		u.writeln("", "![❤️ - Valentine's Day](https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/60/apple/81/heavy-black-heart_2764.png)")
-		sleepAndClear()
-	}
-
 	// VALENTINE'S DAY
 	if currentMonth == time.February && (today == 14 || today == 15 || today == 13) {
 		// TODO: add a few more random images
