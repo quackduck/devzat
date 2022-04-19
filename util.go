@@ -313,7 +313,7 @@ func holidaysCheck(u *User) {
 		{time.September, 11, "👴 - Grandparents' Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/old-woman_1f475.png"},
 		{time.October, 31, "🎃 - Halloween", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/jack-o-lantern_1f383.png"},
 		{time.December, 25, "🎅 - Christmas", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/santa-claus_1f385.png"},
-		{time.December, 31, "🍾 - New Years' Eve", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/bottle-with-popping-cork_1f37e.png"},
+		{time.December, 31, "🍾 - New Year's Eve", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/bottle-with-popping-cork_1f37e.png"},
 	}
 
 	for _, h := range holidayList {
