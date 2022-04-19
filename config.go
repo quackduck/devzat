@@ -12,8 +12,6 @@ type ConfigType struct {
 	Port        int               `yaml:"port"`
 	AltPort     int               `yaml:"alt_port"`
 	ProfilePort int               `yaml:"profile_port"`
-	PluginPort  int               `yaml:"plugin_port"`
-	PluginToken string            `yaml:"plugin_token"`
 	DataDir     string            `yaml:"data_dir"`
 	KeyFile     string            `yaml:"key_file"`
 	Admins      map[string]string `yaml:"admins"`
@@ -30,6 +28,8 @@ type IntegrationsType struct {
 	// Slack stores the information needed for the Slack integration.
 	// Check if it is enabled by checking if Slack is nil.
 	Slack *SlackInfo `yaml:"slack"`
+
+	RPC *RPCInfo `yaml:"rpc"`
 }
 
 type TwitterInfo struct {
@@ -48,13 +48,16 @@ type SlackInfo struct {
 	Prefix string `yaml:"prefix"`
 }
 
+type RPCInfo struct {
+	Port int    `yaml:"port"`
+	Key  string `yaml:"key"`
+}
+
 var (
 	Config = ConfigType{ // first stores default config
 		Port:        2221,
 		AltPort:     8080,
 		ProfilePort: 5555,
-		PluginPort:  5556,
-		PluginToken: "REPLACE_ME_WITH_RANDOM_STRING",
 		DataDir:     "devzat-data",
 		KeyFile:     "devzat-sshkey",
 
@@ -64,6 +67,7 @@ var (
 	Integrations = IntegrationsType{
 		Twitter: nil,
 		Slack:   nil,
+		RPC:     nil,
 	}
 )
 

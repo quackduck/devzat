@@ -17,6 +17,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+var PluginCMDs = map[string]cmdInst{}
+
 type pluginServer struct {
 	pb.UnimplementedPluginServer
 }
@@ -46,7 +48,7 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 
 	listener := initialData.GetListener()
 	if listener == nil {
-		return status.Errorf(codes.InvalidArgument, "First message must be a listener")
+		return status.Error(codes.InvalidArgument, "First message must be a listener")
 	}
 
 	var c *chan pb.MiddlewareChannelMessage
@@ -81,7 +83,7 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 		// wasn't consumed, which means the plugin was probably disconnected (at least I think)
 		switch message.(type) {
 		case *pb.ListenerClientData_Response:
-			return status.Errorf(codes.Unavailable, "Plugin disconnected")
+			return status.Error(codes.Unavailable, "Plugin disconnected")
 		}
 
 		switch listener.Event {
@@ -120,13 +122,13 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 				switch data := mwRes.Data.(type) {
 				case *pb.ListenerClientData_Listener:
 					sendNilResponse()
-					return status.Errorf(codes.InvalidArgument, "Middleware returned a listener instead of a response")
+					return status.Error(codes.InvalidArgument, "Middleware returned a listener instead of a response")
 				case *pb.ListenerClientData_Response:
 					*c <- data
 				}
 			}
 		default:
-			return status.Errorf(codes.Unimplemented, "unimplemented")
+			return status.Error(codes.Unimplemented, "unimplemented")
 		}
 
 		if isOnce {
@@ -143,40 +145,36 @@ type cmdInst struct {
 	c        chan *pb.CmdInvocation
 }
 
-var pluginCMDs = map[string]cmdInst{}
-
 func (s *pluginServer) RegisterCmd(def *pb.CmdDef, stream pb.Plugin_RegisterCmdServer) error {
-	Log.Printf("[gRPC] Registering command with name %s", def.Name)
-	pluginCMDs[def.Name] = cmdInst{
+	Log.Print("[gRPC] Registering command with name " + def.Name)
+	PluginCMDs[def.Name] = cmdInst{
 		argsInfo: def.ArgsInfo,
 		info:     def.Info,
 		c:        make(chan *pb.CmdInvocation),
 	}
 
-	defer delete(pluginCMDs, def.Name)
+	defer delete(PluginCMDs, def.Name)
 
 	for {
-		invocation := <-pluginCMDs[def.Name].c
+		invocation := <-PluginCMDs[def.Name].c
 		err := stream.Send(invocation)
 		if err != nil {
 			return err
 		}
 	}
-
-	return nil
 }
 
 func (s *pluginServer) SendMessage(ctx context.Context, msg *pb.Message) (*pb.MessageRes, error) {
 	if msg.GetEphemeralTo() != "" {
 		u, success := findUserByName(Rooms[msg.Room], *msg.EphemeralTo)
 		if !success {
-			return nil, status.Errorf(codes.NotFound, "Could not find user %s", *msg.EphemeralTo)
+			return nil, status.Error(codes.NotFound, "Could not find user "+*msg.EphemeralTo)
 		}
 		u.writeln(msg.GetFrom(), msg.Msg)
 	} else {
 		r := Rooms[msg.Room]
 		if r == nil {
-			return nil, status.Errorf(codes.InvalidArgument, "Room does not exist")
+			return nil, status.Error(codes.InvalidArgument, "Room does not exist")
 		}
 		r.broadcast(msg.GetFrom(), msg.Msg)
 	}
@@ -191,19 +189,18 @@ func newPluginServer() *pluginServer {
 func authorize(ctx context.Context) error {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return status.Errorf(codes.Unauthenticated, "Missing metadata")
+		return status.Error(codes.Unauthenticated, "Missing metadata")
 	}
 
 	values := md["authorization"]
 	if len(values) == 0 {
-		return status.Errorf(codes.Unauthenticated, "Missing authorization header")
+		return status.Error(codes.Unauthenticated, "Missing authorization header")
 	}
 
 	token := values[0]
-	if token != "Bearer "+Config.PluginToken {
-		return status.Errorf(codes.Unauthenticated, "Invalid authorization header")
+	if token != "Bearer "+Integrations.RPC.Key {
+		return status.Error(codes.Unauthenticated, "Invalid authorization header")
 	}
-
 	return nil
 }
 
@@ -235,27 +232,28 @@ func streamInterceptor(
 	return handler(srv, stream)
 }
 
-func startPluginServer(port int) {
-	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
-	if err != nil {
-		Log.Fatalf("[gRPC] Failed to listen for plugin server: %v", err)
+func startPluginServer() {
+	if Integrations.RPC == nil {
+		return
 	}
-	opts := []grpc.ServerOption{
-		grpc.UnaryInterceptor(unaryInterceptor),
-		grpc.StreamInterceptor(streamInterceptor),
-		grpc.KeepaliveParams(keepalive.ServerParameters{
-			Time: time.Second * 10,
-		}),
+	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", Integrations.RPC.Port))
+	if err != nil {
+		Log.Println("[gRPC] Failed to listen for plugin server:", err)
+		return
 	}
 	// TODO: add TLS if configured
-	grpcServer := grpc.NewServer(opts...)
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(unaryInterceptor),
+		grpc.StreamInterceptor(streamInterceptor),
+		grpc.KeepaliveParams(keepalive.ServerParameters{Time: time.Second * 10}),
+	)
 	pb.RegisterPluginServer(grpcServer, newPluginServer())
-	Log.Printf("[gRPC] Plugin server started on port %d\n", port)
+	Log.Printf("[gRPC] Plugin server started on port %d\n", Integrations.RPC.Port)
 	grpcServer.Serve(lis)
 }
 
 func runPluginCMDs(u *User, currCmd string, args string) (found bool) {
-	if pluginCmd, ok := pluginCMDs[currCmd]; ok {
+	if pluginCmd, ok := PluginCMDs[currCmd]; ok {
 		pluginCmd.c <- &pb.CmdInvocation{
 			Room: u.room.name,
 			From: stripansi.Strip(u.Name),
@@ -281,6 +279,9 @@ func sendMessageToPlugins(line string, u *User) {
 }
 
 func getMiddlewareResult(u *User, line string) string {
+	if Integrations.RPC == nil {
+		return line
+	}
 	// Middleware hook
 	if len(listeners[pb.EventType_SEND].middleware) > 0 {
 		for _, m := range listeners[pb.EventType_SEND].middleware {

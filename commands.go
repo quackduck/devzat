@@ -757,7 +757,7 @@ func manCMD(rest string, u *User) {
 		}
 	}
 	// Plugin commands
-	if c, ok := pluginCMDs[rest]; ok {
+	if c, ok := PluginCMDs[rest]; ok {
 		u.room.broadcast(Devbot, "Usage: "+rest+" "+c.argsInfo+"  \n"+c.info)
 		return
 	}
@@ -792,8 +792,8 @@ func lsCMD(rest string, u *User) {
 }
 
 func commandsCMD(_ string, u *User) {
-	plugins := make([]CMD, 0, len(pluginCMDs))
-	for n, c := range pluginCMDs {
+	plugins := make([]CMD, 0, len(PluginCMDs))
+	for n, c := range PluginCMDs {
 		plugins = append(plugins, CMD{
 			name:     n,
 			info:     c.info,

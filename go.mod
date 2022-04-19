@@ -29,7 +29,7 @@ require (
 	github.com/eliukblau/pixterm v1.3.1 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/gomarkdown/markdown v0.0.0-20220415004816-a770b0c4ff83 // indirect
+	github.com/gomarkdown/markdown v0.0.0-20220419181919-412bcf14cd2e // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/jwalton/go-supportscolor v1.1.0 // indirect
