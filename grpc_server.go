@@ -249,7 +249,10 @@ func startPluginServer() {
 	)
 	pb.RegisterPluginServer(grpcServer, newPluginServer())
 	Log.Printf("[gRPC] Plugin server started on port %d\n", Integrations.RPC.Port)
-	grpcServer.Serve(lis)
+	err = grpcServer.Serve(lis)
+	if err != nil {
+		Log.Println("[gRPC] Failed to serve:", err)
+	}
 }
 
 func runPluginCMDs(u *User, currCmd string, args string) (found bool) {
