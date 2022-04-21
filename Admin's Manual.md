@@ -46,6 +46,8 @@ data_dir: devzat-data
 key_file: devzat-sshkey
 # where an integration config is stored (optional)
 integration_config: devzat-integrations.yml
+# whether to censor messages (optional)
+censor: true
 # a list of admin IDs and notes about them
 admins:
   d6acd2f5c5a8ef95563883032ef0b7c0239129b2d3672f964e5711b5016e05f5: 'Arkaeriit: github.com/Arkaeriit'

@@ -277,6 +277,9 @@ func shasum(s string) string {
 var detector = goaway.NewProfanityDetector().WithSanitizeSpaces(false)
 
 func rmBadWords(text string) string {
+	if !Config.Censor {
+		return text
+	}
 	return detector.Censor(text)
 }
 
