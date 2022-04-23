@@ -174,7 +174,6 @@ func main() {
 			fmt.Println(err)
 		}
 	}()
-	go startPluginServer()
 	err = ssh.ListenAndServe(fmt.Sprintf(":%d", Config.Port), nil, ssh.HostKeyFile(Config.KeyFile), ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
 		return true // allow all keys, this lets us hash pubkeys later
 	}))

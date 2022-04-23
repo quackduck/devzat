@@ -232,27 +232,29 @@ func streamInterceptor(
 	return handler(srv, stream)
 }
 
-func startPluginServer() {
+func rpcInit() {
 	if Integrations.RPC == nil {
 		return
 	}
-	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", Integrations.RPC.Port))
-	if err != nil {
-		Log.Println("[gRPC] Failed to listen for plugin server:", err)
-		return
-	}
-	// TODO: add TLS if configured
-	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(unaryInterceptor),
-		grpc.StreamInterceptor(streamInterceptor),
-		grpc.KeepaliveParams(keepalive.ServerParameters{Time: time.Second * 10}),
-	)
-	pb.RegisterPluginServer(grpcServer, newPluginServer())
-	Log.Printf("[gRPC] Plugin server started on port %d\n", Integrations.RPC.Port)
-	err = grpcServer.Serve(lis)
-	if err != nil {
-		Log.Println("[gRPC] Failed to serve:", err)
-	}
+	go func() {
+		lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", Integrations.RPC.Port))
+		if err != nil {
+			fmt.Println("[gRPC] Failed to listen for plugin server:", err)
+			return
+		}
+		// TODO: add TLS if configured
+		grpcServer := grpc.NewServer(
+			grpc.UnaryInterceptor(unaryInterceptor),
+			grpc.StreamInterceptor(streamInterceptor),
+			grpc.KeepaliveParams(keepalive.ServerParameters{Time: time.Second * 10}),
+		)
+		pb.RegisterPluginServer(grpcServer, newPluginServer())
+		fmt.Printf("[gRPC] Plugin server started on port %d\n", Integrations.RPC.Port)
+		err = grpcServer.Serve(lis)
+		if err != nil {
+			fmt.Println("[gRPC] Failed to serve:", err)
+		}
+	}()
 }
 
 func runPluginCMDs(u *User, currCmd string, args string) (found bool) {
