@@ -40,10 +40,6 @@ port: 2221
 alt_port: 443
 # what port to host profiling on (unimportant)
 profile_port: 5555
-# port to host plugin API on
-plugin_port: 5556
-# random string plugins should provide to authenticate with the plugin API
-plugin_token: <random string>
 # where to store data such as bans and logs
 data_dir: devzat-data
 # where the SSH private key is stored
@@ -108,9 +104,22 @@ twitter:
     access_token_secret: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
-You can use both integrations together.
+### Using the RPC integration
 
-There are 3 environment variables you can set to quickly disable integrations on the command line:
+Devzat includes a built-in gRPC server. This is useful for building your own integration or using a third-party one.
+
+Documentation for using the gRPC API is available [here [TODO]](<TODO>).
+
+```yaml
+rpc:
+    port: 5556 # port to listen on for RPC clients
+    key: "some string" # a string that RPC clients authenticate with
+```
+
+You can use any number of integrations together.
+
+There are 4 environment variables you can set to quickly disable integrations on the command line:
 * `DEVZAT_OFFLINE_TWITTER=true` will disable Twitter
 * `DEVZAT_OFFLINE_SLACK=true` will disable Slack
-* `DEVZAT_OFFLINE=true` will disable both integrations.
+* `DEVZAT_OFFLINE_RPC=true` will disable the gRPC server
+* `DEVZAT_OFFLINE=true` will disable all integrations.
