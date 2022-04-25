@@ -104,16 +104,16 @@ twitter:
     access_token_secret: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
-### Using the RPC integration
+### Using the plugin API integration
 
-Devzat includes a built-in gRPC server. This is useful for building your own integration or using a third-party one.
+Devzat includes a built-in gRPC plugin API. This is useful for building your own integration or using a third-party one.
 
-Documentation for using the gRPC API is available [here [TODO]](<TODO>).
+Documentation for using the gRPC API is available [here](plugin/README.md).
 
 ```yaml
 rpc:
-    port: 5556 # port to listen on for RPC clients
-    key: "some string" # a string that RPC clients authenticate with
+    port: 5556 # port to listen on for gRPC clients
+    key: "some string" # a string that gRPC clients authenticate with
 ```
 
 You can use any number of integrations together.
