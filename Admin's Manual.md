@@ -104,9 +104,22 @@ twitter:
     access_token_secret: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
-You can use both integrations together.
+### Using the plugin API integration
 
-There are 3 environment variables you can set to quickly disable integrations on the command line:
+Devzat includes a built-in gRPC plugin API. This is useful for building your own integration or using a third-party one.
+
+Documentation for using the gRPC API is available [here](plugin/README.md).
+
+```yaml
+rpc:
+    port: 5556 # port to listen on for gRPC clients
+    key: "some string" # a string that gRPC clients authenticate with
+```
+
+You can use any number of integrations together.
+
+There are 4 environment variables you can set to quickly disable integrations on the command line:
 * `DEVZAT_OFFLINE_TWITTER=true` will disable Twitter
 * `DEVZAT_OFFLINE_SLACK=true` will disable Slack
-* `DEVZAT_OFFLINE=true` will disable both integrations.
+* `DEVZAT_OFFLINE_RPC=true` will disable the gRPC server
+* `DEVZAT_OFFLINE=true` will disable all integrations.

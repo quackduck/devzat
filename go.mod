@@ -14,6 +14,8 @@ require (
 	github.com/quackduck/term v0.0.0-20220217011143-d10974b5f140
 	github.com/shurcooL/tictactoe v0.0.0-20210613024444-e573ff1376a3
 	github.com/slack-go/slack v0.10.2
+	google.golang.org/grpc v1.45.0
+	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -26,7 +28,8 @@ require (
 	github.com/dlclark/regexp2 v1.4.0 // indirect
 	github.com/eliukblau/pixterm v1.3.1 // indirect
 	github.com/fatih/color v1.13.0 // indirect
-	github.com/gomarkdown/markdown v0.0.0-20220415004816-a770b0c4ff83 // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/gomarkdown/markdown v0.0.0-20220419181919-412bcf14cd2e // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/jwalton/go-supportscolor v1.1.0 // indirect
@@ -42,4 +45,5 @@ require (
 	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad // indirect
 	golang.org/x/term v0.0.0-20220411215600-e5f449aeb171 // indirect
 	golang.org/x/text v0.3.7 // indirect
+	google.golang.org/genproto v0.0.0-20220414192740-2d67ff6cf2b4 // indirect
 )

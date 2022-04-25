@@ -105,6 +105,9 @@ func runCommands(line string, u *User) {
 		return
 	}
 
+	// Now we know it is not a DM, so this is a safe place to add the hook for sending the event to plugins
+	sendMessageToPlugins(line, u)
+
 	switch currCmd {
 	case "hang":
 		hangCMD(strings.TrimSpace(strings.TrimPrefix(line, "hang")), u)
@@ -125,9 +128,15 @@ func runCommands(line string, u *User) {
 
 	devbotChat(u.room, line)
 
+	args := strings.TrimSpace(strings.TrimPrefix(line, currCmd))
+
+	if runPluginCMDs(u, currCmd, args) {
+		return
+	}
+
 	for _, c := range CMDs {
 		if c.name == currCmd {
-			c.run(strings.TrimSpace(strings.TrimPrefix(line, c.name)), u)
+			c.run(args, u)
 			return
 		}
 	}
@@ -747,6 +756,12 @@ func manCMD(rest string, u *User) {
 			return
 		}
 	}
+	// Plugin commands
+	if c, ok := PluginCMDs[rest]; ok {
+		u.room.broadcast(Devbot, "Usage: "+rest+" "+c.argsInfo+"  \n"+c.info)
+		return
+	}
+
 	u.room.broadcast("", "This system has been minimized by removing packages and content that are not required on a system that users do not log into.\n\nTo restore this content, including manpages, you can run the 'unminimize' command. You will still need to ensure the 'man-db' package is installed.")
 }
 
@@ -777,5 +792,13 @@ func lsCMD(rest string, u *User) {
 }
 
 func commandsCMD(_ string, u *User) {
-	u.room.broadcast("", "Commands  \n"+autogenCommands(MainCMDs))
+	plugins := make([]CMD, 0, len(PluginCMDs))
+	for n, c := range PluginCMDs {
+		plugins = append(plugins, CMD{
+			name:     n,
+			info:     c.info,
+			argsInfo: c.argsInfo,
+		})
+	}
+	u.room.broadcast("", "Commands  \n"+autogenCommands(append(MainCMDs, plugins...)))
 }

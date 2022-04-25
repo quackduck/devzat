@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"os"
 	"strconv"
+
+	"gopkg.in/yaml.v2"
 )
 
 type ConfigType struct {
@@ -28,6 +29,8 @@ type IntegrationsType struct {
 	// Slack stores the information needed for the Slack integration.
 	// Check if it is enabled by checking if Slack is nil.
 	Slack *SlackInfo `yaml:"slack"`
+
+	RPC *RPCInfo `yaml:"rpc"`
 }
 
 type TwitterInfo struct {
@@ -46,6 +49,11 @@ type SlackInfo struct {
 	Prefix string `yaml:"prefix"`
 }
 
+type RPCInfo struct {
+	Port int    `yaml:"port"`
+	Key  string `yaml:"key"`
+}
+
 var (
 	Config = ConfigType{ // first stores default config
 		Port:        2221,
@@ -61,6 +69,7 @@ var (
 	Integrations = IntegrationsType{
 		Twitter: nil,
 		Slack:   nil,
+		RPC:     nil,
 	}
 )
 
@@ -109,19 +118,30 @@ func init() {
 		err = yaml.UnmarshalStrict(d, &Integrations)
 		errCheck(err)
 
-		if Integrations.Slack.Prefix == "" {
-			Integrations.Slack.Prefix = "Slack"
+		if Integrations.Slack != nil {
+			if Integrations.Slack.Prefix == "" {
+				Integrations.Slack.Prefix = "Slack"
+			}
+			if sl := Integrations.Slack; sl.Token == "" || sl.ChannelID == "" {
+				fmt.Println("error: Slack token or Channel ID is missing")
+				os.Exit(0)
+			}
 		}
-		if sl := Integrations.Slack; sl.Token == "" || sl.ChannelID == "" {
-			fmt.Println("error: Slack token or Channel ID is missing")
-			os.Exit(0)
+		if Integrations.Twitter != nil {
+			if tw := Integrations.Twitter; tw.AccessToken == "" ||
+				tw.AccessTokenSecret == "" ||
+				tw.ConsumerKey == "" ||
+				tw.ConsumerSecret == "" {
+				fmt.Println("error: Twitter credentials are incomplete")
+				os.Exit(0)
+			}
 		}
-		if tw := Integrations.Twitter; tw.AccessToken == "" ||
-			tw.AccessTokenSecret == "" ||
-			tw.ConsumerKey == "" ||
-			tw.ConsumerSecret == "" {
-			fmt.Println("error: Twitter credentials are incomplete")
-			os.Exit(0)
+
+		if Integrations.RPC != nil {
+			if rpc := Integrations.RPC; rpc.Key == "" {
+				fmt.Println("error: RPC key is missing")
+				os.Exit(0)
+			}
 		}
 
 		fmt.Println("Integration config loaded from " + Config.IntegrationConfig)
@@ -134,13 +154,19 @@ func init() {
 			fmt.Println("Disabling Twitter")
 			Integrations.Twitter = nil
 		}
+		if os.Getenv("DEVZAT_OFFLINE_RPC") != "" {
+			fmt.Println("Disabling RPC")
+			Integrations.RPC = nil
+		}
 		// Check for global offline for backwards compatibility
 		if os.Getenv("DEVZAT_OFFLINE") != "" {
 			fmt.Println("Offline mode")
 			Integrations.Slack = nil
 			Integrations.Twitter = nil
+			Integrations.RPC = nil
 		}
 	}
 	slackInit()
 	twitterInit()
+	rpcInit()
 }

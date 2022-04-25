@@ -596,6 +596,9 @@ func (u *User) repl() {
 			u.close(u.Name + " has left the chat")
 			return
 		}
+
+		line = getMiddlewareResult(u, line)
+
 		line += "\n"
 		hasNewlines := false
 		//oldPrompt := u.Name + ": "

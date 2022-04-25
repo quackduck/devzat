@@ -9,11 +9,14 @@ adminPass.txt
 *.swp
 devzat-data/log.txt
 devzat-data/bans.json
+devzat-data/user-prefs
 allusers.json
 iptables.sh
 twitter-creds.json
 twitter-creds.json.bak
 devzat-creds.yml
 devzat-sshkey
+devzat-sshkey.pub
+devzat-config.yml
 admins.json
 *.bak
