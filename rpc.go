@@ -237,7 +237,7 @@ func rpcInit() {
 		return
 	}
 	go func() {
-		lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", Integrations.RPC.Port))
+		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", Integrations.RPC.Port))
 		if err != nil {
 			fmt.Println("[gRPC] Failed to listen for plugin server:", err)
 			return
