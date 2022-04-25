@@ -8,7 +8,7 @@ Click [here](TODO) to skip setup and jump to the API docs.
 
 ## 0. Enable the plugin API
 
-In order to use the gRPC plugin API, you need to enable the integration in Devzat's config file. [See here for instructions on how to do that.](../Admin's Manual.md#using-the-plugin-api-integration)
+In order to use the gRPC plugin API, you need to enable the integration in Devzat's config file. [See here for instructions on how to do that.](../Admin's%20Manual.md#using-the-plugin-api-integration)
 
 ## 1. Set up a gRPC client
 
