@@ -4,7 +4,7 @@ __This documentation is for the raw plugin API. If you want to write a plugin in
 
 The Devzat plugin API allows you to build bots and other tools that integrate with Devzat, similar to a Discord bot or a Slack app. The API uses gRPC for communication; if you're already familiar with gRPC, you can jump right in with [the `.proto` file](./plugin.proto), but if you're not, this document will explain how to get started.
 
-Click [here](TODO) to skip setup and jump to the API docs.
+Click [here](#3-use-the-api) to skip setup and jump to the API docs.
 
 ## 0. Enable the plugin API
 
