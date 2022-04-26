@@ -6,6 +6,7 @@ import (
 	"github.com/acarl005/stripansi"
 	"io"
 	"net"
+	"sync"
 	"time"
 
 	pb "devzat/plugin"
@@ -283,10 +284,15 @@ func sendMessageToPlugins(line string, u *User) {
 	}
 }
 
+var middlewareLock = new(sync.Mutex)
+
 func getMiddlewareResult(u *User, line string) string {
 	if Integrations.RPC == nil {
 		return line
 	}
+
+	middlewareLock.Lock()
+	defer middlewareLock.Unlock()
 	// Middleware hook
 	if len(listeners[pb.EventType_SEND].middleware) > 0 {
 		for _, m := range listeners[pb.EventType_SEND].middleware {
