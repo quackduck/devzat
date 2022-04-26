@@ -15,11 +15,7 @@ service Plugin {
 
 /* RegisterListener */
 
-enum EventType {
-  SEND = 0;
-}
-
-message SendEvent {
+message Event {
   string room = 1;
   string from = 2;
   string msg = 3;
@@ -33,24 +29,14 @@ message ListenerClientData {
 }
 
 message Listener {
-  EventType event = 1;
-  optional bool middleware = 2;
-  optional bool once = 3;
-}
-
-message Event {
-  oneof event {
-    SendEvent send = 1;
-  }
+  optional bool middleware = 1;
+  optional bool once = 2;
+  // Regex to match against to determine if this listener should be called
+  // Does not include slashes or flags
+  optional string regex = 3;
 }
 
 message MiddlewareResponse {
-  oneof res {
-    MiddlewareSendResponse send = 1;
-  }
-}
-
-message MiddlewareSendResponse {
   optional string msg = 1;
 }
 
