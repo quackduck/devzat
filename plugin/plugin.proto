@@ -32,6 +32,7 @@ message Listener {
   optional bool middleware = 1;
   optional bool once = 2;
   // Regex to match against to determine if this listener should be called
+  // Does not include slashes or flags
   optional string regex = 3;
 }
 
