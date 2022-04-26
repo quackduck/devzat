@@ -6,6 +6,7 @@ import (
 	"github.com/acarl005/stripansi"
 	"io"
 	"net"
+	"regexp"
 	"time"
 
 	pb "devzat/plugin"
@@ -53,6 +54,14 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 	isMiddleware := listener.Middleware != nil && *listener.Middleware
 	isOnce := listener.Once != nil && *listener.Once
 
+	var regex *regexp.Regexp
+	if listener.Regex != nil {
+		regex, err = regexp.Compile(*listener.Regex)
+		if err != nil {
+			return status.Error(codes.InvalidArgument, "Invalid regex")
+		}
+	}
+
 	var channelCollection *[]chan pb.MiddlewareChannelMessage
 
 	if isMiddleware {
@@ -78,12 +87,11 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 
 		// If the message is somehow a *pb.ListenerClientData_Response, it means somehow the last message we sent
 		// wasn't consumed, which means the plugin was probably disconnected (at least I think)
+		// TODO Actually this is because of the race condition I discussed with Ishan, once that is fixed this can be removed
 		switch message.(type) {
 		case *pb.ListenerClientData_Response:
 			return status.Error(codes.Unavailable, "Plugin disconnected")
 		}
-
-		err := stream.Send(message.(*pb.Event))
 
 		// If something goes wrong, make sure the goroutine sending the message doesn't block on waiting for a response
 		sendNilResponse := func() {
@@ -93,6 +101,16 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 				},
 			}
 		}
+
+		// If there's a regex and it doesn't match, don't send the message to the plugin
+		if listener.Regex != nil && !regex.MatchString(message.(*pb.Event).Msg) {
+			if isMiddleware {
+				sendNilResponse()
+			}
+			break
+		}
+
+		err := stream.Send(message.(*pb.Event))
 
 		if err != nil {
 			if isMiddleware {

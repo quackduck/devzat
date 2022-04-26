@@ -31,6 +31,8 @@ message ListenerClientData {
 message Listener {
   optional bool middleware = 1;
   optional bool once = 2;
+  // Regex to match against to determine if this listener should be called
+  optional string regex = 3;
 }
 
 message MiddlewareResponse {
