@@ -26,9 +26,9 @@ Here's a summary of all the methods the gRPC API provides. All methods are under
 
 The `RegisterListener` method is used to register an event listener or middleware. It accepts a stream of messages of type `ListenerClientData` and returns a stream of `Event`s. A `ListenerClientData` can be either a `Listener` or a `MiddlewareResponse` message. 
 
-When you first establish the connection, send a `Listener` to set it up. In that message, you can set the event type (currently only supports send events), whether the listener is middleware (allowing you to intercept and edit messages before they are sent), and whether the listener should only fire `once`. Devzat will send an `Event` containing details of the event when it occurs; if you registered a middleware listener, you have to send back a `MiddlewareResponse` to allow Devzat to continue processing the event.
+When you first establish the connection, send a `Listener` to set it up. In that message, you can set whether the listener is middleware (allowing you to intercept and edit messages before they are sent), whether the listener should only fire `once`, and optionally provide a regex, allowing you to control when the event fires (useful for reducing latency when building middleware). Devzat will send an `Event` containing details of the event when it occurs; if you registered a middleware listener, you have to send back a `MiddlewareResponse` to allow Devzat to continue processing the event.
 
-This is by far the most complicated part of the gRPC service; you can reference the [Node.js implementation](https://github.com/Merlin04/devzat-node/blob/main/src/index.ts#L80) as an example.
+This is by far the most complicated part of the gRPC service; you can reference the [Node.js implementation](https://github.com/Merlin04/devzat-node/blob/main/src/index.ts#L99) as an example.
 
 Signature:
 ```protobuf
@@ -37,40 +37,19 @@ rpc RegisterListener(stream ListenerClientData) returns (stream Event);
 
 Relevant message types:
 ```protobuf
-message ListenerClientData {
-  oneof data {
-    Listener listener = 1;
-    MiddlewareResponse response = 2;
-  }
-}
-
 message Listener {
-  EventType event = 1;
-  optional bool middleware = 2;
-  optional bool once = 3;
+  optional bool middleware = 1;
+  optional bool once = 2;
+  // Regex to match against to determine if this listener should be called
+  // Does not include slashes or flags
+  optional string regex = 3;
 }
 
 message MiddlewareResponse {
-  oneof res {
-    MiddlewareSendResponse send = 1;
-  }
-}
-
-message MiddlewareSendResponse {
   optional string msg = 1;
 }
 
 message Event {
-  oneof event {
-    SendEvent send = 1;
-  }
-}
-
-enum EventType {
-  SEND = 0;
-}
-
-message SendEvent {
   string room = 1;
   string from = 2;
   string msg = 3;

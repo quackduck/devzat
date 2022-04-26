@@ -20,3 +20,5 @@ devzat-sshkey.pub
 devzat-config.yml
 admins.json
 *.bak
+devzat.yml
+integration.yml
