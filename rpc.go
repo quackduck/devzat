@@ -29,11 +29,9 @@ type listenerCollection struct {
 	middleware    []chan pb.MiddlewareChannelMessage
 }
 
-var listeners = map[pb.EventType]*listenerCollection{
-	pb.EventType_SEND: {
-		nonMiddleware: make([]chan pb.MiddlewareChannelMessage, 0, 4),
-		middleware:    make([]chan pb.MiddlewareChannelMessage, 0, 4),
-	},
+var listeners = listenerCollection{
+	nonMiddleware: make([]chan pb.MiddlewareChannelMessage, 0, 4),
+	middleware:    make([]chan pb.MiddlewareChannelMessage, 0, 4),
 }
 
 func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer) error {
@@ -54,27 +52,26 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 	var c *chan pb.MiddlewareChannelMessage
 	isMiddleware := listener.Middleware != nil && *listener.Middleware
 	isOnce := listener.Once != nil && *listener.Once
-	if entry, ok := listeners[listener.Event]; ok {
-		var channelCollection *[]chan pb.MiddlewareChannelMessage
 
-		if isMiddleware {
-			channelCollection = &entry.middleware
-		} else {
-			channelCollection = &entry.nonMiddleware
-		}
+	var channelCollection *[]chan pb.MiddlewareChannelMessage
 
-		*channelCollection = append(*channelCollection, make(chan pb.MiddlewareChannelMessage))
-		c = &(*channelCollection)[len(*channelCollection)-1]
-		defer func() {
-			// Remove the channel from the channelCollection where the channel is equal to c
-			for i, channel := range *channelCollection {
-				if channel == *c {
-					*channelCollection = append((*channelCollection)[:i], (*channelCollection)[i+1:]...)
-					break
-				}
-			}
-		}()
+	if isMiddleware {
+		channelCollection = &listeners.middleware
+	} else {
+		channelCollection = &listeners.nonMiddleware
 	}
+
+	*channelCollection = append(*channelCollection, make(chan pb.MiddlewareChannelMessage))
+	c = &(*channelCollection)[len(*channelCollection)-1]
+	defer func() {
+		// Remove the channel from the channelCollection where the channel is equal to c
+		for i, channel := range *channelCollection {
+			if channel == *c {
+				*channelCollection = append((*channelCollection)[:i], (*channelCollection)[i+1:]...)
+				break
+			}
+		}
+	}()
 
 	for {
 		message := <-*c
@@ -86,49 +83,38 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 			return status.Error(codes.Unavailable, "Plugin disconnected")
 		}
 
-		switch listener.Event {
-		case pb.EventType_SEND:
-			err := stream.Send(&pb.Event{
-				Event: message.(*pb.Event_Send),
-			})
+		err := stream.Send(message.(*pb.Event))
 
-			// If something goes wrong, make sure the goroutine sending the message doesn't block on waiting for a response
-			sendNilResponse := func() {
-				*c <- &pb.ListenerClientData_Response{
-					Response: &pb.MiddlewareResponse{
-						Res: &pb.MiddlewareResponse_Send{
-							Send: &pb.MiddlewareSendResponse{
-								Msg: nil,
-							},
-						},
-					},
-				}
+		// If something goes wrong, make sure the goroutine sending the message doesn't block on waiting for a response
+		sendNilResponse := func() {
+			*c <- &pb.ListenerClientData_Response{
+				Response: &pb.MiddlewareResponse{
+					Msg: nil,
+				},
 			}
+		}
+
+		if err != nil {
+			if isMiddleware {
+				sendNilResponse()
+			}
+			return err
+		}
+		if isMiddleware {
+			mwRes, err := stream.Recv()
 
 			if err != nil {
-				if isMiddleware {
-					sendNilResponse()
-				}
+				sendNilResponse()
 				return err
 			}
-			if isMiddleware {
-				mwRes, err := stream.Recv()
 
-				if err != nil {
-					sendNilResponse()
-					return err
-				}
-
-				switch data := mwRes.Data.(type) {
-				case *pb.ListenerClientData_Listener:
-					sendNilResponse()
-					return status.Error(codes.InvalidArgument, "Middleware returned a listener instead of a response")
-				case *pb.ListenerClientData_Response:
-					*c <- data
-				}
+			switch data := mwRes.Data.(type) {
+			case *pb.ListenerClientData_Listener:
+				sendNilResponse()
+				return status.Error(codes.InvalidArgument, "Middleware returned a listener instead of a response")
+			case *pb.ListenerClientData_Response:
+				*c <- data
 			}
-		default:
-			return status.Error(codes.Unimplemented, "unimplemented")
 		}
 
 		if isOnce {
@@ -269,15 +255,14 @@ func runPluginCMDs(u *User, currCmd string, args string) (found bool) {
 	return false
 }
 
+// Hook that is called when a user sends a message (not private DMs)
 func sendMessageToPlugins(line string, u *User) {
-	if len(listeners[pb.EventType_SEND].nonMiddleware) > 0 {
-		for _, l := range listeners[pb.EventType_SEND].nonMiddleware {
-			l <- &pb.Event_Send{
-				Send: &pb.SendEvent{
-					Room: u.room.name,
-					From: stripansi.Strip(u.Name),
-					Msg:  line,
-				},
+	if len(listeners.nonMiddleware) > 0 {
+		for _, l := range listeners.nonMiddleware {
+			l <- &pb.Event{
+				Room: u.room.name,
+				From: stripansi.Strip(u.Name),
+				Msg:  line,
 			}
 		}
 	}
@@ -288,16 +273,14 @@ func getMiddlewareResult(u *User, line string) string {
 		return line
 	}
 	// Middleware hook
-	if len(listeners[pb.EventType_SEND].middleware) > 0 {
-		for _, m := range listeners[pb.EventType_SEND].middleware {
-			m <- &pb.Event_Send{
-				Send: &pb.SendEvent{
-					Room: u.room.name,
-					From: stripansi.Strip(u.Name),
-					Msg:  line,
-				},
+	if len(listeners.middleware) > 0 {
+		for _, m := range listeners.middleware {
+			m <- &pb.Event{
+				Room: u.room.name,
+				From: stripansi.Strip(u.Name),
+				Msg:  line,
 			}
-			res := (<-m).(*pb.ListenerClientData_Response).Response.Res.(*pb.MiddlewareResponse_Send).Send
+			res := (<-m).(*pb.ListenerClientData_Response).Response
 			if res.Msg != nil {
 				line = *res.Msg
 			}
