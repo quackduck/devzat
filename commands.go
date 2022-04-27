@@ -61,6 +61,9 @@ var (
 		{"pwd", pwdCMD, "", "Show your current room"},
 		//		{"sixel", sixelCMD, "<png url>", "Render an image in high quality"},
 		{"shrug", shrugCMD, "", `¯\\\_(ツ)\_/¯`}, // won't actually run, here just to show in docs
+		{"ls-tokens", lsTokensCMD, "", "List all plugin tokens and associated data (admin)"},
+		{"revoke-token", revokeTokenCMD, "<token>", "Revoke a plugin token (admin)"},
+		{"grant-token", grantTokenCMD, "<user | data>", "Grant a token and optionally send it to a user (admin)"},
 	}
 	SecretCMDs = []CMD{
 		{"ls", lsCMD, "???", "???"},

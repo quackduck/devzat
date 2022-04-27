@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -203,7 +204,8 @@ func authorize(ctx context.Context) error {
 	}
 
 	token := values[0]
-	if token != "Bearer "+Integrations.RPC.Key {
+	token = strings.TrimPrefix(token, "Bearer ")
+	if !checkToken(token) {
 		return status.Error(codes.Unauthenticated, "Invalid authorization header")
 	}
 	return nil
