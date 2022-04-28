@@ -1,8 +1,9 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
-	"math/rand"
 	"os"
 )
 
@@ -124,11 +125,13 @@ func grantTokenCMD(rest string, u *User) {
 }
 
 func generateToken() string {
-	// get a random token
-	token := "dvz@"
-	for i := 0; i < 32; i++ {
-		token += string(rune(65 + rand.Intn(25)))
+	// https://stackoverflow.com/a/59457748
+	b := make([]byte, 32)
+	_, err := rand.Read(b)
+	if err != nil {
+		Log.Fatal("Error generating token: " + err.Error())
 	}
+	token := "dvz@" + hex.EncodeToString(b)
 	// check if it's already in use
 	for _, t := range Tokens {
 		if t.Token == token {
