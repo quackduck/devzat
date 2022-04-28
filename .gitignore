@@ -10,6 +10,7 @@ adminPass.txt
 devzat-data/log.txt
 devzat-data/bans.json
 devzat-data/user-prefs
+devzat-data/tokens.json
 allusers.json
 iptables.sh
 twitter-creds.json

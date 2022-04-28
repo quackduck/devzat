@@ -59,7 +59,7 @@ var (
 		Port:        2221,
 		AltPort:     8080,
 		ProfilePort: 5555,
-		DataDir:     "devzat-data",
+		DataDir:     "devzat-Data",
 		KeyFile:     "devzat-sshkey",
 		Censor:      false,
 
@@ -166,6 +166,8 @@ func init() {
 			Integrations.RPC = nil
 		}
 	}
+	// initCMDs checks if rpc is enabled so has to be run here
+	initCMDs()
 	slackInit()
 	twitterInit()
 	rpcInit()
