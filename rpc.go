@@ -51,7 +51,6 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 		return status.Error(codes.InvalidArgument, "First message must be a listener")
 	}
 
-	var c *chan pb.MiddlewareChannelMessage
 	isMiddleware := listener.Middleware != nil && *listener.Middleware
 	isOnce := listener.Once != nil && *listener.Once
 
@@ -71,12 +70,13 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 		channelCollection = &listeners.nonMiddleware
 	}
 
-	*channelCollection = append(*channelCollection, make(chan pb.MiddlewareChannelMessage))
-	c = &(*channelCollection)[len(*channelCollection)-1]
+	c := make(chan pb.MiddlewareChannelMessage)
+	*channelCollection = append(*channelCollection, c)
+
 	defer func() {
 		// Remove the channel from the channelCollection where the channel is equal to c
 		for i, channel := range *channelCollection {
-			if channel == *c {
+			if channel == c {
 				*channelCollection = append((*channelCollection)[:i], (*channelCollection)[i+1:]...)
 				break
 			}
@@ -84,7 +84,7 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 	}()
 
 	for {
-		message := <-*c
+		message := <-c
 
 		// If the message is somehow a *pb.ListenerClientData_Response, it means somehow the last message we sent
 		// wasn't consumed, which means the plugin was probably disconnected (at least I think)
@@ -96,7 +96,7 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 
 		// If something goes wrong, make sure the goroutine sending the message doesn't block on waiting for a response
 		sendNilResponse := func() {
-			*c <- &pb.ListenerClientData_Response{
+			c <- &pb.ListenerClientData_Response{
 				Response: &pb.MiddlewareResponse{
 					Msg: nil,
 				},
@@ -111,8 +111,7 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 			continue
 		}
 
-		err := stream.Send(message.(*pb.Event))
-
+		err = stream.Send(message.(*pb.Event))
 		if err != nil {
 			if isMiddleware {
 				sendNilResponse()
@@ -132,7 +131,7 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 				sendNilResponse()
 				return status.Error(codes.InvalidArgument, "Middleware returned a listener instead of a response")
 			case *pb.ListenerClientData_Response:
-				*c <- data
+				c <- data
 			}
 		}
 
@@ -175,7 +174,7 @@ func (s *pluginServer) SendMessage(ctx context.Context, msg *pb.Message) (*pb.Me
 		if !success {
 			return nil, status.Error(codes.NotFound, "Could not find user "+*msg.EphemeralTo)
 		}
-		u.writeln(msg.GetFrom(), msg.Msg)
+		u.writeln(msg.GetFrom()+" -> ", msg.Msg)
 	} else {
 		r := Rooms[msg.Room]
 		if r == nil {
@@ -184,11 +183,6 @@ func (s *pluginServer) SendMessage(ctx context.Context, msg *pb.Message) (*pb.Me
 		r.broadcast(msg.GetFrom(), msg.Msg)
 	}
 	return &pb.MessageRes{}, nil
-}
-
-func newPluginServer() *pluginServer {
-	s := &pluginServer{}
-	return s
 }
 
 func authorize(ctx context.Context) error {
@@ -253,7 +247,7 @@ func rpcInit() {
 			grpc.StreamInterceptor(streamInterceptor),
 			grpc.KeepaliveParams(keepalive.ServerParameters{Time: time.Second * 10}),
 		)
-		pb.RegisterPluginServer(grpcServer, newPluginServer())
+		pb.RegisterPluginServer(grpcServer, &pluginServer{})
 		fmt.Printf("[gRPC] Plugin server started on port %d\n", Integrations.RPC.Port)
 		err = grpcServer.Serve(lis)
 		if err != nil {
@@ -299,6 +293,7 @@ func getMiddlewareResult(u *User, line string) string {
 	// Middleware hook
 	if len(listeners.middleware) > 0 {
 		for _, m := range listeners.middleware {
+			//Log.Println("[gRPC] Running middleware", i+1, "of", len(listeners.middleware))
 			m <- &pb.Event{
 				Room: u.room.name,
 				From: stripansi.Strip(u.Name),
