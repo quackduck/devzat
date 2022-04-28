@@ -59,7 +59,7 @@ var (
 		Port:        2221,
 		AltPort:     8080,
 		ProfilePort: 5555,
-		DataDir:     "devzat-Data",
+		DataDir:     "devzat-data",
 		KeyFile:     "devzat-sshkey",
 		Censor:      false,
 
