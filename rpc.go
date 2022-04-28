@@ -87,14 +87,6 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 	for {
 		message := <-*c
 
-		// If the message is somehow a *pb.ListenerClientData_Response, it means somehow the last message we sent
-		// wasn't consumed, which means the plugin was probably disconnected (at least I think)
-		// TODO Actually this is because of the race condition I discussed with Ishan, once that is fixed this can be removed
-		//switch message.(type) {
-		//case *pb.ListenerClientData_Response:
-		//	return status.Error(codes.Unavailable, "Plugin disconnected")
-		//}
-
 		// If something goes wrong, make sure the goroutine sending the message doesn't block on waiting for a response
 		sendNilResponse := func() {
 			*c <- &pb.ListenerClientData_Response{
