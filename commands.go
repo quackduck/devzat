@@ -75,6 +75,7 @@ const (
 )
 
 func init() {
+	addRPCCMDs()
 	MainCMDs = append(MainCMDs, CMD{"cmds", commandsCMD, "", "Show this message"}) // avoid initialization loop
 	CMDs = append(append(append(CMDs,
 		MainCMDs...), RestCMDs...), SecretCMDs...)
@@ -792,13 +793,5 @@ func lsCMD(rest string, u *User) {
 }
 
 func commandsCMD(_ string, u *User) {
-	plugins := make([]CMD, 0, len(PluginCMDs))
-	for n, c := range PluginCMDs {
-		plugins = append(plugins, CMD{
-			name:     n,
-			info:     c.info,
-			argsInfo: c.argsInfo,
-		})
-	}
-	u.room.broadcast("", "Commands  \n"+autogenCommands(append(MainCMDs, plugins...)))
+	u.room.broadcast("", "Commands  \n"+autogenCommands(MainCMDs))
 }
