@@ -445,21 +445,25 @@ func grantTokenCMD(rest string, u *User) {
 		return
 	}
 
-	toUser, ok := findUserByName(u.room, rest)
-	if !ok {
-		// fallback to sending the token to the admin running the cmd
-		toUser = u
-	}
 	token, err := generateToken()
 	if err != nil {
 		u.room.broadcast(Devbot, "Error generating token: "+err.Error())
 		Log.Println(err)
 		return
 	}
-	Tokens = append(Tokens, tokensDbEntry{token, rest})
-	if toUser != u {
-		toUser.writeln(Devbot, "You have been granted a token: "+token)
+
+	split := strings.Fields(rest)
+	if len(split) > 0 && len(split[0]) > 0 && split[0][0] == '@' {
+		toUser, ok := findUserByName(u.room, split[0][1:])
+		if ok {
+			toUser.writeln(Devbot, "You have been granted a token: "+token)
+		} else {
+			u.room.broadcast(Devbot, "Who's that?")
+			return
+		}
 	}
+
+	Tokens = append(Tokens, tokensDbEntry{token, rest})
 	u.writeln(Devbot, "Granted token: "+token)
 	saveTokens()
 }
