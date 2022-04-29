@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"crypto/rand"
-	"encoding/hex"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/acarl005/stripansi"
@@ -342,7 +342,7 @@ func initTokens() {
 	f, err := os.Open(Config.DataDir + string(os.PathSeparator) + "tokens.json")
 	if err != nil {
 		if !os.IsNotExist(err) {
-			Log.Fatal("Error reading tokens file: " + err.Error())
+			Log.Println("Error reading tokens file:", err)
 		}
 		return
 	}
@@ -351,7 +351,7 @@ func initTokens() {
 	if err != nil {
 		error := "Error decoding tokens file: " + err.Error()
 		MainRoom.broadcast(Devbot, error)
-		Log.Fatal(error)
+		Log.Println(error)
 	}
 }
 
@@ -365,13 +365,13 @@ func saveTokens() {
 	if err != nil {
 		error := "Error encoding tokens file: " + err.Error()
 		MainRoom.broadcast(Devbot, error)
-		Log.Fatal(error)
+		Log.Println(error)
 	}
 	_, err = f.Write(data)
 	if err != nil {
 		error := "Error writing tokens file: " + err.Error()
 		MainRoom.broadcast(Devbot, error)
-		Log.Fatal(error)
+		Log.Println(error)
 	}
 }
 
@@ -449,7 +449,7 @@ func generateToken() string {
 	b := make([]byte, 32)
 	_, err := rand.Read(b)
 	if err != nil {
-		Log.Fatal("Error generating token: " + err.Error())
+		Log.Println("Error generating token: " + err.Error())
 	}
 	token := "dvz@" + base64.StdEncoding.EncodeToString(b)
 	// check if it's already in use
