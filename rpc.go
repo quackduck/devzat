@@ -367,29 +367,26 @@ func initTokens() {
 	defer f.Close()
 	err = json.NewDecoder(f).Decode(&Tokens)
 	if err != nil {
-		error := "Error decoding tokens file: " + err.Error()
-		MainRoom.broadcast(Devbot, error)
-		Log.Println(error)
+		MainRoom.broadcast(Devbot, "Error decoding tokens file: "+err.Error())
+		Log.Println(err)
 	}
 }
 
 func saveTokens() {
 	f, err := os.Create(Config.DataDir + string(os.PathSeparator) + "tokens.json")
 	if err != nil {
-		Log.Println("Error saving tokens file:", err)
+		Log.Println(err)
 	}
 	defer f.Close()
 	data, err := json.Marshal(Tokens)
 	if err != nil {
-		error := "Error encoding tokens file: " + err.Error()
-		MainRoom.broadcast(Devbot, error)
-		Log.Println(error)
+		MainRoom.broadcast(Devbot, "Error encoding tokens file: "+err.Error())
+		Log.Println(err)
 	}
 	_, err = f.Write(data)
 	if err != nil {
-		error := "Error writing tokens file: " + err.Error()
-		MainRoom.broadcast(Devbot, error)
-		Log.Println(error)
+		MainRoom.broadcast(Devbot, "Error writing tokens file: "+err.Error())
+		Log.Println(err)
 	}
 }
 
@@ -412,7 +409,7 @@ func lsTokensCMD(_ string, u *User) {
 	}
 
 	if len(Tokens) == 0 {
-		u.writeln(Devbot, "No tokens found.")
+		u.room.broadcast(Devbot, "No tokens found.")
 		return
 	}
 	u.writeln(Devbot, "Tokens:")
@@ -428,18 +425,18 @@ func revokeTokenCMD(rest string, u *User) {
 	}
 
 	if len(rest) == 0 {
-		u.writeln(Devbot, "Please provide a sha256 hash of a token to revoke.")
+		u.room.broadcast(Devbot, "Please provide a sha256 hash of a token to revoke.")
 		return
 	}
 	for i, t := range Tokens {
 		if shasum(t.Token) == rest {
 			Tokens = append(Tokens[:i], Tokens[i+1:]...)
 			saveTokens()
-			u.writeln(Devbot, "Token revoked!")
+			u.room.broadcast(Devbot, "Token revoked!")
 			return
 		}
 	}
-	u.writeln(Devbot, "Token not found.")
+	u.room.broadcast(Devbot, "Token not found.")
 }
 
 func grantTokenCMD(rest string, u *User) {
@@ -453,7 +450,12 @@ func grantTokenCMD(rest string, u *User) {
 		// fallback to sending the token to the admin running the cmd
 		toUser = u
 	}
-	token := generateToken()
+	token, err := generateToken()
+	if err != nil {
+		u.room.broadcast(Devbot, "Error generating token: "+err.Error())
+		Log.Println(err)
+		return
+	}
 	Tokens = append(Tokens, tokensDbEntry{token, rest})
 	if toUser != u {
 		toUser.writeln(Devbot, "You have been granted a token: "+token)
@@ -462,12 +464,11 @@ func grantTokenCMD(rest string, u *User) {
 	saveTokens()
 }
 
-func generateToken() string {
-	// https://stackoverflow.com/a/59457748
+func generateToken() (string, error) {
 	b := make([]byte, 32)
 	_, err := rand.Read(b)
 	if err != nil {
-		Log.Println("Error generating token: " + err.Error())
+		return "", err
 	}
 	token := "dvz@" + base64.StdEncoding.EncodeToString(b)
 	// check if it's already in use
@@ -476,5 +477,5 @@ func generateToken() string {
 			return generateToken()
 		}
 	}
-	return token
+	return token, nil
 }
