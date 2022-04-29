@@ -137,13 +137,6 @@ func init() {
 			}
 		}
 
-		if Integrations.RPC != nil {
-			if rpc := Integrations.RPC; rpc.Key == "" {
-				fmt.Println("error: RPC key is missing")
-				os.Exit(0)
-			}
-		}
-
 		fmt.Println("Integration config loaded from " + Config.IntegrationConfig)
 
 		if os.Getenv("DEVZAT_OFFLINE_SLACK") != "" {

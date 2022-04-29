@@ -376,7 +376,7 @@ func saveTokens() {
 }
 
 func checkToken(token string) bool {
-	if token == Integrations.RPC.Key {
+	if Integrations.RPC.Key != "" && token == Integrations.RPC.Key {
 		return true
 	}
 	for _, t := range Tokens {
