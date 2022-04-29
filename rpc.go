@@ -358,7 +358,7 @@ func initTokens() {
 func saveTokens() {
 	f, err := os.Create(Config.DataDir + string(os.PathSeparator) + "tokens.json")
 	if err != nil {
-		Log.Fatal("Error saving tokens file: " + err.Error())
+		Log.Println("Error saving tokens file:", err)
 	}
 	defer f.Close()
 	data, err := json.Marshal(Tokens)
@@ -451,7 +451,7 @@ func generateToken() string {
 	if err != nil {
 		Log.Fatal("Error generating token: " + err.Error())
 	}
-	token := "dvz@" + hex.EncodeToString(b)
+	token := "dvz@" + base64.StdEncoding.EncodeToString(b)
 	// check if it's already in use
 	for _, t := range Tokens {
 		if t.Token == token {
