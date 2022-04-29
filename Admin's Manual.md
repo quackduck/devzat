@@ -110,10 +110,12 @@ Devzat includes a built-in gRPC plugin API. This is useful for building your own
 
 Documentation for using the gRPC API is available [here](plugin/README.md).
 
+The integration allows you to hardcode a `key` that plugins can pass as an authentication token in requests, but this is not recommended unless necessary; instead, you should use the token issuing commands detailed in the plugin docs.
+
 ```yaml
 rpc:
     port: 5556 # port to listen on for gRPC clients
-    key: "some string" # a string that gRPC clients authenticate with
+    key: "some string" # a string that gRPC clients authenticate with (not recommended to add here)
 ```
 
 You can use any number of integrations together.

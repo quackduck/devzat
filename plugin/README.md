@@ -6,9 +6,9 @@ The Devzat plugin API allows you to build bots and other tools that integrate wi
 
 Click [here](#3-use-the-api) to skip setup and jump to the API docs.
 
-## 0. Enable the plugin API
+## 0. Enable the plugin API/grant token
 
-In order to use the gRPC plugin API, you need to enable the integration in Devzat's config file. [See here for instructions on how to do that.](../Admin's%20Manual.md#using-the-plugin-api-integration)
+In order to use the gRPC plugin API, you need to enable the integration in Devzat's config file. [See here for instructions on how to do that.](../Admin's%20Manual.md#using-the-plugin-api-integration) You'll also need to grant a token to use to authenticate the plugin; to do this, run `grant-token [username | other descriptor]` in your Devzat instance (you'll need to be an admin). If you ever want to revoke this token in the future, use `ls-tokens` to get the hash of the token, then run `revoke-token [hash]`. If you must, you can also configure a hardcoded token in the integration config file.
 
 ## 1. Set up a gRPC client
 
