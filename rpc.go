@@ -37,13 +37,6 @@ var (
 	}
 )
 
-func addRPCCMDs() {
-	if Integrations.RPC != nil {
-		MainCMDs = append(MainCMDs, RPCCMDs...)
-		RestCMDs = append(RestCMDs, RPCCMDsRest...)
-	}
-}
-
 type pluginServer struct {
 	pb.UnimplementedPluginServer
 }
@@ -251,6 +244,8 @@ func rpcInit() {
 	if Integrations.RPC == nil {
 		return
 	}
+	MainCMDs = append(MainCMDs, RPCCMDs...)
+	RestCMDs = append(RestCMDs, RPCCMDsRest...)
 	go func() {
 		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", Integrations.RPC.Port))
 		if err != nil {

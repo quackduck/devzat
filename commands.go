@@ -28,7 +28,6 @@ type CMD struct {
 }
 
 var (
-	CMDs     = make([]CMD, 0, 30)
 	MainCMDs = []CMD{
 		{"=<user>", dmCMD, "<msg>", "DM <user> with <msg>"}, // won't actually run, here just to show in docs
 		{"users", usersCMD, "", "List users"},
@@ -75,10 +74,7 @@ const (
 )
 
 func init() {
-	addRPCCMDs()
 	MainCMDs = append(MainCMDs, CMD{"cmds", commandsCMD, "", "Show this message"}) // avoid initialization loop
-	CMDs = append(append(append(CMDs,
-		MainCMDs...), RestCMDs...), SecretCMDs...)
 }
 
 // runCommands parses a line of raw input from a User and sends a message as
@@ -135,11 +131,8 @@ func runCommands(line string, u *User) {
 		return
 	}
 
-	for _, c := range CMDs {
-		if c.name == currCmd {
-			c.run(args, u)
-			return
-		}
+	if cmd, ok := getCMD(currCmd); ok {
+		cmd.run(args, u)
 	}
 }
 
@@ -751,11 +744,8 @@ func manCMD(rest string, u *User) {
 		return
 	}
 
-	for _, c := range CMDs {
-		if c.name == rest {
-			u.room.broadcast(Devbot, "Usage: "+c.name+" "+c.argsInfo+"  \n"+c.info)
-			return
-		}
+	if cmd, ok := getCMD(rest); ok {
+		u.room.broadcast(Devbot, "Usage: "+cmd.name+" "+cmd.argsInfo+"  \n"+cmd.info)
 	}
 	// Plugin commands
 	if c, ok := PluginCMDs[rest]; ok {

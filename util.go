@@ -20,8 +20,28 @@ import (
 )
 
 var (
-	Art = getASCIIArt()
+	Art  = getASCIIArt()
+	CMDs []*[]CMD // slice of pointers to slices of commands (this is so updates to sub-slices are reflected in the main slice even if append is used)
 )
+
+func init() {
+	CMDs = []*[]CMD{&MainCMDs, &RestCMDs, &SecretCMDs}
+}
+
+func getCMD(name string) (CMD, bool) {
+	for _, cmds := range CMDs {
+		if cmds == nil {
+			Log.Println("nil slice in CMDs") // should never happen
+			continue
+		}
+		for _, cmd := range *cmds {
+			if cmd.name == name {
+				return cmd, true
+			}
+		}
+	}
+	return CMD{}, false
+}
 
 func getASCIIArt() string {
 	sep := string(os.PathSeparator)
