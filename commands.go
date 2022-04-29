@@ -68,25 +68,14 @@ var (
 		{"rm", rmCMD, "???", "???"},
 		{"colour", colorCMD, "???", "This is an alias of color"}, // appease the british
 	}
-	RpcCMDs = []CMD{
-		{"plugins", pluginsCMD, "", "List commands from plugins"},
-	}
-	RpcCMDsRest = []CMD{
-		{"ls-tokens", lsTokensCMD, "", "List all plugin tokens (hashed) and associated data (admin)"},
-		{"revoke-token", revokeTokenCMD, "<token-hash>", "Revoke a plugin token (admin)"},
-		{"grant-token", grantTokenCMD, "<user | data>", "Grant a token and optionally send it to a user (admin)"},
-	}
 )
 
 const (
 	MaxRoomNameLen = 30
 )
 
-func initCMDs() {
-	if Integrations.RPC != nil {
-		MainCMDs = append(MainCMDs, RpcCMDs...)
-		RestCMDs = append(RestCMDs, RpcCMDsRest...)
-	}
+func init() {
+	addRPCCMDs()
 	MainCMDs = append(MainCMDs, CMD{"cmds", commandsCMD, "", "Show this message"}) // avoid initialization loop
 	CMDs = append(append(append(CMDs,
 		MainCMDs...), RestCMDs...), SecretCMDs...)

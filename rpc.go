@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/acarl005/stripansi"
 	"io"
 	"net"
 	"os"
@@ -14,6 +13,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/acarl005/stripansi"
 
 	pb "devzat/plugin"
 
@@ -24,7 +25,24 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var PluginCMDs = map[string]cmdInst{}
+var (
+	PluginCMDs = map[string]cmdInst{}
+	RPCCMDs    = []CMD{
+		{"plugins", pluginsCMD, "", "List plugin commands"},
+	}
+	RPCCMDsRest = []CMD{
+		{"lstokens", lsTokensCMD, "", "List plugin token hashes and their data (admin)"},
+		{"revoke", revokeTokenCMD, "<token hash>", "Revoke a plugin token (admin)"},
+		{"grant", grantTokenCMD, "[user] [data]", "Grant a token and optionally send it to a user (admin)"},
+	}
+)
+
+func addRPCCMDs() {
+	if Integrations.RPC != nil {
+		MainCMDs = append(MainCMDs, RPCCMDs...)
+		RestCMDs = append(RestCMDs, RPCCMDsRest...)
+	}
+}
 
 type pluginServer struct {
 	pb.UnimplementedPluginServer

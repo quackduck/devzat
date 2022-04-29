@@ -159,8 +159,6 @@ func init() {
 			Integrations.RPC = nil
 		}
 	}
-	// initCMDs checks if rpc is enabled so has to be run here
-	initCMDs()
 	slackInit()
 	twitterInit()
 	rpcInit()
