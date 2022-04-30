@@ -539,8 +539,13 @@ func colorCMD(rest string, u *User) {
 
 func adminsCMD(_ string, u *User) {
 	msg := "Admins:  \n"
-	for i := range Config.Admins {
-		msg += Config.Admins[i] + ": " + i + "  \n"
+	i := 1
+	for id, info := range Config.Admins {
+		if len(id) > 10 {
+			id = id[:10] + "..."
+		}
+		msg += Cyan.Cyan(strconv.Itoa(i)) + ". " + info + "\t" + id + "  \n"
+		i++
 	}
 	u.room.broadcast(Devbot, msg)
 }

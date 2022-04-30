@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -402,10 +403,11 @@ func lsTokensCMD(_ string, u *User) {
 		u.room.broadcast(Devbot, "No tokens found.")
 		return
 	}
-	u.writeln(Devbot, "Tokens:")
-	for _, t := range Tokens {
-		u.writeln(Devbot, shasum(t.Token)+"    "+t.Data)
+	msg := "Tokens:  \n"
+	for i, t := range Tokens {
+		msg += Cyan.Cyan(strconv.Itoa(i+1)) + ". " + shasum(t.Token) + "\t" + t.Data + "  \n"
 	}
+	u.writeln(Devbot, msg)
 }
 
 func revokeTokenCMD(rest string, u *User) {
