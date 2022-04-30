@@ -447,7 +447,8 @@ func bioCMD(line string, u *User) {
 					u.writeln(Devbot, "Your bio is too long. It shouldn't be more than "+strconv.Itoa(MaxBioLen)+" characters.")
 				}
 				u.Bio = input
-				u.savePrefs() // make sure it gets saved now so it stays even if the server crashes
+				// make sure it gets saved now so it stays even if the server crashes
+				u.savePrefs() //nolint:errcheck // best effort
 				return
 			}
 		}
@@ -579,44 +580,6 @@ func adminsCMD(_ string, u *User) {
 		i++
 	}
 	u.room.broadcast(Devbot, msg)
-}
-
-func peopleCMD(_ string, u *User) {
-	u.room.broadcast("", `
-**Hack Club members**  
-Zach Latta     - Founder of Hack Club  
-Zachary Fogg   - Hack Club Game Designer  
-Matthew        - Hack Club HQ  
-Caleb Denio, Safin Singh, Eleeza A  
-Jubril, Sarthak Mohanty, Anghe,  
-Tommy Pujol, Sam Poder, Rishi Kothari,  
-Amogh Chaubey, Ella Xu, Hugo Hu,  
-Robert Goll, Tanishq Soni, Arash Nur Iman,  
-Temi, Aiden Bai, Ivan Bowman, @epic  
-Belle See, Fayd, Benjamin Smith  
-Matt Gleich, Jason Appah  
-_Possibly more people_
-
-
-**From my school:**  
-Kiyan, Riya, Georgie  
-Rayed Hamayun, Aarush Kumar
-
-
-**From Twitter:**  
-Ayush Pathak    @ayshptk  
-Bereket         @heybereket  
-Sanketh         @SankethYS  
-Tony Dinh       @tdinh\_me  
-Srushti         @srushtiuniverse  
-Surjith         @surjithctly  
-Arav Narula     @HeyArav  
-Krish Nerkar    @krishnerkar\_  
-Amrit           @astro_shenava  
-Mudrank Gupta   @mudrankgupta  
-Harsh           @harshb__
-
-**And many more have joined!**`)
 }
 
 func helpCMD(_ string, u *User) {

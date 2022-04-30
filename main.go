@@ -181,8 +181,8 @@ func main() {
 			return true // allow all keys, this lets us hash pubkeys later
 		}),
 		ssh.WrapConn(func(s ssh.Context, conn net.Conn) net.Conn {
-			conn.(*net.TCPConn).SetKeepAlive(true)
-			conn.(*net.TCPConn).SetKeepAlivePeriod(time.Minute)
+			conn.(*net.TCPConn).SetKeepAlive(true)              //nolint:errcheck
+			conn.(*net.TCPConn).SetKeepAlivePeriod(time.Minute) //nolint:errcheck
 			return conn
 		}))
 	if err != nil {
