@@ -443,7 +443,7 @@ func nickCMD(line string, u *User) {
 }
 
 func listBansCMD(_ string, u *User) {
-	msg := "Printing bans by ID:  \n"
+	msg := "Bans by ID:  \n"
 	for i := 0; i < len(Bans); i++ {
 		msg += Cyan.Cyan(strconv.Itoa(i+1)) + ". " + Bans[i].ID + "  \n"
 	}
@@ -538,13 +538,13 @@ func colorCMD(rest string, u *User) {
 }
 
 func adminsCMD(_ string, u *User) {
-	msg := "Admins:  \n"
+	msg := "Admins by ID:  \n"
 	i := 1
 	for id, info := range Config.Admins {
 		if len(id) > 10 {
 			id = id[:10] + "..."
 		}
-		msg += Cyan.Cyan(strconv.Itoa(i)) + ". " + info + "\t" + id + "  \n"
+		msg += Cyan.Cyan(strconv.Itoa(i)) + ". " + id + "\t" + info + "  \n"
 		i++
 	}
 	u.room.broadcast(Devbot, msg)
