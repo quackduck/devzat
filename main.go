@@ -176,9 +176,15 @@ func main() {
 			fmt.Println(err)
 		}
 	}()
-	err = ssh.ListenAndServe(fmt.Sprintf(":%d", Config.Port), nil, ssh.HostKeyFile(Config.KeyFile), ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
-		return true // allow all keys, this lets us hash pubkeys later
-	}))
+	err = ssh.ListenAndServe(fmt.Sprintf(":%d", Config.Port), nil, ssh.HostKeyFile(Config.KeyFile),
+		ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
+			return true // allow all keys, this lets us hash pubkeys later
+		}),
+		ssh.WrapConn(func(s ssh.Context, conn net.Conn) net.Conn {
+			conn.(*net.TCPConn).SetKeepAlive(true)
+			conn.(*net.TCPConn).SetKeepAlivePeriod(time.Minute)
+			return conn
+		}))
 	if err != nil {
 		fmt.Println(err)
 	}
