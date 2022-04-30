@@ -60,6 +60,7 @@ type Room struct {
 type User struct {
 	Name     string
 	Pronouns []string
+	Bio      string
 	session  ssh.Session
 	term     *terminal.Terminal
 
@@ -291,6 +292,7 @@ func newUser(s ssh.Session) *User {
 		term:          term,
 		ColorBG:       "bg-off",
 		Bell:          true,
+		Bio:           "(none set)",
 		id:            shasum(toHash),
 		addr:          host,
 		win:           w,

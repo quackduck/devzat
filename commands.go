@@ -49,6 +49,7 @@ var (
 		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
 	RestCMDs = []CMD{
 		// {"people", peopleCMD, "", "See info about nice people who joined"},
+		{"bio", bioCMD, "[user]", "Get a user's bio or set yours"},
 		{"id", idCMD, "<user>", "Get a unique ID for a user (hashed key)"},
 		{"admins", adminsCMD, "", "Print the ID (hashed key) for all admins"},
 		{"eg-code", exampleCodeCMD, "[big]", "Example syntax-highlighted code"},
@@ -71,6 +72,7 @@ var (
 
 const (
 	MaxRoomNameLen = 30
+	MaxBioLen      = 300
 )
 
 func init() {
@@ -427,6 +429,35 @@ func tzCMD(tzArg string, u *User) {
 		u.FormatTime24 = false
 	}
 	u.room.broadcast(Devbot, "Changed your timezone!")
+}
+
+func bioCMD(line string, u *User) {
+	if line == "" {
+		u.writeln(Devbot, "Your current bio is:  \n> "+u.Bio)
+		u.term.SetPrompt("> ")
+		defer u.term.SetPrompt(u.Name + ": ")
+		for {
+			input, err := u.term.ReadLine()
+			if err != nil {
+				return
+			}
+			input = strings.TrimSpace(input)
+			if input != "" {
+				if len(input) > MaxBioLen {
+					u.writeln(Devbot, "Your bio is too long. It shouldn't be more than "+strconv.Itoa(MaxBioLen)+" characters.")
+				}
+				u.Bio = input
+				u.savePrefs() // make sure it gets saved now so it stays even if the server crashes
+				return
+			}
+		}
+	}
+	target, ok := findUserByName(u.room, line)
+	if !ok {
+		u.room.broadcast(Devbot, "Who???")
+		return
+	}
+	u.room.broadcast("", target.Bio)
 }
 
 func idCMD(line string, u *User) {
