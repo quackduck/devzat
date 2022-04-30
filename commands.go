@@ -48,7 +48,7 @@ var (
 		{"theme", themeCMD, "<theme>|list", "Change the syntax highlighting theme"},
 		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
 	RestCMDs = []CMD{
-		{"people", peopleCMD, "", "See info about nice people who joined"},
+		// {"people", peopleCMD, "", "See info about nice people who joined"},
 		{"id", idCMD, "<user>", "Get a unique ID for a user (hashed key)"},
 		{"admins", adminsCMD, "", "Print the ID (hashed key) for all admins"},
 		{"eg-code", exampleCodeCMD, "[big]", "Example syntax-highlighted code"},
@@ -649,36 +649,7 @@ func init() { // add Matt Gleich's blackbird theme from https://github.com/black
 	teal := "#00ecd8"
 	tealItalic := "italic " + teal
 
-	chromastyles.Register(chroma.MustNewStyle("blackbird", chroma.StyleEntries{
-		chroma.Text:                white,
-		chroma.Error:               red,
-		chroma.Comment:             gray,
-		chroma.Keyword:             redItalic,
-		chroma.KeywordNamespace:    redItalic,
-		chroma.KeywordType:         tealItalic,
-		chroma.Operator:            blue,
-		chroma.Punctuation:         white,
-		chroma.Name:                white,
-		chroma.NameAttribute:       white,
-		chroma.NameClass:           green,
-		chroma.NameConstant:        tealItalic,
-		chroma.NameDecorator:       green,
-		chroma.NameException:       red,
-		chroma.NameFunction:        green,
-		chroma.NameOther:           white,
-		chroma.NameTag:             yellow,
-		chroma.LiteralNumber:       blue,
-		chroma.Literal:             yellow,
-		chroma.LiteralDate:         yellow,
-		chroma.LiteralString:       yellow,
-		chroma.LiteralStringEscape: teal,
-		chroma.GenericDeleted:      red,
-		chroma.GenericEmph:         "italic",
-		chroma.GenericInserted:     green,
-		chroma.GenericStrong:       "bold",
-		chroma.GenericSubheading:   yellow,
-		chroma.Background:          "bg:#000000",
-	}))
+	chromastyles.Register(chroma.MustNewStyle("blackbird", chroma.StyleEntries{chroma.Text: white, chroma.Error: red, chroma.Comment: gray, chroma.Keyword: redItalic, chroma.KeywordNamespace: redItalic, chroma.KeywordType: tealItalic, chroma.Operator: blue, chroma.Punctuation: white, chroma.Name: white, chroma.NameAttribute: white, chroma.NameClass: green, chroma.NameConstant: tealItalic, chroma.NameDecorator: green, chroma.NameException: red, chroma.NameFunction: green, chroma.NameOther: white, chroma.NameTag: yellow, chroma.LiteralNumber: blue, chroma.Literal: yellow, chroma.LiteralDate: yellow, chroma.LiteralString: yellow, chroma.LiteralStringEscape: teal, chroma.GenericDeleted: red, chroma.GenericEmph: "italic", chroma.GenericInserted: green, chroma.GenericStrong: "bold", chroma.GenericSubheading: yellow, chroma.Background: "bg:#000000"}))
 }
 
 func themeCMD(line string, u *User) {
