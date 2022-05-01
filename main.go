@@ -385,11 +385,18 @@ func newUser(s ssh.Session) *User {
 	return u
 }
 
-// cleanupRoom deletes a room if it's empty and isn't the main room
-func cleanupRoom(r *Room) {
-	if r != MainRoom && len(r.users) == 0 {
+// cleanupRoomInstant deletes a room if it's empty and isn't the main room
+func cleanupRoomInstant(r *Room) {
+	if r != MainRoom && r != nil && len(r.users) == 0 {
 		delete(Rooms, r.name)
 	}
+}
+
+func cleanupRoom(r *Room) {
+	go func() {
+		time.Sleep(time.Hour * 24)
+		cleanupRoomInstant(r)
+	}()
 }
 
 // Removes a User and prints Twitter and chat message
