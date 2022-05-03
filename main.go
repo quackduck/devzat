@@ -392,10 +392,32 @@ func cleanupRoomInstant(r *Room) {
 	}
 }
 
+var cleanupMap = make(map[*Room]chan bool, 5)
+
 func cleanupRoom(r *Room) {
+	if ch, ok := cleanupMap[r]; ok {
+		ch <- true // reset timer
+		return
+	}
 	go func() {
-		time.Sleep(time.Hour * 24)
-		cleanupRoomInstant(r)
+		ch := make(chan bool) // no buffer needed
+		cleanupMap[r] = ch
+		timer := time.NewTimer(time.Hour * 24)
+		for {
+			select {
+			case <-ch: // need a reset?
+				if !timer.Stop() {
+					<-timer.C
+				}
+				timer.Reset(time.Hour * 24)
+				// no return, carry on to the next select
+			case <-timer.C:
+				delete(cleanupMap, r)
+				timer.Stop()
+				cleanupRoomInstant(r)
+				return // done!
+			}
+		}
 	}()
 }
 
