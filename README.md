@@ -6,9 +6,10 @@ Where are the devs at? Devzat!
 
 Devzat is a custom SSH server that takes you to a chat instead of a shell prompt. Because there's SSH apps on all platforms (even on phones) you can connect to Devzat on any device!
 
-![image](https://user-images.githubusercontent.com/38882631/115499526-a4d70280-a280-11eb-8723-817f54eccf3e.png)
+<!-- <img src="https://user-images.githubusercontent.com/38882631/115499526-a4d70280-a280-11eb-8723-817f54eccf3e.png" height=400px /> -->
 
-
+A recording I took one day:
+[![asciicast](https://asciinema.org/a/477083.svg)](https://asciinema.org/a/477083?speed=3)
 ## Usage
 
 Try it out:
@@ -41,6 +42,19 @@ ssh chat
 We also have a Slack bridge! If you're on the [Hack Club](https://hackclub.com) Slack, check out the `#ssh-chat-bridge` channel!
 
 Feel free to make a [new issue](https://github.com/quackduck/devzat/issues) if something doesn't work.
+
+### Want to host your own instance?
+
+Quick start:
+```shell
+git clone https://github.com/quackduck/devzat && cd devzat
+go install # or build, if you want to keep things pwd
+ssh-keygen -qN '' -f devzat-sshkey # new ssh host key for the server
+devzat # run! the default config is used & written automatically
+```
+These commands download, build, setup and run a Devzat server listening on port 2221, the default port (change by setting `$PORT`).
+
+Check out the [Admin's Manual](Admin's%20Manual.md) for complete self-host documentation!
 
 ### Permission denied?
 
@@ -113,6 +127,11 @@ The rest
 ## Plugin API
 
 Devzat has a plugin API you can use to integrate your own services: [documentation](plugin/README.md)
+
+
+## Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/quackduck/devzat.svg)](https://starchart.cc/quackduck/devzat)
 
 
 ## People
