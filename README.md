@@ -6,9 +6,10 @@ Where are the devs at? Devzat!
 
 Devzat is a custom SSH server that takes you to a chat instead of a shell prompt. Because there's SSH apps on all platforms (even on phones) you can connect to Devzat on any device!
 
-![image](https://user-images.githubusercontent.com/38882631/115499526-a4d70280-a280-11eb-8723-817f54eccf3e.png)
+<!-- <img src="https://user-images.githubusercontent.com/38882631/115499526-a4d70280-a280-11eb-8723-817f54eccf3e.png" height=400px /> -->
 
-
+A recording I took one day:
+[![asciicast](https://asciinema.org/a/477083.svg)](https://asciinema.org/a/477083?speed=3)
 ## Usage
 
 Try it out:
