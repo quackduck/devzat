@@ -43,6 +43,18 @@ We also have a Slack bridge! If you're on the [Hack Club](https://hackclub.com) 
 
 Feel free to make a [new issue](https://github.com/quackduck/devzat/issues) if something doesn't work.
 
+### Want to host your own instance?
+
+Quick start:
+```shell
+git clone https://github.com/quackduck/devzat && cd devzat
+go install # or build, if you want to keep things pwd
+ssh-keygen -qN '' -f devzat-sshkey # new ssh host key for the server
+devzat # run! the default config is used & written automatically
+```
+These commands download, build, setup and run a Devzat server listening on port 2221, the default port. (change by setting `$PORT`)
+Check out the [Admin's Manual](Admin's%20Manual.md) for complete self-host documentation!
+
 ### Permission denied?
 
 Devzat uses public keys to identify users. If you are denied access: `foo@devzat.hackclub.com: Permission denied (publickey)` try logging in on port 443, which does not require a key, using `ssh devzat.hackclub.com -p 443`.
