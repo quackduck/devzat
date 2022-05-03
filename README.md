@@ -52,7 +52,8 @@ go install # or build, if you want to keep things pwd
 ssh-keygen -qN '' -f devzat-sshkey # new ssh host key for the server
 devzat # run! the default config is used & written automatically
 ```
-These commands download, build, setup and run a Devzat server listening on port 2221, the default port. (change by setting `$PORT`)
+These commands download, build, setup and run a Devzat server listening on port 2221, the default port (change by setting `$PORT`).
+
 Check out the [Admin's Manual](Admin's%20Manual.md) for complete self-host documentation!
 
 ### Permission denied?
