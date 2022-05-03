@@ -110,6 +110,11 @@ The rest
    shrug                   ¯\_(ツ)_/¯
 ```
 
+## Plugin API
+
+Devzat has a plugin API you can use to integrate your own services: [documentation](plugin/README.md)
+
+
 ## People
 
 People who you might know who have joined:
