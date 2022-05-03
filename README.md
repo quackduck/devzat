@@ -115,6 +115,11 @@ The rest
 Devzat has a plugin API you can use to integrate your own services: [documentation](plugin/README.md)
 
 
+## Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/quackduck/devzat.svg)](https://starchart.cc/quackduck/devzat)
+
+
 ## People
 
 People who you might know who have joined:
