@@ -595,17 +595,15 @@ func (u *User) loadPrefs() error {
 	newName := u.Name
 	u.Name = oldUser.Name
 
-	newColor, newColorBG := u.Color, u.ColorBG // needed because pickUsername changes these. TODO: stop it from doing that
-
 	err = u.pickUsername(newName)
 	if err != nil {
 		return err
 	}
-	err = u.changeColor(newColor)
+	err = u.changeColor(u.Color)
 	if err != nil {
 		return err
 	}
-	err = u.changeColor(newColorBG)
+	err = u.changeColor(u.ColorBG)
 	if err != nil {
 		return err
 	}
