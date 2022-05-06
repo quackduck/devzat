@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"math"
 	"math/rand"
 	"os"
@@ -305,11 +306,14 @@ func rmBadWords(text string) string {
 
 func init() {
 	okayIshWords := []string{"ZnVjaw==", "Y3JhcA==", "c2hpdA==", "YXJzZQ==", "YXNz", "YnV0dA=="} // base 64 encoded okay-ish swears
-	for i, word := range goaway.DefaultProfanities {
+	for i := 0; i < len(goaway.DefaultProfanities); i++ {
 		for _, okayIshWord := range okayIshWords {
 			okayIshWordb, _ := base64.StdEncoding.DecodeString(okayIshWord)
-			if word == string(okayIshWordb) {
+			if goaway.DefaultProfanities[i] == string(okayIshWordb) {
+				fmt.Println(string(okayIshWordb))
 				goaway.DefaultProfanities = append(goaway.DefaultProfanities[:i], goaway.DefaultProfanities[i+1:]...)
+				i-- // so we don't skip the next word
+				break
 			}
 		}
 	}
