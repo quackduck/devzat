@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"crypto/sha256"
 	_ "embed"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"math/rand"
 	"os"
@@ -15,47 +15,53 @@ import (
 	"text/tabwriter"
 	"time"
 
+	goaway "github.com/TwiN/go-away"
 	"github.com/acarl005/stripansi"
 	markdown "github.com/quackduck/go-term-markdown"
 )
 
 var (
-	art    = getASCIIArt()
-	admins = getAdmins()
+	Art  = getASCIIArt()
+	CMDs []*[]CMD // slice of pointers to slices of commands (this is so updates to sub-slices are reflected in the main slice even if append is used)
 )
 
-func getAdmins() map[string]string {
-	data, err := ioutil.ReadFile("admins.json")
-	if err != nil {
-		fmt.Println("Error reading admins.json:", err, ". Make an admins.json file to add admins.")
-		return nil
+func init() {
+	CMDs = []*[]CMD{&MainCMDs, &RestCMDs, &SecretCMDs}
+}
+
+func getCMD(name string) (CMD, bool) {
+	for _, cmds := range CMDs {
+		if cmds == nil {
+			Log.Println("nil slice in CMDs") // should never happen
+			continue
+		}
+		for _, cmd := range *cmds {
+			if cmd.name == name {
+				return cmd, true
+			}
+		}
 	}
-	var adminsList map[string]string // id to info
-	err = json.Unmarshal(data, &adminsList)
-	if err != nil {
-		fmt.Println("Error in admins.json formatting.")
-		return nil
-	}
-	return adminsList
+	return CMD{}, false
 }
 
 func getASCIIArt() string {
-	b, _ := ioutil.ReadFile("art.txt")
+	sep := string(os.PathSeparator)
+	b, _ := os.ReadFile(Config.DataDir + sep + "art.txt")
 	if b == nil {
-		return "sowwy, no art was found, please slap your developer and tell em to add an art.txt file"
+		return "sorry, no art was found, please slap your developer and tell em to add a " + Config.DataDir + sep + "art.txt file"
 	}
 	return string(b)
 }
 
-func printUsersInRoom(r *room) string {
+func printUsersInRoom(r *Room) string {
 	names := ""
 	admins := ""
 	for _, us := range r.users {
 		if auth(us) {
-			admins += us.name + " "
+			admins += us.Name + " "
 			continue
 		}
-		names += us.name + " "
+		names += us.Name + " "
 	}
 	if len(names) > 0 {
 		names = names[:len(names)-1] // cut extra space at the end
@@ -72,19 +78,19 @@ func lenString(a string) int {
 	return len([]rune(stripansi.Strip(a)))
 }
 
-func autogenCommands(cmds []cmd) string {
+func autogenCommands(cmds []CMD) string {
 	b := new(bytes.Buffer)
 	w := tabwriter.NewWriter(b, 0, 0, 2, ' ', 0)
 	for _, cmd := range cmds {
-		w.Write([]byte("   " + cmd.name + "\t" + cmd.argsInfo + "\t_" + cmd.info + "_  \n"))
+		w.Write([]byte("   " + cmd.name + "\t" + cmd.argsInfo + "\t_" + cmd.info + "_  \n")) //nolint:errcheck // bytes.Buffer is never going to err out
 	}
 	w.Flush()
 	return b.String()
 }
 
-// check if a user is an admin
-func auth(u *user) bool {
-	_, ok := admins[u.id]
+// check if a User is an admin
+func auth(u *User) bool {
+	_, ok := Config.Admins[u.id]
 	return ok
 }
 
@@ -116,6 +122,7 @@ func printPrettyDuration(d time.Duration) string {
 }
 
 func mdRender(a string, beforeMessageLen int, lineWidth int) string {
+	a = strings.ReplaceAll(a, "https://", "https\\://")
 	if strings.Contains(a, "![") && strings.Contains(a, "](") {
 		lineWidth = int(math.Min(float64(lineWidth/2), 200)) // max image width is 200
 	}
@@ -134,10 +141,10 @@ func mdRender(a string, beforeMessageLen int, lineWidth int) string {
 	return strings.Join(split, "\n")
 }
 
-// Returns true and the user with the same name if the username is taken, false and nil otherwise
-func userDuplicate(r *room, a string) (*user, bool) {
+// Returns true and the User with the same name if the username is taken, false and nil otherwise
+func userDuplicate(r *Room, a string) (*User, bool) {
 	for i := range r.users {
-		if stripansi.Strip(r.users[i].name) == stripansi.Strip(a) {
+		if stripansi.Strip(r.users[i].Name) == stripansi.Strip(a) {
 			return r.users[i], true
 		}
 	}
@@ -145,39 +152,49 @@ func userDuplicate(r *room, a string) (*user, bool) {
 }
 
 func saveBans() {
-	f, err := os.Create("bans.json")
+	f, err := os.Create(Config.DataDir + string(os.PathSeparator) + "bans.json")
 	if err != nil {
-		l.Println(err)
+		Log.Println(err)
 		return
 	}
+	defer f.Close()
 	j := json.NewEncoder(f)
 	j.SetIndent("", "   ")
-	j.Encode(bans)
-	f.Close()
+	err = j.Encode(Bans)
+	if err != nil {
+		MainRoom.broadcast(Devbot, "error saving bans: "+err.Error())
+		Log.Println(err)
+		return
+	}
 }
 
 func readBans() {
-	f, err := os.Open("bans.json")
+	f, err := os.Open(Config.DataDir + string(os.PathSeparator) + "bans.json")
 	if err != nil && !os.IsNotExist(err) { // if there is an error and it is not a "file does not exist" error
-		l.Println(err)
+		Log.Println(err)
 		return
 	}
-	json.NewDecoder(f).Decode(&bans)
-	f.Close()
+	defer f.Close()
+	err = json.NewDecoder(f).Decode(&Bans)
+	if err != nil {
+		MainRoom.broadcast(Devbot, "error reading bans: "+err.Error())
+		Log.Println(err)
+		return
+	}
 }
 
-func findUserByName(r *room, name string) (*user, bool) {
+func findUserByName(r *Room, name string) (*User, bool) {
 	r.usersMutex.Lock()
 	defer r.usersMutex.Unlock()
 	for _, u := range r.users {
-		if stripansi.Strip(u.name) == name {
+		if stripansi.Strip(u.Name) == name {
 			return u, true
 		}
 	}
 	return nil, false
 }
 
-func remove(s []*user, a *user) []*user {
+func remove(s []*User, a *User) []*User {
 	for j := range s {
 		if s[j] == a {
 			return append(s[:j], s[j+1:]...)
@@ -186,7 +203,7 @@ func remove(s []*user, a *user) []*user {
 	return s
 }
 
-func devbotChat(room *room, line string) {
+func devbotChat(room *Room, line string) {
 	if strings.Contains(line, "devbot") {
 		if strings.Contains(line, "how are you") || strings.Contains(line, "how you") {
 			devbotRespond(room, []string{"How are _you_",
@@ -263,12 +280,12 @@ func devbotChat(room *room, line string) {
 	}
 }
 
-func devbotRespond(room *room, messages []string, chance int) {
+func devbotRespond(room *Room, messages []string, chance int) {
 	if chance == 100 || chance > rand.Intn(100) {
 		go func() {
 			time.Sleep(time.Second / 2)
 			pick := messages[rand.Intn(len(messages))]
-			room.broadcast(devbot, pick)
+			room.broadcast(Devbot, pick)
 		}()
 	}
 }
@@ -276,4 +293,62 @@ func devbotRespond(room *room, messages []string, chance int) {
 func shasum(s string) string {
 	h := sha256.Sum256([]byte(s))
 	return hex.EncodeToString(h[:])
+}
+
+var detector = goaway.NewProfanityDetector().WithSanitizeSpaces(false)
+
+func rmBadWords(text string) string {
+	if !Config.Censor {
+		return text
+	}
+	return detector.Censor(text)
+}
+
+func init() {
+	okayIshWords := []string{"ZnVjaw==", "Y3JhcA==", "c2hpdA==", "YXJzZQ==", "YXNz", "YnV0dA=="} // base 64 encoded okay-ish swears
+	for i := 0; i < len(goaway.DefaultProfanities); i++ {
+		for _, okayIshWord := range okayIshWords {
+			okayIshWordb, _ := base64.StdEncoding.DecodeString(okayIshWord)
+			if goaway.DefaultProfanities[i] == string(okayIshWordb) {
+				fmt.Println(string(okayIshWordb))
+				goaway.DefaultProfanities = append(goaway.DefaultProfanities[:i], goaway.DefaultProfanities[i+1:]...)
+				i-- // so we don't skip the next word
+				break
+			}
+		}
+	}
+}
+
+func holidaysCheck(u *User) {
+
+	currentMonth := time.Now().Month()
+	today := time.Now().Day()
+
+	type holiday struct {
+		month time.Month
+		day   int
+		name  string
+		image string
+	}
+
+	holidayList := []holiday{
+		{time.February, 14, "❤️ - Valentine's Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/81/heavy-black-heart_2764.png"},
+		{time.March, 17, "☘️ - St. Patrick's Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/shamrock_2618-fe0f.png"},
+		{time.April, 22, "🌎 - Earth Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/globe-showing-americas_1f30e.png"},
+		{time.May, 8, "👩 - Mother's Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/woman_1f469.png"},
+		{time.June, 19, "👨 - Father's Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/man_1f468.png"},
+		{time.September, 11, "👴 - Grandparents' Day", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/old-woman_1f475.png"},
+		{time.October, 31, "🎃 - Halloween", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/jack-o-lantern_1f383.png"},
+		{time.December, 25, "🎅 - Christmas", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/santa-claus_1f385.png"},
+		{time.December, 31, "🍾 - New Year's Eve", "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/325/bottle-with-popping-cork_1f37e.png"},
+	}
+
+	for _, h := range holidayList {
+		if currentMonth == h.month && today == h.day {
+			u.writeln("", "!["+h.name+"]("+h.image+")")
+			time.Sleep(time.Second)
+			clearCMD("", u)
+			break
+		}
+	}
 }

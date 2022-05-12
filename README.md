@@ -4,11 +4,12 @@
 
 Where are the devs at? Devzat!
 
-Devzat is chat over SSH. Because there's SSH apps literally on all platforms, even your phone, you can connect to Devzat on any device!
+Devzat is a custom SSH server that takes you to a chat instead of a shell prompt. Because there's SSH apps on all platforms (even on phones) you can connect to Devzat on any device!
 
-![image](https://user-images.githubusercontent.com/38882631/115499526-a4d70280-a280-11eb-8723-817f54eccf3e.png)
+<!-- <img src="https://user-images.githubusercontent.com/38882631/115499526-a4d70280-a280-11eb-8723-817f54eccf3e.png" height=400px /> -->
 
-
+A recording I took one day:
+[![asciicast](https://asciinema.org/a/477083.svg)](https://asciinema.org/a/477083?speed=3)
 ## Usage
 
 Try it out:
@@ -31,7 +32,6 @@ If you add this to `~/.ssh/config`:
 ```ssh
 Host chat
     HostName devzat.hackclub.com
-    User yourNickNameHere
 ```
 
 You'll be able to join with just:
@@ -41,9 +41,28 @@ ssh chat
 
 We also have a Slack bridge! If you're on the [Hack Club](https://hackclub.com) Slack, check out the `#ssh-chat-bridge` channel!
 
-### Public key
+Feel free to make a [new issue](https://github.com/quackduck/devzat/issues) if something doesn't work.
 
-Devzat uses public keys to identify users. If you are denied access: `foo@devzat.hackclub.com: Permission denied (publickey)`, you should generate an ssh key pair with the command `ssh-keygen`
+### Want to host your own instance?
+
+Quick start:
+```shell
+git clone https://github.com/quackduck/devzat && cd devzat
+go install # or build, if you want to keep things pwd
+ssh-keygen -qN '' -f devzat-sshkey # new ssh host key for the server
+devzat # run! the default config is used & written automatically
+```
+These commands download, build, setup and run a Devzat server listening on port 2221, the default port (change by setting `$PORT`).
+
+Check out the [Admin's Manual](Admin's%20Manual.md) for complete self-host documentation!
+
+### Permission denied?
+
+Devzat uses public keys to identify users. If you are denied access: `foo@devzat.hackclub.com: Permission denied (publickey)` try logging in on port 443, which does not require a key, using `ssh devzat.hackclub.com -p 443`.
+
+Reasons for this
+* You may not have an SSH key pair. Generate one with the command `ssh-keygen` if this is the case. (you can usually check by making sure a file of this form: `~/.ssh/id_*` exists)
+* If you already have a keypair, and you still get this error, it might be because the server does not yet support RSA SHA-2 signatures. Follow issue progress here: [#77](https://github.com/quackduck/devzat/issues/77).
 
 ### Help
 
@@ -70,33 +89,50 @@ Thanks to Caleb Denio for lending his server!
 ### Commands
 ```text
 Commands
-   =<user>  <msg>        DM <user> with <msg>
-   users                 List users
-   color    <color>      Change your name's color
-   exit                  Leave the chat
-   help                  Show help
-   emojis                See a list of emojis
-   clear                 Clear the screen
-   hang     <char/word>  Play hangman
-   tic      <cell num>   Play tic tac toe!
-   cd       #room/user   Join #room, DM user or run cd to see a list
-   tz       <zone>       Set your IANA timezone (like tz Asia/Dubai)
-   nick     <name>       Change your username
-   rest                  Uncommon commands list
-   cmds                  Show this message
+   =<user>   <msg>           DM <user> with <msg>
+   users                     List users
+   color     <color>         Change your name's color
+   exit                      Leave the chat
+   help                      Show help
+   man       <cmd>           Get help for a specific command
+   emojis                    See a list of emojis
+   bell      on|off|all      ANSI bell on pings (on), never (off) or for every message (all)
+   clear                     Clear the screen
+   hang      <char|word>     Play hangman
+   tic       <cell num>      Play tic tac toe!
+   devmonk                   Test your typing speed
+   cd        #room|user      Join #room, DM user or run cd to see a list
+   tz        <zone> [24h]    Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h
+   nick      <name>          Change your username
+   pronouns  @user|pronouns  Set your pronouns or get another user's
+   theme     <theme>|list    Change the syntax highlighting theme
+   rest                      Uncommon commands list
+   cmds                      Show this message
 ```
 ```
 The rest
-   bell             Toggle the ANSI bell used in pings
-   people           See info about nice people who joined
-   id       <user>  Get a unique ID for a user (hashed IP)
-   eg-code          Example syntax-highlighted code
-   banIP    <IP>    Ban an IP (admin)
-   ban      <user>  Ban <user> (admin)
-   kick     <user>  Kick <user> (admin)
-   art              Show some panda art
-   shrug            ¯\_(ツ)/¯_
+   people                  See info about nice people who joined
+   id       <user>         Get a unique ID for a user (hashed key)
+   admins                  Print the ID (hashed key) for all admins
+   eg-code  [big]          Example syntax-highlighted code
+   lsbans                  List banned IDs
+   ban      <user>         Ban <user> (admin)
+   unban    <IP|ID> [dur]  Unban a person and optionally, for a duration (admin)
+   kick     <user>         Kick <user> (admin)
+   art                     Show some panda art
+   pwd                     Show your current room
+   shrug                   ¯\_(ツ)_/¯
 ```
+
+## Plugin API
+
+Devzat has a plugin API you can use to integrate your own services: [documentation](plugin/README.md)
+
+
+## Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/quackduck/devzat.svg)](https://starchart.cc/quackduck/devzat)
+
 
 ## People
 

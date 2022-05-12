@@ -1,10 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"strings"
 	"time"
 
@@ -14,32 +11,25 @@ import (
 )
 
 var (
-	client     = loadTwitterClient()
-	allowTweet = true
+	StartupTime = time.Now()
+	Client      *twitter.Client
+	AllowTweet  = true
 )
 
-// Credentials stores Twitter creds
-type Credentials struct {
-	ConsumerKey       string
-	ConsumerSecret    string
-	AccessToken       string
-	AccessTokenSecret string
-}
-
 func sendCurrentUsersTwitterMessage() {
-	if offlineTwitter {
+	if Integrations.Twitter == nil {
 		return
 	}
 	// TODO: count all users in all rooms
-	if len(mainRoom.users) == 0 {
+	if len(MainRoom.users) == 0 {
 		return
 	}
-	if !allowTweet {
+	if !AllowTweet {
 		return
 	}
-	allowTweet = false
-	usersSnapshot := append(make([]*user, 0, len(mainRoom.users)), mainRoom.users...)
-	areUsersEqual := func(a []*user, b []*user) bool {
+	AllowTweet = false
+	usersSnapshot := append(make([]*User, 0, len(MainRoom.users)), MainRoom.users...)
+	areUsersEqual := func(a []*User, b []*User) bool {
 		if len(a) != len(b) {
 			return false
 		}
@@ -52,49 +42,34 @@ func sendCurrentUsersTwitterMessage() {
 	}
 	go func() {
 		time.Sleep(time.Second * 60)
-		allowTweet = true
-		if !areUsersEqual(mainRoom.users, usersSnapshot) {
+		AllowTweet = true
+		if !areUsersEqual(MainRoom.users, usersSnapshot) {
 			return
 		}
-		l.Println("Sending twitter update")
-		names := make([]string, 0, len(mainRoom.users))
-		for _, us := range mainRoom.users {
-			names = append(names, us.name)
+		Log.Println("Sending twitter update")
+		names := make([]string, 0, len(MainRoom.users))
+		for _, us := range MainRoom.users {
+			names = append(names, us.Name)
 		}
-		t, _, err := client.Statuses.Update("People on Devzat rn: "+stripansi.Strip(fmt.Sprint(names))+"\nJoin em with \"ssh devzat.hackclub.com\"\nUptime: "+printPrettyDuration(time.Since(startupTime)), nil)
+		t, _, err := Client.Statuses.Update("People on Devzat rn: "+stripansi.Strip(fmt.Sprint(names))+"\nJoin em with \"ssh devzat.hackclub.com\"\nUptime: "+printPrettyDuration(time.Since(StartupTime)), nil)
 		if err != nil {
 			if !strings.Contains(err.Error(), "twitter: 187 Status is a duplicate.") {
-				mainRoom.broadcast(devbot, "err: "+err.Error())
+				MainRoom.broadcast(Devbot, "err: "+err.Error())
 			}
-			l.Println("Got twitter err", err)
+			Log.Println("Got twitter err", err)
 			return
 		}
-		mainRoom.broadcast(devbot, "https\\://twitter.com/"+t.User.ScreenName+"/status/"+t.IDStr)
+		MainRoom.broadcast(Devbot, "https\\://twitter.com/"+t.User.ScreenName+"/status/"+t.IDStr)
 	}()
 }
 
-func loadTwitterClient() *twitter.Client {
-	d, err := ioutil.ReadFile("twitter-creds.json")
-
-	if os.IsNotExist(err) {
-		offlineTwitter = true
-		l.Println("Did not find twitter-creds.json. Enabling offline mode.")
-	} else if err != nil {
-		panic(err)
+func twitterInit() { // called by init() in config.go
+	if Integrations.Twitter == nil {
+		return
 	}
 
-	if offlineTwitter {
-		return nil
-	}
-
-	twitterCreds := new(Credentials)
-	err = json.Unmarshal(d, twitterCreds)
-	if err != nil {
-		panic(err)
-	}
-	config := oauth1.NewConfig(twitterCreds.ConsumerKey, twitterCreds.ConsumerSecret)
-	token := oauth1.NewToken(twitterCreds.AccessToken, twitterCreds.AccessTokenSecret)
+	config := oauth1.NewConfig(Integrations.Twitter.ConsumerKey, Integrations.Twitter.ConsumerSecret)
+	token := oauth1.NewToken(Integrations.Twitter.AccessToken, Integrations.Twitter.AccessTokenSecret)
 	httpClient := config.Client(oauth1.NoContext, token)
-	t := twitter.NewClient(httpClient)
-	return t
+	Client = twitter.NewClient(httpClient)
 }
