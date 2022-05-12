@@ -354,11 +354,11 @@ func newUser(s ssh.Session) *User {
 
 	if len(Backlog) > 0 {
 		lastStamp := Backlog[0].timestamp
-		writeTime(u, lastStamp, "earlier")
+		u.rWriteln(fmtTime(u, lastStamp))
 		for i := range Backlog {
 			if Backlog[i].timestamp.Sub(lastStamp) > time.Minute {
 				lastStamp = Backlog[i].timestamp
-				writeTime(u, lastStamp, "earlier")
+				u.rWriteln(fmtTime(u, lastStamp))
 			}
 			u.writeln(Backlog[i].senderName, Backlog[i].text)
 		}
@@ -466,7 +466,7 @@ func (u *User) writeln(senderName string, msg string) {
 		msg = strings.TrimSpace(mdRender(msg, 0, u.win.Width)) // No sender
 	}
 	if time.Since(u.lastTimestamp) > time.Minute {
-		writeTime(u, u.lastTimestamp, "in")
+		u.rWriteln(fmtTime(u, u.lastTimestamp))
 		u.lastTimestamp = time.Now()
 	}
 	if u.PingEverytime && senderName != u.Name {
@@ -718,14 +718,20 @@ func bansContains(b []Ban, addr string, id string) bool {
 	return false
 }
 
-func writeTime(u *User, lastStamp time.Time, relativTimeString string) {
+func fmtTime(u *User, lastStamp time.Time) string {
+	relativTimeString := ""
+	if u.joinTime.Sub(lastStamp) < 0 {
+		relativTimeString = "earlier"
+	} else {
+		relativTimeString = "in"
+	}
 	if u.Timezone.Location == nil {
-		u.rWriteln(printPrettyDuration(u.joinTime.Sub(lastStamp)) + " " + relativTimeString)
+		return printPrettyDuration(u.joinTime.Sub(lastStamp)) + " " + relativTimeString
 	} else {
 		if u.FormatTime24 {
-			u.rWriteln(lastStamp.In(u.Timezone.Location).Format("15:04"))
+			return lastStamp.In(u.Timezone.Location).Format("15:04")
 		} else {
-			u.rWriteln(lastStamp.In(u.Timezone.Location).Format("3:04 pm"))
+			return lastStamp.In(u.Timezone.Location).Format("3:04 pm")
 		}
 	}
 }
