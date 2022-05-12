@@ -354,11 +354,11 @@ func newUser(s ssh.Session) *User {
 
 	if len(Backlog) > 0 {
 		lastStamp := Backlog[0].timestamp
-		writeTime(u, lastStamp)
+		writeTime(u, lastStamp, "earlier")
 		for i := range Backlog {
 			if Backlog[i].timestamp.Sub(lastStamp) > time.Minute {
 				lastStamp = Backlog[i].timestamp
-				writeTime(u, lastStamp)
+				writeTime(u, lastStamp, "earlier")
 			}
 			u.writeln(Backlog[i].senderName, Backlog[i].text)
 		}
@@ -384,18 +384,6 @@ func newUser(s ssh.Session) *User {
 	}
 	MainRoom.broadcast(Devbot, u.Name+" has joined the chat")
 	return u
-}
-
-func writeTime(u *User, lastStamp time.Time) {
-	if u.Timezone.Location == nil {
-		u.rWriteln(printPrettyDuration(u.joinTime.Sub(lastStamp)) + " earlier")
-	} else {
-		if u.FormatTime24 {
-			u.rWriteln(lastStamp.In(u.Timezone.Location).Format("15:04"))
-		} else {
-			u.rWriteln(lastStamp.In(u.Timezone.Location).Format("3:04 pm"))
-		}
-	}
 }
 
 // cleanupRoomInstant deletes a room if it's empty and isn't the main room
@@ -478,15 +466,7 @@ func (u *User) writeln(senderName string, msg string) {
 		msg = strings.TrimSpace(mdRender(msg, 0, u.win.Width)) // No sender
 	}
 	if time.Since(u.lastTimestamp) > time.Minute {
-		if u.Timezone.Location == nil {
-			u.rWriteln(printPrettyDuration(time.Since(u.joinTime)) + " in")
-		} else {
-			if u.FormatTime24 {
-				u.rWriteln(time.Now().In(u.Timezone.Location).Format("15:04"))
-			} else {
-				u.rWriteln(time.Now().In(u.Timezone.Location).Format("3:04 pm"))
-			}
-		}
+		writeTime(u, u.lastTimestamp, "in")
 		u.lastTimestamp = time.Now()
 	}
 	if u.PingEverytime && senderName != u.Name {
@@ -736,4 +716,16 @@ func bansContains(b []Ban, addr string, id string) bool {
 		}
 	}
 	return false
+}
+
+func writeTime(u *User, lastStamp time.Time, relativTimeString string) {
+	if u.Timezone.Location == nil {
+		u.rWriteln(printPrettyDuration(u.joinTime.Sub(lastStamp)) + " " + relativTimeString)
+	} else {
+		if u.FormatTime24 {
+			u.rWriteln(lastStamp.In(u.Timezone.Location).Format("15:04"))
+		} else {
+			u.rWriteln(lastStamp.In(u.Timezone.Location).Format("3:04 pm"))
+		}
+	}
 }
