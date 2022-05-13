@@ -66,6 +66,7 @@ var (
 		{"ls", lsCMD, "???", "???"},
 		{"cat", catCMD, "???", "???"},
 		{"rm", rmCMD, "???", "???"},
+		{"su", nickCMD, "???", "This is an alias of nick"},
 		{"colour", colorCMD, "???", "This is an alias of color"}, // appease the british
 	}
 )
