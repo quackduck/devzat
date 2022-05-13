@@ -113,14 +113,6 @@ func cleanName(name string) string {
 	return s
 }
 
-func printPrettyDuration(d time.Duration) string {
-	s := strings.TrimSpace(strings.TrimSuffix(d.Round(time.Minute).String(), "0s"))
-	if s == "" { // we cut off the seconds so if there's nothing in the string it means it was made of only seconds.
-		s = "< 1m"
-	}
-	return s
-}
-
 func mdRender(a string, beforeMessageLen int, lineWidth int) string {
 	a = strings.ReplaceAll(a, "https://", "https\\://")
 	if strings.Contains(a, "![") && strings.Contains(a, "](") {
@@ -351,4 +343,27 @@ func holidaysCheck(u *User) {
 			break
 		}
 	}
+}
+
+func printPrettyDuration(d time.Duration) string {
+	s := d.Round(time.Minute).String()
+	s = s[:len(s)-2] // cut off "0s" at the end
+	if s == "" {     // we cut off the seconds so if there's nothing in the string it means it was made of only seconds.
+		s = "< 1m"
+	}
+	return s
+}
+
+func fmtTime(u *User, lastStamp time.Time) string {
+	if u.Timezone.Location == nil {
+		diff := lastStamp.Sub(u.joinTime)
+		if diff < 0 {
+			return printPrettyDuration(-diff) + " earlier"
+		}
+		return printPrettyDuration(diff) + " in"
+	}
+	if u.FormatTime24 {
+		return lastStamp.In(u.Timezone.Location).Format("15:04")
+	}
+	return lastStamp.In(u.Timezone.Location).Format("3:04 pm")
 }

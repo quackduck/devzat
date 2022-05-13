@@ -332,18 +332,6 @@ func newUser(s ssh.Session) *User {
 	clearCMD("", u) // always clear the screen on connect
 	holidaysCheck(u)
 
-	if len(Backlog) > 0 {
-		lastStamp := Backlog[0].timestamp
-		u.rWriteln(printPrettyDuration(u.joinTime.Sub(lastStamp)) + " earlier")
-		for i := range Backlog {
-			if Backlog[i].timestamp.Sub(lastStamp) > time.Minute {
-				lastStamp = Backlog[i].timestamp
-				u.rWriteln(printPrettyDuration(u.joinTime.Sub(lastStamp)) + " earlier")
-			}
-			u.writeln(Backlog[i].senderName, Backlog[i].text)
-		}
-	}
-
 	if rand.Float64() <= 0.4 { // 40% chance of being a random color
 		u.changeColor("random") //nolint:errcheck // we know "random" is a valid color
 	} else {
@@ -363,6 +351,19 @@ func newUser(s ssh.Session) *User {
 	if err != nil {
 		Log.Println("Could not load user:", err)
 	}
+
+	if len(Backlog) > 0 {
+		lastStamp := Backlog[0].timestamp
+		u.rWriteln(fmtTime(u, lastStamp))
+		for i := range Backlog {
+			if Backlog[i].timestamp.Sub(lastStamp) > time.Minute {
+				lastStamp = Backlog[i].timestamp
+				u.rWriteln(fmtTime(u, lastStamp))
+			}
+			u.writeln(Backlog[i].senderName, Backlog[i].text)
+		}
+	}
+
 	MainRoom.usersMutex.Lock()
 	MainRoom.users = append(MainRoom.users, u)
 	go sendCurrentUsersTwitterMessage()
@@ -465,15 +466,7 @@ func (u *User) writeln(senderName string, msg string) {
 		msg = strings.TrimSpace(mdRender(msg, 0, u.win.Width)) // No sender
 	}
 	if time.Since(u.lastTimestamp) > time.Minute {
-		if u.Timezone.Location == nil {
-			u.rWriteln(printPrettyDuration(time.Since(u.joinTime)) + " in")
-		} else {
-			if u.FormatTime24 {
-				u.rWriteln(time.Now().In(u.Timezone.Location).Format("15:04"))
-			} else {
-				u.rWriteln(time.Now().In(u.Timezone.Location).Format("3:04 pm"))
-			}
-		}
+		u.rWriteln(fmtTime(u, u.lastTimestamp))
 		u.lastTimestamp = time.Now()
 	}
 	if u.PingEverytime && senderName != u.Name {
