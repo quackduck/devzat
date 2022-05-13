@@ -717,21 +717,3 @@ func bansContains(b []Ban, addr string, id string) bool {
 	}
 	return false
 }
-
-func fmtTime(u *User, lastStamp time.Time) string {
-	relativTimeString := ""
-	if u.joinTime.Sub(lastStamp) < 0 {
-		relativTimeString = "earlier"
-	} else {
-		relativTimeString = "in"
-	}
-	if u.Timezone.Location == nil {
-		return printPrettyDuration(u.joinTime.Sub(lastStamp)) + " " + relativTimeString
-	} else {
-		if u.FormatTime24 {
-			return lastStamp.In(u.Timezone.Location).Format("15:04")
-		} else {
-			return lastStamp.In(u.Timezone.Location).Format("3:04 pm")
-		}
-	}
-}
