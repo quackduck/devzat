@@ -302,7 +302,6 @@ func init() {
 		for _, okayIshWord := range okayIshWords {
 			okayIshWordb, _ := base64.StdEncoding.DecodeString(okayIshWord)
 			if goaway.DefaultProfanities[i] == string(okayIshWordb) {
-				fmt.Println(string(okayIshWordb))
 				goaway.DefaultProfanities = append(goaway.DefaultProfanities[:i], goaway.DefaultProfanities[i+1:]...)
 				i-- // so we don't skip the next word
 				break
