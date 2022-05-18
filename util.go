@@ -12,10 +12,16 @@ import (
 	"strings"
 	"text/tabwriter"
 	"time"
+	"unsafe"
 
 	"github.com/acarl005/stripansi"
 	markdown "github.com/quackduck/go-term-markdown"
 )
+
+// #cgo LDFLAGS: librustrict_devzat.a -Wl,--no-as-needed -ldl 
+// void censor(char* str);
+// #include <stdlib.h>
+import "C"
 
 var (
 	Art  = getASCIIArt()
@@ -285,8 +291,11 @@ func shasum(s string) string {
 }
 
 func rmBadWords(text string) string {
-    // TODO: fill this
-	return text
+    cText := C.CString(text)
+    defer C.free(unsafe.Pointer(cText))
+    C.censor(cText)
+    ret := C.GoString(cText)
+	return ret
 }
 
 func holidaysCheck(u *User) {
