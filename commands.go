@@ -717,6 +717,7 @@ func manCMD(rest string, u *User) {
 
 	if cmd, ok := getCMD(rest); ok {
 		u.room.broadcast(Devbot, "Usage: "+cmd.name+" "+cmd.argsInfo+"  \n"+cmd.info)
+		return
 	}
 	// Plugin commands
 	if c, ok := PluginCMDs[rest]; ok {
