@@ -23,4 +23,7 @@ install: devzat
 clean:
 	rm -rf devzat
 	rm -rf librustrict_devzat.a
+	cd ./rustrict_devzat; \
+	cargo clean; \
+	cd ..
 
