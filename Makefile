@@ -1,3 +1,8 @@
+# This Makefile is needed to compile the Rust glue layer between Devzat and the
+# Rust library Rustrict. To compile Devzat, simply run `make`. To install it as
+# a Go binary, run `make install`.
+
+all: devzat
 
 GO_SRC := colors.go commands.go config.go games.go main.go rpc.go slack.go twitter.go util.go
 
@@ -10,6 +15,11 @@ librustrict_devzat.a: ./rustrict_devzat/src/lib.rs ./rustrict_devzat/Cargo.toml
 	cp target/release/librustrict_devzat.a ../; \
 	cd ..
 
+.PHONY: install
+install: devzat
+	go install
+
+.PHONY: clean
 clean:
 	rm -rf devzat
 	rm -rf librustrict_devzat.a
