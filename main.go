@@ -466,8 +466,8 @@ func (u *User) writeln(senderName string, msg string) {
 		msg = strings.TrimSpace(mdRender(msg, 0, u.win.Width)) // No sender
 	}
 	if time.Since(u.lastTimestamp) > time.Minute {
-		u.rWriteln(fmtTime(u, u.lastTimestamp))
 		u.lastTimestamp = time.Now()
+		u.rWriteln(fmtTime(u, u.lastTimestamp))
 	}
 	if u.PingEverytime && senderName != u.Name {
 		msg += "\a"
