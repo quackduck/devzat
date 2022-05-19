@@ -20,7 +20,7 @@ import (
 
 // #cgo LDFLAGS: librustrict_devzat.a -Wl,--no-as-needed -ldl 
 // void censor(char* str);
-// #include <stdlib.h>
+// void free(void* p);
 import "C"
 
 var (
