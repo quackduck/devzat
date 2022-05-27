@@ -17,8 +17,4 @@ jobs:
           ssh-private-key: ${{ secrets.PRIVKEY }}
     - name: Deploy
       run: bash .github/workflows/deploy.sh
-      env:
-          PRIVKEY: ${{ secrets.PRIVKEY }}
-          PUBKEY: ${{ secrets.PUBKEY }}
-          SERVER_PASS: ${{ secrets.SERVER_PASS }}
       
