@@ -402,9 +402,9 @@ func cdCMD(rest string, u *User) {
 }
 
 func tzCMD(tzArg string, u *User) {
-	var err error
 	if tzArg == "" {
 		u.Timezone.Location = nil
+		u.room.broadcast(Devbot, "Enabled relative times!")
 		return
 	}
 	tzArgList := strings.Fields(tzArg)
@@ -419,16 +419,13 @@ func tzCMD(tzArg string, u *User) {
 	case "MT":
 		tz = "America/Phoenix"
 	}
+	var err error
 	u.Timezone.Location, err = time.LoadLocation(tz)
 	if err != nil {
 		u.room.broadcast(Devbot, "Weird timezone you have there, use the format Continent/City, the usual US timezones (PST, PDT, EST, EDT...) or check nodatime.org/TimeZones!")
 		return
 	}
-	if len(tzArgList) == 2 {
-		u.FormatTime24 = tzArgList[1] == "24h"
-	} else {
-		u.FormatTime24 = false
-	}
+	u.FormatTime24 = len(tzArgList) == 2 && tzArgList[1] == "24h"
 	u.room.broadcast(Devbot, "Changed your timezone!")
 }
 

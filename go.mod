@@ -47,4 +47,4 @@ require (
 	google.golang.org/genproto v0.0.0-20220502173005-c8bf987b8c21 // indirect
 )
 
-replace golang.org/x/crypto => github.com/cli/crypto v0.0.0-20210929142629-6be313f59b03
+replace golang.org/x/crypto => github.com/rmohr/crypto v0.0.0-20211203105847-e4ed9664ac54

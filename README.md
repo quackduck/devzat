@@ -60,9 +60,7 @@ Check out the [Admin's Manual](Admin's%20Manual.md) for complete self-host docum
 
 Devzat uses public keys to identify users. If you are denied access: `foo@devzat.hackclub.com: Permission denied (publickey)` try logging in on port 443, which does not require a key, using `ssh devzat.hackclub.com -p 443`.
 
-Reasons for this
-* You may not have an SSH key pair. Generate one with the command `ssh-keygen` if this is the case. (you can usually check by making sure a file of this form: `~/.ssh/id_*` exists)
-* If you already have a keypair, and you still get this error, it might be because the server does not yet support RSA SHA-2 signatures. Follow issue progress here: [#77](https://github.com/quackduck/devzat/issues/77).
+This error may happen because you do not have an SSH key pair. Generate one with the command `ssh-keygen` if this is the case. (you can usually check if you have a key pair by making sure a file of this form: `~/.ssh/id_*` exists)
 
 ### Help
 
