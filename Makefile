@@ -4,7 +4,7 @@
 
 all: devzat
 
-GO_SRC := colors.go commands.go config.go games.go main.go rpc.go slack.go twitter.go util.go
+GO_SRC := $(shell ls *.go)
 
 devzat: $(GO_SRC) librustrict_devzat.a
 	go build
