@@ -13,5 +13,5 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-go@v2
-    - run: go build # just build for now to verify code compiles, any tests can run here too
+    - run: make # just build for now to verify code compiles, any tests can run here too
     

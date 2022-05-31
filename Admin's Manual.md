@@ -9,9 +9,9 @@ Feel free to make a [new issue](https://github.com/quackduck/devzat/issues) if s
 git clone https://github.com/quackduck/devzat
 cd devzat
 ```
-To compile Devzat, you will need to have Go installed with a minimum version of 1.17.
+To compile Devzat (rustrict edition), you will need Go (with a minimum version of 1.17) and Rust installed.
 
-Now run `go install` to install the Devzat binary globally, or run `go build` to build and keep the binary in the working directory.
+Now run `make install` to install the Devzat binary globally, or run `make` to build and keep the binary in the working directory.
 
 You may need to generate a new key pair for your server using the `ssh-keygen` command. When prompted, save as `devzat-sshkey` since this is the default location (it can be changed in the config).
 While you can use the same key pair that your user account has, it is recommended to use a new key pair.

@@ -48,7 +48,7 @@ Feel free to make a [new issue](https://github.com/quackduck/devzat/issues) if s
 Quick start:
 ```shell
 git clone https://github.com/quackduck/devzat && cd devzat
-go install # or build, if you want to keep things pwd
+make install # or `make`, if you want to keep things pwd
 ssh-keygen -qN '' -f devzat-sshkey # new ssh host key for the server
 devzat # run! the default config is used & written automatically
 ```
