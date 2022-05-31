@@ -9,7 +9,7 @@ Feel free to make a [new issue](https://github.com/quackduck/devzat/issues) if s
 git clone https://github.com/quackduck/devzat
 cd devzat
 ```
-To compile Devzat, you will need to have Go installed with a minimum version of 1.17. You also need to have the Rust toolchain `cargo` installed.
+To compile Devzat (rustrict edition), you will need Go (with a minimum version of 1.17) and Rust installed.
 
 Now run `make install` to install the Devzat binary globally, or run `make` to build and keep the binary in the working directory.
 

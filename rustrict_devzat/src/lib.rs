@@ -1,7 +1,7 @@
-/// This small Rust library exposes the function `censor` that performs the
-/// censor from rustrict on a C string. The code in the helper functions is
-/// very unsafe but as I know what will be fed into this library and what is
-/// the behavior of rustrict, there is no risks.
+/// This small Rust library exposes a `censor` function that uses rustrict on a C string. 
+/// The code in the helper functions is unsafe but as input is controlled and rustrict behavior
+/// is known, there are no significant risks.
+
 use rustrict::CensorStr;
 use std::ffi::CStr;
 use std::ffi::CString;
