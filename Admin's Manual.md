@@ -9,7 +9,7 @@ Feel free to make a [new issue](https://github.com/quackduck/devzat/issues) if s
 git clone https://github.com/quackduck/devzat
 cd devzat
 ```
-To compile Devzat, you will need to have Go installed with a minimum version of 1.17.
+To compile Devzat, you will need Go installed with a minimum version of 1.17.
 
 Now run `go install` to install the Devzat binary globally, or run `go build` to build and keep the binary in the working directory.
 
