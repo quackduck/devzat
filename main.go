@@ -384,7 +384,7 @@ func newUser(s ssh.Session) *User {
 	default:
 		u.writeln("", Green.Paint("Welcome to the chat. There are", strconv.Itoa(len(MainRoom.users)-1), "more users"))
 	}
-	MainRoom.broadcast("", "--> "+u.Name+" has joined the chat")
+	MainRoom.broadcast("", Green.Paint(" --> ")+u.Name+" has joined the chat")
 	return u
 }
 
@@ -436,7 +436,7 @@ func (u *User) close(msg string) {
 		if time.Since(u.joinTime) > time.Minute/2 {
 			msg += ". They were online for " + printPrettyDuration(time.Since(u.joinTime))
 		}
-		u.room.broadcast("", "<-- "+msg)
+		u.room.broadcast("", Red.Paint(" <-- ")+msg)
 		u.room.users = remove(u.room.users, u)
 		cleanupRoom(u.room)
 	})
@@ -617,7 +617,7 @@ func (u *User) changeRoom(r *Room) {
 		u.pickUsername("") //nolint:errcheck // if reading input failed the next repl will err out
 	}
 	u.room.users = append(u.room.users, u)
-	u.room.broadcast("", "--> "+u.Name+" has joined "+Blue.Paint(u.room.name))
+	u.room.broadcast("", Green.Paint(" --> ")+u.Name+" has joined "+Blue.Paint(u.room.name))
 }
 
 func (u *User) repl() {
