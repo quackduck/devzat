@@ -382,7 +382,7 @@ func newUser(s ssh.Session) *User {
 	default:
 		u.writeln("", Green.Paint("Welcome to the chat. There are", strconv.Itoa(len(MainRoom.users)-1), "more users"))
 	}
-	MainRoom.broadcast(Devbot, u.Name+" has joined the chat")
+	MainRoom.broadcast("", "--> "+u.Name+" has joined the chat")
 	return u
 }
 
