@@ -130,3 +130,19 @@ There are 4 environment variables you can set to quickly disable integrations on
 * `DEVZAT_OFFLINE_SLACK=true` will disable Slack
 * `DEVZAT_OFFLINE_RPC=true` will disable the gRPC server
 * `DEVZAT_OFFLINE=true` will disable all integrations.
+
+### Making a private chat
+
+Devzat have been made to be a public chat-room. But if you want, you can use it as a private, invite-only chat-room. To do so, you should add the following lines in the configuration file:
+
+```yaml
+private: true # Enables the Whitelist checking
+whitelist: 
+  272b326d7d5e9a6b1d98a10b453bdc8cc950fc15cae2c2e858e30645c72ae7c0: 'John Doe' # One entry for each person allowed to log in
+  ...
+```
+
+The `whitelist` entry is a map similar to the `admins` map. The keys are the ID of the allowed user and the value are a string whose content is not used.
+
+Even if someone is in the `admins` list, they would be rejected from a private server if their ID is not in the `whitelist` list.
+
