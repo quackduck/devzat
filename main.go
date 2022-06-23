@@ -183,16 +183,7 @@ func main() {
 	}
 	err = ssh.ListenAndServe(fmt.Sprintf(":%d", Config.Port), nil, ssh.HostKeyFile(Config.KeyFile),
 		ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
-			if Config.Private {
-				id := shasum(string(key.Marshal()))
-				_, ok := Config.WhiteList[id]
-				if !ok {
-					fmt.Println("Refusing user with ID ", id)
-				}
-				return ok
-			} else {
-				return true // allow all keys, this lets us hash pubkeys later
-			}
+			return true // allow all keys, this lets us hash pubkeys later
 		}),
 		ssh.WrapConn(func(s ssh.Context, conn net.Conn) net.Conn {
 			conn.(*net.TCPConn).SetKeepAlive(true)              //nolint:errcheck
@@ -334,6 +325,17 @@ func newUser(s ssh.Session) *User {
 		u.closeQuietly()
 		return nil
 	}
+
+	if Config.Private {
+		_, ok := Config.WhiteList[u.id]
+		if !ok {
+			fmt.Println("Refusing user with ID ", u.id)
+			u.writeln(Devbot, "You are not allowed to log into this private server. If this is a mistake, send your id ("+u.id+") to the admin so that they can whitelist you.")
+			u.closeQuietly()
+			return nil
+		}
+	}
+
 	IDsInMinToTimes[u.id]++
 	time.AfterFunc(60*time.Second, func() {
 		IDsInMinToTimes[u.id]--
