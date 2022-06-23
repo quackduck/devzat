@@ -16,6 +16,8 @@ type ConfigType struct {
 	KeyFile     string            `yaml:"key_file"`
 	Admins      map[string]string `yaml:"admins"`
 	Censor      bool              `yaml:"censor,omitempty"`
+	Private     bool              `yaml:"private,omitempty"`
+	WhiteList   map[string]string `yaml:"whitelist"`
 
 	IntegrationConfig string `yaml:"integration_config"`
 }
@@ -62,6 +64,7 @@ var (
 		DataDir:     "devzat-data",
 		KeyFile:     "devzat-sshkey",
 		Censor:      false,
+		Private:     false,
 
 		IntegrationConfig: "",
 	}

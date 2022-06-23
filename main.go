@@ -170,16 +170,29 @@ func main() {
 
 	fmt.Printf("Starting chat server on port %d and profiling on port %d\n", Config.Port, Config.ProfilePort)
 	go getMsgsFromSlack()
-	go func() {
-		fmt.Println("Also starting chat server on port", Config.AltPort)
-		err := ssh.ListenAndServe(fmt.Sprintf(":%d", Config.AltPort), nil, ssh.HostKeyFile(Config.KeyFile))
-		if err != nil {
-			fmt.Println(err)
-		}
-	}()
+	fmt.Println(Config)
+	fmt.Println(Config.Private)
+	if !Config.Private {
+		go func() {
+			fmt.Println("Also starting chat server on port", Config.AltPort)
+			err := ssh.ListenAndServe(fmt.Sprintf(":%d", Config.AltPort), nil, ssh.HostKeyFile(Config.KeyFile))
+			if err != nil {
+				fmt.Println(err)
+			}
+		}()
+	}
 	err = ssh.ListenAndServe(fmt.Sprintf(":%d", Config.Port), nil, ssh.HostKeyFile(Config.KeyFile),
 		ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
-			return true // allow all keys, this lets us hash pubkeys later
+			if Config.Private {
+				id := shasum(string(key.Marshal()))
+				_, ok := Config.WhiteList[id]
+				if !ok {
+					fmt.Println("Refusing user with ID ", id)
+				}
+				return ok
+			} else {
+				return true // allow all keys, this lets us hash pubkeys later
+			}
 		}),
 		ssh.WrapConn(func(s ssh.Context, conn net.Conn) net.Conn {
 			conn.(*net.TCPConn).SetKeepAlive(true)              //nolint:errcheck
