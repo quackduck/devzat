@@ -367,15 +367,17 @@ func newUser(s ssh.Session) *User {
 		Log.Println("Could not load user:", err)
 	}
 
-	if len(Backlog) > 0 {
-		lastStamp := Backlog[0].timestamp
-		u.rWriteln(fmtTime(u, lastStamp))
-		for i := range Backlog {
-			if Backlog[i].timestamp.Sub(lastStamp) > time.Minute {
-				lastStamp = Backlog[i].timestamp
-				u.rWriteln(fmtTime(u, lastStamp))
+	if !Config.Private {
+		if len(Backlog) > 0 {
+			lastStamp := Backlog[0].timestamp
+			u.rWriteln(fmtTime(u, lastStamp))
+			for i := range Backlog {
+				if Backlog[i].timestamp.Sub(lastStamp) > time.Minute {
+					lastStamp = Backlog[i].timestamp
+					u.rWriteln(fmtTime(u, lastStamp))
+				}
+				u.writeln(Backlog[i].senderName, Backlog[i].text)
 			}
-			u.writeln(Backlog[i].senderName, Backlog[i].text)
 		}
 	}
 
