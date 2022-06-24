@@ -170,8 +170,6 @@ func main() {
 
 	fmt.Printf("Starting chat server on port %d and profiling on port %d\n", Config.Port, Config.ProfilePort)
 	go getMsgsFromSlack()
-	fmt.Println(Config)
-	fmt.Println(Config.Private)
 	if !Config.Private {
 		go func() {
 			fmt.Println("Also starting chat server on port", Config.AltPort)
