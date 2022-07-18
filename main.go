@@ -325,8 +325,9 @@ func newUser(s ssh.Session) *User {
 	}
 
 	if Config.Private {
-		_, ok := Config.WhiteList[u.id]
-		if !ok {
+		_, okWhitelist := Config.WhiteList[u.id]
+		_, okAdmin := Config.Admins[u.id]
+		if !okAdmin && !okWhitelist {
 			fmt.Println("Refusing user with ID ", u.id)
 			u.writeln(Devbot, "You are not allowed to log into this private server. If this is a mistake, send your id ("+u.id+") to the admin so that they can whitelist you.")
 			u.closeQuietly()

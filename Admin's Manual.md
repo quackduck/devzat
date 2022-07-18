@@ -144,5 +144,6 @@ whitelist:
 
 The `whitelist` entry is a map similar to the `admins` map. The keys are the ID of the allowed user and the value are a string whose content is not used.
 
-Even if someone is in the `admins` list, they would be rejected from a private server if their ID is not in the `whitelist` list.
+If someone is in the `admins` list, it is assumed that they are allowed. They, they would not be rejected from a private server even if their ID is not in the `whitelist` list. 
+If everyone on the private server is an admin, you don't need to have a `whitelist` list as all the ID are already in the `admin` list.
 
