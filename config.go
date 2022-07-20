@@ -65,6 +65,7 @@ var (
 		KeyFile:     "devzat-sshkey",
 		Censor:      false,
 		Private:     false,
+		WhiteList:   make(map[string]string),
 
 		IntegrationConfig: "",
 	}
