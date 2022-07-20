@@ -17,7 +17,7 @@ type ConfigType struct {
 	Admins      map[string]string `yaml:"admins"`
 	Censor      bool              `yaml:"censor,omitempty"`
 	Private     bool              `yaml:"private,omitempty"`
-	WhiteList   map[string]string `yaml:"whitelist"`
+	WhiteList   map[string]string `yaml:"whitelist,omitempty"`
 
 	IntegrationConfig string `yaml:"integration_config"`
 }
