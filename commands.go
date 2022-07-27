@@ -308,7 +308,7 @@ func ticCMD(rest string, u *User) {
 }
 
 func exitCMD(_ string, u *User) {
-	u.close(u.Name + Red.Paint(" has left the chat"))
+	u.close(u.Name + " has left the chat")
 }
 
 func bellCMD(rest string, u *User) {

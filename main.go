@@ -81,6 +81,7 @@ type User struct {
 	closeOnce     sync.Once
 	lastTimestamp time.Time
 	joinTime      time.Time
+	lastInteract  time.Time
 	Timezone      tz
 }
 
@@ -303,6 +304,7 @@ func newUser(s ssh.Session) *User {
 		addr:          host,
 		win:           w,
 		lastTimestamp: time.Now(),
+		lastInteract:  time.Now(),
 		joinTime:      time.Now(),
 		room:          MainRoom}
 
@@ -382,7 +384,7 @@ func newUser(s ssh.Session) *User {
 	default:
 		u.writeln("", Green.Paint("Welcome to the chat. There are", strconv.Itoa(len(MainRoom.users)-1), "more users"))
 	}
-	MainRoom.broadcast(Devbot, u.Name+" has joined the chat")
+	MainRoom.broadcast("", Green.Paint(" --> ")+u.Name+" has joined the chat")
 	return u
 }
 
@@ -434,7 +436,7 @@ func (u *User) close(msg string) {
 		if time.Since(u.joinTime) > time.Minute/2 {
 			msg += ". They were online for " + printPrettyDuration(time.Since(u.joinTime))
 		}
-		u.room.broadcast(Devbot, msg)
+		u.room.broadcast("", Red.Paint(" <-- ")+msg)
 		u.room.users = remove(u.room.users, u)
 		cleanupRoom(u.room)
 	})
@@ -615,11 +617,12 @@ func (u *User) changeRoom(r *Room) {
 		u.pickUsername("") //nolint:errcheck // if reading input failed the next repl will err out
 	}
 	u.room.users = append(u.room.users, u)
-	u.room.broadcast(Devbot, u.Name+" has joined "+Blue.Paint(u.room.name))
+	u.room.broadcast("", Green.Paint(" --> ")+u.Name+" has joined "+Blue.Paint(u.room.name))
 }
 
 func (u *User) repl() {
 	for {
+		u.lastInteract = time.Now()
 		line, err := u.term.ReadLine()
 		if err == io.EOF {
 			u.close(u.Name + " has left the chat")
