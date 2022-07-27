@@ -170,13 +170,15 @@ func main() {
 
 	fmt.Printf("Starting chat server on port %d and profiling on port %d\n", Config.Port, Config.ProfilePort)
 	go getMsgsFromSlack()
-	go func() {
-		fmt.Println("Also starting chat server on port", Config.AltPort)
-		err := ssh.ListenAndServe(fmt.Sprintf(":%d", Config.AltPort), nil, ssh.HostKeyFile(Config.KeyFile))
-		if err != nil {
-			fmt.Println(err)
-		}
-	}()
+	if !Config.Private {
+		go func() {
+			fmt.Println("Also starting chat server on port", Config.AltPort)
+			err := ssh.ListenAndServe(fmt.Sprintf(":%d", Config.AltPort), nil, ssh.HostKeyFile(Config.KeyFile))
+			if err != nil {
+				fmt.Println(err)
+			}
+		}()
+	}
 	err = ssh.ListenAndServe(fmt.Sprintf(":%d", Config.Port), nil, ssh.HostKeyFile(Config.KeyFile),
 		ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
 			return true // allow all keys, this lets us hash pubkeys later
@@ -321,6 +323,18 @@ func newUser(s ssh.Session) *User {
 		u.closeQuietly()
 		return nil
 	}
+
+	if Config.Private {
+		_, okWhitelist := Config.WhiteList[u.id]
+		_, okAdmin := Config.Admins[u.id]
+		if !(okAdmin || okWhitelist) {
+			fmt.Println("Refusing user with ID ", u.id)
+			u.writeln(Devbot, "You are not allowed to log into this private server. If this is a mistake, send your id ("+u.id+") to the admin so that they can whitelist you.")
+			u.closeQuietly()
+			return nil
+		}
+	}
+
 	IDsInMinToTimes[u.id]++
 	time.AfterFunc(60*time.Second, func() {
 		IDsInMinToTimes[u.id]--
@@ -354,15 +368,17 @@ func newUser(s ssh.Session) *User {
 		Log.Println("Could not load user:", err)
 	}
 
-	if len(Backlog) > 0 {
-		lastStamp := Backlog[0].timestamp
-		u.rWriteln(fmtTime(u, lastStamp))
-		for i := range Backlog {
-			if Backlog[i].timestamp.Sub(lastStamp) > time.Minute {
-				lastStamp = Backlog[i].timestamp
-				u.rWriteln(fmtTime(u, lastStamp))
+	if !Config.Private {
+		if len(Backlog) > 0 {
+			lastStamp := Backlog[0].timestamp
+			u.rWriteln(fmtTime(u, lastStamp))
+			for i := range Backlog {
+				if Backlog[i].timestamp.Sub(lastStamp) > time.Minute {
+					lastStamp = Backlog[i].timestamp
+					u.rWriteln(fmtTime(u, lastStamp))
+				}
+				u.writeln(Backlog[i].senderName, Backlog[i].text)
 			}
-			u.writeln(Backlog[i].senderName, Backlog[i].text)
 		}
 	}
 
