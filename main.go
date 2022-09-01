@@ -205,16 +205,18 @@ func (r *Room) broadcast(senderName, msg string) {
 
 func (r *Room) findMention(msg string) string {
 	if len(msg) == 0 {
-		return ""
+		return msg
 	}
 	maxLen := 0
 	indexMax := -1
-	for i := range r.users {
-		rawName := stripansi.Strip(r.users[i].Name)
-		if strings.HasPrefix(msg, "@"+rawName) {
-			if len(rawName) > maxLen {
-				maxLen = len(rawName)
-				indexMax = i
+	if msg[0] == '@' {
+		for i := range r.users {
+			rawName := stripansi.Strip(r.users[i].Name)
+			if strings.HasPrefix(msg, "@"+rawName) {
+				if len(rawName) > maxLen {
+					maxLen = len(rawName)
+					indexMax = i
+				}
 			}
 		}
 	}

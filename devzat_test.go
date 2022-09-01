@@ -77,4 +77,6 @@ func TestFindMention(t *testing.T) {
 	inputMsg = "  @tim  "
 	expectedMsg = "  " + r.users[0].Name + "  "
 	performTFM(t, r, inputMsg, expectedMsg)
+	performTFM(t, r, "", "")
+	performTFM(t, r, "no mention", "no mention")
 }
