@@ -1,4 +1,5 @@
-// This module is meant to perform some unit tests on Devzat code.
+// This module is meant to be some standard Go unit tests for Devzat. Run
+// `go test` to run them.
 
 package main
 
@@ -65,6 +66,7 @@ func performTFM(t *testing.T, r *Room, raw string, expected string) {
 	}
 }
 
+// Test the findMention function
 func TestFindMention(t *testing.T) {
 	r := makeDummyRoom()
 	inputMsg := "@tim @tom @timtom @timt Hi!"
