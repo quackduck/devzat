@@ -134,7 +134,9 @@ func (u *user) changeColor(colorName string) error {
 	//styleBG, _ := getStyle(u.colorBG)
 	//u.name = styleFG.apply(u.name) // fg clears the bg color
 	//u.name = styleBG.apply(u.name) // then re-add bg color if any
-	u.term.SetPrompt(u.name + ": ")
+    if u.term != nil { // TODO: fix this in tester.go
+        u.term.SetPrompt(u.name + ": ")
+    }
 	saveBans()
 	return nil
 }
