@@ -18,39 +18,35 @@ func (rw dummyRW) Write(p []byte) (n int, err error) {
 	return 0, nil
 }
 
-func makeDummyRoom() room {
+func makeDummyRoom() Room {
 	drw := dummyRW{}
 	dummyTerm := terminal.NewTerminal(drw, "")
-	ret := room{
+	ret := Room{
 		name:  "DummyRoom",
-		users: []*user{},
+		users: []*User{},
 	}
-	tim := &user{
-		name: "tim",
+	tim := &User{
+		Name: "tim",
 		term: dummyTerm,
 	}
-	tim.initColor()
 	tim.changeColor("red")
 	ret.users = append(ret.users, tim)
-	tom := &user{
-		name: "tom",
+	tom := &User{
+		Name: "tom",
 		term: dummyTerm,
 	}
-	tom.initColor()
 	tom.changeColor("blue")
 	ret.users = append(ret.users, tom)
-	timtom := &user{
-		name: "timtom",
+	timtom := &User{
+		Name: "timtom",
 		term: dummyTerm,
 	}
-	timtom.initColor()
 	timtom.changeColor("sky")
 	ret.users = append(ret.users, timtom)
-	timt := &user{
-		name: "timt",
+	timt := &User{
+		Name: "timt",
 		term: dummyTerm,
 	}
-	timt.initColor()
 	timt.changeColor("coral")
 	ret.users = append(ret.users, timt)
 	return ret
@@ -60,7 +56,7 @@ func TestFindMention(t *testing.T) {
 	r := makeDummyRoom()
 	inputMsg := "@tim @tom @timtom @timt Hi!"
 	// Warning, the order the elements have been put in the dummy room affects the result of the test
-	expectedMsg := r.users[0].name + " " + r.users[1].name + " " + r.users[2].name + " " + r.users[3].name + " Hi!"
+	expectedMsg := r.users[0].Name + " " + r.users[1].Name + " " + r.users[2].Name + " " + r.users[3].Name + " Hi!"
 	coloredMsg := r.findMention(inputMsg)
 	t.Log(coloredMsg)
 	if coloredMsg != expectedMsg {

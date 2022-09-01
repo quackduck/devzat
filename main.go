@@ -203,14 +203,14 @@ func (r *Room) broadcast(senderName, msg string) {
 	r.broadcastNoSlack(senderName, msg)
 }
 
-func (r *room) findMention(msg string) string {
+func (r *Room) findMention(msg string) string {
 	if len(msg) == 0 {
 		return ""
 	}
 	maxLen := 0
 	indexMax := -1
 	for i := range r.users {
-		rawName := stripansi.Strip(r.users[i].name)
+		rawName := stripansi.Strip(r.users[i].Name)
 		if strings.HasPrefix(msg, "@"+rawName) {
 			if len(rawName) > maxLen {
 				maxLen = len(rawName)
@@ -219,8 +219,8 @@ func (r *room) findMention(msg string) string {
 		}
 	}
 	if indexMax != -1 {
-		nextSearch := strings.Replace(msg, "@"+stripansi.Strip(r.users[indexMax].name), "", 1)
-		return r.users[indexMax].name + r.findMention(nextSearch)
+		nextSearch := strings.Replace(msg, "@"+stripansi.Strip(r.users[indexMax].Name), "", 1)
+		return r.users[indexMax].Name + r.findMention(nextSearch)
 	} else {
 		posAt := strings.Index(msg, "@")
 		if posAt < 0 {
