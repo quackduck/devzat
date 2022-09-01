@@ -179,34 +179,34 @@ func (r *room) broadcast(senderName, msg string) {
 }
 
 func (r *room) findMention(msg string) string {
-    if len(msg) == 0 {
-        return ""
-    }
-    maxLen := 0
-    indexMax := -1
-    for i := range r.users {
-        rawName := stripansi.Strip(r.users[i].name)
-        if strings.HasPrefix(msg, "@"+rawName) {
-            if len(rawName) > maxLen {
-                maxLen = len(rawName)
-                indexMax = i
-            }
-        }
-    }
-    if indexMax != -1 {
-        nextSearch := strings.Replace(msg, "@"+stripansi.Strip(r.users[indexMax].name), "", 1)
-        return r.users[indexMax].name + r.findMention(nextSearch)
-    } else {
-        posAt := strings.Index(msg, "@")
-        if posAt < 0 {
-            return msg
-        }
-        if posAt == 0 { // If the message starts with "@" but it isnt a valid mention, we don't want to create an infinite loop
-            posAt = 1;
-        }
-        //fmt.Printf("<%s> <%s>\n", msg[0:posAt], msg[posAt:len(msg)])
-        return msg[0:posAt] + r.findMention(msg[posAt:len(msg)])
-    }
+	if len(msg) == 0 {
+		return ""
+	}
+	maxLen := 0
+	indexMax := -1
+	for i := range r.users {
+		rawName := stripansi.Strip(r.users[i].name)
+		if strings.HasPrefix(msg, "@"+rawName) {
+			if len(rawName) > maxLen {
+				maxLen = len(rawName)
+				indexMax = i
+			}
+		}
+	}
+	if indexMax != -1 {
+		nextSearch := strings.Replace(msg, "@"+stripansi.Strip(r.users[indexMax].name), "", 1)
+		return r.users[indexMax].name + r.findMention(nextSearch)
+	} else {
+		posAt := strings.Index(msg, "@")
+		if posAt < 0 {
+			return msg
+		}
+		if posAt == 0 { // If the message starts with "@" but it isnt a valid mention, we don't want to create an infinite loop
+			posAt = 1
+		}
+		//fmt.Printf("<%s> <%s>\n", msg[0:posAt], msg[posAt:len(msg)])
+		return msg[0:posAt] + r.findMention(msg[posAt:len(msg)])
+	}
 }
 
 func (r *room) broadcastNoSlack(senderName, msg string) {
