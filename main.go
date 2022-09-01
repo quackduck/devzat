@@ -242,8 +242,8 @@ func (r *Room) broadcastNoSlack(senderName, msg string) {
 	}
 	msg = strings.ReplaceAll(msg, "@everyone", Green.Paint("everyone\a"))
 	r.usersMutex.Lock()
+	msg = r.findMention(msg)
 	for i := range r.users {
-		msg = strings.ReplaceAll(msg, "@"+stripansi.Strip(r.users[i].Name), r.users[i].Name)
 		msg = strings.ReplaceAll(msg, `\`+r.users[i].Name, "@"+stripansi.Strip(r.users[i].Name)) // allow escaping
 	}
 	for i := range r.users {
