@@ -3,8 +3,8 @@
 package main
 
 import (
-    "fmt"
 	terminal "github.com/quackduck/term"
+    "testing"
 )
 
 type dummyRW struct {
@@ -46,6 +46,7 @@ func makeDummyRoom() room {
     }
     timtom.initColor()
     timtom.changeColor("sky")
+    ret.users = append(ret.users, timtom);
     timt := &user {
         name: "timt",
         term:  dummyTerm,
@@ -53,12 +54,20 @@ func makeDummyRoom() room {
     timt.initColor()
     timt.changeColor("coral")
     ret.users = append(ret.users, timt);
-    ret.users = append(ret.users, timtom);
     return ret
 }
 
-func test() {
+func TestFindMention(t *testing.T) {
     r := makeDummyRoom()
-    fmt.Println(r.findMention("@tim @tom @timt @timtom Hi!"))
+    inputMsg := "@tim @tom @timtom @timt Hi!"
+    // Warning, the order the elements have been put in the dummy room affects the result of the test
+    expectedMsg := r.users[0].name+" "+r.users[1].name+" "+r.users[2].name+" "+r.users[3].name+" Hi!"
+    coloredMsg := r.findMention(inputMsg)
+    t.Log(coloredMsg)
+    if coloredMsg != expectedMsg {
+        t.Log(expectedMsg)
+        t.Fail()
+    }
+    //fmt.Println(r.findMention("@tim @tom @timt @timtom Hi!"))
 }
 

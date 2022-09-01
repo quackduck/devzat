@@ -89,8 +89,6 @@ type backlogMessage struct {
 
 // TODO: have a web dashboard that shows logs
 func main() {
-    test()
-    return
 	go func() {
 		err := http.ListenAndServe(fmt.Sprintf(":%d", profilePort), nil)
 		if err != nil {
@@ -203,6 +201,10 @@ func (r *room) findMention(msg string) string {
         if posAt < 0 {
             return msg
         }
+        if posAt == 0 { // If the message starts with "@" but it isnt a valid mention, we don't want to create an infinite loop
+            posAt = 1;
+        }
+        //fmt.Printf("<%s> <%s>\n", msg[0:posAt], msg[posAt:len(msg)])
         return msg[0:posAt] + r.findMention(msg[posAt:len(msg)])
     }
 }
