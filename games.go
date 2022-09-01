@@ -42,6 +42,6 @@ func tttPrint(cells [9]tictactoe.State) string {
 			cells[3], cells[4], cells[5],
 			cells[6], cells[7], cells[8]),
 
-		tictactoe.X.String(), chalk.BrightYellow(tictactoe.X.String())), // add some coloring
-		tictactoe.O.String(), chalk.BrightGreen(tictactoe.O.String()))
+		tictactoe.X.String(), Chalk.BrightYellow(tictactoe.X.String())), // add some coloring
+		tictactoe.O.String(), Chalk.BrightGreen(tictactoe.O.String()))
 }

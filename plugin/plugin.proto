@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+option go_package = "devzat/plugin";
+
+package plugin;
+
+service Plugin {
+  // Events are implemented through a stream that is held open
+  rpc RegisterListener(stream ListenerClientData) returns (stream Event);
+  rpc RegisterCmd(CmdDef) returns (stream CmdInvocation);
+
+  // Commands a plugin can call
+  rpc SendMessage(Message) returns (MessageRes);
+}
+
+/* RegisterListener */
+
+message Event {
+  string room = 1;
+  string from = 2;
+  string msg = 3;
+}
+
+message ListenerClientData {
+  oneof data {
+    Listener listener = 1;
+    MiddlewareResponse response = 2;
+  }
+}
+
+message Listener {
+  optional bool middleware = 1;
+  optional bool once = 2;
+  // Regex to match against to determine if this listener should be called
+  // Does not include slashes or flags
+  optional string regex = 3;
+}
+
+message MiddlewareResponse {
+  optional string msg = 1;
+}
+
+/* RegisterCmd */
+
+message CmdDef {
+  string name = 1;
+  string argsInfo = 2;
+  string info = 3;
+}
+
+message CmdInvocation {
+  string room = 1;
+  string from = 2;
+  string args = 3;
+}
+
+/* SendMessage */
+
+message Message {
+  string room = 1;
+  optional string from = 2;
+  string msg = 3;
+  optional string ephemeral_to = 4;
+}
+
+message MessageRes {}
