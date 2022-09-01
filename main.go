@@ -230,7 +230,7 @@ func (r *Room) findMention(msg string) string {
 			posAt = 1
 		}
 		//fmt.Printf("<%s> <%s>\n", msg[0:posAt], msg[posAt:len(msg)])
-		return msg[0:posAt] + r.findMention(msg[posAt:len(msg)])
+		return msg[0:posAt] + r.findMention(msg[posAt:])
 	}
 }
 

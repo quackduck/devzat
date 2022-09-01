@@ -1,8 +1,8 @@
 package main
 
 import (
-	goaway "github.com/TwiN/go-away"
 	"encoding/base64"
+	goaway "github.com/TwiN/go-away"
 )
 
 var detector = goaway.NewProfanityDetector().WithSanitizeSpaces(false)
@@ -27,4 +27,3 @@ func init() {
 		}
 	}
 }
-
