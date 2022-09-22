@@ -457,9 +457,13 @@ func (u *User) writeln(senderName string, msg string) {
 	msg = strings.ReplaceAll(msg, `\n`, "\n")
 	msg = strings.ReplaceAll(msg, `\`+"\n", `\n`) // let people escape newlines
 	if senderName != "" {
-		if strings.HasSuffix(senderName, " <- ") || strings.HasSuffix(senderName, " -> ") { // TODO: kinda hacky DM detection
+		thisUserIsSender = strings.HasSuffix(senderName, " <- ")
+		if thisUserIsSender || strings.HasSuffix(senderName, " -> ") { // TODO: kinda hacky DM detection
 			msg = strings.TrimSpace(mdRender(msg, lenString(senderName), u.win.Width))
-			msg = senderName + msg + "\a"
+			msg = senderName + msg
+			if !thisUserIsSender {
+				msg += "\a"
+			}
 		} else {
 			msg = strings.TrimSpace(mdRender(msg, lenString(senderName)+2, u.win.Width))
 			msg = senderName + ": " + msg
