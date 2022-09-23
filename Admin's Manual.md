@@ -147,3 +147,5 @@ The `whitelist` entry is a map similar to the `admins` map. The keys are the ID 
 All admins are allowed even if their ID is not in the whitelist. 
 Therefore, if everyone on the private server is an admin, a whitelist isn't necessary.
 
+Message backlog on `#main` is disabled in private chats. Thus you can be assured that only the peoples currently logged in can read your messages. No one can snoop in afterwards.
+

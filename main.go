@@ -368,7 +368,7 @@ func newUser(s ssh.Session) *User {
 		Log.Println("Could not load user:", err)
 	}
 
-	if !Config.Private {
+	if !Config.Private { // As sensitive information might be shared on a private chat, not showing the backlog is preferable for a privacy standpoint
 		if len(Backlog) > 0 {
 			lastStamp := Backlog[0].timestamp
 			u.rWriteln(fmtTime(u, lastStamp))
