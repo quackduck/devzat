@@ -595,7 +595,7 @@ Interesting features:
 * Built in Tic Tac Toe and Hangman! Run tic or hang <word> to start new games.
 * Emoji replacements! \:rocket\: => :rocket: (like on Slack and Discord)
 
-For replacing newlines, I often use bulkseotools.com/add-remove-line-breaks.php.
+For replacing newlines, I often use https://bulkseotools.com/add-remove-line-breaks.php.
 
 Join the Devzat discord server: https://discord.gg/5AUjJvBHeT
 
