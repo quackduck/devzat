@@ -225,8 +225,8 @@ func (r *Room) findMention(msg string) string {
 		}
 	}
 	if indexMax != -1 {
-		nextSearch := strings.Replace(msg, "@"+stripansi.Strip(r.users[indexMax].Name), "", 1)
-		return r.users[indexMax].Name + r.findMention(nextSearch)
+		// nextSearch := strings.Replace(msg, "@"+stripansi.Strip(r.users[indexMax].Name), "", 1)
+		return r.users[indexMax].Name + r.findMention(msg[maxLen+1:])
 	} else {
 		posAt := strings.Index(msg, "@")
 		if posAt < 0 {
