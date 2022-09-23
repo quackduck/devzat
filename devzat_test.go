@@ -11,8 +11,6 @@ import (
 	terminal "github.com/quackduck/term"
 )
 
-const benchmarkRuns = 10000
-
 type dummyRW struct{}
 
 func (rw dummyRW) Read(p []byte) (n int, err error)  { return 0, nil }
@@ -69,10 +67,10 @@ func TestFindMention(t *testing.T) {
 
 /* ---------------------- Testing speed of findMention ---------------------- */
 
-const (
+var (
 	noMention      = "This is a message with no mentions."
 	compactMention = "@tom @tom @tom @tom."
-	longMention    = "@tim, This is a looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooonger message"
+	longMention    = "@tim, This is a l" + strings.Repeat("ooooo", 100) + "nger message"
 	escapedMention = "\\@tom \\@tom \\@tom \\@tom."
 )
 
@@ -86,56 +84,56 @@ func oldMention(r *Room, msg string) string {
 
 func BenchmarkFindMentionNoMention(b *testing.B) {
 	r := makeDummyRoom()
-	for i := 0; i < benchmarkRuns; i++ {
+	for i := 0; i < b.N; i++ {
 		_ = r.findMention(noMention)
 	}
 }
 
 func BenchmarkFindMentionCompactMention(b *testing.B) {
 	r := makeDummyRoom()
-	for i := 0; i < benchmarkRuns; i++ {
+	for i := 0; i < b.N; i++ {
 		_ = r.findMention(compactMention)
 	}
 }
 
 func BenchmarkFindMentionLongMessage(b *testing.B) {
 	r := makeDummyRoom()
-	for i := 0; i < benchmarkRuns; i++ {
+	for i := 0; i < b.N; i++ {
 		_ = r.findMention(longMention)
 	}
 }
 
 func BenchmarkFindMentionEscapedMention(b *testing.B) {
 	r := makeDummyRoom()
-	for i := 0; i < benchmarkRuns; i++ {
+	for i := 0; i < b.N; i++ {
 		_ = r.findMention(escapedMention)
 	}
 }
 
 func BenchmarkOldMentionNoMention(b *testing.B) {
 	r := makeDummyRoom()
-	for i := 0; i < benchmarkRuns; i++ {
+	for i := 0; i < b.N; i++ {
 		_ = oldMention(r, noMention)
 	}
 }
 
 func BenchmarkOldMentionCompactMention(b *testing.B) {
 	r := makeDummyRoom()
-	for i := 0; i < benchmarkRuns; i++ {
+	for i := 0; i < b.N; i++ {
 		_ = oldMention(r, compactMention)
 	}
 }
 
 func BenchmarkOldMentionLongMessage(b *testing.B) {
 	r := makeDummyRoom()
-	for i := 0; i < benchmarkRuns; i++ {
+	for i := 0; i < b.N; i++ {
 		_ = oldMention(r, longMention)
 	}
 }
 
 func BenchmarkOldMentionEscapedMention(b *testing.B) {
 	r := makeDummyRoom()
-	for i := 0; i < benchmarkRuns; i++ {
+	for i := 0; i < b.N; i++ {
 		_ = oldMention(r, escapedMention)
 	}
 }
