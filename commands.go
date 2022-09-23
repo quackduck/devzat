@@ -68,7 +68,7 @@ var (
 		{"rm", rmCMD, "???", "???"},
 		{"su", nickCMD, "???", "This is an alias of nick"},
 		{"colour", colorCMD, "???", "This is an alias of color"}, // appease the british
-		{":q", exitCMD, "???", "This is an alias of exit"}, // appease the Vim user
+		{":q", exitCMD, "", "This is an alias of exit"},          // appease the Vim user
 	}
 )
 
@@ -136,7 +136,9 @@ func runCommands(line string, u *User) {
 	}
 
 	if cmd, ok := getCMD(currCmd); ok {
-		cmd.run(args, u)
+		if !(cmd.argsInfo == "" && args != "") {
+			cmd.run(args, u)
+		}
 	}
 }
 
