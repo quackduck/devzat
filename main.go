@@ -492,10 +492,14 @@ func (u *User) writeln(senderName string, msg string) {
 	}
 	msg = strings.ReplaceAll(msg, `\n`, "\n")
 	msg = strings.ReplaceAll(msg, `\`+"\n", `\n`) // let people escape newlines
+	thisUserIsDMSender := strings.HasSuffix(senderName, " <- ")
 	if senderName != "" {
-		if strings.HasSuffix(senderName, " <- ") || strings.HasSuffix(senderName, " -> ") { // TODO: kinda hacky DM detection
+		if thisUserIsDMSender || strings.HasSuffix(senderName, " -> ") { // TODO: kinda hacky DM detection
 			msg = strings.TrimSpace(mdRender(msg, lenString(senderName), u.win.Width))
-			msg = senderName + msg + "\a"
+			msg = senderName + msg
+			if !thisUserIsDMSender {
+				msg += "\a"
+			}
 		} else {
 			msg = strings.TrimSpace(mdRender(msg, lenString(senderName)+2, u.win.Width))
 			msg = senderName + ": " + msg
@@ -507,7 +511,7 @@ func (u *User) writeln(senderName string, msg string) {
 		u.lastTimestamp = time.Now()
 		u.rWriteln(fmtTime(u, u.lastTimestamp))
 	}
-	if u.PingEverytime && senderName != u.Name {
+	if u.PingEverytime && senderName != u.Name && !thisUserIsDMSender {
 		msg += "\a"
 	}
 	if !u.Bell {
