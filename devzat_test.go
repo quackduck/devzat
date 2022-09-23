@@ -4,10 +4,14 @@
 package main
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/acarl005/stripansi"
 	terminal "github.com/quackduck/term"
 )
+
+const benchmarkRuns = 10000
 
 type dummyRW struct{}
 
@@ -32,6 +36,8 @@ func makeDummyRoom() *Room {
 	return ret
 }
 
+/* ------------------ Testing correctness of findMention ------------------- */
+
 func performTFM(t *testing.T, r *Room, raw string, expected string) {
 	colored := r.findMention(raw)
 	t.Log(colored)
@@ -41,7 +47,6 @@ func performTFM(t *testing.T, r *Room, raw string, expected string) {
 	}
 }
 
-// Test the findMention function
 func TestFindMention(t *testing.T) {
 	r := makeDummyRoom()
 	inputMsg := "@tim @tom @timtom @timt Hi!"
@@ -59,4 +64,70 @@ func TestFindMention(t *testing.T) {
 	performTFM(t, r, "@tim \\@tim", r.users[0].Name+" @tim")
 	performTFM(t, r, "@", "@")
 	performTFM(t, r, "\\@", "@")
+}
+
+/* ---------------------- Testing speed of findMention ---------------------- */
+
+func oldMention(r *Room, msg string) string {
+	for i := range r.users {
+		msg = strings.ReplaceAll(msg, "@"+stripansi.Strip(r.users[i].Name), r.users[i].Name)
+		msg = strings.ReplaceAll(msg, `\`+r.users[i].Name, "@"+stripansi.Strip(r.users[i].Name)) // allow escaping
+	}
+	return msg
+}
+
+func BenchmarkFindMentionNoMention(b *testing.B) {
+	r := makeDummyRoom()
+	for i := 0; i < benchmarkRuns; i++ {
+		_ = r.findMention("This is a message with no mentions.")
+	}
+}
+
+func BenchmarkFindMentionCompactMention(b *testing.B) {
+	r := makeDummyRoom()
+	for i := 0; i < benchmarkRuns; i++ {
+		_ = r.findMention("@tom @tom @tom @tom.")
+	}
+}
+
+func BenchmarkFindMentionLongMessage(b *testing.B) {
+	r := makeDummyRoom()
+	for i := 0; i < benchmarkRuns; i++ {
+		_ = r.findMention("@tim, This is a looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooonger message")
+	}
+}
+
+func BenchmarkFindMentionEscapedMention(b *testing.B) {
+	r := makeDummyRoom()
+	for i := 0; i < benchmarkRuns; i++ {
+		_ = r.findMention("\\@tom \\@tom \\@tom \\@tom.")
+	}
+}
+
+func BenchmarkOldMentionNoMention(b *testing.B) {
+	r := makeDummyRoom()
+	for i := 0; i < benchmarkRuns; i++ {
+		_ = oldMention(r, "This is a message with no mentions.")
+	}
+}
+
+func BenchmarkOldMentionCompactMention(b *testing.B) {
+	r := makeDummyRoom()
+	for i := 0; i < benchmarkRuns; i++ {
+		_ = oldMention(r, "@tom @tom @tom @tom.")
+	}
+}
+
+func BenchmarkOldMentionLongMessage(b *testing.B) {
+	r := makeDummyRoom()
+	for i := 0; i < benchmarkRuns; i++ {
+		_ = oldMention(r, "@tim, This is a looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooonger message")
+	}
+}
+
+func BenchmarkOldMentionEscapedMention(b *testing.B) {
+	r := makeDummyRoom()
+	for i := 0; i < benchmarkRuns; i++ {
+		_ = oldMention(r, "\\@tom \\@tom \\@tom \\@tom.")
+	}
 }
