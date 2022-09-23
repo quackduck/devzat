@@ -206,6 +206,7 @@ func (r *Room) broadcast(senderName, msg string) {
 // In a string, colors all the username of the users in the room when they are
 // @-mentioned. A lot of care have been put in ensuring that if an username is
 // a substring of an other, the longest name is chosen.
+// If the @ is escaped, the mention is not search for.
 func (r *Room) findMention(msg string) string {
 	if len(msg) == 0 {
 		return msg
@@ -231,8 +232,12 @@ func (r *Room) findMention(msg string) string {
 		if posAt < 0 {
 			return msg
 		}
-		if posAt == 0 { // If the message starts with "@" but it isnt a valid mention, we don't want to create an infinite loop
+		if posAt == 0 { // If the message starts with "@" but it isn't a valid mention, we don't want to create an infinite loop
 			posAt = 1
+		} else {
+			if msg[posAt-1] == '\\' { // If the "@" is escaped, we don't want to try to use it for mentions
+				msg = msg[0:posAt-1] + msg[posAt:] // We pop the "\" from the string. posAt no longer points to "@" so the mention is not replaced.
+			}
 		}
 		//fmt.Printf("<%s> <%s>\n", msg[0:posAt], msg[posAt:len(msg)])
 		return msg[0:posAt] + r.findMention(msg[posAt:])
@@ -246,9 +251,6 @@ func (r *Room) broadcastNoSlack(senderName, msg string) {
 	msg = strings.ReplaceAll(msg, "@everyone", Green.Paint("everyone\a"))
 	r.usersMutex.Lock()
 	msg = r.findMention(msg)
-	for i := range r.users {
-		msg = strings.ReplaceAll(msg, `\`+r.users[i].Name, "@"+stripansi.Strip(r.users[i].Name)) // allow escaping
-	}
 	for i := range r.users {
 		r.users[i].writeln(senderName, msg)
 	}
