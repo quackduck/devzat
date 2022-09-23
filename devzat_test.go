@@ -4,56 +4,31 @@
 package main
 
 import (
-	terminal "github.com/quackduck/term"
 	"testing"
+
+	terminal "github.com/quackduck/term"
 )
 
-type dummyRW struct {
-}
+type dummyRW struct{}
 
-func (rw dummyRW) Read(p []byte) (n int, err error) {
-	return 0, nil
-}
-
-func (rw dummyRW) Write(p []byte) (n int, err error) {
-	return 0, nil
-}
+func (rw dummyRW) Read(p []byte) (n int, err error)  { return 0, nil }
+func (rw dummyRW) Write(p []byte) (n int, err error) { return 0, nil }
 
 func makeDummyRoom() *Room {
 	drw := dummyRW{}
 	dummyTerm := terminal.NewTerminal(drw, "")
-	ret := &Room{
-		name:  "DummyRoom",
-		users: []*User{},
-	}
-	tim := &User{
-		Name:    "tim",
-		term:    dummyTerm,
-		ColorBG: "bg-off",
-	}
+	ret := &Room{name: "DummyRoom", users: []*User{}}
+
+	tim := &User{Name: "tim", term: dummyTerm, ColorBG: "bg-off"}
 	_ = tim.changeColor("red")
-	ret.users = append(ret.users, tim)
-	tom := &User{
-		Name:    "tom",
-		term:    dummyTerm,
-		ColorBG: "bg-off",
-	}
+	tom := &User{Name: "tom", term: dummyTerm, ColorBG: "bg-off"}
 	_ = tom.changeColor("blue")
-	ret.users = append(ret.users, tom)
-	timtom := &User{
-		Name:    "timtom",
-		term:    dummyTerm,
-		ColorBG: "bg-off",
-	}
+	timtom := &User{Name: "timtom", term: dummyTerm, ColorBG: "bg-off"}
 	_ = timtom.changeColor("sky")
-	ret.users = append(ret.users, timtom)
-	timt := &User{
-		Name:    "timt",
-		term:    dummyTerm,
-		ColorBG: "bg-off",
-	}
+	timt := &User{Name: "timt", term: dummyTerm, ColorBG: "bg-off"}
 	_ = timt.changeColor("coral")
-	ret.users = append(ret.users, timt)
+
+	ret.users = append(ret.users, tim, tom, timtom, timt)
 	return ret
 }
 
