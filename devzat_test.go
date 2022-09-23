@@ -68,10 +68,10 @@ func TestFindMention(t *testing.T) {
 /* ---------------------- Testing speed of findMention ---------------------- */
 
 var (
-	noMention      = "This is a message with no mentions."
-	compactMention = "@tom @tom @tom @tom."
-	longMention    = "@tim, This is a l" + strings.Repeat("ooooo", 100) + "nger message"
-	escapedMention = "\\@tom \\@tom \\@tom \\@tom."
+	noMention      = strings.Repeat("This is a message with no mentions.", 100)
+	compactMention = "@timt @timt @tom @timt."
+	longMention    = strings.Repeat(" @timt", 100)
+	escapedMention = strings.Repeat(" \\@timt", 100)
 )
 
 func oldMention(r *Room, msg string) string {
