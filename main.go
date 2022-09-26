@@ -203,10 +203,7 @@ func (r *Room) broadcast(senderName, msg string) {
 	r.broadcastNoSlack(senderName, msg)
 }
 
-// In a string, colors all the username of the users in the room when they are
-// @-mentioned. A lot of care have been put in ensuring that if an username is
-// a substring of an other, the longest name is chosen.
-// If the @ is escaped, the mention is not search for.
+// findMention finds mentions and colors them
 func (r *Room) findMention(msg string) string {
 	if len(msg) == 0 {
 		return msg
@@ -238,7 +235,7 @@ func (r *Room) findMention(msg string) string {
 	}
 
 	if msg[posAt-1] == '\\' { // if the "@" is escaped
-		msg = msg[0:posAt-1] + msg[posAt:] // we pop the "\" from the string. posAt no longer points to "@" so the mention is not replaced.
+		return msg[0:posAt-1] + "@" + r.findMention(msg[posAt+1:])
 	}
 
 	return msg[0:posAt] + r.findMention(msg[posAt:])
