@@ -203,16 +203,51 @@ func (r *Room) broadcast(senderName, msg string) {
 	r.broadcastNoSlack(senderName, msg)
 }
 
+// findMention finds mentions and colors them
+func (r *Room) findMention(msg string) string {
+	if len(msg) == 0 {
+		return msg
+	}
+	maxLen := 0
+	indexMax := -1
+
+	if msg[0] == '@' {
+		for i := range r.users {
+			rawName := stripansi.Strip(r.users[i].Name)
+			if strings.HasPrefix(msg, "@"+rawName) {
+				if len(rawName) > maxLen {
+					maxLen = len(rawName)
+					indexMax = i
+				}
+			}
+		}
+		if indexMax != -1 { // found a mention
+			return r.users[indexMax].Name + r.findMention(msg[maxLen+1:])
+		}
+	}
+
+	posAt := strings.IndexByte(msg, '@')
+	if posAt < 0 { // no mention
+		return msg
+	}
+	if posAt == 0 { // if the message starts with "@" but it isn't a valid mention, we don't want to create an infinite loop
+		return "@" + r.findMention(msg[1:])
+	}
+
+	if msg[posAt-1] == '\\' { // if the "@" is escaped
+		return msg[0:posAt-1] + "@" + r.findMention(msg[posAt+1:])
+	}
+
+	return msg[0:posAt] + r.findMention(msg[posAt:])
+}
+
 func (r *Room) broadcastNoSlack(senderName, msg string) {
 	if msg == "" {
 		return
 	}
 	msg = strings.ReplaceAll(msg, "@everyone", Green.Paint("everyone\a"))
 	r.usersMutex.Lock()
-	for i := range r.users {
-		msg = strings.ReplaceAll(msg, "@"+stripansi.Strip(r.users[i].Name), r.users[i].Name)
-		msg = strings.ReplaceAll(msg, `\`+r.users[i].Name, "@"+stripansi.Strip(r.users[i].Name)) // allow escaping
-	}
+	msg = r.findMention(msg)
 	for i := range r.users {
 		r.users[i].writeln(senderName, msg)
 	}
