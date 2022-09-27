@@ -168,15 +168,21 @@ func main() {
 		u.repl()
 	})
 
-	fmt.Printf("Starting chat server on port %d and profiling on port %d\n", Config.Port, Config.ProfilePort)
+	if Config.Private {
+		Log.Printf("Starting a private Devzat server on port %d and profiling on port %d\n Edit your config to change who's allowed entry.", Config.Port, Config.ProfilePort)
+	} else {
+		Log.Printf("Starting a Devzat server on port %d and profiling on port %d\n", Config.Port, Config.ProfilePort)
+	}
 	go getMsgsFromSlack()
-	go func() {
-		fmt.Println("Also starting chat server on port", Config.AltPort)
-		err := ssh.ListenAndServe(fmt.Sprintf(":%d", Config.AltPort), nil, ssh.HostKeyFile(Config.KeyFile))
-		if err != nil {
-			fmt.Println(err)
-		}
-	}()
+	if !Config.Private { // allow non-sshkey logins on a non-private server
+		go func() {
+			fmt.Println("Also serving on port", Config.AltPort)
+			err := ssh.ListenAndServe(fmt.Sprintf(":%d", Config.AltPort), nil, ssh.HostKeyFile(Config.KeyFile))
+			if err != nil {
+				fmt.Println(err)
+			}
+		}()
+	}
 	err = ssh.ListenAndServe(fmt.Sprintf(":%d", Config.Port), nil, ssh.HostKeyFile(Config.KeyFile),
 		ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
 			return true // allow all keys, this lets us hash pubkeys later
@@ -351,11 +357,23 @@ func newUser(s ssh.Session) *User {
 	Log.Println("Connected " + u.Name + " [" + u.id + "]")
 
 	if bansContains(Bans, u.addr, u.id) {
-		Log.Println("Rejected " + u.Name + " [" + host + "]")
+		Log.Println("Rejected " + u.Name + " [" + host + "] (banned)")
 		u.writeln(Devbot, "**You are banned**. If you feel this was a mistake, please reach out at github.com/quackduck/devzat/issues or email igoel.mail@gmail.com. Please include the following information: [ID "+u.id+"]")
 		u.closeQuietly()
 		return nil
 	}
+
+	if Config.Private {
+		_, isOnAllowlist := Config.Allowlist[u.id]
+		_, isAdmin := Config.Admins[u.id]
+		if !(isAdmin || isOnAllowlist) {
+			Log.Println("Rejected " + u.Name + " [" + u.id + "] (not on allowlist)")
+			u.writeln(Devbot, "You are not on the allowlist of this private server. If this is a mistake, send your id ("+u.id+") to the admin so that they can whitelist you.")
+			u.closeQuietly()
+			return nil
+		}
+	}
+
 	IDsInMinToTimes[u.id]++
 	time.AfterFunc(60*time.Second, func() {
 		IDsInMinToTimes[u.id]--
@@ -389,15 +407,17 @@ func newUser(s ssh.Session) *User {
 		Log.Println("Could not load user:", err)
 	}
 
-	if len(Backlog) > 0 {
-		lastStamp := Backlog[0].timestamp
-		u.rWriteln(fmtTime(u, lastStamp))
-		for i := range Backlog {
-			if Backlog[i].timestamp.Sub(lastStamp) > time.Minute {
-				lastStamp = Backlog[i].timestamp
-				u.rWriteln(fmtTime(u, lastStamp))
+	if !Config.Private { // sensitive info might be shared on a private server
+		if len(Backlog) > 0 {
+			lastStamp := Backlog[0].timestamp
+			u.rWriteln(fmtTime(u, lastStamp))
+			for i := range Backlog {
+				if Backlog[i].timestamp.Sub(lastStamp) > time.Minute {
+					lastStamp = Backlog[i].timestamp
+					u.rWriteln(fmtTime(u, lastStamp))
+				}
+				u.writeln(Backlog[i].senderName, Backlog[i].text)
 			}
-			u.writeln(Backlog[i].senderName, Backlog[i].text)
 		}
 	}
 
