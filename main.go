@@ -168,11 +168,15 @@ func main() {
 		u.repl()
 	})
 
-	fmt.Printf("Starting chat server on port %d and profiling on port %d\n", Config.Port, Config.ProfilePort)
+	if Config.Private {
+		Log.Printf("Starting a private Devzat server on port %d and profiling on port %d\n Edit your config to change who's allowed entry.", Config.Port, Config.ProfilePort)
+	} else {
+		Log.Printf("Starting a Devzat server on port %d and profiling on port %d\n", Config.Port, Config.ProfilePort)
+	}
 	go getMsgsFromSlack()
-	if !Config.Private {
+	if !Config.Private { // allow non-sshkey logins on a non-private server
 		go func() {
-			fmt.Println("Also starting chat server on port", Config.AltPort)
+			fmt.Println("Also serving on port", Config.AltPort)
 			err := ssh.ListenAndServe(fmt.Sprintf(":%d", Config.AltPort), nil, ssh.HostKeyFile(Config.KeyFile))
 			if err != nil {
 				fmt.Println(err)
@@ -318,18 +322,18 @@ func newUser(s ssh.Session) *User {
 	Log.Println("Connected " + u.Name + " [" + u.id + "]")
 
 	if bansContains(Bans, u.addr, u.id) {
-		Log.Println("Rejected " + u.Name + " [" + host + "]")
+		Log.Println("Rejected " + u.Name + " [" + host + "] (banned)")
 		u.writeln(Devbot, "**You are banned**. If you feel this was a mistake, please reach out at github.com/quackduck/devzat/issues or email igoel.mail@gmail.com. Please include the following information: [ID "+u.id+"]")
 		u.closeQuietly()
 		return nil
 	}
 
 	if Config.Private {
-		_, okWhitelist := Config.WhiteList[u.id]
-		_, okAdmin := Config.Admins[u.id]
-		if !(okAdmin || okWhitelist) {
-			fmt.Println("Refusing user with ID ", u.id)
-			u.writeln(Devbot, "You are not allowed to log into this private server. If this is a mistake, send your id ("+u.id+") to the admin so that they can whitelist you.")
+		_, isOnAllowlist := Config.Allowlist[u.id]
+		_, isAdmin := Config.Admins[u.id]
+		if !(isAdmin || isOnAllowlist) {
+			Log.Println("Rejected " + u.Name + " [" + u.id + "] (not on allowlist)")
+			u.writeln(Devbot, "You are not on the allowlist of this private server. If this is a mistake, send your id ("+u.id+") to the admin so that they can whitelist you.")
 			u.closeQuietly()
 			return nil
 		}
@@ -368,7 +372,7 @@ func newUser(s ssh.Session) *User {
 		Log.Println("Could not load user:", err)
 	}
 
-	if !Config.Private { // As sensitive information might be shared on a private chat, not showing the backlog is preferable for a privacy standpoint
+	if !Config.Private { // sensitive info might be shared on a private server
 		if len(Backlog) > 0 {
 			lastStamp := Backlog[0].timestamp
 			u.rWriteln(fmtTime(u, lastStamp))

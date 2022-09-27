@@ -131,21 +131,20 @@ There are 4 environment variables you can set to quickly disable integrations on
 * `DEVZAT_OFFLINE_RPC=true` will disable the gRPC server
 * `DEVZAT_OFFLINE=true` will disable all integrations.
 
-### Making a private chat
+### Enabling a user allowlist
 
-Devzat have been made to be a public chat-room. But if you want, you can use it as a private, invite-only chat-room. To do so, you should add the following lines in the configuration file:
+Devzat can use be used as a private chatroom. Add this to your config:
 
 ```yaml
-private: true # Enables the Whitelist checking
-whitelist: 
-  272b326d7d5e9a6b1d98a10b453bdc8cc950fc15cae2c2e858e30645c72ae7c0: 'John Doe' # One entry for each person allowed to log in
+private: true # enable allowlist checking
+allowlist: 
+  272b326d7d5e9a6b1d98a10b453bdc8cc950fc15cae2c2e858e30645c72ae7c0: 'John Doe'
   ...
 ```
 
-The `whitelist` entry is a map similar to the `admins` map. The keys are the ID of the allowed user and the value are a string whose content is not used.
+The `whitelist` has the same format as the `admins` list. Add the IDs of the allowed user and some info about that user (this is to make IDs easier to identify when editing the config file, and isn't used by Devzat)
 
-All admins are allowed even if their ID is not in the whitelist. 
-Therefore, if everyone on the private server is an admin, a whitelist isn't necessary.
+All admins are allowed even if their ID is not in the whitelist. So, if everyone on the private server is an admin, a whitelist isn't necessary, just enable private mode.
 
-Message backlog on `#main` is disabled in private chats. Thus you can be assured that only the peoples currently logged in can read your messages. No one can snoop in afterwards.
+Message backlog on `#main` is disabled in private chats. Only those logged in at the same time as you can read your messages.
 
