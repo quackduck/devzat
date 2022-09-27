@@ -66,6 +66,22 @@ kick <user>
 
 If running these commands makes Devbot complain about authorization, you need to add your ID under the `admins` key in your config file (`devzat-config.yml` by default).
 
+### Enabling a user allowlist
+
+Devzat can use be used as a private chatroom. Add this to your config:
+
+```yaml
+private: true # enable allowlist checking
+allowlist: 
+  272b326d7d5e9a6b1d98a10b453bdc8cc950fc15cae2c2e858e30645c72ae7c0: 'John Doe'
+  ...
+```
+
+The `whitelist` has the same format as the `admins` list. Add the IDs of the allowed user and some info about that user (this is to make IDs easier to identify when editing the config file, and isn't used by Devzat)
+
+All admins are allowed even if their ID is not in the whitelist. So, if everyone on the private server is an admin, a whitelist isn't necessary, just enable private mode.
+
+Message backlog on `#main` is disabled in private chats. Only those logged in at the same time as you can read your messages.
 
 ### Enabling integrations
 
@@ -130,21 +146,4 @@ There are 4 environment variables you can set to quickly disable integrations on
 * `DEVZAT_OFFLINE_SLACK=true` will disable Slack
 * `DEVZAT_OFFLINE_RPC=true` will disable the gRPC server
 * `DEVZAT_OFFLINE=true` will disable all integrations.
-
-### Enabling a user allowlist
-
-Devzat can use be used as a private chatroom. Add this to your config:
-
-```yaml
-private: true # enable allowlist checking
-allowlist: 
-  272b326d7d5e9a6b1d98a10b453bdc8cc950fc15cae2c2e858e30645c72ae7c0: 'John Doe'
-  ...
-```
-
-The `whitelist` has the same format as the `admins` list. Add the IDs of the allowed user and some info about that user (this is to make IDs easier to identify when editing the config file, and isn't used by Devzat)
-
-All admins are allowed even if their ID is not in the whitelist. So, if everyone on the private server is an admin, a whitelist isn't necessary, just enable private mode.
-
-Message backlog on `#main` is disabled in private chats. Only those logged in at the same time as you can read your messages.
 
