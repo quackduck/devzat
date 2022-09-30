@@ -136,7 +136,7 @@ func runCommands(line string, u *User) {
 	}
 
 	if cmd, ok := getCMD(currCmd); ok {
-		if !(cmd.argsInfo == "" && args != "") {
+		if cmd.argsInfo != "" || args == "" {
 			cmd.run(args, u)
 		}
 	}
