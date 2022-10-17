@@ -117,17 +117,7 @@ func mdRender(a string, beforeMessageLen int, lineWidth int) string {
 	}
 	md := string(markdown.Render(a, lineWidth-(beforeMessageLen), 0))
 	md = strings.TrimSuffix(md, "\n")
-	split := strings.Split(md, "\n")
-	for i := range split {
-		if i == 0 {
-			continue // the first line will automatically be padded
-		}
-		split[i] = strings.Repeat(" ", beforeMessageLen) + split[i]
-	}
-	if len(split) == 1 {
-		return md
-	}
-	return strings.Join(split, "\n")
+	return md[beforeMessageLen:]
 }
 
 // Returns true and the User with the same name if the username is taken, false and nil otherwise
