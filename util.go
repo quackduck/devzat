@@ -234,12 +234,11 @@ func devbotChat(room *Room, line string) {
 		devbotRespond(room, []string{"The repo's at github.com/quackduck/devzat!", ":star: github.com/quackduck/devzat :star:", "# github.com/quackduck/devzat"}, 100)
 	}
 	if strings.Contains(line, "rocket") || strings.Contains(line, "spacex") || strings.Contains(line, "tesla") {
-		devbotRespond(room, []string{"Doge to the mooooon :rocket:",
-			"I should have bought ETH before it :rocket:ed to the :moon:",
+		devbotRespond(room, []string{
 			":rocket:",
 			"I like rockets",
 			"SpaceX",
-			"Elon Musk OP"}, 80)
+			"Elon Musk sus"}, 80)
 	}
 	if strings.Contains(line, "elon") {
 		devbotRespond(room, []string{"When something is important enough, you do it even if the odds are not in your favor. - Elon",
