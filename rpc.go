@@ -56,7 +56,6 @@ var listeners = listenerCollection{
 
 func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer) error {
 	s.lock.Lock()
-	defer s.lock.Unlock()
 	Log.Println("[gRPC] Registering event listener")
 	initialData, err := stream.Recv()
 	if err == io.EOF {
@@ -93,6 +92,7 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 	c := make(chan pb.MiddlewareChannelMessage)
 	*channelCollection = append(*channelCollection, c)
 
+	s.lock.Unlock()
 	defer func() {
 		// Remove the channel from the channelCollection where the channel is equal to c
 		for i, channel := range *channelCollection {
@@ -163,14 +163,13 @@ type cmdInst struct {
 
 func (s *pluginServer) RegisterCmd(def *pb.CmdDef, stream pb.Plugin_RegisterCmdServer) error {
 	s.lock.Lock()
-	defer s.lock.Unlock()
 	Log.Print("[gRPC] Registering command with name " + def.Name)
 	PluginCMDs[def.Name] = cmdInst{
 		argsInfo: def.ArgsInfo,
 		info:     def.Info,
 		c:        make(chan *pb.CmdInvocation),
 	}
-
+	s.lock.Unlock()
 	defer delete(PluginCMDs, def.Name)
 
 	for {
