@@ -188,8 +188,15 @@ func main() {
 			return true // allow all keys, this lets us hash pubkeys later
 		}),
 		ssh.WrapConn(func(s ssh.Context, conn net.Conn) net.Conn {
-			conn.(*net.TCPConn).SetKeepAlive(true)              //nolint:errcheck
-			conn.(*net.TCPConn).SetKeepAlivePeriod(time.Minute) //nolint:errcheck
+			err := conn.(*net.TCPConn).SetKeepAlive(true) //nolint:errcheck
+			if err != nil {
+				Log.Println("Couldn't set keep alive:", err)
+				return conn
+			}
+			err = conn.(*net.TCPConn).SetKeepAlivePeriod(time.Minute) //nolint:errcheck
+			if err != nil {
+				Log.Println("Couldn't set keep alive period:", err)
+			}
 			return conn
 		}))
 	if err != nil {
