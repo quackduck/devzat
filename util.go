@@ -92,7 +92,7 @@ func auth(u *User) bool {
 	return ok
 }
 
-func keepalive(s ssh.Session) {
+func keepSessionAlive(s ssh.Session) {
 	func() {
 		for {
 			time.Sleep(time.Minute * 3)
