@@ -155,7 +155,7 @@ func main() {
 		os.Exit(0)
 	}()
 	ssh.Handle(func(s ssh.Session) {
-		go keepalive(s)
+		go keepSessionAlive(s)
 		u := newUser(s)
 		if u == nil {
 			s.Close()
