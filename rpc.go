@@ -40,6 +40,7 @@ var (
 
 type pluginServer struct {
 	pb.UnimplementedPluginServer
+	lock sync.Mutex
 }
 
 // Since pb.MiddlewareChannelMessage includes pb.IsEvent_Event, we'll just use that
@@ -54,6 +55,8 @@ var listeners = listenerCollection{
 }
 
 func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
 	Log.Println("[gRPC] Registering event listener")
 	initialData, err := stream.Recv()
 	if err == io.EOF {
@@ -159,6 +162,8 @@ type cmdInst struct {
 }
 
 func (s *pluginServer) RegisterCmd(def *pb.CmdDef, stream pb.Plugin_RegisterCmdServer) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
 	Log.Print("[gRPC] Registering command with name " + def.Name)
 	PluginCMDs[def.Name] = cmdInst{
 		argsInfo: def.ArgsInfo,
@@ -178,6 +183,8 @@ func (s *pluginServer) RegisterCmd(def *pb.CmdDef, stream pb.Plugin_RegisterCmdS
 }
 
 func (s *pluginServer) SendMessage(ctx context.Context, msg *pb.Message) (*pb.MessageRes, error) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
 	if msg.GetEphemeralTo() != "" {
 		u, success := findUserByName(Rooms[msg.Room], *msg.EphemeralTo)
 		if !success {
