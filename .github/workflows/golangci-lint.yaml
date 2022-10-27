@@ -16,7 +16,9 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-go@latest
+      - uses: actions/setup-go@v3
+        with:
+          check-latest: true
       - uses: actions/checkout@v2
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2

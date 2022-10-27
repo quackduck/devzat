@@ -12,7 +12,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/setup-go@latest
+    - uses: actions/setup-go@v3
+      with:
+        check-latest: true
     - run: go build # just build for now to verify code compiles, any tests can run here too
     - run: go test
     
