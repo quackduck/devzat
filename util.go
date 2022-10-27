@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/acarl005/stripansi"
+	"github.com/gliderlabs/ssh"
 	markdown "github.com/quackduck/go-term-markdown"
 )
 
@@ -89,6 +90,18 @@ func autogenCommands(cmds []CMD) string {
 func auth(u *User) bool {
 	_, ok := Config.Admins[u.id]
 	return ok
+}
+
+func keepalive(s ssh.Session) {
+	func() {
+		for {
+			time.Sleep(time.Minute * 3)
+			_, err := s.SendRequest("keepalive@devzat", true, nil)
+			if err != nil {
+				return
+			}
+		}
+	}()
 }
 
 // removes arrows, spaces and non-ascii-printable characters

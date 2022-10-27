@@ -155,6 +155,7 @@ func main() {
 		os.Exit(0)
 	}()
 	ssh.Handle(func(s ssh.Session) {
+		go keepalive(s)
 		u := newUser(s)
 		if u == nil {
 			s.Close()
@@ -187,18 +188,12 @@ func main() {
 		ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
 			return true // allow all keys, this lets us hash pubkeys later
 		}),
-		ssh.WrapConn(func(s ssh.Context, conn net.Conn) net.Conn {
-			err := conn.(*net.TCPConn).SetKeepAlive(true) //nolint:errcheck
-			if err != nil {
-				Log.Println("Couldn't set keep alive:", err)
-				return conn
-			}
-			err = conn.(*net.TCPConn).SetKeepAlivePeriod(time.Minute) //nolint:errcheck
-			if err != nil {
-				Log.Println("Couldn't set keep alive period:", err)
-			}
-			return conn
-		}))
+		//ssh.WrapConn(func(s ssh.Context, conn net.Conn) net.Conn { // doesn't actually work for some reason
+		//	conn.(*net.TCPConn).SetKeepAlive(true) //nolint:errcheck
+		//	conn.(*net.TCPConn).SetKeepAlivePeriod(time.Minute) //nolint:errcheck
+		//	return conn
+		//}),
+	)
 	if err != nil {
 		fmt.Println(err)
 	}
