@@ -151,6 +151,9 @@ func main() {
 		for _, r := range Rooms {
 			r.broadcast(Devbot, "Server going down! This is probably because it is being updated. Try joining back immediately.  \n"+
 				"If you still can't join, try joining back in 2 minutes. If you _still_ can't join, make an issue at github.com/quackduck/devzat/issues")
+			for _, u := range r.users {
+				u.savePrefs() //nolint:errcheck
+			}
 		}
 		os.Exit(0)
 	}()
