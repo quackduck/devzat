@@ -7,7 +7,7 @@ ssh -o StrictHostKeyChecking=no -p 4242 ubuntu@150.136.142.44 <<EOL # Unquote so
 	echo $SERVER_PASS | sudo -S pkill devzat && echo Killed
 	sleep 2
 	echo $SERVER_PASS | sudo -S pkill -9 devzat && echo Killed with SIGKILL
-	echo $SERVER_PASS | nohup sudo -S GOMAXPROCS=2 DEVZAT_CONFIG=mainserver.yml ./devzat > /dev/null 2>&1 </dev/null &
+	echo $SERVER_PASS | nohup sudo -S GOMAXPROCS=2 DEVZAT_CONFIG=mainserver.yml ./devzat > /dev/null 2>stderr </dev/null &
 	echo Started server
 	disown
 	exit
