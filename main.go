@@ -14,7 +14,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -164,11 +163,7 @@ func main() {
 			s.Close()
 			return
 		}
-		defer func() { // crash protection
-			if i := recover(); i != nil {
-				MainRoom.broadcast(Devbot, "Slap the developers in the face for me, the server almost crashed, also tell them this: "+fmt.Sprint(i)+", stack: "+string(debug.Stack()))
-			}
-		}()
+		defer protectFromPanic()
 		u.repl()
 	})
 

@@ -6,9 +6,11 @@ import (
 	_ "embed"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"math"
 	"math/rand"
 	"os"
+	"runtime/debug"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -102,6 +104,12 @@ func keepSessionAlive(s ssh.Session) {
 			}
 		}
 	}()
+}
+
+func protectFromPanic() {
+	if i := recover(); i != nil {
+		MainRoom.broadcast(Devbot, "Slap the developers in the face for me, the server almost crashed, also tell them this: "+fmt.Sprint(i)+", stack: "+string(debug.Stack()))
+	}
 }
 
 // removes arrows, spaces and non-ascii-printable characters

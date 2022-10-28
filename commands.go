@@ -1,12 +1,10 @@
 package main
 
 import (
-	"fmt"
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
 	"math/rand"
-	"runtime/debug"
 	"sort"
 	"strconv"
 	"strings"
@@ -91,11 +89,7 @@ func runCommands(line string, u *User) {
 	if line == "" {
 		return
 	}
-	defer func() { // crash protection
-		if i := recover(); i != nil {
-			MainRoom.broadcast(Devbot, "Slap the developers in the face for me, the server almost crashed, also tell them this: "+fmt.Sprint(i, "\n"+string(debug.Stack())))
-		}
-	}()
+	defer protectFromPanic()
 	currCmd := strings.Fields(line)[0]
 	if u.messaging != nil && currCmd != "=" && currCmd != "cd" && currCmd != "exit" && currCmd != "pwd" { // the commands allowed in a private dm room
 		dmRoomCMD(line, u)
