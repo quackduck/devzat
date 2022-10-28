@@ -166,7 +166,7 @@ func dmCMD(rest string, u *User) {
 }
 
 func hangCMD(rest string, u *User) {
-	if len(rest) > 1 {
+	if len([]rune(rest)) > 1 {
 		if !u.isSlack {
 			u.writeln(u.Name, "hang "+rest)
 			u.writeln(Devbot, "(that word won't show dw)")
