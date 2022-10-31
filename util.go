@@ -95,15 +95,13 @@ func auth(u *User) bool {
 }
 
 func keepSessionAlive(s ssh.Session) {
-	func() {
-		for {
-			time.Sleep(time.Minute * 3)
-			_, err := s.SendRequest("keepalive@devzat", true, nil)
-			if err != nil {
-				return
-			}
+	for {
+		time.Sleep(time.Minute * 3)
+		_, err := s.SendRequest("keepalive@devzat", true, nil)
+		if err != nil {
+			return
 		}
-	}()
+	}
 }
 
 func protectFromPanic() {

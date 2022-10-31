@@ -487,7 +487,6 @@ func (u *User) close(msg string) {
 		if err != nil {
 			Log.Println(err) // not much else we can do
 		}
-		go sendCurrentUsersTwitterMessage()
 		if time.Since(u.joinTime) > time.Minute/2 {
 			msg += ". They were online for " + printPrettyDuration(time.Since(u.joinTime))
 		}
