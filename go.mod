@@ -1,19 +1,19 @@
 module devzat
 
-go 1.17
+go 1.18
 
 require (
 	github.com/TwiN/go-away v1.6.8
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/alecthomas/chroma v0.10.0
-	github.com/dghubble/go-twitter v0.0.0-20221024160433-0cc1e72ed6d8
+	github.com/dghubble/go-twitter v0.0.0-20221104224141-912508c3888b
 	github.com/dghubble/oauth1 v0.7.1
 	github.com/gliderlabs/ssh v0.3.5
 	github.com/jwalton/gchalk v1.3.0
 	github.com/quackduck/go-term-markdown v0.13.0
 	github.com/quackduck/term v0.0.0-20220503000306-91213e332287
 	github.com/shurcooL/tictactoe v0.0.0-20210613024444-e573ff1376a3
-	github.com/slack-go/slack v0.11.3
+	github.com/slack-go/slack v0.11.4
 	google.golang.org/grpc v1.50.1
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v2 v2.4.0
