@@ -136,6 +136,9 @@ func mdRender(a string, beforeMessageLen int, lineWidth int) string {
 	}
 	md := string(markdown.Render(a, lineWidth-beforeMessageLen, beforeMessageLen))
 	md = strings.TrimSuffix(md, "\n")
+	if md == "" {
+		return ""
+	}
 	return md[beforeMessageLen:]
 }
 
