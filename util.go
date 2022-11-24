@@ -139,6 +139,9 @@ func mdRender(a string, beforeMessageLen int, lineWidth int) string {
 	if md == "" {
 		return ""
 	}
+	if len(md) < beforeMessageLen {
+		return md
+	}
 	return md[beforeMessageLen:]
 }
 
