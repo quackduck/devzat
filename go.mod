@@ -14,7 +14,7 @@ require (
 	github.com/quackduck/term v0.0.0-20220503000306-91213e332287
 	github.com/shurcooL/tictactoe v0.0.0-20210613024444-e573ff1376a3
 	github.com/slack-go/slack v0.11.4
-	google.golang.org/grpc v1.50.1
+	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -22,7 +22,7 @@ require (
 require (
 	github.com/MichaelMure/go-term-text v0.3.1 // indirect
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
-	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
+	github.com/cenkalti/backoff/v4 v4.2.0 // indirect
 	github.com/dghubble/sling v1.4.0 // indirect
 	github.com/disintegration/imaging v1.6.2 // indirect
 	github.com/dlclark/regexp2 v1.7.0 // indirect
@@ -38,14 +38,12 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
-	github.com/rivo/uniseg v0.4.2 // indirect
-	golang.org/x/crypto v0.1.0 // indirect
+	github.com/rivo/uniseg v0.4.3 // indirect
+	golang.org/x/crypto v0.3.0 // indirect
 	golang.org/x/image v0.1.0 // indirect
-	golang.org/x/net v0.1.0 // indirect
-	golang.org/x/sys v0.1.0 // indirect
-	golang.org/x/term v0.1.0 // indirect
+	golang.org/x/net v0.2.0 // indirect
+	golang.org/x/sys v0.2.0 // indirect
+	golang.org/x/term v0.2.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
-	google.golang.org/genproto v0.0.0-20221027153422-115e99e71e1c // indirect
+	google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6 // indirect
 )
-
-replace golang.org/x/crypto => github.com/rmohr/crypto v0.0.0-20211203105847-e4ed9664ac54
