@@ -153,7 +153,7 @@ Mudrank [@mudrankgupta](https://twitter.com/mudrankgupta): "🔥🚀🚀"
 From Hack Club:  
 **[Caleb Denio](https://calebden.io), [Safin Singh](https://safin.dev), [Eleeza](https://github.com/E-Lee-Za)   
 [Jubril](https://github.com/s1ntaxe770r), [Sarthak Mohanty](https://sarthakmohanty.me)    
-[Tommy Pujol](https://itstommy.xyz/), [Sam Poder](http://sampoder.com), [Rishi Kothari](http://rishi.cx)    
+[Sam Poder](http://sampoder.com), [Rishi Kothari](http://rishi.cx)    
 [Amogh Chaubey](https://amogh.sh), [Ella](https://ella.cx/), [Hugo Hu](https://github.com/Hugoyhu)
 [Matthew Stanciu](https://matthewstanciu.me/), [Tanishq Soni](https://tanishqsoni.me)**
 
