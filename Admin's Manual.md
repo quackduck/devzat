@@ -77,9 +77,9 @@ allowlist:
   ...
 ```
 
-The `whitelist` has the same format as the `admins` list. Add the IDs of the allowed user and some info about that user (this is to make IDs easier to identify when editing the config file, and isn't used by Devzat)
+The `allowlist` has the same format as the `admins` list. Add the IDs of the allowed users and info about that user (this is to make IDs easier to identify when editing the config file, and isn't used by Devzat)
 
-All admins are allowed even if their ID is not in the whitelist. So, if everyone on the private server is an admin, a whitelist isn't necessary, just enable private mode.
+All admins are allowed even if their ID is not in the allowlist. So, if everyone on the private server is an admin, an allowlist isn't necessary, just enable private mode.
 
 Message backlog on `#main` is disabled in private chats. Only those logged in at the same time as you can read your messages.
 
