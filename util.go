@@ -200,8 +200,10 @@ func findUserByName(r *Room, name string) (*User, bool) {
 
 func remove(s []*User, a *User) []*User {
 	for j := range s {
-		if s[j] == a {
-			return append(s[:j], s[j+1:]...)
+		if s[j] == a { // https://github.com/golang/go/wiki/SliceTricks#delete
+			copy(s[j:], s[j+1:])
+			s[len(s)-1] = nil
+			return s[:len(s)-1]
 		}
 	}
 	return s
