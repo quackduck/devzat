@@ -4,9 +4,10 @@
 port: 22
 alt_port: 443
 profile_port: 5555
+scrollback: 16 # the number of messages from #main to keep in memory to give context when a user joins
 data_dir: devzat-data
 key_file: devzat-sshkey
-integration_config: devzat-creds.yml # this is not committed into the repo for obvious reasons
+integration_config: devzat-creds.yml # the file itself is not committed into the repo for obvious reasons
 censor: true # the internet is harsh...
 admins:
   1eab2de20e41abed903ab2f22e7ff56dc059666dbe2ebbce07a8afeece8d0424: 'Shok: school'
