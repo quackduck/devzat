@@ -26,11 +26,9 @@ import (
 )
 
 var (
-	Scrollback = 16
-
 	MainRoom         = &Room{"#main", make([]*User, 0, 10), sync.Mutex{}}
 	Rooms            = map[string]*Room{MainRoom.name: MainRoom}
-	Backlog          = make([]backlogMessage, 0, Scrollback)
+	Backlog          []backlogMessage
 	Bans             = make([]Ban, 0, 10)
 	IDsInMinToTimes  = make(map[string]int, 10) // TODO: maybe add some IP-based factor to disallow rapid key-gen attempts
 	AntispamMessages = make(map[string]int)
@@ -259,10 +257,11 @@ func (r *Room) broadcastNoSlack(senderName, msg string) {
 	}
 	r.usersMutex.Unlock()
 	if r == MainRoom {
+		Backlog = Backlog[1:]
 		Backlog = append(Backlog, backlogMessage{time.Now(), senderName, msg + "\n"})
-		if len(Backlog) > Scrollback {
-			Backlog = Backlog[len(Backlog)-Scrollback:]
-		}
+		//if len(Backlog) > Config.Scrollback {
+		//	Backlog = Backlog[len(Backlog)-Config.Scrollback:]
+		//}
 	}
 }
 
@@ -368,7 +367,7 @@ func newUser(s ssh.Session) *User {
 		_, isAdmin := Config.Admins[u.id]
 		if !(isAdmin || isOnAllowlist) {
 			Log.Println("Rejected " + u.Name + " [" + u.id + "] (not on allowlist)")
-			u.writeln(Devbot, "You are not on the allowlist of this private server. If this is a mistake, send your id ("+u.id+") to the admin so that they can whitelist you.")
+			u.writeln(Devbot, "You are not on the allowlist of this private server. If this is a mistake, send your id ("+u.id+") to the admin so that they can add you.")
 			u.closeQuietly()
 			return nil
 		}
@@ -408,16 +407,16 @@ func newUser(s ssh.Session) *User {
 	}
 
 	if !Config.Private { // sensitive info might be shared on a private server
-		if len(Backlog) > 0 {
-			lastStamp := Backlog[0].timestamp
-			u.rWriteln(fmtTime(u, lastStamp))
-			for i := range Backlog {
-				if Backlog[i].timestamp.Sub(lastStamp) > time.Minute {
-					lastStamp = Backlog[i].timestamp
-					u.rWriteln(fmtTime(u, lastStamp))
-				}
-				u.writeln(Backlog[i].senderName, Backlog[i].text)
+		var lastStamp time.Time
+		for i := range Backlog {
+			if Backlog[i].text == "" { // skip empty entries
+				continue
 			}
+			if i == 0 || Backlog[i].timestamp.Sub(lastStamp) > time.Minute {
+				lastStamp = Backlog[i].timestamp
+				u.rWriteln(fmtTime(u, lastStamp))
+			}
+			u.writeln(Backlog[i].senderName, Backlog[i].text)
 		}
 	}
 

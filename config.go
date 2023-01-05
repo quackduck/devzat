@@ -12,6 +12,7 @@ type ConfigType struct {
 	Port        int               `yaml:"port"`
 	AltPort     int               `yaml:"alt_port"`
 	ProfilePort int               `yaml:"profile_port"`
+	Scrollback  int               `yaml:"scrollback"`
 	DataDir     string            `yaml:"data_dir"`
 	KeyFile     string            `yaml:"key_file"`
 	Admins      map[string]string `yaml:"admins"`
@@ -61,6 +62,7 @@ var (
 		Port:        2221,
 		AltPort:     8080,
 		ProfilePort: 5555,
+		Scrollback:  16,
 		DataDir:     "devzat-data",
 		KeyFile:     "devzat-sshkey",
 
@@ -112,6 +114,8 @@ func init() {
 		Config.Port, err = strconv.Atoi(os.Getenv("PORT"))
 		errCheck(err)
 	}
+
+	Backlog = make([]backlogMessage, Config.Scrollback)
 
 	if Config.IntegrationConfig != "" {
 		d, err = os.ReadFile(Config.IntegrationConfig)
