@@ -549,7 +549,7 @@ func kickCMD(line string, u *User) {
 		u.room.broadcast("", "User not found")
 		return
 	}
-	if !auth(u) {
+	if !auth(u) && victim != u {
 		u.room.broadcast(Devbot, "Not authorized")
 		return
 	}
