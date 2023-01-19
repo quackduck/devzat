@@ -16,6 +16,7 @@ var (
 	SlackChan chan string
 	API       *slack.Client
 	RTM       *slack.RTM
+	BotID     string
 )
 
 func getMsgsFromSlack() {
@@ -23,7 +24,11 @@ func getMsgsFromSlack() {
 		return
 	}
 
-	go RTM.ManageConnection()
+	go func() {
+		RTM.ManageConnection()
+		BotID = RTM.GetInfo().User.ID
+	}()
+	
 	uslack := new(User)
 	uslack.isSlack = true
 	devnull, _ := os.OpenFile(os.DevNull, os.O_RDWR, 0)
@@ -38,7 +43,7 @@ func getMsgsFromSlack() {
 				break // We're only handling normal messages.
 			}
 			u, _ := API.GetUserInfo(msg.User)
-			if !strings.HasPrefix(text, "./hide") {
+			if u.ID != BotID && !strings.HasPrefix(text, "./hide")  {
 				h := sha1.Sum([]byte(u.ID))
 				i, _ := strconv.ParseInt(hex.EncodeToString(h[:2]), 16, 0) // two bytes as an int
 				uslack.Name = Yellow.Paint(Integrations.Slack.Prefix+" ") + (Styles[int(i)%len(Styles)]).apply(strings.Fields(u.RealName)[0])

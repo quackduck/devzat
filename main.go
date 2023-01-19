@@ -259,9 +259,6 @@ func (r *Room) broadcastNoSlack(senderName, msg string) {
 	if r == MainRoom && len(Backlog) > 0 {
 		Backlog = Backlog[1:]
 		Backlog = append(Backlog, backlogMessage{time.Now(), senderName, msg + "\n"})
-		//if len(Backlog) > Config.Scrollback {
-		//	Backlog = Backlog[len(Backlog)-Config.Scrollback:]
-		//}
 	}
 }
 
