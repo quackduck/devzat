@@ -28,16 +28,21 @@ func discordInit() {
 	sess.AddHandler(discordMessageHandler)
 
 	DiscordChan = make(chan string, 100)
+	go func() {
+		for msg := range DiscordChan {
+			sess.ChannelMessageSend(Integrations.Discord.ChannelID, msg)
+		}
+	}()
 
 	DiscordUser.isBridge = true
 	devnull, _ := os.OpenFile(os.DevNull, os.O_RDWR, 0)
 	DiscordUser.term = term.NewTerminal(devnull, "")
 	DiscordUser.room = MainRoom
-	Log.Println("Connected to Discord with bot ID", sess.State.User.ID, "as", sess.State.User.Username)
+	//Log.Println("Connected to Discord with bot ID", sess.State.User.ID, "as", sess.State.User.Username)
 }
 
 func discordMessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if m != nil || m.Author != nil || m.Author.ID == s.State.User.ID || m.ChannelID != Integrations.Discord.ChannelID { // ignore self and other channels
+	if m == nil || m.Author == nil || m.Author.ID == s.State.User.ID || m.ChannelID != Integrations.Discord.ChannelID { // ignore self and other channels
 		return
 	}
 	h := sha1.Sum([]byte(m.Author.ID))
