@@ -146,10 +146,10 @@ func init() {
 			}
 		}
 		if Integrations.Discord != nil {
-			if Integrations.Slack.Prefix == "" {
-				Integrations.Slack.Prefix = "Discord"
+			if Integrations.Discord.Prefix == "" {
+				Integrations.Discord.Prefix = "Discord"
 			}
-			if sl := Integrations.Slack; sl.Token == "" || sl.ChannelID == "" {
+			if sl := Integrations.Discord; sl.Token == "" || sl.ChannelID == "" {
 				fmt.Println("error: Discord token or channel ID is missing")
 				os.Exit(0)
 			}

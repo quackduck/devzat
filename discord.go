@@ -33,6 +33,7 @@ func discordInit() {
 	devnull, _ := os.OpenFile(os.DevNull, os.O_RDWR, 0)
 	DiscordUser.term = term.NewTerminal(devnull, "")
 	DiscordUser.room = MainRoom
+	Log.Println("Connected to Discord with bot ID", sess.State.User.ID, "as", sess.State.User.Username)
 }
 
 func discordMessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
