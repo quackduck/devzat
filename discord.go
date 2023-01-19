@@ -57,5 +57,7 @@ func discordMessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	DiscordUser.Name = Magenta.Paint(Integrations.Discord.Prefix+" ") + (Styles[int(i)%len(Styles)]).apply(m.Author.Username)
 	m.Content = strings.TrimSpace(m.Content) // mildly cursed but eh who cares
 	runCommands(m.Content, DiscordUser)
-	SlackChan <- Integrations.Discord.Prefix + " " + m.Author.Username + ": " + m.Content // send this discord message to slack
+	if Integrations.Slack != nil {
+		SlackChan <- Integrations.Discord.Prefix + " " + m.Author.Username + ": " + m.Content // send this discord message to slack
+	}
 }
