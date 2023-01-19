@@ -66,7 +66,7 @@ type User struct {
 
 	Bell          bool
 	PingEverytime bool
-	isSlack       bool
+	isBridge      bool
 	FormatTime24  bool
 
 	Color   string
@@ -199,10 +199,15 @@ func (r *Room) broadcast(senderName, msg string) {
 	if msg == "" {
 		return
 	}
-	if senderName != "" {
+	if senderName != "" && Integrations.Slack != nil {
 		SlackChan <- "[" + r.name + "] " + senderName + ": " + msg
 	} else {
 		SlackChan <- "[" + r.name + "] " + msg
+	}
+	if senderName != "" && Integrations.Discord != nil {
+		DiscordChan <- "[" + r.name + "] " + senderName + ": " + msg
+	} else {
+		DiscordChan <- "[" + r.name + "] " + msg
 	}
 	r.broadcastNoSlack(senderName, msg)
 }

@@ -95,7 +95,7 @@ func runCommands(line string, u *User) {
 		dmRoomCMD(line, u)
 		return
 	}
-	if strings.HasPrefix(line, "=") && !u.isSlack {
+	if strings.HasPrefix(line, "=") && !u.isBridge {
 		dmCMD(strings.TrimSpace(strings.TrimPrefix(line, "=")), u)
 		return
 	}
@@ -115,7 +115,7 @@ func runCommands(line string, u *User) {
 		return
 	}
 
-	if u.isSlack {
+	if u.isBridge {
 		u.room.broadcastNoSlack(u.Name, line)
 	} else {
 		u.room.broadcast(u.Name, line)
@@ -161,7 +161,7 @@ func dmCMD(rest string, u *User) {
 
 func hangCMD(rest string, u *User) {
 	if len([]rune(rest)) > 1 {
-		if !u.isSlack {
+		if !u.isBridge {
 			u.writeln(u.Name, "hang "+rest)
 			u.writeln(Devbot, "(that word won't show dw)")
 		}
@@ -170,7 +170,7 @@ func hangCMD(rest string, u *User) {
 		u.room.broadcast(Devbot, "```\n"+hangPrint(hangGame)+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```")
 		return
 	}
-	if !u.isSlack {
+	if !u.isBridge {
 		u.room.broadcast(u.Name, "hang "+rest)
 	}
 	if strings.Trim(hangGame.word, hangGame.guesses) == "" {
