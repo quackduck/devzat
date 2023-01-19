@@ -54,6 +54,8 @@ func discordMessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	h := sha1.Sum([]byte(m.Author.ID))
 	i, _ := strconv.ParseInt(hex.EncodeToString(h[:2]), 16, 0) // two bytes as an int
-	DiscordUser.Name = Magenta.Paint(Integrations.Discord.Prefix+" ") + (Styles[int(i)%len(Styles)]).apply(strings.Fields(m.Author.Username)[0])
-	runCommands(strings.TrimSpace(m.Content), DiscordUser)
+	DiscordUser.Name = Magenta.Paint(Integrations.Discord.Prefix+" ") + (Styles[int(i)%len(Styles)]).apply(m.Author.Username)
+	m.Content = strings.TrimSpace(m.Content) // mildly cursed but eh who cares
+	runCommands(m.Content, DiscordUser)
+	SlackChan <- Integrations.Discord.Prefix + " " + m.Author.Username + ": " + m.Content // send this discord message to slack
 }
