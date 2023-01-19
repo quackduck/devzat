@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"github.com/acarl005/stripansi"
 	"github.com/bwmarrin/discordgo"
 	"github.com/quackduck/term"
 	"os"
@@ -26,11 +27,16 @@ func discordInit() {
 	}
 
 	sess.AddHandler(discordMessageHandler)
+	sess.Identify.Intents = discordgo.IntentsGuildMessages // only listen to messages
+	err = sess.Open()
+	if err != nil {
+		return
+	}
 
 	DiscordChan = make(chan string, 100)
 	go func() {
 		for msg := range DiscordChan {
-			sess.ChannelMessageSend(Integrations.Discord.ChannelID, msg)
+			sess.ChannelMessageSend(Integrations.Discord.ChannelID, strings.ReplaceAll(stripansi.Strip(msg), `\n`, "\n"))
 		}
 	}()
 
