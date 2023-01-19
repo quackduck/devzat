@@ -191,7 +191,7 @@ func findUserByName(r *Room, name string) (*User, bool) {
 	r.usersMutex.Lock()
 	defer r.usersMutex.Unlock()
 	for _, u := range r.users {
-		if stripansi.Strip(u.Name) == name {
+		if stripansi.Strip(u.Name) == name || "@" + stripansi.Strip(u.Name) == name {
 			return u, true
 		}
 	}
