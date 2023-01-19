@@ -12,7 +12,7 @@ import (
 
 var (
 	DiscordChan chan string
-	DiscordUser *User
+	DiscordUser = new(User)
 )
 
 func discordInit() {
