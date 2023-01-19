@@ -36,6 +36,7 @@ func discordInit() {
 	DiscordChan = make(chan string, 100)
 	go func() {
 		for msg := range DiscordChan {
+			msg = strings.ReplaceAll(msg, "@everyone", "@\\everyone")
 			sess.ChannelMessageSend(Integrations.Discord.ChannelID, strings.ReplaceAll(stripansi.Strip(msg), `\n`, "\n"))
 		}
 	}()
