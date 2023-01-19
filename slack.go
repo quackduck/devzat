@@ -24,11 +24,8 @@ func getMsgsFromSlack() {
 		return
 	}
 
-	go func() {
-		RTM.ManageConnection()
-		BotID = RTM.GetInfo().User.ID
-	}()
-	
+	go RTM.ManageConnection()
+
 	uslack := new(User)
 	uslack.isSlack = true
 	devnull, _ := os.OpenFile(os.DevNull, os.O_RDWR, 0)
@@ -43,14 +40,15 @@ func getMsgsFromSlack() {
 				break // We're only handling normal messages.
 			}
 			u, _ := API.GetUserInfo(msg.User)
-			if u.ID != BotID && !strings.HasPrefix(text, "./hide")  {
+			if u.ID != BotID && !strings.HasPrefix(text, "./hide") {
 				h := sha1.Sum([]byte(u.ID))
 				i, _ := strconv.ParseInt(hex.EncodeToString(h[:2]), 16, 0) // two bytes as an int
 				uslack.Name = Yellow.Paint(Integrations.Slack.Prefix+" ") + (Styles[int(i)%len(Styles)]).apply(strings.Fields(u.RealName)[0])
 				runCommands(text, uslack)
 			}
 		case *slack.ConnectedEvent:
-			Log.Println("Connected to Slack")
+			BotID = ev.Info.User.ID
+			Log.Println("Connected to Slack with bot ID", BotID, "as", ev.Info.User.Name)
 		case *slack.InvalidAuthEvent:
 			Log.Println("Invalid token")
 			return
