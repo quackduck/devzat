@@ -23,6 +23,7 @@ func discordInit() {
 
 	sess, err := discordgo.New("Bot " + Integrations.Discord.Token)
 	if err != nil {
+		Log.Println("Error creating Discord session:", err)
 		return
 	}
 
@@ -45,7 +46,7 @@ func discordInit() {
 	devnull, _ := os.OpenFile(os.DevNull, os.O_RDWR, 0)
 	DiscordUser.term = term.NewTerminal(devnull, "")
 	DiscordUser.room = MainRoom
-	//Log.Println("Connected to Discord with bot ID", sess.State.User.ID, "as", sess.State.User.Username)
+	Log.Println("Connected to Discord with bot ID", sess.State.User.ID, "as", sess.State.User.Username)
 }
 
 func discordMessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -56,8 +57,8 @@ func discordMessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	i, _ := strconv.ParseInt(hex.EncodeToString(h[:2]), 16, 0) // two bytes as an int
 	DiscordUser.Name = Magenta.Paint(Integrations.Discord.Prefix+" ") + (Styles[int(i)%len(Styles)]).apply(m.Author.Username)
 	m.Content = strings.TrimSpace(m.Content) // mildly cursed but eh who cares
-	runCommands(m.Content, DiscordUser)
 	if Integrations.Slack != nil {
 		SlackChan <- Integrations.Discord.Prefix + " " + m.Author.Username + ": " + m.Content // send this discord message to slack
 	}
+	runCommands(m.Content, DiscordUser)
 }

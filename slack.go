@@ -47,15 +47,15 @@ func getMsgsFromSlack() {
 			i, _ := strconv.ParseInt(hex.EncodeToString(h[:2]), 16, 0) // two bytes as an int
 			name := strings.Fields(u.RealName)[0]
 			uslack.Name = Yellow.Paint(Integrations.Slack.Prefix+" ") + (Styles[int(i)%len(Styles)]).apply(name)
-			runCommands(text, uslack)
 			if Integrations.Discord != nil {
 				DiscordChan <- Integrations.Slack.Prefix + " " + name + ": " + text // send this discord message to slack
 			}
+			runCommands(text, uslack)
 		case *slack.ConnectedEvent:
 			SlackBotID = ev.Info.User.ID
 			Log.Println("Connected to Slack with bot ID", SlackBotID, "as", ev.Info.User.Name)
 		case *slack.InvalidAuthEvent:
-			Log.Println("Invalid token")
+			Log.Println("Invalid Slack authentication")
 			return
 		}
 	}

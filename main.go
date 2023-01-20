@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"math"
 	"math/rand"
 	"net"
@@ -33,7 +32,6 @@ var (
 	IDsInMinToTimes  = make(map[string]int, 10) // TODO: maybe add some IP-based factor to disallow rapid key-gen attempts
 	AntispamMessages = make(map[string]int)
 
-	Log    *log.Logger
 	Devbot = "" // initialized in main
 )
 
@@ -118,12 +116,6 @@ type backlogMessage struct {
 
 // TODO: have a web dashboard that shows logs
 func main() {
-	logfile, err := os.OpenFile(Config.DataDir+string(os.PathSeparator)+"log.txt", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0666)
-	if err != nil {
-		fmt.Println(err) // can't log yet so just print
-		return
-	}
-	Log = log.New(io.MultiWriter(logfile, os.Stdout), "", log.Ldate|log.Ltime|log.Lshortfile)
 	go func() {
 		err := http.ListenAndServe(fmt.Sprintf(":%d", Config.ProfilePort), nil)
 		if err != nil {
@@ -140,7 +132,6 @@ func main() {
 		<-c
 		fmt.Println("Shutting down...")
 		saveBans()
-		logfile.Close()
 		time.AfterFunc(time.Second, func() {
 			Log.Println("Broadcast taking too long, exiting server early.")
 			os.Exit(4)
@@ -180,15 +171,15 @@ func main() {
 			}
 		}()
 	}
-	err = ssh.ListenAndServe(fmt.Sprintf(":%d", Config.Port), nil, ssh.HostKeyFile(Config.KeyFile),
+	err := ssh.ListenAndServe(fmt.Sprintf(":%d", Config.Port), nil, ssh.HostKeyFile(Config.KeyFile),
 		ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
 			return true // allow all keys, this lets us hash pubkeys later
 		}),
-		//ssh.WrapConn(func(s ssh.Context, conn net.Conn) net.Conn { // doesn't actually work for some reason
-		//	conn.(*net.TCPConn).SetKeepAlive(true) //nolint:errcheck
-		//	conn.(*net.TCPConn).SetKeepAlivePeriod(time.Minute) //nolint:errcheck
-		//	return conn
-		//}),
+		ssh.WrapConn(func(s ssh.Context, conn net.Conn) net.Conn { // doesn't actually work for some reason?
+			conn.(*net.TCPConn).SetKeepAlive(true)              //nolint:errcheck
+			conn.(*net.TCPConn).SetKeepAlivePeriod(time.Minute) //nolint:errcheck
+			return conn
+		}),
 	)
 	if err != nil {
 		fmt.Println(err)

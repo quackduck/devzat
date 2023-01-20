@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"log"
 	"os"
 	"strconv"
 
@@ -87,6 +89,8 @@ var (
 		Discord: nil,
 		RPC:     nil,
 	}
+
+	Log *log.Logger
 )
 
 func init() {
@@ -122,6 +126,10 @@ func init() {
 
 	err = os.MkdirAll(Config.DataDir, 0755)
 	errCheck(err)
+
+	logfile, err := os.OpenFile(Config.DataDir+string(os.PathSeparator)+"log.txt", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0666)
+	errCheck(err)
+	Log = log.New(io.MultiWriter(logfile, os.Stdout), "", log.Ldate|log.Ltime|log.Lshortfile)
 
 	if os.Getenv("PORT") != "" {
 		Config.Port, err = strconv.Atoi(os.Getenv("PORT"))
