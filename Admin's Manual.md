@@ -96,7 +96,7 @@ Now make a new file at that path. This is your integration config file.
 
 #### Using the Slack integration
 
-Devzat supports a bridge to Slack. You'll need Slack bot token so Devzat can post to and receive messages from Slack. Follow the guide [here](https://api.slack.com/authentication/basics) to get your token and add a Slack app to your workspace. Ensure it has read and write scopes.
+Devzat supports a bridge to Slack. You'll need a Slack bot token so Devzat can post to and receive messages from Slack. Follow the guide [here](https://api.slack.com/authentication/basics) to get your token and add a Slack app to your workspace. Ensure it has read and write scopes.
 
 Add your bot token to your integration config file. The `prefix` key defines what messages from Slack rendered in Devzat will be prefixed with. Find the channel ID of the channel you want to bridge to with a right-click on it in Slack.
 
@@ -105,6 +105,19 @@ slack:
     token: xoxb-XXXXXXXXXX-XXXXXXXXXXXX-XXXXXXXXXXXXXXXXXXXXXXXX
     channel_id: XXXXXXXXXXX # usually starts with a C, but could be a G or D
     prefix: Slack
+```
+
+#### Using the Devzat integration
+
+Devzat supports a bridge to Slack. You'll need a Devzat bot token so Devzat can post to and receive messages from Slack. Follow the guide [here](https://api.slack.com/authentication/basics) to get your token and add a Slack app to your workspace. Ensure the token allows reading and writing messages.
+
+Add your bot token to your integration config file. The `prefix` key defines what messages from Discord rendered in Devzat will be prefixed with. Find the channel ID of the channel you want to bridge to with a right-click on it.
+
+```yaml
+discord:
+    token: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    channel_id: XXXXXXXXXXXXXXXXXXX
+    prefix: Discord
 ```
 
 #### Using the Twitter integration

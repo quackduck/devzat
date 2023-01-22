@@ -122,9 +122,12 @@ The rest
    shrug                   ¯\_(ツ)_/¯
 ```
 
-## Plugin API
+## Integrations
 
-Devzat has a plugin API you can use to integrate your own services: [documentation](plugin/README.md)
+When self-hosting an instance, Devzat can integrate with Slack and/or Discord to bridge messages, and Twitter to post new-user announcements. 
+See the [Admin's Manual](Admin's%20Manual.md) for more info.
+
+Devzat has a plugin API you can use to integrate your own services: [documentation](plugin/README.md). Feel free to add a plugin to the main instance. Just ask for a token on the server.
 
 
 ## Stargazers over time
