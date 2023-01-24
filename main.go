@@ -288,20 +288,19 @@ func userMentionAutocomplete(u *User, words []string) string {
 	if len(words) < 1 {
 		return ""
 	}
-	// Cleaning up word to remove @, =, or =@
+	// remove @, =, or =@ from the start of the last word
 	lastWord := words[len(words)-1]
-	var inputWord string
-	if len(lastWord) > 1 && lastWord[0:2] == "=@" {
-		inputWord = lastWord[2:]
+	if len(lastWord) > 1 && lastWord[0] == '=' && lastWord[1] == '@'  {
+		lastWord = lastWord[2:]
 	} else if lastWord[0] == '@' || lastWord[0] == '=' {
-		inputWord = lastWord[1:]
+		lastWord = lastWord[1:]
 	} else { // No prefix match
 		return ""
 	}
-	// Check the last word and see if it's trying to refer to a User
+	// check the last word and see if it's trying to refer to a user
 	for i := range u.room.users {
 		strippedName := stripansi.Strip(u.room.users[i].Name)
-		toAdd := strings.TrimPrefix(strippedName, inputWord)
+		toAdd := strings.TrimPrefix(strippedName, lastWord)
 		if toAdd != strippedName { // there was a match, and some text got trimmed!
 			return toAdd + " "
 		}
