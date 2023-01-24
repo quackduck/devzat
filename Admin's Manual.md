@@ -107,9 +107,9 @@ slack:
     prefix: Slack
 ```
 
-#### Using the Devzat integration
+#### Using the Discord integration
 
-Devzat supports a bridge to Slack. You'll need a Devzat bot token so Devzat can post to and receive messages from Slack. Follow the guide [here](https://api.slack.com/authentication/basics) to get your token and add a Slack app to your workspace. Ensure the token allows reading and writing messages.
+Devzat supports a bridge to Discord. You'll need a Discord bot token so Devzat can post to and receive messages from Discord. Follow the guide [here](https://discord.com/developers/docs/intro) to get your bot setup.
 
 Add your bot token to your integration config file. The `prefix` key defines what messages from Discord rendered in Devzat will be prefixed with. Find the channel ID of the channel you want to bridge to with a right-click on it.
 
