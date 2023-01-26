@@ -191,7 +191,7 @@ func findUserByName(r *Room, name string) (*User, bool) {
 	r.usersMutex.Lock()
 	defer r.usersMutex.Unlock()
 	for _, u := range r.users {
-		if stripansi.Strip(u.Name) == name || "@" + stripansi.Strip(u.Name) == name {
+		if stripansi.Strip(u.Name) == name || "@"+stripansi.Strip(u.Name) == name {
 			return u, true
 		}
 	}
@@ -354,5 +354,5 @@ func fmtTime(u *User, lastStamp time.Time) string {
 	if u.FormatTime24 {
 		return lastStamp.In(u.Timezone.Location).Format("15:04")
 	}
-	return lastStamp.In(u.Timezone.Location).Format("3:04 pm")
+	return lastStamp.In(u.Timezone.Location).Format("3:04")
 }

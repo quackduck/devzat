@@ -190,15 +190,19 @@ func (r *Room) broadcast(senderName, msg string) {
 	if msg == "" {
 		return
 	}
-	if senderName != "" && Integrations.Slack != nil {
-		SlackChan <- "[" + r.name + "] " + senderName + ": " + msg
-	} else {
-		SlackChan <- "[" + r.name + "] " + msg
+	if Integrations.Slack != nil {
+		if senderName != "" {
+			SlackChan <- "[" + r.name + "] " + senderName + ": " + msg
+		} else {
+			SlackChan <- "[" + r.name + "] " + msg
+		}
 	}
-	if senderName != "" && Integrations.Discord != nil {
-		DiscordChan <- "[" + r.name + "] " + senderName + ": " + msg
-	} else {
-		DiscordChan <- "[" + r.name + "] " + msg
+	if Integrations.Discord != nil {
+		if senderName != "" {
+			DiscordChan <- "[" + r.name + "] " + senderName + ": " + msg
+		} else {
+			DiscordChan <- "[" + r.name + "] " + msg
+		}
 	}
 	r.broadcastNoSlack(senderName, msg)
 }
@@ -410,6 +414,9 @@ func newUser(s ssh.Session) *User {
 				u.rWriteln(fmtTime(u, lastStamp))
 			}
 			u.writeln(Backlog[i].senderName, Backlog[i].text)
+		}
+		if time.Now().Sub(lastStamp) > time.Minute && u.Timezone.Location != nil {
+			u.rWriteln(fmtTime(u, time.Now()))
 		}
 	}
 
