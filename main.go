@@ -535,7 +535,7 @@ func (u *User) writeln(senderName string, msg string) {
 	}
 	_, err := u.term.Write([]byte(msg + "\n"))
 	if err != nil {
-		u.close(u.Name + "has left the chat because of an error writing to their terminal: " + err.Error())
+		u.close(u.Name + " has left the chat because of an error writing to their terminal: " + err.Error())
 	}
 }
 
