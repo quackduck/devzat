@@ -190,21 +190,21 @@ func (r *Room) broadcast(senderName, msg string) {
 	if msg == "" {
 		return
 	}
-	if Integrations.Slack != nil {
+	if Integrations.Slack != nil || Integrations.Discord != nil {
+		var toSend string
 		if senderName != "" {
-			SlackChan <- "[" + r.name + "] " + senderName + ": " + msg
+			toSend = "[" + r.name + "] " + senderName + ": " + msg
 		} else {
-			SlackChan <- "[" + r.name + "] " + msg
+			toSend = "[" + r.name + "] " + msg
+		}
+		if Integrations.Slack != nil {
+			SlackChan <- toSend
+		}
+		if Integrations.Discord != nil {
+			DiscordChan <- toSend
 		}
 	}
-	if Integrations.Discord != nil {
-		if senderName != "" {
-			DiscordChan <- "[" + r.name + "] " + senderName + ": " + msg
-		} else {
-			DiscordChan <- "[" + r.name + "] " + msg
-		}
-	}
-	r.broadcastNoSlack(senderName, msg)
+	r.broadcastNoBridges(senderName, msg)
 }
 
 // findMention finds mentions and colors them
@@ -245,7 +245,7 @@ func (r *Room) findMention(msg string) string {
 	return msg[0:posAt] + r.findMention(msg[posAt:])
 }
 
-func (r *Room) broadcastNoSlack(senderName, msg string) {
+func (r *Room) broadcastNoBridges(senderName, msg string) {
 	if msg == "" {
 		return
 	}
@@ -287,7 +287,7 @@ func userMentionAutocomplete(u *User, words []string) string {
 	}
 	// remove @, =, or =@ from the start of the last word
 	lastWord := words[len(words)-1]
-	if len(lastWord) > 1 && lastWord[0] == '=' && lastWord[1] == '@'  {
+	if len(lastWord) > 1 && lastWord[0] == '=' && lastWord[1] == '@' {
 		lastWord = lastWord[2:]
 	} else if lastWord[0] == '@' || lastWord[0] == '=' {
 		lastWord = lastWord[1:]
@@ -360,7 +360,7 @@ func newUser(s ssh.Session) *User {
 
 	if bansContains(Bans, u.addr, u.id) {
 		Log.Println("Rejected " + u.Name + " [" + host + "] (banned)")
-		u.writeln(Devbot, "**You are banned**. If you feel this was a mistake, please reach out at github.com/quackduck/devzat/issues or email igoel.mail@gmail.com. Please include the following information: [ID "+u.id+"]")
+		u.writeln(Devbot, "**You are banned**. If you feel this was a mistake, please reach out to the server admin. Include the following information: [ID "+u.id+"]")
 		u.closeQuietly()
 		return nil
 	}
@@ -377,9 +377,7 @@ func newUser(s ssh.Session) *User {
 	}
 
 	IDsInMinToTimes[u.id]++
-	time.AfterFunc(60*time.Second, func() {
-		IDsInMinToTimes[u.id]--
-	})
+	time.AfterFunc(60*time.Second, func() { IDsInMinToTimes[u.id]-- })
 	if IDsInMinToTimes[u.id] > 6 {
 		Bans = append(Bans, Ban{u.addr, u.id})
 		MainRoom.broadcast(Devbot, "`"+s.User()+"` has been banned automatically. ID: "+u.id)
@@ -398,16 +396,16 @@ func newUser(s ssh.Session) *User {
 		u.changeColor("bg-random") //nolint:errcheck // we know "bg-random" is a valid color
 	}
 
-	if err := u.pickUsernameQuietly(s.User()); err != nil { // User exited or had some error
-		Log.Println(err)
-		s.Close()
-		return nil
-	}
-
 	err := u.loadPrefs() // since we are loading for the first time, respect the saved value
 	if err != nil {
 		Log.Println("Could not load user:", err)
 	}
+
+	//if err := u.pickUsernameQuietly(s.User()); err != nil { // User exited or had some error
+	//	Log.Println(err)
+	//	s.Close()
+	//	return nil
+	//}
 
 	if !Config.Private { // sensitive info might be shared on a private server
 		var lastStamp time.Time
@@ -574,16 +572,14 @@ func (u *User) pickUsernameQuietly(possibleName string) error {
 	possibleName = cleanName(possibleName)
 	var err error
 	for {
-		if possibleName == "" {
-		} else if strings.HasPrefix(possibleName, "#") || possibleName == "devbot" || strings.HasPrefix(possibleName, "@") {
+		if possibleName == "" || strings.HasPrefix(possibleName, "#") || possibleName == "devbot" || strings.HasPrefix(possibleName, "@") {
 			u.writeln("", "Your username is invalid. Pick a different one:")
 		} else if otherUser, dup := userDuplicate(u.room, possibleName); dup {
 			if otherUser == u {
-				break // allow selecting the same name as before
+				break // allow selecting the same name as before the user tried to change it
 			}
 			u.writeln("", "Your username is already in use. Pick a different one:")
-		} else {
-			possibleName = cleanName(possibleName)
+		} else { // valid name
 			break
 		}
 
@@ -653,7 +649,7 @@ func (u *User) loadPrefs() error {
 	newName := u.Name
 	u.Name = oldUser.Name
 
-	err = u.pickUsername(newName)
+	err = u.pickUsernameQuietly(newName)
 	if err != nil {
 		return err
 	}

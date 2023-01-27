@@ -301,7 +301,6 @@ func shasum(s string) string {
 }
 
 func holidaysCheck(u *User) {
-
 	currentMonth := time.Now().Month()
 	today := time.Now().Day()
 

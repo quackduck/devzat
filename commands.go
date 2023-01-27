@@ -116,7 +116,7 @@ func runCommands(line string, u *User) {
 	}
 
 	if u.isBridge {
-		u.room.broadcastNoSlack(u.Name, line)
+		u.room.broadcastNoBridges(u.Name, line)
 	} else {
 		u.room.broadcast(u.Name, line)
 	}
