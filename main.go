@@ -336,7 +336,7 @@ func newUser(s ssh.Session) *User {
 	}
 
 	u := &User{
-		Name:          s.User(),
+		Name:          cleanName(s.User()),
 		Pronouns:      []string{"unset"},
 		session:       s,
 		term:          term,
@@ -399,6 +399,10 @@ func newUser(s ssh.Session) *User {
 	err := u.loadPrefs() // since we are loading for the first time, respect the saved value
 	if err != nil {
 		Log.Println("Could not load user:", err)
+	}
+
+	if u.Name == "" {
+		u.pickUsernameQuietly("")
 	}
 
 	//if err := u.pickUsernameQuietly(s.User()); err != nil { // User exited or had some error
