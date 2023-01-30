@@ -72,7 +72,7 @@ type User struct {
 	id      string
 	addr    string
 
-	win           ssh.Window
+	winWidth      int
 	closeOnce     sync.Once
 	lastTimestamp time.Time
 	joinTime      time.Time
@@ -323,7 +323,10 @@ func newUser(s ssh.Session) *User {
 	term := terminal.NewTerminal(s, "> ")
 	_ = term.SetSize(10000, 10000) // disable any formatting done by term
 	pty, winChan, _ := s.Pty()
-	w := pty.Window
+	w := pty.Window.Width
+	if w == 0 {
+		w = 80
+	}
 	host, _, _ := net.SplitHostPort(s.RemoteAddr().String()) // definitely should not give an err
 
 	toHash := ""
@@ -345,14 +348,15 @@ func newUser(s ssh.Session) *User {
 		Bio:           "(none set)",
 		id:            shasum(toHash),
 		addr:          host,
-		win:           w,
+		winWidth:      w,
 		lastTimestamp: time.Now(),
 		lastInteract:  time.Now(),
 		joinTime:      time.Now(),
 		room:          MainRoom}
 
 	go func() {
-		for u.win = range winChan {
+		for win := range winChan {
+			u.winWidth = win.Width
 		}
 	}()
 
@@ -401,11 +405,11 @@ func newUser(s ssh.Session) *User {
 		Log.Println("Could not load user:", err)
 	}
 
-	//if err := u.pickUsernameQuietly(s.User()); err != nil { // User exited or had some error
-	//	Log.Println(err)
-	//	s.Close()
-	//	return nil
-	//}
+	if err = u.pickUsernameQuietly(stripansi.Strip(u.Name)); err != nil { // User exited or had some error
+		Log.Println(err)
+		s.Close()
+		return nil
+	}
 
 	if !Config.Private { // sensitive info might be shared on a private server
 		var lastStamp time.Time
@@ -516,17 +520,17 @@ func (u *User) writeln(senderName string, msg string) {
 	thisUserIsDMSender := strings.HasSuffix(senderName, " <- ")
 	if senderName != "" {
 		if thisUserIsDMSender || strings.HasSuffix(senderName, " -> ") { // TODO: kinda hacky DM detection
-			msg = strings.TrimSpace(mdRender(msg, lenString(senderName), u.win.Width))
+			msg = strings.TrimSpace(mdRender(msg, lenString(senderName), u.winWidth))
 			msg = senderName + msg
 			if !thisUserIsDMSender {
 				msg += "\a"
 			}
 		} else {
-			msg = strings.TrimSpace(mdRender(msg, lenString(senderName)+2, u.win.Width))
+			msg = strings.TrimSpace(mdRender(msg, lenString(senderName)+2, u.winWidth))
 			msg = senderName + ": " + msg
 		}
 	} else {
-		msg = strings.TrimSpace(mdRender(msg, 0, u.win.Width)) // No sender
+		msg = strings.TrimSpace(mdRender(msg, 0, u.winWidth)) // No sender
 	}
 	if time.Since(u.lastTimestamp) > time.Minute {
 		u.lastTimestamp = time.Now()
@@ -546,8 +550,8 @@ func (u *User) writeln(senderName string, msg string) {
 
 // Write to the right of the User's window
 func (u *User) rWriteln(msg string) {
-	if u.win.Width-lenString(msg) > 0 {
-		u.term.Write([]byte(strings.Repeat(" ", u.win.Width-lenString(msg)) + msg + "\n"))
+	if u.winWidth-lenString(msg) > 0 {
+		u.term.Write([]byte(strings.Repeat(" ", u.winWidth-lenString(msg)) + msg + "\n"))
 	} else {
 		u.term.Write([]byte(msg + "\n"))
 	}
@@ -716,11 +720,10 @@ func (u *User) repl() {
 		u.term.SetPrompt(u.Name + ": ")
 
 		if hasNewlines {
-			calculateLinesTaken(u, u.Name+": "+line, u.win.Width)
+			calculateLinesTaken(u, u.Name+": "+line, u.winWidth)
 		} else {
-			u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(lenString(u.Name+line)+2)/(float64(u.win.Width))))))) // basically, ceil(length of line divided by term width)
+			u.term.Write([]byte(strings.Repeat("\033[A\033[2K", int(math.Ceil(float64(lenString(u.Name+line)+2)/(float64(u.winWidth))))))) // basically, ceil(length of line divided by term width)
 		}
-		//u.term.Write([]byte(strings.Repeat("\033[A\033[2K", calculateLinesTaken(u.Name+": "+line, u.win.Width))))
 
 		if line == "" {
 			continue
