@@ -322,10 +322,10 @@ func roomAutocomplete(_ *User, words []string) string {
 func newUser(s ssh.Session) *User {
 	term := terminal.NewTerminal(s, "> ")
 	_ = term.SetSize(10000, 10000) // disable any formatting done by term
-	pty, winChan, _ := s.Pty()
+	pty, winChan, isPty := s.Pty()
 	w := pty.Window.Width
-	if w == 0 {
-		w = 80
+	if !isPty { // only support pty joins
+		return nil
 	}
 	host, _, _ := net.SplitHostPort(s.RemoteAddr().String()) // definitely should not give an err
 
