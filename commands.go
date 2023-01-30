@@ -733,6 +733,12 @@ func lsCMD(rest string, u *User) {
 			return
 		}
 	}
+	if rest == "-i" && auth(u) { // A ls -i option is available for admins. It is used to show the id of each user.
+		for _, us := range u.room.users {
+			u.room.broadcast("", us.id+" "+us.Name)
+		}
+		return
+	}
 	if rest != "" {
 		u.room.broadcast("", "ls: "+rest+" Permission denied")
 		return
