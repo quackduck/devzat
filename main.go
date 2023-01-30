@@ -402,7 +402,11 @@ func newUser(s ssh.Session) *User {
 	}
 
 	if u.Name == "" {
-		u.pickUsernameQuietly("")
+		err := u.pickUsernameQuietly("")
+		if err != nil {
+			Log.Println("Could not give name to user user:", s.User())
+			return nil
+		}
 	}
 
 	//if err := u.pickUsernameQuietly(s.User()); err != nil { // User exited or had some error
