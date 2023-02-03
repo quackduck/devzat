@@ -553,7 +553,11 @@ func kickCMD(line string, u *User) {
 		u.room.broadcast(Devbot, "Not authorized")
 		return
 	}
-	victim.close(victim.Name + Red.Paint(" has been kicked by ") + u.Name)
+	id := victim.id
+	for ok {
+		victim.close(victim.Name + Red.Paint(" has been kicked by ") + u.Name)
+		victim, ok = findUserById(u.room, id)
+	}
 }
 
 func colorCMD(rest string, u *User) {
