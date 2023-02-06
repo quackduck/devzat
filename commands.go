@@ -498,6 +498,7 @@ func unbanIDorIP(toUnban string) bool {
 		if Bans[i].ID == toUnban || Bans[i].Addr == toUnban { // allow unbanning by either ID or IP
 			// remove this ban
 			Bans = append(Bans[:i], Bans[i+1:]...)
+			saveBans()
 			return true
 		}
 	}
@@ -526,21 +527,14 @@ func banCMD(line string, u *User) {
 			u.room.broadcast(Devbot, "I couldn't parse that as a duration")
 			return
 		}
-		Bans = append(Bans, Ban{victim.addr, victim.id})
-		victim.close(victim.Name + " has been banned by " + u.Name + " for " + dur.String())
+		victim.ban(u.Name + " has been banned by " + u.Name + " for " + dur.String())
 		go func(id string) {
 			time.Sleep(dur)
 			unbanIDorIP(id)
 		}(victim.id) // evaluate id now, call unban with that value later
 		return
 	}
-	banUser(u.Name, victim)
-}
-
-func banUser(banner string, victim *User) {
-	Bans = append(Bans, Ban{victim.addr, victim.id})
-	saveBans()
-	victim.close(victim.Name + " has been banned by " + banner)
+	victim.ban(u.Name + " has been banned by " + u.Name)
 }
 
 func kickCMD(line string, u *User) {

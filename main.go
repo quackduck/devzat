@@ -73,7 +73,6 @@ type User struct {
 	addr    string
 
 	winWidth      int
-	closeOnce     sync.Once
 	lastTimestamp time.Time
 	joinTime      time.Time
 	lastInteract  time.Time
@@ -366,7 +365,7 @@ func newUser(s ssh.Session) *User {
 	if bansContains(Bans, u.addr, u.id) {
 		Log.Println("Rejected " + u.Name + " [" + host + "] (banned)")
 		u.writeln(Devbot, "**You are banned**. If you feel this was a mistake, please reach out to the server admin. Include the following information: [ID "+u.id+"]")
-		u.closeQuietly()
+		u.close("")
 		return nil
 	}
 
@@ -376,7 +375,7 @@ func newUser(s ssh.Session) *User {
 		if !(isAdmin || isOnAllowlist) {
 			Log.Println("Rejected " + u.Name + " [" + u.id + "] (not on allowlist)")
 			u.writeln(Devbot, "You are not on the allowlist of this private server. If this is a mistake, send your id ("+u.id+") to the admin so that they can add you.")
-			u.closeQuietly()
+			u.close("")
 			return nil
 		}
 	}
@@ -384,8 +383,8 @@ func newUser(s ssh.Session) *User {
 	IDsInMinToTimes[u.id]++
 	time.AfterFunc(60*time.Second, func() { IDsInMinToTimes[u.id]-- })
 	if IDsInMinToTimes[u.id] > 6 {
-		Bans = append(Bans, Ban{u.addr, u.id})
-		MainRoom.broadcast(Devbot, "`"+s.User()+"` has been banned automatically. ID: "+u.id)
+		u.ban("")
+		MainRoom.broadcast(Devbot, u.Name+" has been banned automatically. ID: "+u.id)
 		return nil
 	}
 
@@ -431,8 +430,8 @@ func newUser(s ssh.Session) *User {
 
 	MainRoom.usersMutex.Lock()
 	MainRoom.users = append(MainRoom.users, u)
-	go sendCurrentUsersTwitterMessage()
 	MainRoom.usersMutex.Unlock()
+	go sendCurrentUsersTwitterMessage()
 
 	u.term.SetBracketedPasteMode(true) // experimental paste bracketing support
 	term.AutoCompleteCallback = func(line string, pos int, key rune) (string, int, bool) {
@@ -487,29 +486,31 @@ func cleanupRoom(r *Room) {
 	}()
 }
 
-// Removes a User and prints Twitter and chat message
+// Removes a User and prints a chat message
 func (u *User) close(msg string) {
-	u.closeOnce.Do(func() {
-		u.closeQuietly()
-		err := u.savePrefs()
-		if err != nil {
-			Log.Println(err) // not much else we can do
-		}
-		if time.Since(u.joinTime) > time.Minute/2 {
-			msg += ". They were online for " + printPrettyDuration(time.Since(u.joinTime))
-		}
-		u.room.broadcast("", Red.Paint(" <-- ")+msg)
-		u.room.users = remove(u.room.users, u)
-		cleanupRoom(u.room)
-	})
-}
-
-// Removes a User silently, used to close banned users
-func (u *User) closeQuietly() {
 	u.room.usersMutex.Lock()
 	u.room.users = remove(u.room.users, u)
 	u.room.usersMutex.Unlock()
+	u.session = nil
 	u.session.Close()
+	if msg == "" {
+		return
+	}
+	err := u.savePrefs()
+	if err != nil {
+		Log.Println(err) // not much else we can do
+	}
+	if time.Since(u.joinTime) > time.Minute/2 {
+		msg += ". They were online for " + printPrettyDuration(time.Since(u.joinTime))
+	}
+	u.room.broadcast("", Red.Paint(" <-- ")+msg)
+	cleanupRoom(u.room)
+}
+
+func (u *User) ban(banner string) {
+	Bans = append(Bans, Ban{u.addr, u.id})
+	saveBans()
+	u.close(banner)
 }
 
 func (u *User) writeln(senderName string, msg string) {
@@ -689,7 +690,9 @@ func (u *User) repl() {
 		u.lastInteract = time.Now()
 		line, err := u.term.ReadLine()
 		if err == io.EOF {
-			u.close(u.Name + " has left the chat")
+			if u.session != nil {
+				u.close(u.Name + " has left the chat")
+			}
 			return
 		}
 
