@@ -520,27 +520,32 @@ func banCMD(line string, u *User) {
 		return
 	}
 	// check if the ban is for a certain duration
+	var dur time.Duration = 0
 	if len(split) > 1 {
-		dur, err := time.ParseDuration(split[1])
+		var err error
+		dur, err = time.ParseDuration(split[1])
 		if err != nil {
 			u.room.broadcast(Devbot, "I couldn't parse that as a duration")
 			return
 		}
-		Bans = append(Bans, Ban{victim.addr, victim.id})
-		victim.close(victim.Name + " has been banned by " + u.Name + " for " + dur.String())
+	}
+	banUser(u.Name, victim, dur)
+}
+
+func banUser(banner string, victim *User, dur time.Duration) {
+	Bans = append(Bans, Ban{victim.addr, victim.id})
+	if dur != 0 {
 		go func(id string) {
 			time.Sleep(dur)
 			unbanIDorIP(id)
 		}(victim.id) // evaluate id now, call unban with that value later
-		return
+	} else {
+		saveBans()
 	}
-	banUser(u.Name, victim)
-}
-
-func banUser(banner string, victim *User) {
-	Bans = append(Bans, Ban{victim.addr, victim.id})
-	saveBans()
+	id := victim.id
+	r := victim.room
 	victim.close(victim.Name + " has been banned by " + banner)
+	kickId(id, banner, r)
 }
 
 func kickCMD(line string, u *User) {
@@ -553,10 +558,15 @@ func kickCMD(line string, u *User) {
 		u.room.broadcast(Devbot, "Not authorized")
 		return
 	}
-	id := victim.id
+	kickId(victim.id, u.Name, u.room)
+}
+
+// Kicks all users using the given ID in the given room
+func kickId(id string, kicker string, r *Room) {
+	victim, ok := findUserById(r, id)
 	for ok {
-		victim.close(victim.Name + Red.Paint(" has been kicked by ") + u.Name)
-		victim, ok = findUserById(u.room, id)
+		victim.close(victim.Name + Red.Paint(" has been kicked by ") + kicker)
+		victim, ok = findUserById(r, id)
 	}
 }
 
