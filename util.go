@@ -209,14 +209,6 @@ func findUserById(r *Room, id string) (*User, bool) {
 	return nil, false
 }
 
-func findUserByIdOrName(r *Room, input string) (*User, bool) {
-	u, ok := findUserById(r, input)
-	if ok {
-		return u, true
-	}
-	return findUserByName(r, input)
-}
-
 func remove(s []*User, a *User) []*User {
 	for j := range s {
 		if s[j] == a { // https://github.com/golang/go/wiki/SliceTricks#delete

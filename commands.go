@@ -514,7 +514,7 @@ func banCMD(line string, u *User) {
 		u.room.broadcast(Devbot, "Which user do you want to ban?")
 		return
 	}
-	victim, ok := findUserByIdOrName(u.room, split[0])
+	victim, ok := findUserByName(u.room, split[0])
 	if !ok {
 		u.room.broadcast("", "User not found")
 		return
@@ -549,7 +549,7 @@ func banUser(banner string, victim *User, dur time.Duration) {
 }
 
 func kickCMD(line string, u *User) {
-	victim, ok := findUserByIdOrName(u.room, line)
+	victim, ok := findUserByName(u.room, line)
 	if !ok {
 		u.room.broadcast("", "User not found")
 		return
