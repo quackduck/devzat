@@ -542,9 +542,8 @@ func banUser(banner string, victim *User, dur time.Duration) {
 		}(victim.id) // evaluate id now, call unban with that value later
 	}
 	id := victim.id
-	r := victim.room
 	victim.ban(victim.Name + " has been banned by " + banner)
-	kickId(id, banner, r)
+	kickId(id, banner)
 }
 
 func kickCMD(line string, u *User) {
@@ -557,15 +556,17 @@ func kickCMD(line string, u *User) {
 		u.room.broadcast(Devbot, "Not authorized")
 		return
 	}
-	kickId(victim.id, u.Name, u.room)
+	kickId(victim.id, u.Name)
 }
 
 // Kicks all users using the given ID in the given room
-func kickId(id string, kicker string, r *Room) {
-	victim, ok := findUserById(r, id)
-	for ok {
-		victim.close(victim.Name + Red.Paint(" has been kicked by ") + kicker)
-		victim, ok = findUserById(r, id)
+func kickId(id string, kicker string) {
+	for _, r := range Rooms {
+		victim, ok := findUserById(r, id)
+		for ok {
+			victim.close(victim.Name + Red.Paint(" has been kicked by ") + kicker)
+			victim, ok = findUserById(r, id)
+		}
 	}
 }
 
