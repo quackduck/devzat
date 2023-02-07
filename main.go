@@ -491,8 +491,8 @@ func (u *User) close(msg string) {
 	u.room.usersMutex.Lock()
 	u.room.users = remove(u.room.users, u)
 	u.room.usersMutex.Unlock()
-	u.session = nil
 	u.session.Close()
+	u.session = nil
 	if msg == "" {
 		return
 	}
