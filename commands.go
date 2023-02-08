@@ -530,20 +530,16 @@ func banCMD(line string, u *User) {
 			return
 		}
 	}
-	banUser(u.Name, victim, dur)
-}
-
-func banUser(banner string, victim *User, dur time.Duration) {
 	if dur != 0 {
-		victim.ban(victim.Name + " has been banned by " + banner + " for " + dur.String())
+		victim.ban(victim.Name + " has been banned by " + u.Name + " for " + dur.String())
 		go func(id string) {
 			time.Sleep(dur)
 			unbanIDorIP(id)
 		}(victim.id) // evaluate id now, call unban with that value later
 	}
 	id := victim.id
-	victim.ban(victim.Name + " has been banned by " + banner)
-	kickId(id, banner)
+	victim.ban(victim.Name + " has been banned by " + u.Name)
+	kickId(id, u.Name)
 }
 
 func kickCMD(line string, u *User) {
