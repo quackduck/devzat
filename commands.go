@@ -552,7 +552,7 @@ func kickCMD(line string, u *User) {
 		u.room.broadcast(Devbot, "Not authorized")
 		return
 	}
-	kickId(victim.id, u.Name)
+	victim.close(victim.Name + Red.Paint(" has been kicked by ") + u.Name)
 }
 
 // Kicks all users using the given ID in the given room
