@@ -527,14 +527,14 @@ func banCMD(line string, u *User) {
 			u.room.broadcast(Devbot, "I couldn't parse that as a duration")
 			return
 		}
-		victim.ban(u.Name + " has been banned by " + u.Name + " for " + dur.String())
+		victim.ban(victim.Name + " has been banned by " + u.Name + " for " + dur.String())
 		go func(id string) {
 			time.Sleep(dur)
 			unbanIDorIP(id)
 		}(victim.id) // evaluate id now, call unban with that value later
 		return
 	}
-	victim.ban(u.Name + " has been banned by " + u.Name)
+	victim.ban(victim.Name + " has been banned by " + u.Name)
 }
 
 func kickCMD(line string, u *User) {
@@ -726,6 +726,12 @@ func lsCMD(rest string, u *User) {
 			u.room.broadcast("", usersList)
 			return
 		}
+	}
+	if rest == "-i" && auth(u) { // A ls -i option is available for admins. It is used to show the id of each user.
+		for _, us := range u.room.users {
+			u.room.broadcast("", us.id+" "+us.Name)
+		}
+		return
 	}
 	if rest != "" {
 		u.room.broadcast("", "ls: "+rest+" Permission denied")
