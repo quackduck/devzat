@@ -411,6 +411,13 @@ func newUser(s ssh.Session) *User {
 		return nil
 	}
 
+	if bansContains(Bans, u.addr, u.id) { // in case the user got banned while this instance was on the username picking screen. ... yes people have actually done this. the reason the check is repeated is because the check is inexpensive and it minimizes active connections
+		Log.Println("Rejected " + u.Name + " [" + host + "] (banned)")
+		u.writeln(Devbot, "**You are banned**. If you feel this was a mistake, please reach out to the server admin. Include the following information: [ID "+u.id+"]")
+		u.close("")
+		return nil
+	}
+
 	if !Config.Private { // sensitive info might be shared on a private server
 		var lastStamp time.Time
 		for i := range Backlog {
