@@ -532,6 +532,7 @@ func banCMD(line string, u *User) {
 			time.Sleep(dur)
 			unbanIDorIP(id)
 		}(victim.id) // evaluate id now, call unban with that value later
+		return
 	}
 	victim.ban(victim.Name + " has been banned by " + u.Name)
 }
