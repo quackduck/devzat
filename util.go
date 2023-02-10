@@ -198,17 +198,6 @@ func findUserByName(r *Room, name string) (*User, bool) {
 	return nil, false
 }
 
-func findUserById(r *Room, id string) (*User, bool) {
-	r.usersMutex.Lock()
-	defer r.usersMutex.Unlock()
-	for _, u := range r.users {
-		if u.id == id {
-			return u, true
-		}
-	}
-	return nil, false
-}
-
 func remove(s []*User, a *User) []*User {
 	for j := range s {
 		if s[j] == a { // https://github.com/golang/go/wiki/SliceTricks#delete
