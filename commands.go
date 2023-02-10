@@ -521,16 +521,12 @@ func banCMD(line string, u *User) {
 		return
 	}
 	// check if the ban is for a certain duration
-	var dur time.Duration = 0
 	if len(split) > 1 {
-		var err error
-		dur, err = time.ParseDuration(split[1])
+		dur, err := time.ParseDuration(split[1])
 		if err != nil {
 			u.room.broadcast(Devbot, "I couldn't parse that as a duration")
 			return
 		}
-	}
-	if dur != 0 {
 		victim.ban(victim.Name + " has been banned by " + u.Name + " for " + dur.String())
 		go func(id string) {
 			time.Sleep(dur)
