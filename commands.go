@@ -537,9 +537,7 @@ func banCMD(line string, u *User) {
 			unbanIDorIP(id)
 		}(victim.id) // evaluate id now, call unban with that value later
 	}
-	id := victim.id
 	victim.ban(victim.Name + " has been banned by " + u.Name)
-	kickId(id, u.Name)
 }
 
 func kickCMD(line string, u *User) {
@@ -553,17 +551,6 @@ func kickCMD(line string, u *User) {
 		return
 	}
 	victim.close(victim.Name + Red.Paint(" has been kicked by ") + u.Name)
-}
-
-// Kicks all users using the given ID in the given room
-func kickId(id string, kicker string) {
-	for _, r := range Rooms {
-		victim, ok := findUserById(r, id)
-		for ok {
-			victim.close(victim.Name + Red.Paint(" has been kicked by ") + kicker)
-			victim, ok = findUserById(r, id)
-		}
-	}
 }
 
 func colorCMD(rest string, u *User) {

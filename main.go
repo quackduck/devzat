@@ -510,7 +510,14 @@ func (u *User) close(msg string) {
 func (u *User) ban(banner string) {
 	Bans = append(Bans, Ban{u.addr, u.id})
 	saveBans()
-	u.close(banner)
+	// u.close(banner)
+	for _, r := range Rooms {
+		victim, ok := findUserById(r, u.id)
+		if !ok {
+			continue // no more users with the same id in this room
+		}
+		victim.close(banner)
+	}
 }
 
 func (u *User) writeln(senderName string, msg string) {
