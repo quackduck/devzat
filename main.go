@@ -400,22 +400,31 @@ func newUser(s ssh.Session) *User {
 		u.changeColor("bg-random") //nolint:errcheck // we know "bg-random" is a valid color
 	}
 
-	err := u.loadPrefs() // since we are loading for the first time, respect the saved value
-	if err != nil {
-		Log.Println("Could not load user:", err)
-	}
+	timeoutChan := make(chan bool)
+	timedOut := false
+	go func() { // timeout to minimize inactive connections
+		err := u.loadPrefs()
+		if err != nil && !timedOut {
+			Log.Println("Could not load user:", err)
+			return
+		}
+		if timedOut {
+			return
+		}
+		if err = u.pickUsernameQuietly(stripansi.Strip(u.Name)); err != nil && !timedOut {
+			Log.Println(err)
+			s.Close()
+		}
+		timeoutChan <- true
+	}()
 
-	if err = u.pickUsernameQuietly(stripansi.Strip(u.Name)); err != nil { // User exited or had some error
-		Log.Println(err)
+	select {
+	case <-time.After(time.Minute):
+		Log.Println("Timeout for user", stripansi.Strip(u.Name), "with ID", u.id)
+		timedOut = true
 		s.Close()
 		return nil
-	}
-
-	if bansContains(Bans, u.addr, u.id) { // in case the user got banned while this instance was on the username picking screen. ... yes people have actually done this. the reason the check is repeated is because the check is inexpensive and it minimizes active connections
-		Log.Println("Rejected " + u.Name + " [" + host + "] (banned)")
-		u.writeln(Devbot, "**You are banned**. If you feel this was a mistake, please reach out to the server admin. Include the following information: [ID "+u.id+"]")
-		u.close("")
-		return nil
+	case <-timeoutChan:
 	}
 
 	if !Config.Private { // sensitive info might be shared on a private server
