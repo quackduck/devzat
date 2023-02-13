@@ -365,7 +365,7 @@ func newUser(s ssh.Session) *User {
 	if bansContains(Bans, u.addr, u.id) {
 		Log.Println("Rejected " + u.Name + " [" + host + "] (banned)")
 		u.writeln(Devbot, "**You are banned**. If you feel this was a mistake, please reach out to the server admin. Include the following information: [ID "+u.id+"]")
-		u.close("")
+		s.Close()
 		return nil
 	}
 
@@ -375,7 +375,7 @@ func newUser(s ssh.Session) *User {
 		if !(isAdmin || isOnAllowlist) {
 			Log.Println("Rejected " + u.Name + " [" + u.id + "] (not on allowlist)")
 			u.writeln(Devbot, "You are not on the allowlist of this private server. If this is a mistake, send your id ("+u.id+") to the admin so that they can add you.")
-			u.close("")
+			s.Close()
 			return nil
 		}
 	}
@@ -507,29 +507,32 @@ func (u *User) close(msg string) {
 	u.room.usersMutex.Lock()
 	u.room.users = remove(u.room.users, u)
 	u.room.usersMutex.Unlock()
+	cleanupRoom(u.room)
 	u.session.Close()
 	u.session = nil
-	if msg == "" {
-		return
-	}
 	err := u.savePrefs()
 	if err != nil {
 		Log.Println(err) // not much else we can do
+	}
+	if msg == "" {
+		return
 	}
 	if time.Since(u.joinTime) > time.Minute/2 {
 		msg += ". They were online for " + printPrettyDuration(time.Since(u.joinTime))
 	}
 	u.room.broadcast("", Red.Paint(" <-- ")+msg)
-	cleanupRoom(u.room)
 }
 
 func (u *User) ban(banner string) {
 	Bans = append(Bans, Ban{u.addr, u.id})
 	saveBans()
-	for _, r := range Rooms { // close all users that have this id (including this user)
-		for _, u2 := range r.users {
-			if u2.id == u.id {
-				u2.close(banner)
+	uid := u.id
+	u.close(banner)
+	for i := range Rooms { // close all users that have this id (including this user)
+		for j := 0; j < len(Rooms[i].users); j++ {
+			if Rooms[i].users[j].id == uid {
+				Rooms[i].users[j].close("")
+				j--
 			}
 		}
 	}
