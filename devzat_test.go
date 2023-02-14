@@ -172,6 +172,7 @@ func BenchmarkOldMentionEscapedMention(b *testing.B) {
 func TestBan(t *testing.T) {
 	// Testing a single user being banned
 	r := makeDummyRoom()
+	Rooms = map[string]*Room{r.name: r}
 	r.users[0].id = "0"
 	r.users[1].id = "1"
 	r.users[2].id = "2"
@@ -184,6 +185,7 @@ func TestBan(t *testing.T) {
 	}
 	// Testing the two consecutive users sharing the same ID
 	r = makeDummyRoom()
+	Rooms = map[string]*Room{r.name: r}
 	r.users[0].id = "900d"
 	r.users[1].id = "bad"
 	r.users[2].id = "bad"
@@ -196,6 +198,7 @@ func TestBan(t *testing.T) {
 	}
 	// Testing all user having the same id
 	r = makeDummyRoom()
+	Rooms = map[string]*Room{r.name: r}
 	r.users[0].id = "5am3"
 	r.users[1].id = "5am3"
 	r.users[2].id = "5am3"
@@ -208,6 +211,7 @@ func TestBan(t *testing.T) {
 	}
 	// Testing interlaced users sharing the same ID
 	r = makeDummyRoom()
+	Rooms = map[string]*Room{r.name: r}
 	r.users[0].id = "bad"
 	r.users[1].id = "900d"
 	r.users[2].id = "bad"
