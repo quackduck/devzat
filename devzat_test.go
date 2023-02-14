@@ -65,7 +65,7 @@ func makeDummyRoom() *Room {
 
 /* ------------------ Testing correctness of findMention ------------------- */
 
-func performTFM(t *testing.T, r *Room, raw string, expected string) {
+func performTestFindMention(t *testing.T, r *Room, raw string, expected string) {
 	colored := r.findMention(raw)
 	t.Log(colored)
 	if colored != expected {
@@ -79,19 +79,19 @@ func TestFindMention(t *testing.T) {
 	inputMsg := "@tim @tom @timtom @timt Hi!"
 	// Warning, the order the elements have been put in the dummy room affects the result of the test
 	expectedMsg := r.users[0].Name + " " + r.users[1].Name + " " + r.users[2].Name + " " + r.users[3].Name + " Hi!"
-	performTFM(t, r, inputMsg, expectedMsg)
+	performTestFindMention(t, r, inputMsg, expectedMsg)
 	inputMsg = "@tim @fakemention"
 	expectedMsg = r.users[0].Name + " @fakemention"
-	performTFM(t, r, inputMsg, expectedMsg)
+	performTestFindMention(t, r, inputMsg, expectedMsg)
 	inputMsg = "  @tim  "
 	expectedMsg = "  " + r.users[0].Name + "  "
-	performTFM(t, r, inputMsg, expectedMsg)
-	performTFM(t, r, "", "")
-	performTFM(t, r, "@tom", r.users[1].Name)
-	performTFM(t, r, "no mention", "no mention")
-	performTFM(t, r, "@tim \\@tim", r.users[0].Name+" @tim")
-	performTFM(t, r, "@", "@")
-	performTFM(t, r, "\\@", "@")
+	performTestFindMention(t, r, inputMsg, expectedMsg)
+	performTestFindMention(t, r, "", "")
+	performTestFindMention(t, r, "@tom", r.users[1].Name)
+	performTestFindMention(t, r, "no mention", "no mention")
+	performTestFindMention(t, r, "@tim \\@tim", r.users[0].Name+" @tim")
+	performTestFindMention(t, r, "@", "@")
+	performTestFindMention(t, r, "\\@", "@")
 }
 
 /* ---------------------- Testing speed of findMention ---------------------- */
@@ -169,57 +169,27 @@ func BenchmarkOldMentionEscapedMention(b *testing.B) {
 
 /* --------------------- Testing correctness of banning --------------------- */
 
-func TestBan(t *testing.T) {
-	// Testing a single user being banned
+func performTestBan(t *testing.T, id0 string, id1 string, id2 string, id3 string, usersBanned int) {
 	r := makeDummyRoom()
 	Rooms = map[string]*Room{r.name: r}
-	r.users[0].id = "0"
-	r.users[1].id = "1"
-	r.users[2].id = "2"
-	r.users[3].id = "3"
-	r.users[1].ban("Tom is a meany")
-	if len(r.users) != 3 {
-		t.Log("Error, one user should have been kicked.")
-		t.Log(len(r.users))
-		t.Fail()
-	}
-	// Testing the two consecutive users sharing the same ID
-	r = makeDummyRoom()
-	Rooms = map[string]*Room{r.name: r}
-	r.users[0].id = "900d"
-	r.users[1].id = "bad"
-	r.users[2].id = "bad"
-	r.users[3].id = "900d"
-	r.users[1].ban("Tom is a meany")
-	if len(r.users) != 2 {
-		t.Log("Error, two users should have been kicked.")
-		t.Log(len(r.users))
-		t.Fail()
-	}
-	// Testing all user having the same id
-	r = makeDummyRoom()
-	Rooms = map[string]*Room{r.name: r}
-	r.users[0].id = "5am3"
-	r.users[1].id = "5am3"
-	r.users[2].id = "5am3"
-	r.users[3].id = "5am3"
-	r.users[1].ban("Tom is a meany")
-	if len(r.users) != 0 {
-		t.Log("Error, all users should have been kicked.")
-		t.Log(len(r.users))
-		t.Fail()
-	}
-	// Testing interlaced users sharing the same ID
-	r = makeDummyRoom()
-	Rooms = map[string]*Room{r.name: r}
-	r.users[0].id = "bad"
-	r.users[1].id = "900d"
-	r.users[2].id = "bad"
-	r.users[3].id = "900d"
+	r.users[0].id = id0
+	r.users[1].id = id1
+	r.users[2].id = id2
+	r.users[3].id = id3
 	r.users[0].ban("Tim is a meany")
-	if len(r.users) != 2 {
-		t.Log("Error, two users should have been kicked.")
-		t.Log(len(r.users))
+	if len(r.users) != 4-usersBanned {
+		t.Log("Error,", usersBanned, "users should have been kicked but", 4-len(r.users), "have been kicked.")
 		t.Fail()
 	}
+}
+
+func TestBan(t *testing.T) {
+	// Testing a single user being banned
+	performTestBan(t, "0", "1", "2", "3", 1)
+	// Testing the two consecutive users sharing the same ID
+	performTestBan(t, "bad", "bad", "900d", "900d", 2)
+	// Testing all user having the same id
+	performTestBan(t, "same", "same", "same", "same", 4)
+	// Testing interlaced users sharing the same ID
+	performTestBan(t, "bad", "900d", "bad", "900d", 2)
 }
