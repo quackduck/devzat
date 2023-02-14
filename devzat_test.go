@@ -50,13 +50,13 @@ func makeDummyRoom() *Room {
 	dummyTerm := terminal.NewTerminal(drw, "")
 	ret := &Room{name: "DummyRoom", users: []*User{}, usersMutex: sync.Mutex{}}
 
-	tim := &User{Name: "tim", term: dummyTerm, ColorBG: "bg-off", room: ret, session: dummySession{}, id: "900d"}
+	tim := &User{Name: "tim", term: dummyTerm, ColorBG: "bg-off", room: ret, session: dummySession{}}
 	_ = tim.changeColor("red")
-	tom := &User{Name: "tom", term: dummyTerm, ColorBG: "bg-off", room: ret, session: dummySession{}, id: "bad"}
+	tom := &User{Name: "tom", term: dummyTerm, ColorBG: "bg-off", room: ret, session: dummySession{}}
 	_ = tom.changeColor("blue")
-	timtom := &User{Name: "timtom", term: dummyTerm, ColorBG: "bg-off", room: ret, session: dummySession{}, id: "bad"}
+	timtom := &User{Name: "timtom", term: dummyTerm, ColorBG: "bg-off", room: ret, session: dummySession{}}
 	_ = timtom.changeColor("sky")
-	timt := &User{Name: "timt", term: dummyTerm, ColorBG: "bg-off", room: ret, session: dummySession{}, id: "900d"}
+	timt := &User{Name: "timt", term: dummyTerm, ColorBG: "bg-off", room: ret, session: dummySession{}}
 	_ = timt.changeColor("coral")
 
 	ret.users = append(ret.users, tim, tom, timtom, timt)
@@ -164,5 +164,58 @@ func BenchmarkOldMentionEscapedMention(b *testing.B) {
 	r := makeDummyRoom()
 	for i := 0; i < b.N; i++ {
 		_ = oldMention(r, escapedMention)
+	}
+}
+
+/* --------------------- Testing correctness of banning --------------------- */
+
+func TestBan(t *testing.T) {
+	// Testing a single user being banned
+	r := makeDummyRoom()
+	r.users[0].id = "0"
+	r.users[1].id = "1"
+	r.users[2].id = "2"
+	r.users[3].id = "3"
+	r.users[1].ban("Tom is a meany")
+	if len(r.users) != 3 {
+		t.Log("Error, one user should have been kicked.")
+		t.Log(len(r.users))
+		t.Fail()
+	}
+	// Testing the two consecutive users sharing the same ID
+	r = makeDummyRoom()
+	r.users[0].id = "900d"
+	r.users[1].id = "bad"
+	r.users[2].id = "bad"
+	r.users[3].id = "900d"
+	r.users[1].ban("Tom is a meany")
+	if len(r.users) != 2 {
+		t.Log("Error, two users should have been kicked.")
+		t.Log(len(r.users))
+		t.Fail()
+	}
+	// Testing all user having the same id
+	r = makeDummyRoom()
+	r.users[0].id = "5am3"
+	r.users[1].id = "5am3"
+	r.users[2].id = "5am3"
+	r.users[3].id = "5am3"
+	r.users[1].ban("Tom is a meany")
+	if len(r.users) != 0 {
+		t.Log("Error, all users should have been kicked.")
+		t.Log(len(r.users))
+		t.Fail()
+	}
+	// Testing interlaced users sharing the same ID
+	r = makeDummyRoom()
+	r.users[0].id = "bad"
+	r.users[1].id = "900d"
+	r.users[2].id = "bad"
+	r.users[3].id = "900d"
+	r.users[0].ban("Tim is a meany")
+	if len(r.users) != 2 {
+		t.Log("Error, two users should have been kicked.")
+		t.Log(len(r.users))
+		t.Fail()
 	}
 }
