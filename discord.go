@@ -31,6 +31,7 @@ func discordInit() {
 	sess.Identify.Intents = discordgo.IntentsGuildMessages // only listen to messages
 	err = sess.Open()
 	if err != nil {
+		Log.Println("Error opening Discord session:", err)
 		return
 	}
 
@@ -38,7 +39,10 @@ func discordInit() {
 	go func() {
 		for msg := range DiscordChan {
 			msg = strings.ReplaceAll(msg, "@everyone", "@\\everyone")
-			sess.ChannelMessageSend(Integrations.Discord.ChannelID, strings.ReplaceAll(stripansi.Strip(msg), `\n`, "\n"))
+			_, err = sess.ChannelMessageSend(Integrations.Discord.ChannelID, strings.ReplaceAll(stripansi.Strip(msg), `\n`, "\n"))
+			if err != nil {
+				Log.Println("Error sending Discord message:", err)
+			}
 		}
 	}()
 

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/acarl005/stripansi"
-	"github.com/dghubble/go-twitter/twitter"
+	"github.com/dghubble/go-twitter/twitter" //nolint:staticcheck // library deprecated
 	"github.com/dghubble/oauth1"
 )
 

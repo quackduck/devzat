@@ -324,7 +324,7 @@ func newUser(s ssh.Session) *User {
 	pty, winChan, isPty := s.Pty()
 	w := pty.Window.Width
 	if !isPty { // only support pty joins
-		s.Write([]byte("Devzat does not allow non-pty joins. What are you trying to pull here?"))
+		term.Write([]byte("Devzat does not allow non-pty joins. What are you trying to pull here?"))
 		return nil
 	}
 	host, _, _ := net.SplitHostPort(s.RemoteAddr().String()) // definitely should not give an err
@@ -439,7 +439,7 @@ func newUser(s ssh.Session) *User {
 			}
 			u.writeln(Backlog[i].senderName, Backlog[i].text)
 		}
-		if time.Now().Sub(lastStamp) > time.Minute && u.Timezone.Location != nil {
+		if time.Since(lastStamp) > time.Minute && u.Timezone.Location != nil {
 			u.rWriteln(fmtTime(u, time.Now()))
 		}
 	}
