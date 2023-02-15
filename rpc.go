@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	PluginCMDs = map[string]cmdInst{}
+	PluginCMDs = map[string]PluginCMD{}
 	RPCCMDs    = []CMD{
 		{"plugins", pluginsCMD, "", "List plugin commands"},
 	}
@@ -36,22 +36,14 @@ var (
 		{"revoke", revokeTokenCMD, "<token hash>", "Revoke a plugin token (admin)"},
 		{"grant", grantTokenCMD, "[user] [data]", "Grant a token and optionally send it to a user (admin)"},
 	}
+	ListenersNonMiddleware = make([]chan pb.MiddlewareChannelMessage, 0, 4)
+	ListenersMiddleware    = make([]chan pb.MiddlewareChannelMessage, 0, 4)
+	Tokens                 = make(map[string]string, 10)
 )
 
 type pluginServer struct {
 	pb.UnimplementedPluginServer
 	lock sync.Mutex
-}
-
-// Since pb.MiddlewareChannelMessage includes pb.IsEvent_Event, we'll just use that
-type listenerCollection struct {
-	nonMiddleware []chan pb.MiddlewareChannelMessage
-	middleware    []chan pb.MiddlewareChannelMessage
-}
-
-var listeners = listenerCollection{
-	nonMiddleware: make([]chan pb.MiddlewareChannelMessage, 0, 4),
-	middleware:    make([]chan pb.MiddlewareChannelMessage, 0, 4),
 }
 
 func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer) error {
@@ -81,23 +73,23 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 		}
 	}
 
-	var channelCollection *[]chan pb.MiddlewareChannelMessage
+	var listenerList *[]chan pb.MiddlewareChannelMessage
 
 	if isMiddleware {
-		channelCollection = &listeners.middleware
+		listenerList = &ListenersMiddleware
 	} else {
-		channelCollection = &listeners.nonMiddleware
+		listenerList = &ListenersNonMiddleware
 	}
 
 	c := make(chan pb.MiddlewareChannelMessage)
-	*channelCollection = append(*channelCollection, c)
+	*listenerList = append(*listenerList, c)
 
 	s.lock.Unlock()
 	defer func() {
-		// Remove the channel from the channelCollection where the channel is equal to c
-		for i, channel := range *channelCollection {
-			if channel == c {
-				*channelCollection = append((*channelCollection)[:i], (*channelCollection)[i+1:]...)
+		// Remove the channel from the list where the channel is equal to c
+		for i := range *listenerList {
+			if (*listenerList)[i] == c {
+				*listenerList = append((*listenerList)[:i], (*listenerList)[i+1:]...)
 				break
 			}
 		}
@@ -130,14 +122,13 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 			}
 			return err
 		}
+
 		if isMiddleware {
 			mwRes, err := stream.Recv()
-
 			if err != nil {
 				sendNilResponse()
 				return err
 			}
-
 			switch data := mwRes.Data.(type) {
 			case *pb.ListenerClientData_Listener:
 				sendNilResponse()
@@ -151,31 +142,28 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 			break
 		}
 	}
-
 	return nil
 }
 
-type cmdInst struct {
-	argsInfo string
-	info     string
-	c        chan *pb.CmdInvocation
+type PluginCMD struct {
+	argsInfo       string
+	info           string
+	invocationChan chan *pb.CmdInvocation
 }
 
 func (s *pluginServer) RegisterCmd(def *pb.CmdDef, stream pb.Plugin_RegisterCmdServer) error {
 	s.lock.Lock()
 	Log.Print("[gRPC] Registering command with name " + def.Name)
-	PluginCMDs[def.Name] = cmdInst{
-		argsInfo: def.ArgsInfo,
-		info:     def.Info,
-		c:        make(chan *pb.CmdInvocation),
+	PluginCMDs[def.Name] = PluginCMD{
+		argsInfo:       def.ArgsInfo,
+		info:           def.Info,
+		invocationChan: make(chan *pb.CmdInvocation),
 	}
 	s.lock.Unlock()
 	defer delete(PluginCMDs, def.Name)
 
 	for {
-		invocation := <-PluginCMDs[def.Name].c
-		err := stream.Send(invocation)
-		if err != nil {
+		if err := stream.Send(<-PluginCMDs[def.Name].invocationChan); err != nil {
 			return err
 		}
 	}
@@ -211,40 +199,15 @@ func authorize(ctx context.Context) error {
 		return status.Error(codes.Unauthenticated, "Missing authorization header")
 	}
 
-	token := values[0]
-	token = strings.TrimPrefix(token, "Bearer ")
-	if !checkToken(token) {
+	token := strings.TrimPrefix(values[0], "Bearer ")
+
+	if Integrations.RPC.Key != "" && token == Integrations.RPC.Key {
+		return nil
+	}
+	if _, ok = Tokens[token]; !ok {
 		return status.Error(codes.Unauthenticated, "Invalid authorization header")
 	}
 	return nil
-}
-
-func unaryInterceptor(
-	ctx context.Context,
-	req interface{},
-	info *grpc.UnaryServerInfo,
-	handler grpc.UnaryHandler,
-) (interface{}, error) {
-	err := authorize(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return handler(ctx, req)
-}
-
-func streamInterceptor(
-	srv interface{},
-	stream grpc.ServerStream,
-	info *grpc.StreamServerInfo,
-	handler grpc.StreamHandler,
-) error {
-	err := authorize(stream.Context())
-	if err != nil {
-		return err
-	}
-
-	return handler(srv, stream)
 }
 
 func rpcInit() {
@@ -253,30 +216,40 @@ func rpcInit() {
 	}
 	MainCMDs = append(MainCMDs, RPCCMDs...)
 	RestCMDs = append(RestCMDs, RPCCMDsRest...)
+	initTokens()
 	go func() {
 		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", Integrations.RPC.Port))
 		if err != nil {
-			fmt.Println("[gRPC] Failed to listen for plugin server:", err)
+			Log.Println("[gRPC] Failed to listen for plugin server:", err)
 			return
 		}
 		// TODO: add TLS if configured
 		grpcServer := grpc.NewServer(
-			grpc.UnaryInterceptor(unaryInterceptor),
-			grpc.StreamInterceptor(streamInterceptor),
+			grpc.UnaryInterceptor(func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+				if err := authorize(ctx); err != nil {
+					return nil, err
+				}
+				return handler(ctx, req)
+			}),
+			grpc.StreamInterceptor(func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+				if err := authorize(stream.Context()); err != nil {
+					return err
+				}
+				return handler(srv, stream)
+			}),
 			grpc.KeepaliveParams(keepalive.ServerParameters{Time: time.Second * 10}),
 		)
 		pb.RegisterPluginServer(grpcServer, &pluginServer{})
-		fmt.Printf("[gRPC] Plugin server started on port %d\n", Integrations.RPC.Port)
-		err = grpcServer.Serve(lis)
-		if err != nil {
-			fmt.Println("[gRPC] Failed to serve:", err)
+		Log.Printf("[gRPC] Plugin server started on port %d\n", Integrations.RPC.Port)
+		if err = grpcServer.Serve(lis); err != nil {
+			Log.Println("[gRPC] Failed to serve:", err)
 		}
 	}()
 }
 
 func runPluginCMDs(u *User, currCmd string, args string) (found bool) {
 	if pluginCmd, ok := PluginCMDs[currCmd]; ok {
-		pluginCmd.c <- &pb.CmdInvocation{
+		pluginCmd.invocationChan <- &pb.CmdInvocation{
 			Room: u.room.name,
 			From: stripansi.Strip(u.Name),
 			Args: args,
@@ -288,8 +261,8 @@ func runPluginCMDs(u *User, currCmd string, args string) (found bool) {
 
 // Hook that is called when a user sends a message (not private DMs)
 func sendMessageToPlugins(line string, u *User) {
-	if len(listeners.nonMiddleware) > 0 {
-		for _, l := range listeners.nonMiddleware {
+	if len(ListenersNonMiddleware) > 0 {
+		for _, l := range ListenersNonMiddleware {
 			l <- &pb.Event{
 				Room: u.room.name,
 				From: stripansi.Strip(u.Name),
@@ -309,17 +282,15 @@ func getMiddlewareResult(u *User, line string) string {
 	middlewareLock.Lock()
 	defer middlewareLock.Unlock()
 	// Middleware hook
-	if len(listeners.middleware) > 0 {
-		for _, m := range listeners.middleware {
-			//Log.Println("[gRPC] Running middleware", i+1, "of", len(listeners.middleware))
-			m <- &pb.Event{
+	if len(ListenersMiddleware) > 0 {
+		for i := range ListenersMiddleware {
+			ListenersMiddleware[i] <- &pb.Event{
 				Room: u.room.name,
 				From: stripansi.Strip(u.Name),
 				Msg:  line,
 			}
-			res := (<-m).(*pb.ListenerClientData_Response).Response
-			if res.Msg != nil {
-				line = *res.Msg
+			if res := (<-ListenersMiddleware[i]).(*pb.ListenerClientData_Response).Response.Msg; res != nil {
+				line = *res
 			}
 		}
 	}
@@ -342,18 +313,7 @@ func pluginsCMD(_ string, u *User) {
 	u.room.broadcast("", "Plugin commands  \n"+autogenerated)
 }
 
-type tokensDbEntry struct {
-	Token string `json:"token"`
-	Data  string `json:"data"`
-}
-
-var Tokens = make([]tokensDbEntry, 0)
-
 func initTokens() {
-	if Integrations.RPC == nil {
-		return
-	}
-
 	f, err := os.Open(Config.DataDir + string(os.PathSeparator) + "tokens.json")
 	if err != nil {
 		if !os.IsNotExist(err) {
@@ -362,10 +322,29 @@ func initTokens() {
 		return
 	}
 	defer f.Close()
-	err = json.NewDecoder(f).Decode(&Tokens)
+	j, err := io.ReadAll(f)
 	if err != nil {
-		MainRoom.broadcast(Devbot, "Error decoding tokens file: "+err.Error())
-		Log.Println(err)
+		Log.Println("Error reading tokens file:", err)
+		return
+	}
+
+	err = json.Unmarshal(j, &Tokens)
+	if err != nil {
+		var s []struct { // old format
+			Token string `json:"token"`
+			Data  string `json:"data"`
+		}
+		err = json.Unmarshal(j, &s)
+		if err != nil {
+			Log.Println("Error decoding tokens file:", err)
+			return
+		}
+		Log.Println("Changing token file format")
+		for i := range s {
+			Tokens[s[i].Token] = s[i].Data
+		}
+		f.Close()
+		saveTokens()
 	}
 }
 
@@ -377,26 +356,12 @@ func saveTokens() {
 	defer f.Close()
 	data, err := json.Marshal(Tokens)
 	if err != nil {
-		MainRoom.broadcast(Devbot, "Error encoding tokens file: "+err.Error())
-		Log.Println(err)
+		Log.Println("Error encoding tokens file:", err)
 	}
 	_, err = f.Write(data)
 	if err != nil {
-		MainRoom.broadcast(Devbot, "Error writing tokens file: "+err.Error())
-		Log.Println(err)
+		Log.Println("Error writing tokens file:", err)
 	}
-}
-
-func checkToken(token string) bool {
-	if Integrations.RPC.Key != "" && token == Integrations.RPC.Key {
-		return true
-	}
-	for _, t := range Tokens {
-		if t.Token == token {
-			return true
-		}
-	}
-	return false
 }
 
 func lsTokensCMD(_ string, u *User) {
@@ -410,8 +375,10 @@ func lsTokensCMD(_ string, u *User) {
 		return
 	}
 	msg := "Tokens:  \n"
-	for i, t := range Tokens {
-		msg += Cyan.Cyan(strconv.Itoa(i+1)) + ". " + shasum(t.Token) + "\t" + t.Data + "  \n"
+	i := 0
+	for t := range Tokens {
+		i++
+		msg += Cyan.Cyan(strconv.Itoa(i+1)) + ". " + shasum(t) + "\t" + Tokens[t] + "  \n"
 	}
 	u.writeln(Devbot, msg)
 }
@@ -426,9 +393,9 @@ func revokeTokenCMD(rest string, u *User) {
 		u.room.broadcast(Devbot, "Please provide a sha256 hash of a token to revoke.")
 		return
 	}
-	for i, t := range Tokens {
-		if shasum(t.Token) == rest {
-			Tokens = append(Tokens[:i], Tokens[i+1:]...)
+	for token := range Tokens {
+		if shasum(token) == rest {
+			delete(Tokens, token)
 			saveTokens()
 			u.room.broadcast(Devbot, "Token revoked!")
 			return
@@ -460,8 +427,7 @@ func grantTokenCMD(rest string, u *User) {
 			return
 		}
 	}
-
-	Tokens = append(Tokens, tokensDbEntry{token, rest})
+	Tokens[token] = rest
 	u.writeln(Devbot, "Granted token: "+token)
 	saveTokens()
 }
@@ -474,10 +440,8 @@ func generateToken() (string, error) {
 	}
 	token := "dvz@" + base64.StdEncoding.EncodeToString(b)
 	// check if it's already in use
-	for _, t := range Tokens {
-		if t.Token == token {
-			return generateToken()
-		}
+	if _, ok := Tokens[token]; ok {
+		return generateToken()
 	}
 	return token, nil
 }

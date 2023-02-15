@@ -32,7 +32,7 @@ var (
 	IDsInMinToTimes  = make(map[string]int, 10) // TODO: maybe add some IP-based factor to disallow rapid key-gen attempts
 	AntispamMessages = make(map[string]int)
 
-	Devbot = "" // initialized in main
+	Devbot = Green.Paint("devbot")
 )
 
 const (
@@ -121,10 +121,8 @@ func main() {
 			Log.Println(err)
 		}
 	}()
-	Devbot = Green.Paint("devbot")
 	rand.Seed(time.Now().Unix())
 	readBans()
-	initTokens()
 	c := make(chan os.Signal, 2)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 	go func() {
