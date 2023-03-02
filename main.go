@@ -201,10 +201,10 @@ func (r *Room) broadcast(senderName, msg string) {
 			toSendD = toSendS
 		}
 		if Integrations.Slack != nil {
-			SlackChan <- toSend
+			SlackChan <- toSendS
 		}
 		if Integrations.Discord != nil {
-			DiscordChan <- toSend
+			DiscordChan <- toSendD
 		}
 	}
 	r.broadcastNoBridges(senderName, msg)
