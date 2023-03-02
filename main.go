@@ -189,7 +189,11 @@ func (r *Room) broadcast(senderName, msg string) {
 	if Integrations.Slack != nil || Integrations.Discord != nil {
 		var toSend string
 		if senderName != "" {
-			toSend = "[" + r.name + "] " + senderName + ": " + msg
+			if Integrations.Slack != nil {
+				toSend = "[" + r.name + "] *" + senderName + "*: " + msg
+			} else {
+				toSend = "[" + r.name + "] **" + senderName + "**: " + msg
+			}
 		} else {
 			toSend = "[" + r.name + "] " + msg
 		}
