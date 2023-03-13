@@ -83,12 +83,7 @@ var (
 		IntegrationConfig: "",
 	}
 
-	Integrations = IntegrationsType{
-		Twitter: nil,
-		Slack:   nil,
-		Discord: nil,
-		RPC:     nil,
-	}
+	Integrations = IntegrationsType{} // all nil
 
 	Log *log.Logger
 )

@@ -418,6 +418,7 @@ func newUser(s ssh.Session) *User {
 		if err = u.pickUsernameQuietly(stripansi.Strip(u.Name)); err != nil && !timedOut {
 			Log.Println(err)
 			s.Close()
+			s = nil // marker so we know to exit
 		}
 		timeoutChan <- true
 	}()
@@ -429,6 +430,9 @@ func newUser(s ssh.Session) *User {
 		s.Close()
 		return nil
 	case <-timeoutChan:
+		if s == nil {
+			return nil
+		}
 	}
 
 	if !Config.Private { // sensitive info might be shared on a private server
