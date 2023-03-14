@@ -25,12 +25,12 @@ import (
 )
 
 var (
-	MainRoom         = &Room{"#main", make([]*User, 0, 10), sync.Mutex{}}
-	Rooms            = map[string]*Room{MainRoom.name: MainRoom}
-	Backlog          []backlogMessage
-	Bans             = make([]Ban, 0, 10)
-	IDsInMinToTimes  = make(map[string]int, 10) // TODO: maybe add some IP-based factor to disallow rapid key-gen attempts
-	AntispamMessages = make(map[string]int)
+	MainRoom                   = &Room{"#main", make([]*User, 0, 10), sync.Mutex{}}
+	Rooms                      = map[string]*Room{MainRoom.name: MainRoom}
+	Backlog                    []backlogMessage
+	Bans                       = make([]Ban, 0, 10)
+	IDandIPsToTimesJoinedInMin = make(map[string]int, 10) // ban type has addr and id
+	AntispamMessages           = make(map[string]int)
 
 	Devbot = Green.Paint("devbot")
 )
@@ -384,9 +384,13 @@ func newUser(s ssh.Session) *User {
 		}
 	}
 
-	IDsInMinToTimes[u.id]++
-	time.AfterFunc(60*time.Second, func() { IDsInMinToTimes[u.id]-- })
-	if IDsInMinToTimes[u.id] > 6 {
+	IDandIPsToTimesJoinedInMin[u.addr]++
+	IDandIPsToTimesJoinedInMin[u.id]++
+	time.AfterFunc(60*time.Second, func() {
+		IDandIPsToTimesJoinedInMin[u.addr]--
+		IDandIPsToTimesJoinedInMin[u.id]--
+	})
+	if IDandIPsToTimesJoinedInMin[u.addr] > 6 || IDandIPsToTimesJoinedInMin[u.id] > 6 {
 		u.ban("")
 		MainRoom.broadcast(Devbot, u.Name+" has been banned automatically. ID: "+u.id)
 		return nil
