@@ -520,6 +520,9 @@ func (u *User) close(msg string) {
 	u.room.users = remove(u.room.users, u)
 	u.room.usersMutex.Unlock()
 	cleanupRoom(u.room)
+	if u.isBridge {
+		return
+	}
 	u.session.Close()
 	u.session = nil
 	err := u.savePrefs()
