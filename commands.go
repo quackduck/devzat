@@ -511,7 +511,7 @@ func banCMD(line string, u *User) {
 		u.room.broadcast(Devbot, "Which user do you want to ban?")
 		return
 	}
-	var victim *user
+	var victim *User
 	var ok bool
 	banner := u.Name
 	if split[0] == "devbot" {
@@ -525,7 +525,7 @@ func banCMD(line string, u *User) {
 		u.room.broadcast("", "User not found")
 		return
 	}
-	
+
 	// check if the ban is for a certain duration
 	if len(split) > 1 {
 		dur, err := time.ParseDuration(split[1])
