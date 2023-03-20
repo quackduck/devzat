@@ -188,23 +188,25 @@ func (r *Room) broadcast(senderName, msg string) {
 	}
 	if Integrations.Slack != nil || Integrations.Discord != nil {
 		var toSendS string
-		var toSendD string
+		var toSendNameD string
 		if senderName != "" {
 			if Integrations.Slack != nil {
 				toSendS = "[" + r.name + "] *" + senderName + "*: " + msg
 			}
 			if Integrations.Discord != nil {
-				toSendD = "[" + r.name + "] **" + senderName + "**: " + msg
+				toSendNameD = "[" + r.name + "] " + senderName
 			}
 		} else {
 			toSendS = "[" + r.name + "] " + msg
-			toSendD = toSendS
 		}
 		if Integrations.Slack != nil {
 			SlackChan <- toSendS
 		}
 		if Integrations.Discord != nil {
-			DiscordChan <- toSendD
+			DiscordChan <- DiscordMsg{
+				senderName: toSendNameD,
+				msg:        msg,
+			}
 		}
 	}
 	r.broadcastNoBridges(senderName, msg)

@@ -48,7 +48,10 @@ func getMsgsFromSlack() {
 			name := strings.Fields(u.RealName)[0]
 			uslack.Name = Yellow.Paint(Integrations.Slack.Prefix+" ") + (Styles[int(i)%len(Styles)]).apply(name)
 			if Integrations.Discord != nil {
-				DiscordChan <- Integrations.Slack.Prefix + " " + name + ": " + text // send this discord message to slack
+				DiscordChan <- DiscordMsg{
+					senderName: Integrations.Slack.Prefix + " " + name,
+					msg:        text,
+				} // send this discord message to slack
 			}
 			runCommands(text, uslack)
 		case *slack.ConnectedEvent:

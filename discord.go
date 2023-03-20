@@ -12,9 +12,14 @@ import (
 )
 
 var (
-	DiscordChan chan string
+	DiscordChan chan DiscordMsg
 	DiscordUser = new(User)
 )
+
+type DiscordMsg struct {
+	senderName string
+	msg        string
+}
 
 func discordInit() {
 	if Integrations.Discord == nil {
@@ -35,11 +40,38 @@ func discordInit() {
 		return
 	}
 
-	DiscordChan = make(chan string, 100)
+	//get or create Webhook
+	webhooks, err := sess.ChannelWebhooks(Integrations.Discord.ChannelID)
+	if err != nil {
+		Log.Println("Error getting Webhooks:", err)
+		return
+	}
+	var webhook *discordgo.Webhook
+	for _, wh := range webhooks {
+		if wh.Name == "Devzat" {
+			webhook = wh
+		}
+	}
+	if webhook == nil {
+		webhook, err = sess.WebhookCreate(Integrations.Discord.ChannelID, "Devzat", "")
+		if err != nil {
+			Log.Println("Error creating Webhook:", err)
+			return
+		}
+	}
+	DiscordChan = make(chan DiscordMsg, 100)
 	go func() {
 		for msg := range DiscordChan {
-			msg = strings.ReplaceAll(msg, "@everyone", "@\\everyone")
-			_, err = sess.ChannelMessageSend(Integrations.Discord.ChannelID, strings.ReplaceAll(stripansi.Strip(msg), `\n`, "\n"))
+			txt := strings.ReplaceAll(msg.msg, "@everyone", "@\\everyone")
+			_, err = sess.WebhookExecute(
+				webhook.ID,
+				webhook.Token,
+				true,
+				&discordgo.WebhookParams{ //TODO: maybe change the pfp based on the Sender (color?)
+					Content:  strings.ReplaceAll(stripansi.Strip(txt), `\n`, "\n"),
+					Username: stripansi.Strip(msg.senderName),
+				},
+			)
 			if err != nil {
 				Log.Println("Error sending Discord message:", err)
 			}
@@ -53,8 +85,8 @@ func discordInit() {
 	Log.Println("Connected to Discord with bot ID", sess.State.User.ID, "as", sess.State.User.Username)
 }
 
-func discordMessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if m == nil || m.Author == nil || m.Author.ID == s.State.User.ID || m.ChannelID != Integrations.Discord.ChannelID { // ignore self and other channels
+func discordMessageHandler(_ *discordgo.Session, m *discordgo.MessageCreate) {
+	if m == nil || m.Author == nil || m.Author.Bot || m.ChannelID != Integrations.Discord.ChannelID { // ignore self and other channels
 		return
 	}
 	h := sha1.Sum([]byte(m.Author.ID))
