@@ -211,6 +211,10 @@ func remove(s []*User, a *User) []*User {
 
 func devbotChat(room *Room, line string) {
 	if strings.Contains(line, "devbot") {
+		if line[0:5] == "kick " || line[0:4] == "ban " {
+			// Devbot already replied in the command function
+			return
+		}
 		if strings.Contains(line, "how are you") || strings.Contains(line, "how you") {
 			devbotRespond(room, []string{"How are _you_",
 				"Good as always lol",

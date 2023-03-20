@@ -517,7 +517,11 @@ func banCMD(line string, u *User) {
 	}
 	victim, ok := findUserByName(u.room, split[0])
 	if !ok {
-		u.room.broadcast("", "User not found")
+		if split[0] == "devbot" {
+			u.room.broadcast(Devbot, "Do you really think you can ban me, punny human?")
+		} else {
+			u.room.broadcast("", "User not found")
+		}
 		return
 	}
 	// check if the ban is for a certain duration
@@ -540,7 +544,12 @@ func banCMD(line string, u *User) {
 func kickCMD(line string, u *User) {
 	victim, ok := findUserByName(u.room, line)
 	if !ok {
-		u.room.broadcast("", "User not found")
+		if line == "devbot" {
+			u.room.broadcast(Devbot, "You will pay for this")
+			u.close(u.Name + Red.Paint(" has been kicked by ") + Devbot)
+		} else {
+			u.room.broadcast("", "User not found")
+		}
 		return
 	}
 	if !auth(u) && victim.id != u.id {
