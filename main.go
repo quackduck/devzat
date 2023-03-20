@@ -25,7 +25,7 @@ import (
 )
 
 var (
-	MainRoom                   = &Room{"#main", make([]*User, 0, 10), sync.Mutex{}}
+	MainRoom                   = &Room{"#main", make([]*User, 0, 10), sync.RWMutex{}}
 	Rooms                      = map[string]*Room{MainRoom.name: MainRoom}
 	Backlog                    []backlogMessage
 	Bans                       = make([]Ban, 0, 10)
@@ -47,7 +47,7 @@ type Ban struct {
 type Room struct {
 	name       string
 	users      []*User
-	usersMutex sync.Mutex
+	usersMutex sync.RWMutex
 }
 
 // User represents a user connected to the SSH server.
@@ -253,12 +253,12 @@ func (r *Room) broadcastNoBridges(senderName, msg string) {
 		return
 	}
 	msg = strings.ReplaceAll(msg, "@everyone", Green.Paint("everyone\a"))
-	r.usersMutex.Lock()
+	r.usersMutex.RLock()
 	msg = r.findMention(msg)
 	for i := range r.users {
 		r.users[i].writeln(senderName, msg)
 	}
-	r.usersMutex.Unlock()
+	r.usersMutex.RUnlock()
 	if r == MainRoom && len(Backlog) > 0 {
 		Backlog = Backlog[1:]
 		Backlog = append(Backlog, backlogMessage{time.Now(), senderName, msg + "\n"})

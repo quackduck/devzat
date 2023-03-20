@@ -188,8 +188,8 @@ func readBans() {
 }
 
 func findUserByName(r *Room, name string) (*User, bool) {
-	r.usersMutex.Lock()
-	defer r.usersMutex.Unlock()
+	r.usersMutex.RLock()
+	defer r.usersMutex.RUnlock()
 	for _, u := range r.users {
 		if stripansi.Strip(u.Name) == name || "@"+stripansi.Strip(u.Name) == name {
 			return u, true

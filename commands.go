@@ -359,7 +359,7 @@ func cdCMD(rest string, u *User) {
 		if v, ok := Rooms[rest]; ok {
 			u.changeRoom(v)
 		} else {
-			Rooms[rest] = &Room{rest, make([]*User, 0, 10), sync.Mutex{}}
+			Rooms[rest] = &Room{rest, make([]*User, 0, 10), sync.RWMutex{}}
 			u.changeRoom(Rooms[rest])
 		}
 		return
