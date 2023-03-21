@@ -11,7 +11,7 @@ require (
 	github.com/dghubble/oauth1 v0.7.2
 	github.com/gliderlabs/ssh v0.3.5
 	github.com/jwalton/gchalk v1.3.0
-	github.com/quackduck/go-term-markdown v0.14.0
+	github.com/quackduck/go-term-markdown v0.14.1
 	github.com/quackduck/term v0.0.0-20220503000306-91213e332287
 	github.com/shurcooL/tictactoe v0.0.0-20210613024444-e573ff1376a3
 	github.com/slack-go/slack v0.12.1
