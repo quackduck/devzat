@@ -188,13 +188,9 @@ func (r *Room) broadcast(senderName, msg string) {
 	}
 	if Integrations.Slack != nil || Integrations.Discord != nil {
 		var toSendS string
-		var toSendNameD string
 		if senderName != "" {
 			if Integrations.Slack != nil {
 				toSendS = "[" + r.name + "] *" + senderName + "*: " + msg
-			}
-			if Integrations.Discord != nil {
-				toSendNameD = "[" + r.name + "] " + senderName
 			}
 		} else {
 			toSendS = "[" + r.name + "] " + msg
@@ -204,8 +200,9 @@ func (r *Room) broadcast(senderName, msg string) {
 		}
 		if Integrations.Discord != nil {
 			DiscordChan <- DiscordMsg{
-				senderName: toSendNameD,
+				senderName: senderName,
 				msg:        msg,
+				channel:    r.name,
 			}
 		}
 	}

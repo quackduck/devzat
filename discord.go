@@ -19,6 +19,7 @@ var (
 type DiscordMsg struct {
 	senderName string
 	msg        string
+	channel    string
 }
 
 func discordInit() {
@@ -40,38 +41,50 @@ func discordInit() {
 		return
 	}
 
-	//get or create Webhook
-	webhooks, err := sess.ChannelWebhooks(Integrations.Discord.ChannelID)
-	if err != nil {
-		Log.Println("Error getting Webhooks:", err)
-		return
-	}
 	var webhook *discordgo.Webhook
-	for _, wh := range webhooks {
-		if wh.Name == "Devzat" {
-			webhook = wh
-		}
-	}
-	if webhook == nil {
-		webhook, err = sess.WebhookCreate(Integrations.Discord.ChannelID, "Devzat", "")
+	//get or create Webhook
+	if Integrations.Discord.DiscordStyleUsername {
+		webhooks, err := sess.ChannelWebhooks(Integrations.Discord.ChannelID)
 		if err != nil {
-			Log.Println("Error creating Webhook:", err)
+			Log.Println("Error getting Webhooks:", err)
 			return
+		}
+		for _, wh := range webhooks {
+			if wh.Name == "Devzat" {
+				webhook = wh
+			}
+		}
+		if webhook == nil {
+			webhook, err = sess.WebhookCreate(Integrations.Discord.ChannelID, "Devzat", "")
+			if err != nil {
+				Log.Println("Error creating Webhook:", err)
+				return
+			}
 		}
 	}
 	DiscordChan = make(chan DiscordMsg, 100)
 	go func() {
 		for msg := range DiscordChan {
 			txt := strings.ReplaceAll(msg.msg, "@everyone", "@\\everyone")
-			_, err = sess.WebhookExecute(
-				webhook.ID,
-				webhook.Token,
-				true,
-				&discordgo.WebhookParams{ //TODO: maybe change the pfp based on the Sender (color?)
-					Content:  strings.ReplaceAll(stripansi.Strip(txt), `\n`, "\n"),
-					Username: stripansi.Strip(msg.senderName),
-				},
-			)
+			if Integrations.Discord.DiscordStyleUsername {
+				_, err = sess.WebhookExecute(
+					webhook.ID,
+					webhook.Token,
+					true,
+					&discordgo.WebhookParams{ //TODO: maybe change the pfp based on the Sender (color?)
+						Content:  strings.ReplaceAll(stripansi.Strip(txt), `\n`, "\n"),
+						Username: stripansi.Strip("[" + msg.channel + "] " + msg.senderName),
+					},
+				)
+			} else {
+				var toSend string
+				if msg.senderName == "" {
+					strings.ReplaceAll(stripansi.Strip("["+msg.channel+"] "+txt), `\n`, "\n")
+				} else {
+					strings.ReplaceAll(stripansi.Strip("["+msg.channel+"] **"+msg.senderName+"**: "+txt), `\n`, "\n")
+				}
+				_, err = sess.ChannelMessageSend(Integrations.Discord.ChannelID, toSend)
+			}
 			if err != nil {
 				Log.Println("Error sending Discord message:", err)
 			}
