@@ -79,9 +79,9 @@ func discordInit() {
 			} else {
 				var toSend string
 				if msg.senderName == "" {
-					strings.ReplaceAll(stripansi.Strip("["+msg.channel+"] "+txt), `\n`, "\n")
+					toSend = strings.ReplaceAll(stripansi.Strip("["+msg.channel+"] "+txt), `\n`, "\n")
 				} else {
-					strings.ReplaceAll(stripansi.Strip("["+msg.channel+"] **"+msg.senderName+"**: "+txt), `\n`, "\n")
+					toSend = strings.ReplaceAll(stripansi.Strip("["+msg.channel+"] **"+msg.senderName+"**: "+txt), `\n`, "\n")
 				}
 				_, err = sess.ChannelMessageSend(Integrations.Discord.ChannelID, toSend)
 			}
