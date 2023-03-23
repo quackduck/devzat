@@ -739,9 +739,11 @@ func lsCMD(rest string, u *User) {
 		}
 	}
 	if rest == "-i" { // show ids
+		s := ""
 		for _, us := range u.room.users {
-			u.room.broadcast("", us.id+" "+us.Name)
+			s += us.id + " " + us.Name + "  \n"
 		}
+		u.room.broadcast("", s)
 		return
 	}
 	if rest != "" {

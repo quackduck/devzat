@@ -252,13 +252,14 @@ func (r *Room) broadcastNoBridges(senderName, msg string) {
 	if msg == "" {
 		return
 	}
-	msg = strings.ReplaceAll(msg, "@everyone", Green.Paint("everyone\a"))
-	r.usersMutex.RLock()
-	msg = r.findMention(msg)
-	for i := range r.users {
+	msg = r.findMention(strings.ReplaceAll(msg, "@everyone", Green.Paint("everyone\a")))
+	//go func() {
+	//r.usersMutex.RLock()
+	for i := 0; i < len(r.users); i++ { // updates when new users join or old users leave. it is okay to read concurrently.
 		r.users[i].writeln(senderName, msg)
 	}
-	r.usersMutex.RUnlock()
+	//r.usersMutex.RUnlock()
+	//}()
 	if r == MainRoom && len(Backlog) > 0 {
 		Backlog = Backlog[1:]
 		Backlog = append(Backlog, backlogMessage{time.Now(), senderName, msg + "\n"})

@@ -113,10 +113,7 @@ func protectFromPanic() {
 // removes arrows, spaces and non-ascii-printable characters
 func cleanName(name string) string {
 	s := ""
-	name = strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(
-		strings.TrimSpace(strings.Split(name, "\n")[0]), // use one trimmed line
-		"<-", ""),
-		"->", ""),
+	name = strings.ReplaceAll(strings.TrimSpace(strings.Split(name, "\n")[0]), // use one trimmed line
 		" ", "-")
 	if len([]rune(name)) > 27 {
 		name = string([]rune(name)[:27])
