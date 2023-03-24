@@ -48,7 +48,7 @@ func (s dummySession) Write(data []byte) (int, error) { return 0, nil }
 func makeDummyRoom() *Room {
 	drw := dummyRW{}
 	dummyTerm := terminal.NewTerminal(drw, "")
-	ret := &Room{name: "DummyRoom", users: []*User{}, usersMutex: sync.Mutex{}}
+	ret := &Room{name: "DummyRoom", users: []*User{}, usersMutex: sync.RWMutex{}}
 
 	tim := &User{Name: "tim", term: dummyTerm, ColorBG: "bg-off", room: ret, session: dummySession{}}
 	_ = tim.changeColor("red")

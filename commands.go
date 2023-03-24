@@ -359,7 +359,7 @@ func cdCMD(rest string, u *User) {
 		if v, ok := Rooms[rest]; ok {
 			u.changeRoom(v)
 		} else {
-			Rooms[rest] = &Room{rest, make([]*User, 0, 10), sync.Mutex{}}
+			Rooms[rest] = &Room{rest, make([]*User, 0, 10), sync.RWMutex{}}
 			u.changeRoom(Rooms[rest])
 		}
 		return
@@ -506,20 +506,26 @@ func unbanIDorIP(toUnban string) bool {
 }
 
 func banCMD(line string, u *User) {
-	if !auth(u) {
-		u.room.broadcast(Devbot, "Not authorized")
-		return
-	}
 	split := strings.Split(line, " ")
 	if len(split) == 0 {
 		u.room.broadcast(Devbot, "Which user do you want to ban?")
 		return
 	}
-	victim, ok := findUserByName(u.room, split[0])
-	if !ok {
+	var victim *User
+	var ok bool
+	banner := u.Name
+	if split[0] == "devbot" {
+		u.room.broadcast(Devbot, "Do you really think you can ban me, puny human?")
+		victim = u // mwahahahaha - devbot
+		banner = Devbot
+	} else if !auth(u) {
+		u.room.broadcast(Devbot, "Not authorized")
+		return
+	} else if victim, ok = findUserByName(u.room, split[0]); !ok {
 		u.room.broadcast("", "User not found")
 		return
 	}
+
 	// check if the ban is for a certain duration
 	if len(split) > 1 {
 		dur, err := time.ParseDuration(split[1])
@@ -527,20 +533,25 @@ func banCMD(line string, u *User) {
 			u.room.broadcast(Devbot, "I couldn't parse that as a duration")
 			return
 		}
-		victim.ban(victim.Name + " has been banned by " + u.Name + " for " + dur.String())
+		victim.ban(victim.Name + " has been banned by " + banner + " for " + dur.String())
 		go func(id string) {
 			time.Sleep(dur)
 			unbanIDorIP(id)
 		}(victim.id) // evaluate id now, call unban with that value later
 		return
 	}
-	victim.ban(victim.Name + " has been banned by " + u.Name)
+	victim.ban(victim.Name + " has been banned by " + banner)
 }
 
 func kickCMD(line string, u *User) {
 	victim, ok := findUserByName(u.room, line)
 	if !ok {
-		u.room.broadcast("", "User not found")
+		if line == "devbot" {
+			u.room.broadcast(Devbot, "You will pay for this")
+			u.close(u.Name + Red.Paint(" has been kicked by ") + Devbot)
+		} else {
+			u.room.broadcast("", "User not found")
+		}
 		return
 	}
 	if !auth(u) && victim.id != u.id {
@@ -727,10 +738,12 @@ func lsCMD(rest string, u *User) {
 			return
 		}
 	}
-	if rest == "-i" && auth(u) { // A ls -i option is available for admins. It is used to show the id of each user.
+	if rest == "-i" { // show ids
+		s := ""
 		for _, us := range u.room.users {
-			u.room.broadcast("", us.id+" "+us.Name)
+			s += us.id + " " + us.Name + "  \n"
 		}
+		u.room.broadcast("", s)
 		return
 	}
 	if rest != "" {

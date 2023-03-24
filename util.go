@@ -113,10 +113,7 @@ func protectFromPanic() {
 // removes arrows, spaces and non-ascii-printable characters
 func cleanName(name string) string {
 	s := ""
-	name = strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(
-		strings.TrimSpace(strings.Split(name, "\n")[0]), // use one trimmed line
-		"<-", ""),
-		"->", ""),
+	name = strings.ReplaceAll(strings.TrimSpace(strings.Split(name, "\n")[0]), // use one trimmed line
 		" ", "-")
 	if len([]rune(name)) > 27 {
 		name = string([]rune(name)[:27])
@@ -188,8 +185,8 @@ func readBans() {
 }
 
 func findUserByName(r *Room, name string) (*User, bool) {
-	r.usersMutex.Lock()
-	defer r.usersMutex.Unlock()
+	r.usersMutex.RLock()
+	defer r.usersMutex.RUnlock()
 	for _, u := range r.users {
 		if stripansi.Strip(u.Name) == name || "@"+stripansi.Strip(u.Name) == name {
 			return u, true
@@ -211,6 +208,9 @@ func remove(s []*User, a *User) []*User {
 
 func devbotChat(room *Room, line string) {
 	if strings.Contains(line, "devbot") {
+		if strings.HasPrefix(line, "kick ") || strings.HasPrefix(line, "ban ") { // devbot already replied in the command function
+			return
+		}
 		if strings.Contains(line, "how are you") || strings.Contains(line, "how you") {
 			devbotRespond(room, []string{"How are _you_",
 				"Good as always lol",
