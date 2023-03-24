@@ -88,6 +88,9 @@ func discordInit() {
 						Username: stripansi.Strip("[" + msg.channel + "] " + msg.senderName),
 					},
 				)
+				if err != nil {
+					Log.Println("Error sending Discord message:", err)
+				}
 			} else {
 				var toSend string
 				if msg.senderName == "" {
@@ -96,9 +99,9 @@ func discordInit() {
 					toSend = strings.ReplaceAll(stripansi.Strip("["+msg.channel+"] **"+msg.senderName+"**: "+txt), `\n`, "\n")
 				}
 				_, err = sess.ChannelMessageSend(Integrations.Discord.ChannelID, toSend)
-			}
-			if err != nil {
-				Log.Println("Error sending Discord message:", err)
+				if err != nil {
+					Log.Println("Error sending Discord message:", err)
+				}
 			}
 		}
 	}()
