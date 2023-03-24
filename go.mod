@@ -11,7 +11,7 @@ require (
 	github.com/dghubble/oauth1 v0.7.2
 	github.com/gliderlabs/ssh v0.3.5
 	github.com/jwalton/gchalk v1.3.0
-  github.com/leaanthony/go-ansi-parser v1.6.0
+	github.com/leaanthony/go-ansi-parser v1.6.0
 	github.com/quackduck/go-term-markdown v0.14.2
 	github.com/quackduck/term v0.0.0-20220503000306-91213e332287
 	github.com/shurcooL/tictactoe v0.0.0-20210613024444-e573ff1376a3
@@ -41,7 +41,7 @@ require (
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/mattn/go-runewidth v0.0.12 // indirect
-	github.com/rivo/uniseg v0.1.0 // indirect
+	github.com/rivo/uniseg v0.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20220826181053-bd7e27e6170d // indirect
 	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/sys v0.4.0 // indirect
