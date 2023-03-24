@@ -1,11 +1,18 @@
 package main
 
 import (
+	"bytes"
 	"crypto/sha1"
+	"encoding/base64"
 	"encoding/hex"
 	"github.com/acarl005/stripansi"
 	"github.com/bwmarrin/discordgo"
+	"github.com/leaanthony/go-ansi-parser"
 	"github.com/quackduck/term"
+	"golang.org/x/image/draw"
+	"image"
+	"image/color"
+	"image/jpeg"
 	"os"
 	"strconv"
 	"strings"
@@ -67,6 +74,11 @@ func discordInit() {
 		for msg := range DiscordChan {
 			txt := strings.ReplaceAll(msg.msg, "@everyone", "@\\everyone")
 			if Integrations.Discord.DiscordStyleUsername {
+				avatar := createDiscordImage(msg.senderName)
+				_, err := sess.WebhookEditWithToken(webhook.ID, webhook.Token, webhook.Name, avatar)
+				if err != nil {
+					Log.Println("Error modifying Discord webhook:", err)
+				}
 				_, err = sess.WebhookExecute(
 					webhook.ID,
 					webhook.Token,
@@ -110,4 +122,40 @@ func discordMessageHandler(_ *discordgo.Session, m *discordgo.MessageCreate) {
 		SlackChan <- Integrations.Discord.Prefix + " " + m.Author.Username + ": " + m.Content // send this discord message to slack
 	}
 	runCommands(m.Content, DiscordUser)
+}
+
+func createDiscordImage(user string) string {
+	if user == "" {
+		return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAAAXNSR0IArs4c6QAAAAxJREFUCJljMDayAAABOQCeivIjywAAAABJRU5ErkJggg=="
+	}
+	styledTexts, err := ansi.Parse(user)
+	if err != nil {
+		Log.Println("Error parsing username while creating Image.")
+		return ""
+	}
+	_ = styledTexts
+	img := image.NewRGBA(image.Rectangle{
+		Min: image.Point{},
+		Max: image.Point{X: len(styledTexts), Y: 1},
+	})
+	i := 0
+	for i < len(styledTexts) {
+		img.Set(i, 0, color.RGBA{
+			R: styledTexts[i].FgCol.Rgb.R,
+			G: styledTexts[i].FgCol.Rgb.G,
+			B: styledTexts[i].FgCol.Rgb.B,
+		})
+		i++
+	}
+
+	dst := image.NewRGBA(image.Rect(0, 0, 128, 128))
+	draw.NearestNeighbor.Scale(dst, dst.Rect, img, img.Bounds(), draw.Over, nil)
+	var buff bytes.Buffer
+	encoder := base64.NewEncoder(base64.StdEncoding, &buff)
+	err = jpeg.Encode(encoder, dst, nil)
+	if err != nil {
+		Log.Println("Error creating Image.")
+		return ""
+	}
+	return "data:image/jpeg;base64," + buff.String()
 }
