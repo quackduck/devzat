@@ -136,15 +136,27 @@ func createDiscordImage(user string) string {
 	_ = styledTexts
 	img := image.NewRGBA(image.Rectangle{
 		Min: image.Point{},
-		Max: image.Point{X: len(styledTexts), Y: 1},
+		Max: image.Point{X: len(styledTexts), Y: 5},
 	})
 	i := 0
 	for i < len(styledTexts) {
-		img.Set(i, 0, color.RGBA{
-			R: styledTexts[i].FgCol.Rgb.R,
-			G: styledTexts[i].FgCol.Rgb.G,
-			B: styledTexts[i].FgCol.Rgb.B,
-		})
+		j := 0
+		for j < 5 {
+			if (j == 0 || j == 4) && styledTexts[i].BgCol != nil {
+				img.Set(i, j, color.RGBA{
+					R: styledTexts[i].BgCol.Rgb.R,
+					G: styledTexts[i].BgCol.Rgb.G,
+					B: styledTexts[i].BgCol.Rgb.B,
+				})
+			} else {
+				img.Set(i, j, color.RGBA{
+					R: styledTexts[i].FgCol.Rgb.R,
+					G: styledTexts[i].FgCol.Rgb.G,
+					B: styledTexts[i].FgCol.Rgb.B,
+				})
+			}
+			j++
+		}
 		i++
 	}
 
