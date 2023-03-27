@@ -50,8 +50,8 @@ func discordInit() {
 	}
 
 	var webhook *discordgo.Webhook
-	// get or create a webhook
-	if Integrations.Discord.DiscordStyleUsername {
+	// get or create a webhook if we're not in compact mode
+	if !Integrations.Discord.CompactMode {
 		webhooks, err := sess.ChannelWebhooks(Integrations.Discord.ChannelID)
 		if err != nil {
 			Log.Println("Error getting Discord webhooks:", err)
@@ -74,7 +74,18 @@ func discordInit() {
 	go func() {
 		for msg := range DiscordChan {
 			txt := strings.ReplaceAll(msg.msg, "@everyone", "@\\everyone")
-			if Integrations.Discord.DiscordStyleUsername {
+			if Integrations.Discord.CompactMode {
+				var toSend string
+				if msg.senderName == "" {
+					toSend = strings.ReplaceAll(stripansi.Strip("["+msg.channel+"] "+txt), `\n`, "\n")
+				} else {
+					toSend = strings.ReplaceAll(stripansi.Strip("["+msg.channel+"] **"+msg.senderName+"**: "+txt), `\n`, "\n")
+				}
+				_, err = sess.ChannelMessageSend(Integrations.Discord.ChannelID, toSend)
+				if err != nil {
+					Log.Println("Error sending Discord message:", err)
+				}
+			} else {
 				_, err := sess.WebhookEditWithToken(webhook.ID, webhook.Token, webhook.Name, createDiscordImage(msg.senderName))
 				if err != nil {
 					Log.Println("Error modifying Discord webhook:", err)
@@ -85,17 +96,6 @@ func discordInit() {
 						Username: stripansi.Strip("[" + msg.channel + "] " + msg.senderName),
 					},
 				)
-				if err != nil {
-					Log.Println("Error sending Discord message:", err)
-				}
-			} else {
-				var toSend string
-				if msg.senderName == "" {
-					toSend = strings.ReplaceAll(stripansi.Strip("["+msg.channel+"] "+txt), `\n`, "\n")
-				} else {
-					toSend = strings.ReplaceAll(stripansi.Strip("["+msg.channel+"] **"+msg.senderName+"**: "+txt), `\n`, "\n")
-				}
-				_, err = sess.ChannelMessageSend(Integrations.Discord.ChannelID, toSend)
 				if err != nil {
 					Log.Println("Error sending Discord message:", err)
 				}
