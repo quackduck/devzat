@@ -64,6 +64,8 @@ type DiscordInfo struct {
 	ChannelID string `yaml:"channel_id"`
 	// Prefix is the prefix to prepend to messages from Discord when rendered for SSH users
 	Prefix string `yaml:"prefix"`
+	// Compact mode disables avatars to save vertical space
+	CompactMode bool `yaml:"compact_mode"`
 }
 
 type RPCInfo struct {
