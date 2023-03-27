@@ -7,7 +7,7 @@ import (
 	"encoding/hex"
 	"image"
 	"image/color"
-	"image/jpeg"
+	"image/png"
 	"os"
 	"strconv"
 	"strings"
@@ -16,7 +16,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leaanthony/go-ansi-parser"
 	"github.com/quackduck/term"
-	"golang.org/x/image/draw"
 )
 
 var (
@@ -43,6 +42,7 @@ func discordInit() {
 
 	sess.AddHandler(discordMessageHandler)
 	sess.Identify.Intents = discordgo.IntentsGuildMessages // only listen to messages
+	sess.Identify.Intents = discordgo.IntentGuildWebhooks
 	err = sess.Open()
 	if err != nil {
 		Log.Println("Error opening Discord session:", err)
@@ -134,8 +134,8 @@ var imageCache = make([]struct {
 }, cacheSize)
 
 func createDiscordImage(user string) string {
-	// matches default discord background color
-	fallback := "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAAAXNSR0IArs4c6QAAAAxJREFUCJljMDayAAABOQCeivIjywAAAABJRU5ErkJggg=="
+	// a completely transparent one pixel png
+	fallback := "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAEUlEQVR4nGJiYGBgAAQAAP//AA8AA/6P688AAAAASUVORK5CYII="
 	if user == "" {
 		// make messages with no sender (eg. command outputs) look seamless
 		return fallback
@@ -150,35 +150,28 @@ func createDiscordImage(user string) string {
 		Log.Println("Error parsing ANSI from username while creating Discord avatar:", err)
 		return fallback
 	}
-	_ = styledTexts
 	img := image.NewRGBA(image.Rectangle{
 		Min: image.Point{},
 		Max: image.Point{X: len(styledTexts), Y: 5},
 	})
-	i := 0
-	for i < len(styledTexts) {
-		j := 0
-		for j < 5 {
+
+	for i := 0; i < len(styledTexts); i++ {
+		for j := 0; j < 5; j++ {
 			if (j == 0 || j == 4) && styledTexts[i].BgCol != nil {
 				img.Set(i, j, color.RGBA{R: styledTexts[i].BgCol.Rgb.R, G: styledTexts[i].BgCol.Rgb.G, B: styledTexts[i].BgCol.Rgb.B})
 			} else {
 				img.Set(i, j, color.RGBA{R: styledTexts[i].FgCol.Rgb.R, G: styledTexts[i].FgCol.Rgb.G, B: styledTexts[i].FgCol.Rgb.B})
 			}
-			j++
 		}
-		i++
 	}
 
-	dst := image.NewRGBA(image.Rect(0, 0, 128, 128))
-	draw.NearestNeighbor.Scale(dst, dst.Rect, img, img.Bounds(), draw.Over, nil)
 	var buff bytes.Buffer
-	encoder := base64.NewEncoder(base64.StdEncoding, &buff)
-	err = jpeg.Encode(encoder, dst, nil)
+	err = png.Encode(base64.NewEncoder(base64.StdEncoding, &buff), img)
 	if err != nil {
 		Log.Println("Error creating Discord avatar:", err)
 		return fallback
 	}
-	result := "data:image/jpeg;base64," + buff.String()
+	result := "data:image/png;base64," + buff.String()
 	if len(imageCache) >= cacheSize {
 		// remove the first value
 		imageCache = imageCache[1:]
