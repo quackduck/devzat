@@ -109,7 +109,7 @@ slack:
 
 #### Using the Discord integration
 
-Devzat supports a bridge to Discord. You'll need a Discord bot token so Devzat can post to and receive messages from Discord. Follow the guide [here](https://www.writebots.com/discord-bot-token) to set up your bot.
+Devzat supports a bridge to Discord. You'll need a Discord bot token so Devzat can post to and receive messages from Discord. Follow the guide [here](https://www.writebots.com/discord-bot-token) to set up your bot and ensure it will have the "Send Messages", "Read Message History", and "Manage Webhooks" permissions.
 
 Add your bot token to your integration config file. The `prefix` key defines what messages from Discord rendered in Devzat will be prefixed with. Find the channel ID of the channel you want to bridge to with a right-click on it.
 
@@ -118,6 +118,7 @@ discord:
     token: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     channel_id: XXXXXXXXXXXXXXXXXXX
     prefix: Discord
+    compact_mode: true # optional: disables avatars so messages take up less vertical space
 ```
 
 #### Using the Twitter integration

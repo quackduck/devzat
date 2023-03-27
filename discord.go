@@ -134,9 +134,11 @@ var imageCache = make([]struct {
 }, cacheSize)
 
 func createDiscordImage(user string) string {
+	// matches default discord background color
+	fallback := "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAAAXNSR0IArs4c6QAAAAxJREFUCJljMDayAAABOQCeivIjywAAAABJRU5ErkJggg=="
 	if user == "" {
-		// matches default discord background color so messages without users look seamless
-		return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAAAXNSR0IArs4c6QAAAAxJREFUCJljMDayAAABOQCeivIjywAAAABJRU5ErkJggg=="
+		// make messages with no sender (eg. command outputs) look seamless
+		return fallback
 	}
 	for i := range imageCache {
 		if imageCache[i].user == user {
@@ -146,7 +148,7 @@ func createDiscordImage(user string) string {
 	styledTexts, err := ansi.Parse(user)
 	if err != nil {
 		Log.Println("Error parsing ANSI from username while creating Discord avatar:", err)
-		return ""
+		return fallback
 	}
 	_ = styledTexts
 	img := image.NewRGBA(image.Rectangle{
@@ -174,7 +176,7 @@ func createDiscordImage(user string) string {
 	err = jpeg.Encode(encoder, dst, nil)
 	if err != nil {
 		Log.Println("Error creating Discord avatar:", err)
-		return ""
+		return fallback
 	}
 	result := "data:image/jpeg;base64," + buff.String()
 	if len(imageCache) >= cacheSize {
