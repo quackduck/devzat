@@ -5,17 +5,18 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/hex"
-	"github.com/acarl005/stripansi"
-	"github.com/bwmarrin/discordgo"
-	"github.com/leaanthony/go-ansi-parser"
-	"github.com/quackduck/term"
-	"golang.org/x/image/draw"
 	"image"
 	"image/color"
 	"image/jpeg"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/acarl005/stripansi"
+	"github.com/bwmarrin/discordgo"
+	"github.com/leaanthony/go-ansi-parser"
+	"github.com/quackduck/term"
+	"golang.org/x/image/draw"
 )
 
 var (
@@ -49,11 +50,11 @@ func discordInit() {
 	}
 
 	var webhook *discordgo.Webhook
-	//get or create Webhook
+	// get or create a webhook
 	if Integrations.Discord.DiscordStyleUsername {
 		webhooks, err := sess.ChannelWebhooks(Integrations.Discord.ChannelID)
 		if err != nil {
-			Log.Println("Error getting Webhooks:", err)
+			Log.Println("Error getting Discord webhooks:", err)
 			return
 		}
 		for _, wh := range webhooks {
@@ -64,7 +65,7 @@ func discordInit() {
 		if webhook == nil {
 			webhook, err = sess.WebhookCreate(Integrations.Discord.ChannelID, "Devzat", "")
 			if err != nil {
-				Log.Println("Error creating Webhook:", err)
+				Log.Println("Error creating a Discord webhook:", err)
 				return
 			}
 		}
@@ -74,16 +75,12 @@ func discordInit() {
 		for msg := range DiscordChan {
 			txt := strings.ReplaceAll(msg.msg, "@everyone", "@\\everyone")
 			if Integrations.Discord.DiscordStyleUsername {
-				avatar := createDiscordImage(msg.senderName)
-				_, err := sess.WebhookEditWithToken(webhook.ID, webhook.Token, webhook.Name, avatar)
+				_, err := sess.WebhookEditWithToken(webhook.ID, webhook.Token, webhook.Name, createDiscordImage(msg.senderName))
 				if err != nil {
 					Log.Println("Error modifying Discord webhook:", err)
 				}
-				_, err = sess.WebhookExecute(
-					webhook.ID,
-					webhook.Token,
-					true,
-					&discordgo.WebhookParams{ //TODO: maybe change the pfp based on the Sender (color?)
+				_, err = sess.WebhookExecute(webhook.ID, webhook.Token, true,
+					&discordgo.WebhookParams{
 						Content:  strings.ReplaceAll(stripansi.Strip(txt), `\n`, "\n"),
 						Username: stripansi.Strip("[" + msg.channel + "] " + msg.senderName),
 					},
@@ -128,13 +125,27 @@ func discordMessageHandler(_ *discordgo.Session, m *discordgo.MessageCreate) {
 	runCommands(msgContent, DiscordUser)
 }
 
+var cacheSize = 20
+
+// basic cache system
+var imageCache = make([]struct {
+	user  string
+	image string
+}, cacheSize)
+
 func createDiscordImage(user string) string {
 	if user == "" {
+		// matches default discord background color so messages without users look seamless
 		return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAAAXNSR0IArs4c6QAAAAxJREFUCJljMDayAAABOQCeivIjywAAAABJRU5ErkJggg=="
+	}
+	for i := range imageCache {
+		if imageCache[i].user == user {
+			return imageCache[i].image
+		}
 	}
 	styledTexts, err := ansi.Parse(user)
 	if err != nil {
-		Log.Println("Error parsing username while creating Image.")
+		Log.Println("Error parsing ANSI from username while creating Discord avatar:", err)
 		return ""
 	}
 	_ = styledTexts
@@ -147,17 +158,9 @@ func createDiscordImage(user string) string {
 		j := 0
 		for j < 5 {
 			if (j == 0 || j == 4) && styledTexts[i].BgCol != nil {
-				img.Set(i, j, color.RGBA{
-					R: styledTexts[i].BgCol.Rgb.R,
-					G: styledTexts[i].BgCol.Rgb.G,
-					B: styledTexts[i].BgCol.Rgb.B,
-				})
+				img.Set(i, j, color.RGBA{R: styledTexts[i].BgCol.Rgb.R, G: styledTexts[i].BgCol.Rgb.G, B: styledTexts[i].BgCol.Rgb.B})
 			} else {
-				img.Set(i, j, color.RGBA{
-					R: styledTexts[i].FgCol.Rgb.R,
-					G: styledTexts[i].FgCol.Rgb.G,
-					B: styledTexts[i].FgCol.Rgb.B,
-				})
+				img.Set(i, j, color.RGBA{R: styledTexts[i].FgCol.Rgb.R, G: styledTexts[i].FgCol.Rgb.G, B: styledTexts[i].FgCol.Rgb.B})
 			}
 			j++
 		}
@@ -170,8 +173,17 @@ func createDiscordImage(user string) string {
 	encoder := base64.NewEncoder(base64.StdEncoding, &buff)
 	err = jpeg.Encode(encoder, dst, nil)
 	if err != nil {
-		Log.Println("Error creating Image.")
+		Log.Println("Error creating Discord avatar:", err)
 		return ""
 	}
-	return "data:image/jpeg;base64," + buff.String()
+	result := "data:image/jpeg;base64," + buff.String()
+	if len(imageCache) >= cacheSize {
+		// remove the first value
+		imageCache = imageCache[1:]
+	}
+	imageCache = append(imageCache, struct {
+		user  string
+		image string
+	}{user: user, image: result})
+	return result
 }
