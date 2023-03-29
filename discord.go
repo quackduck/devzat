@@ -16,6 +16,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leaanthony/go-ansi-parser"
 	"github.com/quackduck/term"
+	"golang.org/x/image/draw"
 )
 
 var (
@@ -41,8 +42,7 @@ func discordInit() {
 	}
 
 	sess.AddHandler(discordMessageHandler)
-	sess.Identify.Intents = discordgo.IntentsGuildMessages // only listen to messages
-	sess.Identify.Intents = discordgo.IntentGuildWebhooks
+	sess.Identify.Intents = discordgo.IntentsGuildMessages | discordgo.IntentGuildWebhooks // listen to messages, manage webhooks
 	err = sess.Open()
 	if err != nil {
 		Log.Println("Error opening Discord session:", err)
@@ -150,28 +150,29 @@ func createDiscordImage(user string) string {
 		Log.Println("Error parsing ANSI from username while creating Discord avatar:", err)
 		return fallback
 	}
-	img := image.NewRGBA(image.Rectangle{
-		Min: image.Point{},
-		Max: image.Point{X: len(styledTexts), Y: 5},
-	})
+	img := image.NewNRGBA(image.Rect(0, 0, len(styledTexts), 3))
 
 	for i := 0; i < len(styledTexts); i++ {
-		for j := 0; j < 5; j++ {
-			if (j == 0 || j == 4) && styledTexts[i].BgCol != nil {
-				img.Set(i, j, color.RGBA{R: styledTexts[i].BgCol.Rgb.R, G: styledTexts[i].BgCol.Rgb.G, B: styledTexts[i].BgCol.Rgb.B})
-			} else {
-				img.Set(i, j, color.RGBA{R: styledTexts[i].FgCol.Rgb.R, G: styledTexts[i].FgCol.Rgb.G, B: styledTexts[i].FgCol.Rgb.B})
+		for j := 0; j < 3 && styledTexts[i].FgCol != nil; j++ {
+			col := styledTexts[i].FgCol
+			if (j == 0 || j == 2) && styledTexts[i].BgCol != nil {
+				col = styledTexts[i].BgCol
 			}
+			img.Set(i, j, color.NRGBA{R: col.Rgb.R, G: col.Rgb.G, B: col.Rgb.B, A: 255})
 		}
 	}
 
-	var buff bytes.Buffer
-	err = png.Encode(base64.NewEncoder(base64.StdEncoding, &buff), img)
+	dst := image.NewNRGBA(image.Rect(0, 0, 256, 256))
+	draw.CatmullRom.Scale(dst, dst.Rect, img, img.Bounds(), draw.Over, nil)
+	//draw.NearestNeighbor.Scale(dst, dst.Rect, img, img.Bounds(), draw.Over, nil)
+	buff := new(bytes.Buffer)
+	err = png.Encode(buff, dst)
 	if err != nil {
 		Log.Println("Error creating Discord avatar:", err)
 		return fallback
 	}
-	result := "data:image/png;base64," + buff.String()
+	result := "data:image/png;base64," + base64.StdEncoding.EncodeToString(buff.Bytes())
+
 	if len(imageCache) >= cacheSize {
 		// remove the first value
 		imageCache = imageCache[1:]

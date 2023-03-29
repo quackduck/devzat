@@ -49,9 +49,9 @@ func getMsgsFromSlack() {
 			uslack.Name = Yellow.Paint(Integrations.Slack.Prefix+" ") + (Styles[int(i)%len(Styles)]).apply(name)
 			if Integrations.Discord != nil {
 				DiscordChan <- DiscordMsg{
-					senderName: name,
+					senderName: Integrations.Slack.Prefix + " " + name,
 					msg:        text,
-					channel:    Integrations.Slack.Prefix,
+					channel:    uslack.room.name,
 				} // send this discord message to slack
 			}
 			runCommands(text, uslack)
