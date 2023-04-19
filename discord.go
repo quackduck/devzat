@@ -86,10 +86,12 @@ func discordInit() {
 					Log.Println("Error sending Discord message:", err)
 				}
 			} else {
+				//Log.Println("Modifiying webhook")
 				_, err := sess.WebhookEditWithToken(webhook.ID, webhook.Token, webhook.Name, createDiscordImage(msg.senderName))
 				if err != nil {
 					Log.Println("Error modifying Discord webhook:", err)
 				}
+				//Log.Println("Modified webhook") // takes really long sometimes
 				_, err = sess.WebhookExecute(webhook.ID, webhook.Token, true,
 					&discordgo.WebhookParams{
 						Content:  strings.ReplaceAll(stripansi.Strip(txt), `\n`, "\n"),
@@ -163,6 +165,13 @@ func createDiscordImage(user string) string {
 	}
 
 	dst := image.NewNRGBA(image.Rect(0, 0, 256, 256))
+	//(&draw.Kernel{
+	//	Support: 10,
+	//	At: func(t float64) float64 {
+	//		return math.Exp(-t * t * 2)
+	//	},
+	//}).Scale(dst, dst.Rect, img, img.Bounds(), draw.Over, nil)
+	//draw.BiLinear.Scale(dst, dst.Rect, img, img.Bounds(), draw.Over, nil)
 	draw.CatmullRom.Scale(dst, dst.Rect, img, img.Bounds(), draw.Over, nil)
 	//draw.NearestNeighbor.Scale(dst, dst.Rect, img, img.Bounds(), draw.Over, nil)
 	buff := new(bytes.Buffer)
@@ -181,5 +190,6 @@ func createDiscordImage(user string) string {
 		user  string
 		image string
 	}{user: user, image: result})
+	//Log.Println("returned", result)
 	return result
 }
