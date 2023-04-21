@@ -196,13 +196,21 @@ func (r *Room) broadcast(senderName, msg string) {
 			toSendS = "[" + r.name + "] " + msg
 		}
 		if Integrations.Slack != nil {
-			SlackChan <- toSendS
+			select {
+			case SlackChan <- toSendS:
+			default:
+				fmt.Println("Overflow in Slack channel")
+			}
 		}
 		if Integrations.Discord != nil {
-			DiscordChan <- DiscordMsg{
+			select {
+			case DiscordChan <- DiscordMsg{
 				senderName: senderName,
 				msg:        msg,
 				channel:    r.name,
+			}:
+			default:
+				fmt.Println("Overflow in Discord channel")
 			}
 		}
 	}
