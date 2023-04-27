@@ -7,6 +7,7 @@ require (
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/alecthomas/chroma v0.10.0
 	github.com/bwmarrin/discordgo v0.27.1
+	github.com/crazy3lf/colorconv v1.2.0
 	github.com/dghubble/go-twitter v0.0.0-20221104224141-912508c3888b
 	github.com/dghubble/oauth1 v0.7.2
 	github.com/gliderlabs/ssh v0.3.5

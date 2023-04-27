@@ -339,7 +339,7 @@ func newUser(s ssh.Session) *User {
 		term.Write([]byte("Devzat does not allow non-pty joins. What are you trying to pull here?"))
 		return nil
 	}
-	if w <= 0 {
+	if w <= 0 { // strange terminals
 		w = 80
 	}
 

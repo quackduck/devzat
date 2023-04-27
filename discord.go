@@ -11,6 +11,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/acarl005/stripansi"
 	"github.com/bwmarrin/discordgo"
@@ -71,6 +72,7 @@ func discordInit() {
 		}
 	}
 	DiscordChan = make(chan DiscordMsg, 100)
+	editsInLastMinute := 0 // discord allows for 30 webhook edits per minute: https://twitter.com/lolpython/status/967621046277820416
 	go func() {
 		for msg := range DiscordChan {
 			txt := strings.ReplaceAll(msg.msg, "@everyone", "@\\everyone")
@@ -86,12 +88,19 @@ func discordInit() {
 					Log.Println("Error sending Discord message:", err)
 				}
 			} else {
-				//Log.Println("Modifiying webhook")
-				_, err := sess.WebhookEditWithToken(webhook.ID, webhook.Token, webhook.Name, createDiscordImage(msg.senderName))
-				if err != nil {
-					Log.Println("Error modifying Discord webhook:", err)
+				Log.Println("edits in last minute", editsInLastMinute)
+				if editsInLastMinute < 30 { // rate-limit the edits
+					avatarFor := msg.senderName
+					if editsInLastMinute == 29 { // blank out pfp if we're about to hit the limit
+						avatarFor = ""
+					}
+					_, err := sess.WebhookEditWithToken(webhook.ID, webhook.Token, webhook.Name, createDiscordImage(avatarFor))
+					if err != nil {
+						Log.Println("Error modifying Discord webhook:", err)
+					}
+					editsInLastMinute++
+					time.AfterFunc(time.Minute, func() { editsInLastMinute-- })
 				}
-				//Log.Println("Modified webhook") // takes really long sometimes
 				_, err = sess.WebhookExecute(webhook.ID, webhook.Token, true,
 					&discordgo.WebhookParams{
 						Content:  strings.ReplaceAll(stripansi.Strip(txt), `\n`, "\n"),

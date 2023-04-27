@@ -3,12 +3,14 @@ package main
 import (
 	"errors"
 	"fmt"
+	"math"
 	"math/rand"
 	"strconv"
 	"strings"
 
 	"github.com/acarl005/stripansi"
 	chromastyles "github.com/alecthomas/chroma/styles"
+	"github.com/crazy3lf/colorconv"
 	"github.com/jwalton/gchalk"
 	markdown "github.com/quackduck/go-term-markdown"
 )
@@ -19,18 +21,28 @@ func makeFlag(colors []string) func(a string) string {
 		flag[i] = Chalk.WithHex(colors[i])
 	}
 	return func(a string) string {
-		return applyRainbow(flag, a)
+		return applyMulticolor(flag, a)
 	}
 }
 
-func applyRainbow(rainbow []*gchalk.Builder, a string) string {
+func applyHueRange(start, end, s, v float64, a string) string {
 	a = stripansi.Strip(a)
-	buf := ""
-	colorOffset := rand.Intn(len(rainbow))
+	buf := strings.Builder{}
 	for i, r := range []rune(a) {
-		buf += rainbow[(colorOffset+i)%len(rainbow)].Paint(string(r))
+		hue := start + (end-start)*float64(i)/float64(len(a))
+		buf.WriteString(hsv(hue, s, v).Paint(string(r)))
 	}
-	return buf
+	return buf.String()
+}
+
+func applyMulticolor(colors []*gchalk.Builder, a string) string {
+	a = stripansi.Strip(a)
+	buf := strings.Builder{}
+	colorOffset := rand.Intn(len(colors))
+	for i, r := range []rune(a) {
+		buf.WriteString(colors[(colorOffset+i)%len(colors)].Paint(string(r)))
+	}
+	return buf.String()
 }
 
 var (
@@ -79,8 +91,16 @@ var (
 		{"genderfluid", makeFlag([]string{"#FE75A1", "#FFFFFF", "#BE18D6", "#333333", "#333EBC"})},
 		{"agender", makeFlag([]string{"#333333", "#BCC5C6", "#FFFFFF", "#B5F582", "#FFFFFF", "#BCC5C6", "#333333"})},
 		{"rainbow", func(a string) string {
-			rainbow := []*gchalk.Builder{Red, Orange, Yellow, Green, Cyan, Blue, ansi256(2, 2, 5), Magenta}
-			return applyRainbow(rainbow, a)
+			//rainbow := []*gchalk.Builder{}
+			//rainbow := []*gchalk.Builder{Red, Orange, Yellow, Green, Cyan, Blue, ansi256(2, 2, 5), Magenta}
+			span := 360.0
+			length := len(stripansi.Strip(a))
+			if length < 8 {
+				span = 45 * float64(length) // at least 45 degrees per letter
+			}
+			start := 360 * rand.Float64()
+			return applyHueRange(start, start+span, 1, 1, a)
+			//return applyMulticolor(rainbow, a)
 		}}}
 )
 
@@ -94,20 +114,25 @@ type Style struct {
 }
 
 func buildStyle(c *gchalk.Builder) func(string) string {
-	return func(s string) string {
-		return c.Paint(stripansi.Strip(s))
-	}
+	return func(s string) string { return c.Paint(stripansi.Strip(s)) }
+}
+func buildStyleNoStrip(c *gchalk.Builder) func(string) string {
+	return func(s string) string { return c.Paint(s) }
 }
 
-func buildStyleNoStrip(c *gchalk.Builder) func(string) string {
-	return func(s string) string {
-		return c.Paint(s)
+// h from 0 to 360, others from 0 to 1
+func hsv(h, s, v float64) *gchalk.Builder {
+	r, g, b, err := colorconv.HSVToRGB(math.Mod(h, 360), s, v)
+	if err != nil {
+		return Chalk.WithRGB(0, 0, 0)
 	}
+	return Chalk.WithRGB(r, g, b)
 }
 
 // with r, g and b values from 0 to 5
 func ansi256(r, g, b uint8) *gchalk.Builder {
 	return Chalk.WithRGB(255/5*r, 255/5*g, 255/5*b)
+	//return Chalk.WithRGB(uint8(math.Round(255*float64(r)/5)), uint8(math.Round(255*float64(g)/5)), uint8(math.Round(255*float64(b)/5)))
 }
 
 func bgAnsi256(r, g, b uint8) *gchalk.Builder {

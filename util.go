@@ -131,8 +131,7 @@ func mdRender(a string, beforeMessageLen int, lineWidth int) string {
 	if strings.Contains(a, "![") && strings.Contains(a, "](") {
 		lineWidth = int(math.Min(float64(lineWidth/2), 200)) // max image width is 200
 	}
-	md := string(markdown.Render(a, lineWidth-beforeMessageLen, beforeMessageLen))
-	md = strings.TrimSuffix(md, "\n")
+	md := strings.TrimSuffix(string(markdown.Render(a, lineWidth, beforeMessageLen)), "\n")
 	if md == "" {
 		return ""
 	}
