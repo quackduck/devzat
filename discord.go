@@ -117,7 +117,7 @@ func discordInit() {
 			if elaspsedTime.Seconds() > 20 {
 				overloading = true
 			}
-			if len(DiscordChan) == 0 {
+			if len(DiscordChan) == 0 && elaspsedTime.Seconds() < 10 {
 				overloading = false
 			}
 		}
