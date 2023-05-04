@@ -35,11 +35,11 @@ func applyHueRange(start, end float64, a string) string {
 }
 
 func applyStyles(styles []*Style, a string) string {
-	a = stripansi.Strip(a)
+	//a = stripansi.Strip(a)
 	buf := strings.Builder{}
 	colorOffset := rand.Intn(len(styles))
-	for i, r := range []rune(a) {
-		buf.WriteString(styles[(colorOffset+i)%len(styles)].apply(string(r)))
+	for i, s := range tokenizeAnsi(a) {
+		buf.WriteString(styles[(colorOffset+i)%len(styles)].apply(s))
 	}
 	return buf.String()
 }
@@ -52,6 +52,32 @@ func applyMulticolor(colors []*gchalk.Builder, a string) string {
 		buf.WriteString(colors[(colorOffset+i)%len(colors)].Paint(string(r)))
 	}
 	return buf.String()
+}
+
+// splits runes and includes their color codes
+func tokenizeAnsi(a string) []string {
+	tokens := make([]string, 0, len(a)/3)
+	buf := strings.Builder{}
+	buildUntilM := false // m delineates end of ansi color code
+	for _, r := range a {
+		buf.WriteRune(r)
+		if r == '\033' {
+			buildUntilM = true
+			continue
+		}
+		if buildUntilM {
+			if r == 'm' {
+				buildUntilM = false
+			}
+			continue
+		}
+		tokens = append(tokens, buf.String())
+		buf.Reset()
+	}
+	if buf.Len() > 0 { // that last m could be needed
+		tokens = append(tokens, buf.String())
+	}
+	return tokens
 }
 
 var (
@@ -264,12 +290,10 @@ func getCustomColor(name string) (*Style, error) {
 // Turns name into a style (defaults to nil)
 func getStyle(name string) (*Style, error) {
 	name = strings.TrimSpace(name)
-	//Log.Println("1 getting style for", name, "...")
 	if names := strings.Fields(name); len(names) > 1 {
 		styleSlice := make([]*Style, len(names))
 		newName := ""
 		for i := range names {
-			//Log.Println("2 getting style for", names[i], "...")
 			style, err := getStyle(names[i])
 			if err != nil {
 				return nil, err
@@ -284,11 +308,11 @@ func getStyle(name string) (*Style, error) {
 	}
 	switch name {
 	case "random":
-		r, g, b := uint8(rand.Intn(6)), uint8(rand.Intn(6)), uint8(rand.Intn(6))
-		return &Style{fmt.Sprintf("%03d", r*100+g*10+b), buildStyle(ansi256(r, g, b))}, nil
+		r, g, b := rand.Intn(6), rand.Intn(6), rand.Intn(6)
+		return &Style{fmt.Sprintf("%03d", r*100+g*10+b), buildStyle(ansi256(uint8(r), uint8(g), uint8(b)))}, nil
 	case "bg-random":
-		r, g, b := uint8(rand.Intn(6)), uint8(rand.Intn(6)), uint8(rand.Intn(6))
-		return &Style{fmt.Sprintf("%03d", r*100+g*10+b), buildStyleNoStrip(bgAnsi256(r, g, b))}, nil
+		r, g, b := rand.Intn(6), rand.Intn(6), rand.Intn(6)
+		return &Style{fmt.Sprintf("%03d", r*100+g*10+b), buildStyleNoStrip(bgAnsi256(uint8(r), uint8(g), uint8(b)))}, nil
 	case "bg-off":
 		return &Style{"bg-off", func(a string) string { return a }}, nil // no background
 	}
