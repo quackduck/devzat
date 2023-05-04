@@ -89,23 +89,27 @@ func discordInit() {
 				}
 			} else {
 				Log.Println("edits in last minute", editsInLastMinute)
-				if editsInLastMinute < 30 { // rate-limit the edits
+				if len(DiscordChan) < 5 { // rate-limit the edits
 					avatarFor := msg.senderName
-					if editsInLastMinute == 29 { // blank out pfp if we're about to hit the limit
-						avatarFor = ""
-					}
-					_, err := sess.WebhookEditWithToken(webhook.ID, webhook.Token, webhook.Name, createDiscordImage(avatarFor))
+					//if len(DiscordChan) == 9 { // blank out pfp if we're about to hit the limit
+					//	avatarFor = ""
+					//}
+					//Log.Println("before edit")
+					//_, err = sess.WebhookEditWithToken(webhook.ID, webhook.Token, webhook.Name, createDiscordImage(avatarFor))
+					_, err = sess.WebhookEdit(webhook.ID, webhook.Name, createDiscordImage(avatarFor), webhook.ChannelID, discordgo.WithRetryOnRatelimit(true))
 					if err != nil {
 						Log.Println("Error modifying Discord webhook:", err)
 					}
+					//Log.Println("after edit", msg.msg)
 					editsInLastMinute++
 					time.AfterFunc(time.Minute, func() { editsInLastMinute-- })
 				}
-				_, err = sess.WebhookExecute(webhook.ID, webhook.Token, true,
+				_, err = sess.WebhookExecute(webhook.ID, webhook.Token, false,
 					&discordgo.WebhookParams{
 						Content:  strings.ReplaceAll(stripansi.Strip(txt), `\n`, "\n"),
 						Username: stripansi.Strip("[" + msg.channel + "] " + msg.senderName),
 					},
+					discordgo.WithRetryOnRatelimit(true),
 				)
 				if err != nil {
 					Log.Println("Error sending Discord message:", err)

@@ -10,7 +10,6 @@ import (
 
 	"github.com/acarl005/stripansi"
 	chromastyles "github.com/alecthomas/chroma/styles"
-	"github.com/crazy3lf/colorconv"
 	"github.com/jwalton/gchalk"
 	markdown "github.com/quackduck/go-term-markdown"
 )
@@ -25,12 +24,22 @@ func makeFlag(colors []string) func(a string) string {
 	}
 }
 
-func applyHueRange(start, end, s, v float64, a string) string {
+func applyHueRange(start, end float64, a string) string {
 	a = stripansi.Strip(a)
 	buf := strings.Builder{}
 	for i, r := range []rune(a) {
-		hue := start + (end-start)*float64(i)/float64(len(a))
-		buf.WriteString(hsv(hue, s, v).Paint(string(r)))
+		h := start + (end-start)*float64(i)/float64(len(a))
+		buf.WriteString(hue(h).Paint(string(r)))
+	}
+	return buf.String()
+}
+
+func applyStyles(styles []*Style, a string) string {
+	a = stripansi.Strip(a)
+	buf := strings.Builder{}
+	colorOffset := rand.Intn(len(styles))
+	for i, r := range []rune(a) {
+		buf.WriteString(styles[(colorOffset+i)%len(styles)].apply(string(r)))
 	}
 	return buf.String()
 }
@@ -68,7 +77,7 @@ var (
 		{"cranberry", buildStyle(ansi256(3, 0, 1))},
 		{"lavender", buildStyle(ansi256(4, 2, 5))},
 		{"fire", buildStyle(ansi256(5, 2, 0))},
-		{"pastel green", buildStyle(ansi256(0, 5, 3))},
+		{"pastelgreen", buildStyle(ansi256(0, 5, 3))},
 		{"olive", buildStyle(ansi256(4, 5, 1))},
 		{"yellow", buildStyle(Yellow)},
 		{"orange", buildStyle(Orange)},
@@ -99,7 +108,7 @@ var (
 				span = 45 * float64(length) // at least 45 degrees per letter
 			}
 			start := 360 * rand.Float64()
-			return applyHueRange(start, start+span, 1, 1, a)
+			return applyHueRange(start, start+span, a)
 			//return applyMulticolor(rainbow, a)
 		}}}
 )
@@ -120,13 +129,19 @@ func buildStyleNoStrip(c *gchalk.Builder) func(string) string {
 	return func(s string) string { return c.Paint(s) }
 }
 
-// h from 0 to 360, others from 0 to 1
-func hsv(h, s, v float64) *gchalk.Builder {
-	r, g, b, err := colorconv.HSVToRGB(math.Mod(h, 360), s, v)
-	if err != nil {
-		return Chalk.WithRGB(0, 0, 0)
-	}
-	return Chalk.WithRGB(r, g, b)
+// h from 0 to 360
+// https://www.desmos.com/calculator/wb91fw4nyj
+func hue(h float64) *gchalk.Builder {
+	pi := math.Pi
+	h = math.Mod(h, 360) / 360.0
+	r := math.Round(255.0 * (0.5 + 0.5*math.Sin(2*pi*h+pi/2)))
+	g := math.Round(255.0 * (0.5 + 0.5*math.Sin(2*pi*h+pi/2+2*pi/3)))
+	b := math.Round(255.0 * (0.5 + 0.5*math.Sin(2*pi*h+pi/2+4*pi/3)))
+	//r, g, b, err := colorconv.HSVToRGB(math.Mod(h, 360), s, v)
+	//if err != nil {
+	//	return Chalk.WithRGB(0, 0, 0)
+	//}
+	return Chalk.WithRGB(uint8(r), uint8(g), uint8(b))
 }
 
 // with r, g and b values from 0 to 5
@@ -141,22 +156,50 @@ func bgAnsi256(r, g, b uint8) *gchalk.Builder {
 
 // Applies color from name
 func (u *User) changeColor(colorName string) error {
+	if strings.Contains(colorName, "bg") {
+		if names := strings.Fields(colorName); len(names) > 1 { // do we need to separate bg and fg colors?
+			fgColors := make([]string, 0, len(names)-1)
+			bgColors := make([]string, 0, len(names))
+			for _, name := range names {
+				if strings.HasPrefix(name, "bg") {
+					bgColors = append(bgColors, name)
+				} else {
+					fgColors = append(fgColors, name)
+				}
+			}
+			if len(fgColors) != 0 { // if no fg colors, carry on normally
+				err := u.changeColor(strings.Join(fgColors, " "))
+				if err != nil {
+					return err
+				}
+				return u.changeColor(strings.Join(bgColors, " "))
+			}
+		}
+	}
 	style, err := getStyle(colorName)
 	if err != nil {
 		return err
 	}
-	if strings.HasPrefix(colorName, "bg-") {
+
+	//changedBg := false
+	if strings.HasPrefix(colorName, "bg") {
+		//changedBg = true
 		u.ColorBG = style.name // update bg color
 	} else {
 		u.Color = style.name // update fg color
 	}
 
-	//if colorName == "random" {
-	//	u.room.broadcast("", "You're now using "+u.color)
+	u.Name, _ = applyColorToData(u.Name, u.Color, u.ColorBG)
+	//styleFG := &Style{}
+	//styleBG := &Style{}
+	//if changedBg {
+	//	styleFG, _ = getStyle(u.Color) // already checked for errors
+	//	styleBG = style
+	//} else {
+	//	styleBG, err = getStyle(u.ColorBG) // already checked for errors
+	//	styleFG = style
 	//}
-
-	u.Name, _ = applyColorToData(u.Name, u.Color, u.ColorBG) // error can be discarded as it has already been checked earlier
-
+	//u.Name = styleBG.apply(styleFG.apply(u.Name))
 	u.term.SetPrompt(u.Name + ": ")
 	return nil
 }
@@ -171,26 +214,6 @@ func applyColorToData(data string, color string, colorBG string) (string, error)
 		return "", err
 	}
 	return styleBG.apply(styleFG.apply(data)), nil // fg clears the bg color
-}
-
-// Sets either the foreground or the background with a random color if the
-// given name is correct.
-func getRandomColor(name string) *Style {
-	var foreground bool
-	if name == "random" {
-		foreground = true
-	} else if name == "bg-random" {
-		foreground = false
-	} else {
-		return nil
-	}
-	r := rand.Intn(6)
-	g := rand.Intn(6)
-	b := rand.Intn(6)
-	if foreground {
-		return &Style{fmt.Sprintf("%03d", r*100+g*10+b), buildStyle(ansi256(uint8(r), uint8(g), uint8(b)))}
-	}
-	return &Style{fmt.Sprintf("bg-%03d", r*100+g*10+b), buildStyleNoStrip(bgAnsi256(uint8(r), uint8(g), uint8(b)))}
 }
 
 // If the input is a named style, returns it. Otherwise, returns nil.
@@ -240,12 +263,34 @@ func getCustomColor(name string) (*Style, error) {
 
 // Turns name into a style (defaults to nil)
 func getStyle(name string) (*Style, error) {
-	randomColor := getRandomColor(name)
-	if randomColor != nil {
-		return randomColor, nil
+	name = strings.TrimSpace(name)
+	//Log.Println("1 getting style for", name, "...")
+	if names := strings.Fields(name); len(names) > 1 {
+		styleSlice := make([]*Style, len(names))
+		newName := ""
+		for i := range names {
+			//Log.Println("2 getting style for", names[i], "...")
+			style, err := getStyle(names[i])
+			if err != nil {
+				return nil, err
+			}
+			styleSlice[i] = style
+			newName += style.name + " "
+		}
+
+		return &Style{newName[:len(newName)-1], func(a string) string {
+			return applyStyles(styleSlice, a)
+		}}, nil
 	}
-	if name == "bg-off" {
-		return &Style{"bg-off", func(a string) string { return a }}, nil // Used to remove one's background
+	switch name {
+	case "random":
+		r, g, b := uint8(rand.Intn(6)), uint8(rand.Intn(6)), uint8(rand.Intn(6))
+		return &Style{fmt.Sprintf("%03d", r*100+g*10+b), buildStyle(ansi256(r, g, b))}, nil
+	case "bg-random":
+		r, g, b := uint8(rand.Intn(6)), uint8(rand.Intn(6)), uint8(rand.Intn(6))
+		return &Style{fmt.Sprintf("%03d", r*100+g*10+b), buildStyleNoStrip(bgAnsi256(r, g, b))}, nil
+	case "bg-off":
+		return &Style{"bg-off", func(a string) string { return a }}, nil // no background
 	}
 	namedColor := getNamedColor(name)
 	if namedColor != nil {
