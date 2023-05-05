@@ -74,9 +74,11 @@ func discordInit() {
 	DiscordChan = make(chan DiscordMsg, 100)
 	editsInLastMinute := 0 // discord allows for 30 webhook edits per minute: https://twitter.com/lolpython/status/967621046277820416
 	go func() {
+		overloading := false
 		for msg := range DiscordChan {
+			sendingTimeStart := time.Now()
 			txt := strings.ReplaceAll(msg.msg, "@everyone", "@\\everyone")
-			if Integrations.Discord.CompactMode {
+			if Integrations.Discord.CompactMode || overloading {
 				var toSend string
 				if msg.senderName == "" {
 					toSend = strings.ReplaceAll(stripansi.Strip("["+msg.channel+"] "+txt), `\n`, "\n")
@@ -114,6 +116,13 @@ func discordInit() {
 				if err != nil {
 					Log.Println("Error sending Discord message:", err)
 				}
+			}
+			elaspsedTime := time.Since(sendingTimeStart)
+			if elaspsedTime.Seconds() > 20 {
+				overloading = true
+			}
+			if len(DiscordChan) == 0 && elaspsedTime.Seconds() < 10 {
+				overloading = false
 			}
 		}
 	}()
