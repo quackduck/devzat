@@ -109,6 +109,7 @@ var (
 		{"orange", buildStyle(Orange)},
 		{"blue", buildStyle(Blue)}}
 	SecretStyles = []*Style{
+		{"elitedino", buildStyle(ansi256(5, 0, 0))},
 		{"ukraine", buildStyle(Chalk.WithHex("#005bbb").WithBgHex("#ffd500"))},
 		{"easter", buildStyle(Chalk.WithRGB(255, 51, 255).WithBgRGB(255, 255, 0))},
 		{"baby", buildStyle(Chalk.WithRGB(255, 51, 255).WithBgRGB(102, 102, 255))},
