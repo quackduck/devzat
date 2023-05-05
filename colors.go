@@ -17,7 +17,7 @@ import (
 func makeFlag(colors []string) func(a string) string {
 	flag := make([]*gchalk.Builder, len(colors))
 	for i := range colors {
-		flag[i] = Chalk.WithHex(colors[i])
+		flag[i] = TrueColor.WithHex(colors[i])
 	}
 	return func(a string) string {
 		return applyMulticolor(flag, a)
@@ -81,16 +81,17 @@ func tokenizeAnsi(a string) []string {
 }
 
 var (
-	Chalk   = gchalk.New(gchalk.ForceLevel(gchalk.LevelAnsi256))
-	Green   = ansi256(1, 5, 1)
-	Red     = ansi256(5, 1, 1)
-	Cyan    = ansi256(1, 5, 5)
-	Magenta = ansi256(5, 1, 5)
-	Yellow  = ansi256(5, 5, 1)
-	Orange  = ansi256(5, 3, 0)
-	Blue    = ansi256(0, 3, 5)
-	White   = ansi256(5, 5, 5)
-	Styles  = []*Style{
+	TrueColor = gchalk.New(gchalk.ForceLevel(gchalk.LevelAnsi16m))
+	Chalk     = gchalk.New(gchalk.ForceLevel(gchalk.LevelAnsi256))
+	Green     = ansi256(1, 5, 1)
+	Red       = ansi256(5, 1, 1)
+	Cyan      = ansi256(1, 5, 5)
+	Magenta   = ansi256(5, 1, 5)
+	Yellow    = ansi256(5, 5, 1)
+	Orange    = ansi256(5, 3, 0)
+	Blue      = ansi256(0, 3, 5)
+	White     = ansi256(5, 5, 5)
+	Styles    = []*Style{
 		{"white", buildStyle(White)},
 		{"red", buildStyle(Red)},
 		{"coral", buildStyle(ansi256(5, 2, 2))},
@@ -110,22 +111,16 @@ var (
 		{"blue", buildStyle(Blue)}}
 	SecretStyles = []*Style{
 		{"elitedino", buildStyle(ansi256(5, 0, 0))},
-		{"ukraine", buildStyle(Chalk.WithHex("#005bbb").WithBgHex("#ffd500"))},
+		{"ukraine", buildStyle(TrueColor.WithHex("#005bbb").WithBgHex("#ffd500"))},
 		{"easter", buildStyle(Chalk.WithRGB(255, 51, 255).WithBgRGB(255, 255, 0))},
 		{"baby", buildStyle(Chalk.WithRGB(255, 51, 255).WithBgRGB(102, 102, 255))},
 		{"hacker", buildStyle(Chalk.WithRGB(0, 255, 0).WithBgRGB(0, 0, 0))},
 		{"l33t", buildStyleNoStrip(Chalk.WithBgBrightBlack())},
 		{"whiten", buildStyleNoStrip(Chalk.WithBgWhite())},
-		{"trans", makeFlag([]string{"#55CDFC", "#F7A8B8", "#FFFFFF", "#F7A8B8", "#55CDFC"})},
+		{"trans", makeFlag([]string{"#5BCEFA", "#F5A9B8", "#FFFFFF", "#F5A9B8", "#5BCEFA"})},
 		{"gay", makeFlag([]string{"#FF0018", "#FFA52C", "#FFFF41", "#008018", "#0000F9", "#86007D"})},
 		{"lesbian", makeFlag([]string{"#D62E02", "#FD9855", "#FFFFFF", "#D161A2", "#A20160"})},
 		{"bi", makeFlag([]string{"#D60270", "#D60270", "#9B4F96", "#0038A8", "#0038A8"})},
-		{"ace", makeFlag([]string{"#333333", "#A4A4A4", "#FFFFFF", "#810081"})},
-		{"pan", makeFlag([]string{"#FF1B8D", "#FFDA00", "#1BB3FF"})},
-		{"enby", makeFlag([]string{"#FFF430", "#FFFFFF", "#9C59D1", "#000000"})},
-		{"aro", makeFlag([]string{"#3AA63F", "#A8D47A", "#FFFFFF", "#AAAAAA", "#000000"})},
-		{"genderfluid", makeFlag([]string{"#FE75A1", "#FFFFFF", "#BE18D6", "#333333", "#333EBC"})},
-		{"agender", makeFlag([]string{"#333333", "#BCC5C6", "#FFFFFF", "#B5F582", "#FFFFFF", "#BCC5C6", "#333333"})},
 		{"rainbow", func(a string) string {
 			//rainbow := []*gchalk.Builder{}
 			//rainbow := []*gchalk.Builder{Red, Orange, Yellow, Green, Cyan, Blue, ansi256(2, 2, 5), Magenta}
@@ -168,7 +163,7 @@ func hue(h float64) *gchalk.Builder {
 	//if err != nil {
 	//	return Chalk.WithRGB(0, 0, 0)
 	//}
-	return Chalk.WithRGB(uint8(r), uint8(g), uint8(b))
+	return TrueColor.WithRGB(uint8(r), uint8(g), uint8(b))
 }
 
 // with r, g and b values from 0 to 5
@@ -260,10 +255,10 @@ func getNamedColor(name string) *Style {
 
 func getCustomColor(name string) (*Style, error) {
 	if strings.HasPrefix(name, "#") {
-		return &Style{name, buildStyle(Chalk.WithHex(name))}, nil
+		return &Style{name, buildStyle(TrueColor.WithHex(name))}, nil
 	}
 	if strings.HasPrefix(name, "bg-#") {
-		return &Style{name, buildStyleNoStrip(Chalk.WithBgHex(strings.TrimPrefix(name, "bg-")))}, nil
+		return &Style{name, buildStyleNoStrip(TrueColor.WithBgHex(strings.TrimPrefix(name, "bg-")))}, nil
 	}
 	if len(name) == 3 || len(name) == 6 {
 		rgbCode := name
