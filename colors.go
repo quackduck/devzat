@@ -24,13 +24,36 @@ func makeFlag(colors []string) func(a string) string {
 	}
 }
 
-func applyHueRange(start, end float64, a string) string {
-	a = stripansi.Strip(a)
-	buf := strings.Builder{}
-	for i, r := range []rune(a) {
-		h := start + (end-start)*float64(i)/float64(len(a))
-		buf.WriteString(hue(h).Paint(string(r)))
+func rainbow(a string, bg bool) string {
+	span := 360.0
+	length := len(stripansi.Strip(a))
+	if length < 16 {
+		span = 22.5 * float64(length) // at least 45 degrees per letter
 	}
+	start := 360 * rand.Float64()
+	//span /= 2
+	return applyHueRange(start, start+span, a, bg)
+}
+
+func applyHueRange(start, end float64, a string, bg bool) string {
+	if !bg { // if fg, strip all color (bg is applied after fg)
+		a = stripansi.Strip(a)
+	}
+	buf := strings.Builder{}
+	if !bg {
+		for i, r := range []rune(a) {
+			h := start + (end-start)*float64(i)/float64(len(a))
+			buf.WriteString(TrueColor.WithRGB(hueRGB(h)).Paint(string(r)))
+		}
+	} else { // need to operate with ansi codes
+		split := tokenizeAnsi(a)
+		for i, s := range split {
+			//fmt.Printf("applying rainbow to %#v\n", s)
+			h := start + (end-start)*float64(i)/float64(len(split))
+			buf.WriteString(TrueColor.WithBgRGB(hueRGB(h)).Paint(s))
+		}
+	}
+	//fmt.Printf("rainbow: %v\n", strconv.Quote(buf.String()))
 	return buf.String()
 }
 
@@ -77,7 +100,20 @@ func tokenizeAnsi(a string) []string {
 	if buf.Len() > 0 { // that last m could be needed
 		tokens = append(tokens, buf.String())
 	}
+
+	//for i := range tokens {
+	//	if strings.HasPrefix(tokens[i], "\x1b[39m") {
+	//		if i != len(tokens)-1 {
+	//			tokens[i] = tokens[i][5:]
+	//		} else {
+	//			// move to earlier token
+	//			tokens[i-1] += tokens[i]
+	//			tokens = tokens[:len(tokens)-1]
+	//		}
+	//	}
+	//}
 	return tokens
+
 }
 
 var (
@@ -121,18 +157,9 @@ var (
 		{"gay", makeFlag([]string{"#FF0018", "#FFA52C", "#FFFF41", "#008018", "#0000F9", "#86007D"})},
 		{"lesbian", makeFlag([]string{"#D62E02", "#FD9855", "#FFFFFF", "#D161A2", "#A20160"})},
 		{"bi", makeFlag([]string{"#D60270", "#D60270", "#9B4F96", "#0038A8", "#0038A8"})},
-		{"rainbow", func(a string) string {
-			//rainbow := []*gchalk.Builder{}
-			//rainbow := []*gchalk.Builder{Red, Orange, Yellow, Green, Cyan, Blue, ansi256(2, 2, 5), Magenta}
-			span := 360.0
-			length := len(stripansi.Strip(a))
-			if length < 8 {
-				span = 45 * float64(length) // at least 45 degrees per letter
-			}
-			start := 360 * rand.Float64()
-			return applyHueRange(start, start+span, a)
-			//return applyMulticolor(rainbow, a)
-		}}}
+		{"bg-sunset", func(a string) string { return applyHueRange(320, 480, a, true) }},
+		{"rainbow", func(a string) string { return rainbow(a, false) }},
+		{"bg-rainbow", func(a string) string { return rainbow(a, true) }}}
 )
 
 func init() {
@@ -153,17 +180,18 @@ func buildStyleNoStrip(c *gchalk.Builder) func(string) string {
 
 // h from 0 to 360
 // https://www.desmos.com/calculator/wb91fw4nyj
-func hue(h float64) *gchalk.Builder {
+func hueRGB(h float64) (r, g, b uint8) {
 	pi := math.Pi
 	h = math.Mod(h, 360) / 360.0
-	r := math.Round(255.0 * (0.5 + 0.5*math.Sin(2*pi*h+pi/2)))
-	g := math.Round(255.0 * (0.5 + 0.5*math.Sin(2*pi*h+pi/2+2*pi/3)))
-	b := math.Round(255.0 * (0.5 + 0.5*math.Sin(2*pi*h+pi/2+4*pi/3)))
+	r = uint8(math.Round(255.0 * (0.5 + 0.5*math.Sin(2*pi*h+pi/2))))
+	g = uint8(math.Round(255.0 * (0.5 + 0.5*math.Sin(2*pi*h+pi/2+2*pi/3))))
+	b = uint8(math.Round(255.0 * (0.5 + 0.5*math.Sin(2*pi*h+pi/2+4*pi/3))))
 	//r, g, b, err := colorconv.HSVToRGB(math.Mod(h, 360), s, v)
 	//if err != nil {
 	//	return Chalk.WithRGB(0, 0, 0)
 	//}
-	return TrueColor.WithRGB(uint8(r), uint8(g), uint8(b))
+	return
+	//return TrueColor.WithRGB(uint8(r), uint8(g), uint8(b))
 }
 
 // with r, g and b values from 0 to 5
