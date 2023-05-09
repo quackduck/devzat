@@ -41,19 +41,18 @@ func applyHueRange(start, end float64, a string, bg bool) string {
 	}
 	buf := strings.Builder{}
 	if !bg {
-		for i, r := range []rune(a) {
-			h := start + (end-start)*float64(i)/float64(len(a))
+		runes := []rune(a)
+		for i, r := range runes {
+			h := start + (end-start)*float64(i)/float64(len(runes))
 			buf.WriteString(TrueColor.WithRGB(hueRGB(h)).Paint(string(r)))
 		}
 	} else { // need to operate with ansi codes
 		split := tokenizeAnsi(a)
 		for i, s := range split {
-			//fmt.Printf("applying rainbow to %#v\n", s)
 			h := start + (end-start)*float64(i)/float64(len(split))
 			buf.WriteString(TrueColor.WithBgRGB(hueRGB(h)).Paint(s))
 		}
 	}
-	//fmt.Printf("rainbow: %v\n", strconv.Quote(buf.String()))
 	return buf.String()
 }
 
@@ -101,17 +100,17 @@ func tokenizeAnsi(a string) []string {
 		tokens = append(tokens, buf.String())
 	}
 
-	//for i := range tokens {
-	//	if strings.HasPrefix(tokens[i], "\x1b[39m") {
-	//		if i != len(tokens)-1 {
-	//			tokens[i] = tokens[i][5:]
-	//		} else {
-	//			// move to earlier token
-	//			tokens[i-1] += tokens[i]
-	//			tokens = tokens[:len(tokens)-1]
-	//		}
-	//	}
-	//}
+	for i := range tokens {
+		if strings.HasPrefix(tokens[i], "\x1b[39m") {
+			if i != len(tokens)-1 {
+				tokens[i] = tokens[i][5:]
+			} else {
+				// move to earlier token
+				tokens[i-1] += tokens[i]
+				tokens = tokens[:len(tokens)-1]
+			}
+		}
+	}
 	return tokens
 
 }
@@ -157,6 +156,7 @@ var (
 		{"gay", makeFlag([]string{"#FF0018", "#FFA52C", "#FFFF41", "#008018", "#0000F9", "#86007D"})},
 		{"lesbian", makeFlag([]string{"#D62E02", "#FD9855", "#FFFFFF", "#D161A2", "#A20160"})},
 		{"bi", makeFlag([]string{"#D60270", "#D60270", "#9B4F96", "#0038A8", "#0038A8"})},
+		{"sunset", func(a string) string { return applyHueRange(320, 480, a, false) }},
 		{"bg-sunset", func(a string) string { return applyHueRange(320, 480, a, true) }},
 		{"rainbow", func(a string) string { return rainbow(a, false) }},
 		{"bg-rainbow", func(a string) string { return rainbow(a, true) }}}
@@ -287,6 +287,20 @@ func getCustomColor(name string) (*Style, error) {
 	}
 	if strings.HasPrefix(name, "bg-#") {
 		return &Style{name, buildStyleNoStrip(TrueColor.WithBgHex(strings.TrimPrefix(name, "bg-")))}, nil
+	}
+	bghue := strings.HasPrefix(name, "bg-hue-")
+	if bghue || strings.HasPrefix(name, "hue-") {
+		var hue1, hue2 float64
+		var err error
+		if bghue {
+			_, err = fmt.Sscanf(name, "bg-hue-%f-%f", &hue1, &hue2)
+		} else {
+			_, err = fmt.Sscanf(name, "hue-%f-%f", &hue1, &hue2)
+		}
+		if err != nil {
+			return nil, err
+		}
+		return &Style{name, func(a string) string { return applyHueRange(hue1, hue2, a, bghue) }}, nil
 	}
 	if len(name) == 3 || len(name) == 6 {
 		rgbCode := name

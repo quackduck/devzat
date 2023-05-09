@@ -90,7 +90,7 @@ func discordInit() {
 					Log.Println("Error sending Discord message:", err)
 				}
 			} else {
-				Log.Println("edits in last minute", editsInLastMinute)
+				//Log.Println("edits in last minute", editsInLastMinute)
 				if len(DiscordChan) < 5 { // rate-limit the edits
 					avatarFor := msg.senderName
 					//if len(DiscordChan) == 9 { // blank out pfp if we're about to hit the limit
