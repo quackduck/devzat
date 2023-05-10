@@ -14,6 +14,78 @@ import (
 	markdown "github.com/quackduck/go-term-markdown"
 )
 
+var (
+	TrueColor = gchalk.New(gchalk.ForceLevel(gchalk.LevelAnsi16m))
+	Chalk     = gchalk.New(gchalk.ForceLevel(gchalk.LevelAnsi256))
+	Green     = ansi256(1, 5, 1)
+	Red       = ansi256(5, 1, 1)
+	Cyan      = ansi256(1, 5, 5)
+	Magenta   = ansi256(5, 1, 5)
+	Yellow    = ansi256(5, 5, 1)
+	Orange    = ansi256(5, 3, 0)
+	Blue      = ansi256(0, 3, 5)
+	White     = ansi256(5, 5, 5)
+	Styles    = []*Style{
+		{"white", buildStyle(White)},
+		{"red", buildStyle(Red)},
+		{"coral", buildStyle(ansi256(5, 2, 2))},
+		{"green", buildStyle(Green)},
+		{"sky", buildStyle(ansi256(3, 5, 5))},
+		{"cyan", buildStyle(Cyan)},
+		{"magenta", buildStyle(Magenta)},
+		{"pink", buildStyle(ansi256(5, 3, 4))},
+		{"rose", buildStyle(ansi256(5, 0, 2))},
+		{"cranberry", buildStyle(ansi256(3, 0, 1))},
+		{"lavender", buildStyle(ansi256(4, 2, 5))},
+		{"fire", buildStyle(ansi256(5, 2, 0))},
+		{"pastelgreen", buildStyle(ansi256(0, 5, 3))},
+		{"olive", buildStyle(ansi256(4, 5, 1))},
+		{"yellow", buildStyle(Yellow)},
+		{"orange", buildStyle(Orange)},
+		{"blue", buildStyle(Blue)}}
+	SecretStyles = []*Style{
+		{"elitedino", buildStyle(ansi256(5, 0, 0))},
+		{"ukraine", buildStyle(TrueColor.WithHex("#005bbb").WithBgHex("#ffd500"))},
+		{"easter", buildStyle(Chalk.WithRGB(255, 51, 255).WithBgRGB(255, 255, 0))},
+		{"baby", buildStyle(Chalk.WithRGB(255, 51, 255).WithBgRGB(102, 102, 255))},
+		{"hacker", buildStyle(Chalk.WithRGB(0, 255, 0).WithBgRGB(0, 0, 0))},
+		{"l33t", buildStyleNoStrip(Chalk.WithBgBrightBlack())},
+		{"whiten", buildStyleNoStrip(Chalk.WithBgWhite())},
+		{"trans", makeFlag([]string{"#5BCEFA", "#F5A9B8", "#FFFFFF", "#F5A9B8", "#5BCEFA"})},
+		{"gay", makeFlag([]string{"#FF0018", "#FFA52C", "#FFFF41", "#008018", "#0000F9", "#86007D"})},
+		{"lesbian", makeFlag([]string{"#D62E02", "#FD9855", "#FFFFFF", "#D161A2", "#A20160"})},
+		{"bi", makeFlag([]string{"#D60270", "#D60270", "#9B4F96", "#0038A8", "#0038A8"})},
+		{"sunset", func(a string) string { return applyHueRange(320, 480, a, false) }},
+		{"bg-sunset", func(a string) string { return applyHueRange(320, 480, a, true) }},
+		{"rainbow", func(a string) string { return rainbow(a, false) }},
+		{"bg-rainbow", func(a string) string { return rainbow(a, true) }}}
+	ColorHelpMsg = `Which color? Choose from random, ` + strings.Join(func() []string {
+		colors := make([]string, 0, len(Styles))
+		for i := range Styles {
+			colors = append(colors, Styles[i].name)
+		}
+		return colors
+	}(), ", ") + `
+
+Make your own colors using hex (eg. color #A0FFFF) or RGB values from 0-5 (eg. color 530). Generate gradients with hues (eg. color hue-50-150). Set bg with "bg-" (eg. color bg-530, color bg-hue-50-150). Use multiple colors at once (eg. color rose #F5A9B8). Remove bg with bg-off. There's also a few secret colors :)`
+)
+
+func init() {
+	markdown.CurrentTheme = chromastyles.ParaisoDark
+}
+
+type Style struct {
+	name  string
+	apply func(string) string
+}
+
+func buildStyle(c *gchalk.Builder) func(string) string {
+	return func(s string) string { return c.Paint(stripansi.Strip(s)) }
+}
+func buildStyleNoStrip(c *gchalk.Builder) func(string) string {
+	return func(s string) string { return c.Paint(s) }
+}
+
 func makeFlag(colors []string) func(a string) string {
 	flag := make([]*gchalk.Builder, len(colors))
 	for i := range colors {
@@ -112,70 +184,6 @@ func tokenizeAnsi(a string) []string {
 		}
 	}
 	return tokens
-
-}
-
-var (
-	TrueColor = gchalk.New(gchalk.ForceLevel(gchalk.LevelAnsi16m))
-	Chalk     = gchalk.New(gchalk.ForceLevel(gchalk.LevelAnsi256))
-	Green     = ansi256(1, 5, 1)
-	Red       = ansi256(5, 1, 1)
-	Cyan      = ansi256(1, 5, 5)
-	Magenta   = ansi256(5, 1, 5)
-	Yellow    = ansi256(5, 5, 1)
-	Orange    = ansi256(5, 3, 0)
-	Blue      = ansi256(0, 3, 5)
-	White     = ansi256(5, 5, 5)
-	Styles    = []*Style{
-		{"white", buildStyle(White)},
-		{"red", buildStyle(Red)},
-		{"coral", buildStyle(ansi256(5, 2, 2))},
-		{"green", buildStyle(Green)},
-		{"sky", buildStyle(ansi256(3, 5, 5))},
-		{"cyan", buildStyle(Cyan)},
-		{"magenta", buildStyle(Magenta)},
-		{"pink", buildStyle(ansi256(5, 3, 4))},
-		{"rose", buildStyle(ansi256(5, 0, 2))},
-		{"cranberry", buildStyle(ansi256(3, 0, 1))},
-		{"lavender", buildStyle(ansi256(4, 2, 5))},
-		{"fire", buildStyle(ansi256(5, 2, 0))},
-		{"pastelgreen", buildStyle(ansi256(0, 5, 3))},
-		{"olive", buildStyle(ansi256(4, 5, 1))},
-		{"yellow", buildStyle(Yellow)},
-		{"orange", buildStyle(Orange)},
-		{"blue", buildStyle(Blue)}}
-	SecretStyles = []*Style{
-		{"elitedino", buildStyle(ansi256(5, 0, 0))},
-		{"ukraine", buildStyle(TrueColor.WithHex("#005bbb").WithBgHex("#ffd500"))},
-		{"easter", buildStyle(Chalk.WithRGB(255, 51, 255).WithBgRGB(255, 255, 0))},
-		{"baby", buildStyle(Chalk.WithRGB(255, 51, 255).WithBgRGB(102, 102, 255))},
-		{"hacker", buildStyle(Chalk.WithRGB(0, 255, 0).WithBgRGB(0, 0, 0))},
-		{"l33t", buildStyleNoStrip(Chalk.WithBgBrightBlack())},
-		{"whiten", buildStyleNoStrip(Chalk.WithBgWhite())},
-		{"trans", makeFlag([]string{"#5BCEFA", "#F5A9B8", "#FFFFFF", "#F5A9B8", "#5BCEFA"})},
-		{"gay", makeFlag([]string{"#FF0018", "#FFA52C", "#FFFF41", "#008018", "#0000F9", "#86007D"})},
-		{"lesbian", makeFlag([]string{"#D62E02", "#FD9855", "#FFFFFF", "#D161A2", "#A20160"})},
-		{"bi", makeFlag([]string{"#D60270", "#D60270", "#9B4F96", "#0038A8", "#0038A8"})},
-		{"sunset", func(a string) string { return applyHueRange(320, 480, a, false) }},
-		{"bg-sunset", func(a string) string { return applyHueRange(320, 480, a, true) }},
-		{"rainbow", func(a string) string { return rainbow(a, false) }},
-		{"bg-rainbow", func(a string) string { return rainbow(a, true) }}}
-)
-
-func init() {
-	markdown.CurrentTheme = chromastyles.ParaisoDark
-}
-
-type Style struct {
-	name  string
-	apply func(string) string
-}
-
-func buildStyle(c *gchalk.Builder) func(string) string {
-	return func(s string) string { return c.Paint(stripansi.Strip(s)) }
-}
-func buildStyleNoStrip(c *gchalk.Builder) func(string) string {
-	return func(s string) string { return c.Paint(s) }
 }
 
 // h from 0 to 360
@@ -191,7 +199,6 @@ func hueRGB(h float64) (r, g, b uint8) {
 	//	return Chalk.WithRGB(0, 0, 0)
 	//}
 	return
-	//return TrueColor.WithRGB(uint8(r), uint8(g), uint8(b))
 }
 
 // with r, g and b values from 0 to 5
@@ -368,16 +375,5 @@ func getStyle(name string) (*Style, error) {
 	if customColor != nil {
 		return customColor, nil
 	}
-	//s, err := Chalk.WithStyle(strings.Split(name, "-")...)
-	//if err == nil {
-	//	return &style{name, buildStyle(s)}, nil
-	//}
-
-	return nil, errors.New("Which color? Choose from random, " + strings.Join(func() []string {
-		colors := make([]string, 0, len(Styles))
-		for i := range Styles {
-			colors = append(colors, Styles[i].name)
-		}
-		return colors
-	}(), ", ") + "  \nMake your own colors using hex (#A0FFFF, etc) or RGB values from 0 to 5 (for example, `color 530`, a pretty nice orange). Set bg color like this: color bg-530; remove bg color with color bg-off.\nThere's also a few secret colors :)")
+	return nil, errors.New(ColorHelpMsg)
 }
