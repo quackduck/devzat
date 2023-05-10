@@ -39,7 +39,7 @@ var (
 		{"lavender", buildStyle(ansi256(4, 2, 5))},
 		{"fire", buildStyle(ansi256(5, 2, 0))},
 		{"pastelgreen", buildStyle(ansi256(0, 5, 3))},
-		{"olive", buildStyle(ansi256(4, 5, 1))},
+		{"olive", buildStyle(ansi256(2, 3, 0))},
 		{"yellow", buildStyle(Yellow)},
 		{"orange", buildStyle(Orange)},
 		{"blue", buildStyle(Blue)}}
@@ -59,19 +59,25 @@ var (
 		{"bg-sunset", func(a string) string { return applyHueRange(320, 480, a, true) }},
 		{"rainbow", func(a string) string { return rainbow(a, false) }},
 		{"bg-rainbow", func(a string) string { return rainbow(a, true) }}}
-	ColorHelpMsg = `Which color? Choose from random, ` + strings.Join(func() []string {
+	ColorHelpMsg = ""
+)
+
+func colorNameWithColor(c string) string {
+	style, _ := getStyle(c)
+	return style.apply(c)
+}
+
+func init() {
+	markdown.CurrentTheme = chromastyles.ParaisoDark
+	ColorHelpMsg = strings.Join(func() []string {
 		colors := make([]string, 0, len(Styles))
 		for i := range Styles {
-			colors = append(colors, Styles[i].name)
+			colors = append(colors, Styles[i].apply(Styles[i].name))
 		}
 		return colors
 	}(), ", ") + `
 
-Make your own colors using hex (eg. color #A0FFFF) or RGB values from 0-5 (eg. color 530). Generate gradients with hues (eg. color hue-50-150). Set bg with "bg-" (eg. color bg-530, color bg-hue-50-150). Use multiple colors at once (eg. color rose #F5A9B8). Remove bg with bg-off. There's also a few secret colors :)`
-)
-
-func init() {
-	markdown.CurrentTheme = chromastyles.ParaisoDark
+Make your own colors using hex (eg. color ` + colorNameWithColor("#A0FFFF") + ` or RGB values from 0-5 (eg. color ` + colorNameWithColor("530") + `). Generate gradients with hues (eg. color ` + colorNameWithColor("hue-0-360") + `). Set bg with "bg-" (eg. color ` + colorNameWithColor("bg-101") + `, color ` + colorNameWithColor("bg-hue-130-20") + `). Use multiple colors at once (eg. color ` + colorNameWithColor("rose #F5A9B8") + `). Remove bg with bg-off. There's also a few secret colors :)`
 }
 
 type Style struct {
@@ -375,5 +381,5 @@ func getStyle(name string) (*Style, error) {
 	if customColor != nil {
 		return customColor, nil
 	}
-	return nil, errors.New(ColorHelpMsg)
+	return nil, errors.New(`Which color? Choose from ` + colorNameWithColor("random") + `, ` + colorNameWithColor("bg-random") + `, ` + ColorHelpMsg)
 }

@@ -564,7 +564,7 @@ func kickCMD(line string, u *User) {
 
 func colorCMD(rest string, u *User) {
 	if rest == "which" {
-		u.room.broadcast(Devbot, "fg: "+u.Color+" & bg: "+u.ColorBG)
+		u.room.broadcast(Devbot, u.Color+" "+u.ColorBG)
 	} else if err := u.changeColor(rest); err != nil {
 		u.room.broadcast(Devbot, err.Error())
 	}
