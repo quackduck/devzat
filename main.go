@@ -421,7 +421,7 @@ func newUser(s ssh.Session) *User {
 		u.changeColor("bg-random") //nolint:errcheck // we know "bg-random" is a valid color
 	}
 
-	u.Prompt = u.Name + ":"
+	u.Prompt = "\\u:"
 	timeoutChan := make(chan bool)
 	timedOut := false
 	go func() { // timeout to minimize inactive connections
