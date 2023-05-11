@@ -267,10 +267,6 @@ func (u *User) changeColor(colorName string) error {
 	return nil
 }
 
-func (u *User) resetPrompt() {
-	u.term.SetPrompt(u.Name + ": ")
-}
-
 func applyColorToData(data string, color string, colorBG string) (string, error) {
 	styleFG, err := getStyle(color)
 	if err != nil {
