@@ -758,6 +758,8 @@ func (u *User) showPrompt() {
 				} else {
 					formatedPrompt += Blue.Paint(u.room.name)
 				}
+			case 't', 'T':
+				formatedPrompt += fmtTime(u, time.Now())
 			case 'h', 'H':
 				coloredDevzat, err := applyColorToData("devzat", u.Color, u.ColorBG)
 				if err == nil {

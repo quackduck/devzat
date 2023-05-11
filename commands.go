@@ -42,7 +42,7 @@ var (
 		{"cd", cdCMD, "#room|user", "Join #room, DM user or run cd to see a list"}, // won't actually run, here just to show in docs
 		{"tz", tzCMD, "<zone> [24h]", "Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h"},
 		{"nick", nickCMD, "<name>", "Change your username"},
-		{"prompt", promptCMD, "<prompt>", "Change your promt. You can use \\w, \\W, \\h, and \\u PS1 tags"},
+		{"prompt", promptCMD, "<prompt>", "Change your promt. You can use \\w, \\W, \\t, \\h, and \\u PS1 tags"},
 		{"pronouns", pronounsCMD, "@user|pronouns", "Set your pronouns or get another user's"},
 		{"theme", themeCMD, "<theme>|list", "Change the syntax highlighting theme"},
 		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
@@ -402,6 +402,7 @@ func cdCMD(rest string, u *User) {
 }
 
 func tzCMD(tzArg string, u *User) {
+	defer u.showPrompt()
 	if tzArg == "" {
 		u.Timezone.Location = nil
 		u.room.broadcast(Devbot, "Enabled relative times!")
