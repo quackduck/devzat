@@ -750,8 +750,14 @@ func (u *User) showPrompt() {
 			switch c {
 			case 'u':
 				formatedPrompt += u.Name
-			case 'w', 'W':
+			case 'w':
 				formatedPrompt += Blue.Paint(u.room.name)
+			case 'W':
+				if u.room.name == "#main" {
+					formatedPrompt += Blue.Paint("~")
+				} else {
+					formatedPrompt += Blue.Paint(u.room.name)
+				}
 			case 'h', 'H':
 				coloredDevzat, err := applyColorToData("devzat", u.Color, u.ColorBG)
 				if err == nil {
