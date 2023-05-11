@@ -654,7 +654,7 @@ func (u *User) pickUsernameQuietly(possibleName string) error {
 	possibleName = rmBadWords(possibleName)
 
 	u.Name, _ = applyColorToData(possibleName, u.Color, u.ColorBG) //nolint:errcheck // we haven't changed the color so we know it's valid
-	u.term.SetPrompt(u.Prompt + " ")
+	u.showPrompt()
 	return nil
 }
 
@@ -739,6 +739,34 @@ func (u *User) changeRoom(r *Room) {
 	u.room.broadcast("", Green.Paint(" --> ")+u.Name+" has joined "+Blue.Paint(u.room.name))
 }
 
+func (u *User) showPrompt() {
+	formatedPrompt := ""
+	last_escaped := false
+	for _, c := range u.Prompt {
+		if c == '\\' {
+			last_escaped = true
+		} else if last_escaped {
+			last_escaped = false
+			switch c {
+			case 'u':
+				formatedPrompt += u.Name
+			case 'w', 'W':
+				formatedPrompt += Blue.Paint(u.room.name)
+			case 'h', 'H':
+				coloredDevzat, err := applyColorToData("devzat", u.Color, u.ColorBG)
+				if err == nil {
+					formatedPrompt += coloredDevzat
+				}
+			default:
+				formatedPrompt += string(c)
+			}
+		} else {
+			formatedPrompt += string(c)
+		}
+	}
+	u.term.SetPrompt(formatedPrompt + " ")
+}
+
 func (u *User) repl() {
 	for {
 		u.lastInteract = time.Now()
@@ -775,7 +803,7 @@ func (u *User) repl() {
 		}
 		line = strings.TrimSpace(line)
 
-		u.term.SetPrompt(u.Prompt + " ")
+		u.showPrompt()
 
 		if hasNewlines {
 			calculateLinesTaken(u, u.Name+": "+line, u.winWidth)

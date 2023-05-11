@@ -230,7 +230,7 @@ func devmonkCMD(_ string, u *User) {
 	text := sentences[rand.Intn(len(sentences))]
 	u.writeln(Devbot, "Okay type this text: \n\n> "+text)
 	u.term.SetPrompt("> ")
-	defer u.resetPrompt()
+	defer u.showPrompt()
 	start := time.Now()
 	line, err := u.term.ReadLine()
 	if err == term.ErrPasteIndicator { // TODO: doesn't work for some reason?
@@ -432,7 +432,7 @@ func bioCMD(line string, u *User) {
 	if line == "" {
 		u.writeln(Devbot, "Your current bio is:  \n> "+u.Bio)
 		u.term.SetPrompt("> ")
-		defer u.resetPrompt()
+		defer u.showPrompt()
 		for {
 			input, err := u.term.ReadLine()
 			if err != nil {
@@ -473,7 +473,7 @@ func nickCMD(line string, u *User) {
 
 func promptCMD(line string, u *User) {
 	u.Prompt = line
-	u.term.SetPrompt(u.Prompt + " ")
+	u.showPrompt()
 }
 
 func listBansCMD(_ string, u *User) {
