@@ -652,7 +652,7 @@ func (u *User) pickUsernameQuietly(possibleName string) error {
 	possibleName = rmBadWords(possibleName)
 
 	u.Name, _ = applyColorToData(possibleName, u.Color, u.ColorBG) //nolint:errcheck // we haven't changed the color so we know it's valid
-	u.term.SetPrompt(u.Name + ": ")
+	u.resetPrompt()
 	return nil
 }
 
@@ -773,7 +773,7 @@ func (u *User) repl() {
 		}
 		line = strings.TrimSpace(line)
 
-		u.term.SetPrompt(u.Name + ": ")
+		u.resetPrompt()
 
 		if hasNewlines {
 			calculateLinesTaken(u, u.Name+": "+line, u.winWidth)

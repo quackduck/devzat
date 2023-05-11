@@ -263,8 +263,12 @@ func (u *User) changeColor(colorName string) error {
 	//	styleFG = style
 	//}
 	//u.Name = styleBG.apply(styleFG.apply(u.Name))
-	u.term.SetPrompt(u.Name + ": ")
+	u.resetPrompt()
 	return nil
+}
+
+func (u *User) resetPrompt() {
+	u.term.SetPrompt(u.Name + ": ")
 }
 
 func applyColorToData(data string, color string, colorBG string) (string, error) {
