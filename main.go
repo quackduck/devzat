@@ -54,6 +54,7 @@ type Room struct {
 // Exported fields represent ones saved to disk. (see also: User.savePrefs())
 type User struct {
 	Name     string
+	Prompt   string
 	Pronouns []string
 	Bio      string
 	session  ssh.Session
@@ -420,6 +421,7 @@ func newUser(s ssh.Session) *User {
 		u.changeColor("bg-random") //nolint:errcheck // we know "bg-random" is a valid color
 	}
 
+	u.Prompt = u.Name + ":"
 	timeoutChan := make(chan bool)
 	timedOut := false
 	go func() { // timeout to minimize inactive connections
@@ -652,7 +654,7 @@ func (u *User) pickUsernameQuietly(possibleName string) error {
 	possibleName = rmBadWords(possibleName)
 
 	u.Name, _ = applyColorToData(possibleName, u.Color, u.ColorBG) //nolint:errcheck // we haven't changed the color so we know it's valid
-	u.resetPrompt()
+	u.term.SetPrompt(u.Prompt + " ")
 	return nil
 }
 
@@ -773,7 +775,7 @@ func (u *User) repl() {
 		}
 		line = strings.TrimSpace(line)
 
-		u.resetPrompt()
+		u.term.SetPrompt(u.Prompt + " ")
 
 		if hasNewlines {
 			calculateLinesTaken(u, u.Name+": "+line, u.winWidth)

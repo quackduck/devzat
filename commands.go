@@ -42,6 +42,7 @@ var (
 		{"cd", cdCMD, "#room|user", "Join #room, DM user or run cd to see a list"}, // won't actually run, here just to show in docs
 		{"tz", tzCMD, "<zone> [24h]", "Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h"},
 		{"nick", nickCMD, "<name>", "Change your username"},
+		{"prompt", promptCMD, "<prompt>", "Change your promt"},
 		{"pronouns", pronounsCMD, "@user|pronouns", "Set your pronouns or get another user's"},
 		{"theme", themeCMD, "<theme>|list", "Change the syntax highlighting theme"},
 		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
@@ -468,6 +469,11 @@ func idCMD(line string, u *User) {
 
 func nickCMD(line string, u *User) {
 	u.pickUsername(line) //nolint:errcheck // if reading input fails, the next repl will err out
+}
+
+func promptCMD(line string, u *User) {
+	u.Prompt = line
+	u.term.SetPrompt(u.Prompt + " ")
 }
 
 func listBansCMD(_ string, u *User) {
