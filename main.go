@@ -761,7 +761,6 @@ func (u *User) showPrompt() {
 			case 't', 'T':
 				formatedPrompt += fmtTime(u, time.Now())
 			case 'h', 'H':
-				//coloredDevzat, err := applyColorToData("devzat", u.Color, u.ColorBG)
 				colorTokens := tokenizeAnsi(u.Name)
 				coloredDevzat := ""
 				for i, c := range "devzat" {
