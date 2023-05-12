@@ -761,10 +761,18 @@ func (u *User) showPrompt() {
 			case 't', 'T':
 				formatedPrompt += fmtTime(u, time.Now())
 			case 'h', 'H':
-				coloredDevzat, err := applyColorToData("devzat", u.Color, u.ColorBG)
-				if err == nil {
-					formatedPrompt += coloredDevzat
+				//coloredDevzat, err := applyColorToData("devzat", u.Color, u.ColorBG)
+				colorTokens := tokenizeAnsi(u.Name)
+				coloredDevzat := ""
+				for i, c := range "devzat" {
+					token := colorTokens[i%len(colorTokens)]
+					token = strings.ReplaceAll(token, "\033[39m", "") // Remove reset to default foreground and background
+					tokenByte := []byte(strings.ReplaceAll(token, "\033[49m", ""))
+					tokenByte[len(tokenByte)-1] = byte(c)
+					coloredDevzat += string(tokenByte)
 				}
+				coloredDevzat += "\033[39m\033[49m"
+				formatedPrompt += coloredDevzat
 			case 'S':
 				formatedPrompt += " "
 			default:
