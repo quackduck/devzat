@@ -724,7 +724,7 @@ func manCMD(rest string, u *User) {
 	}
 
 	if rest == "prompt" {
-		u.room.broadcast(Devbot, "`prompt <prompt>` sets your prompt\\n\\nYou can use some bash PS1 tags in it.  \\nThe supported tags are:  \\n* \\u: your user name\\n* \\h, \\H: devzat colored like your username\\n* \\t, \\T: the time in your preferred formatting\\n* \\w: the current room\\n* \\W: the current room with #main aliased to ~")
+		u.room.broadcast(Devbot, "`prompt <prompt>` sets your prompt\\n\\nYou can use some bash PS1 tags in it.  \\nThe supported tags are:  \\n* \\u: your user name\\n* \\h, \\H: devzat colored like your username\\n* \\t, \\T: the time in your preferred formatting\\n* \\w: the current room\\n* \\W: the current room with #main aliased to ~\\n* \\S: a space character\\n\\nThe default prompt is `\\u:\\S`.")
 		return
 	}
 

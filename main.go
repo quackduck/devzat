@@ -421,7 +421,7 @@ func newUser(s ssh.Session) *User {
 		u.changeColor("bg-random") //nolint:errcheck // we know "bg-random" is a valid color
 	}
 
-	u.Prompt = "\\u:"
+	u.Prompt = "\\u:\\s"
 	timeoutChan := make(chan bool)
 	timedOut := false
 	go func() { // timeout to minimize inactive connections
@@ -765,6 +765,8 @@ func (u *User) showPrompt() {
 				if err == nil {
 					formatedPrompt += coloredDevzat
 				}
+			case 'S':
+				formatedPrompt += " "
 			default:
 				formatedPrompt += string(c)
 			}
@@ -772,7 +774,7 @@ func (u *User) showPrompt() {
 			formatedPrompt += string(c)
 		}
 	}
-	u.term.SetPrompt(formatedPrompt + " ")
+	u.term.SetPrompt(formatedPrompt)
 }
 
 func (u *User) repl() {
