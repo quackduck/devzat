@@ -383,3 +383,19 @@ func getStyle(name string) (*Style, error) {
 	}
 	return nil, errors.New(`Which color? Choose from ` + colorNameWithColor("random") + `, ` + colorNameWithColor("bg-random") + `, ` + ColorHelpMsg)
 }
+
+// Return the msg string with the same colors as the reference string
+func copyColor(msg string, ref string) string {
+	stripedMsg := stripansi.Strip(msg)
+	colorTokens := tokenizeAnsi(ref)
+	ret := ""
+	for i, c := range stripedMsg {
+		token := colorTokens[i%len(colorTokens)]
+		token = strings.ReplaceAll(token, "\033[39m", "") // Remove reset to default foreground and background
+		tokenByte := []byte(strings.ReplaceAll(token, "\033[49m", ""))
+		tokenByte[len(tokenByte)-1] = byte(c)
+		ret += string(tokenByte)
+	}
+	ret += "\033[39m\033[49m"
+	return ret
+}

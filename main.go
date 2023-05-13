@@ -751,27 +751,17 @@ func (u *User) showPrompt() {
 			case 'u':
 				formatedPrompt += u.Name
 			case 'w':
-				formatedPrompt += Blue.Paint(u.room.name)
+				formatedPrompt += copyColor(u.room.name, u.Name)
 			case 'W':
 				if u.room.name == "#main" {
-					formatedPrompt += Blue.Paint("~")
+					formatedPrompt += copyColor("~", u.Name)
 				} else {
-					formatedPrompt += Blue.Paint(u.room.name)
+					formatedPrompt += copyColor("~/"+u.room.name[1:], u.Name)
 				}
 			case 't', 'T':
 				formatedPrompt += fmtTime(u, time.Now())
 			case 'h', 'H':
-				colorTokens := tokenizeAnsi(u.Name)
-				coloredDevzat := ""
-				for i, c := range "devzat" {
-					token := colorTokens[i%len(colorTokens)]
-					token = strings.ReplaceAll(token, "\033[39m", "") // Remove reset to default foreground and background
-					tokenByte := []byte(strings.ReplaceAll(token, "\033[49m", ""))
-					tokenByte[len(tokenByte)-1] = byte(c)
-					coloredDevzat += string(tokenByte)
-				}
-				coloredDevzat += "\033[39m\033[49m"
-				formatedPrompt += coloredDevzat
+				formatedPrompt += copyColor("devzat", u.Name)
 			case 'S':
 				formatedPrompt += " "
 			default:
