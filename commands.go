@@ -230,7 +230,7 @@ func devmonkCMD(_ string, u *User) {
 	text := sentences[rand.Intn(len(sentences))]
 	u.writeln(Devbot, "Okay type this text: \n\n> "+text)
 	u.term.SetPrompt("> ")
-	defer u.showPrompt()
+	defer u.formatPrompt()
 	start := time.Now()
 	line, err := u.term.ReadLine()
 	if err == term.ErrPasteIndicator { // TODO: doesn't work for some reason?
@@ -338,7 +338,7 @@ func bellCMD(rest string, u *User) {
 }
 
 func cdCMD(rest string, u *User) {
-	defer u.showPrompt()
+	defer u.formatPrompt()
 	if u.messaging != nil {
 		u.messaging = nil
 		u.writeln(Devbot, "Left private chat")
@@ -402,7 +402,7 @@ func cdCMD(rest string, u *User) {
 }
 
 func tzCMD(tzArg string, u *User) {
-	defer u.showPrompt()
+	defer u.formatPrompt()
 	if tzArg == "" {
 		u.Timezone.Location = nil
 		u.room.broadcast(Devbot, "Enabled relative times!")
@@ -434,7 +434,7 @@ func bioCMD(line string, u *User) {
 	if line == "" {
 		u.writeln(Devbot, "Your current bio is:  \n> "+u.Bio)
 		u.term.SetPrompt("> ")
-		defer u.showPrompt()
+		defer u.formatPrompt()
 		for {
 			input, err := u.term.ReadLine()
 			if err != nil {
@@ -475,7 +475,7 @@ func nickCMD(line string, u *User) {
 
 func promptCMD(line string, u *User) {
 	u.Prompt = line
-	u.showPrompt()
+	u.formatPrompt()
 }
 
 func listBansCMD(_ string, u *User) {

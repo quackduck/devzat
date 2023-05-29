@@ -263,7 +263,7 @@ func (u *User) changeColor(colorName string) error {
 	//	styleFG = style
 	//}
 	//u.Name = styleBG.apply(styleFG.apply(u.Name))
-	u.showPrompt()
+	u.formatPrompt()
 	return nil
 }
 

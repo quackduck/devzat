@@ -53,12 +53,13 @@ type Room struct {
 // User represents a user connected to the SSH server.
 // Exported fields represent ones saved to disk. (see also: User.savePrefs())
 type User struct {
-	Name     string
-	Prompt   string
-	Pronouns []string
-	Bio      string
-	session  ssh.Session
-	term     *terminal.Terminal
+	Name           string
+	Prompt         string
+	FormattedPrompt string
+	Pronouns       []string
+	Bio            string
+	session        ssh.Session
+	term           *terminal.Terminal
 
 	room      *Room
 	messaging *User // currently messaging this User in a DM
@@ -654,7 +655,7 @@ func (u *User) pickUsernameQuietly(possibleName string) error {
 	possibleName = rmBadWords(possibleName)
 
 	u.Name, _ = applyColorToData(possibleName, u.Color, u.ColorBG) //nolint:errcheck // we haven't changed the color so we know it's valid
-	u.showPrompt()
+	u.formatPrompt()
 	return nil
 }
 
@@ -739,8 +740,8 @@ func (u *User) changeRoom(r *Room) {
 	u.room.broadcast("", Green.Paint(" --> ")+u.Name+" has joined "+Blue.Paint(u.room.name))
 }
 
-func (u *User) showPrompt() {
-	formatedPrompt := ""
+func (u *User) formatPrompt() {
+	u.FormattedPrompt = ""
 	last_escaped := false
 	for _, c := range u.Prompt {
 		if c == '\\' {
@@ -749,29 +750,33 @@ func (u *User) showPrompt() {
 			last_escaped = false
 			switch c {
 			case 'u':
-				formatedPrompt += u.Name
+				u.FormattedPrompt += u.Name
 			case 'w':
-				formatedPrompt += copyColor(u.room.name, u.Name)
+				u.FormattedPrompt += copyColor(u.room.name, u.Name)
 			case 'W':
 				if u.room.name == "#main" {
-					formatedPrompt += copyColor("~", u.Name)
+					u.FormattedPrompt += copyColor("~", u.Name)
 				} else {
-					formatedPrompt += copyColor("~/"+u.room.name[1:], u.Name)
+					u.FormattedPrompt += copyColor("~/"+u.room.name[1:], u.Name)
 				}
 			case 't', 'T':
-				formatedPrompt += fmtTime(u, time.Now())
+				u.FormattedPrompt += fmtTime(u, time.Now())
 			case 'h', 'H':
-				formatedPrompt += copyColor("devzat", u.Name)
+				u.FormattedPrompt += copyColor("devzat", u.Name)
 			case 'S':
-				formatedPrompt += " "
+				u.FormattedPrompt += " "
 			default:
-				formatedPrompt += string(c)
+				u.FormattedPrompt += string(c)
 			}
 		} else {
-			formatedPrompt += string(c)
+			u.FormattedPrompt += string(c)
 		}
 	}
-	u.term.SetPrompt(formatedPrompt)
+	u.showPrompt()
+}
+
+func (u *User) showPrompt() {
+	u.term.SetPrompt(u.FormattedPrompt)
 }
 
 func (u *User) repl() {
