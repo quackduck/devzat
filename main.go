@@ -674,6 +674,7 @@ func (u *User) displayPronouns() string {
 func (u *User) savePrefs() error {
 	oldname := u.Name
 	u.Name = stripansi.Strip(u.Name)
+	u.FormattedPrompt = ""
 	data, err := json.Marshal(u)
 	u.Name = oldname
 	if err != nil {
