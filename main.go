@@ -53,13 +53,13 @@ type Room struct {
 // User represents a user connected to the SSH server.
 // Exported fields represent ones saved to disk. (see also: User.savePrefs())
 type User struct {
-	Name           string
-	Prompt         string
-	FormattedPrompt string
-	Pronouns       []string
-	Bio            string
-	session        ssh.Session
-	term           *terminal.Terminal
+	Name            string
+	Prompt          string
+	formattedPrompt string
+	Pronouns        []string
+	Bio             string
+	session         ssh.Session
+	term            *terminal.Terminal
 
 	room      *Room
 	messaging *User // currently messaging this User in a DM
@@ -674,7 +674,6 @@ func (u *User) displayPronouns() string {
 func (u *User) savePrefs() error {
 	oldname := u.Name
 	u.Name = stripansi.Strip(u.Name)
-	u.FormattedPrompt = ""
 	data, err := json.Marshal(u)
 	u.Name = oldname
 	if err != nil {
@@ -742,7 +741,7 @@ func (u *User) changeRoom(r *Room) {
 }
 
 func (u *User) formatPrompt() {
-	u.FormattedPrompt = ""
+	u.formattedPrompt = ""
 	last_escaped := false
 	for _, c := range u.Prompt {
 		if c == '\\' {
@@ -751,33 +750,33 @@ func (u *User) formatPrompt() {
 			last_escaped = false
 			switch c {
 			case 'u':
-				u.FormattedPrompt += u.Name
+				u.formattedPrompt += u.Name
 			case 'w':
-				u.FormattedPrompt += copyColor(u.room.name, u.Name)
+				u.formattedPrompt += copyColor(u.room.name, u.Name)
 			case 'W':
 				if u.room.name == "#main" {
-					u.FormattedPrompt += copyColor("~", u.Name)
+					u.formattedPrompt += copyColor("~", u.Name)
 				} else {
-					u.FormattedPrompt += copyColor("~/"+u.room.name[1:], u.Name)
+					u.formattedPrompt += copyColor("~/"+u.room.name[1:], u.Name)
 				}
 			case 't', 'T':
-				u.FormattedPrompt += fmtTime(u, time.Now())
+				u.formattedPrompt += fmtTime(u, time.Now())
 			case 'h', 'H':
-				u.FormattedPrompt += copyColor("devzat", u.Name)
+				u.formattedPrompt += copyColor("devzat", u.Name)
 			case 'S':
-				u.FormattedPrompt += " "
+				u.formattedPrompt += " "
 			default:
-				u.FormattedPrompt += string(c)
+				u.formattedPrompt += string(c)
 			}
 		} else {
-			u.FormattedPrompt += string(c)
+			u.formattedPrompt += string(c)
 		}
 	}
 	u.showPrompt()
 }
 
 func (u *User) showPrompt() {
-	u.term.SetPrompt(u.FormattedPrompt)
+	u.term.SetPrompt(u.formattedPrompt)
 }
 
 func (u *User) repl() {
