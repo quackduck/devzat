@@ -734,6 +734,7 @@ The supported tags are:
 * \\w: the current room
 * \\W: the current room with #main aliased to ~
 * \\S: a space character
+* \\$: $ for normal users, # for admins
 
 The default prompt is "\\u:\\S".`)
 		return

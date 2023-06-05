@@ -765,6 +765,12 @@ func (u *User) formatPrompt() {
 				u.formattedPrompt += copyColor("devzat", u.Name)
 			case 'S':
 				u.formattedPrompt += " "
+			case '$':
+				if auth(u) {
+					u.formattedPrompt += "#"
+				} else {
+					u.formattedPrompt += "$"
+				}
 			default:
 				u.formattedPrompt += string(c)
 			}
