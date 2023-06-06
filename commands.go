@@ -42,6 +42,7 @@ var (
 		{"cd", cdCMD, "#room|user", "Join #room, DM user or run cd to see a list"}, // won't actually run, here just to show in docs
 		{"tz", tzCMD, "<zone> [24h]", "Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h"},
 		{"nick", nickCMD, "<name>", "Change your username"},
+		{"prompt", promptCMD, "<prompt>", "Change your promt. Run `man prompt` for more info"},
 		{"pronouns", pronounsCMD, "@user|pronouns", "Set your pronouns or get another user's"},
 		{"theme", themeCMD, "<theme>|list", "Change the syntax highlighting theme"},
 		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
@@ -229,7 +230,7 @@ func devmonkCMD(_ string, u *User) {
 	text := sentences[rand.Intn(len(sentences))]
 	u.writeln(Devbot, "Okay type this text: \n\n> "+text)
 	u.term.SetPrompt("> ")
-	defer u.resetPrompt()
+	defer u.formatPrompt()
 	start := time.Now()
 	line, err := u.term.ReadLine()
 	if err == term.ErrPasteIndicator { // TODO: doesn't work for some reason?
@@ -337,6 +338,7 @@ func bellCMD(rest string, u *User) {
 }
 
 func cdCMD(rest string, u *User) {
+	defer u.formatPrompt()
 	if u.messaging != nil {
 		u.messaging = nil
 		u.writeln(Devbot, "Left private chat")
@@ -400,6 +402,7 @@ func cdCMD(rest string, u *User) {
 }
 
 func tzCMD(tzArg string, u *User) {
+	defer u.formatPrompt()
 	if tzArg == "" {
 		u.Timezone.Location = nil
 		u.room.broadcast(Devbot, "Enabled relative times!")
@@ -431,7 +434,7 @@ func bioCMD(line string, u *User) {
 	if line == "" {
 		u.writeln(Devbot, "Your current bio is:  \n> "+u.Bio)
 		u.term.SetPrompt("> ")
-		defer u.resetPrompt()
+		defer u.formatPrompt()
 		for {
 			input, err := u.term.ReadLine()
 			if err != nil {
@@ -468,6 +471,11 @@ func idCMD(line string, u *User) {
 
 func nickCMD(line string, u *User) {
 	u.pickUsername(line) //nolint:errcheck // if reading input fails, the next repl will err out
+}
+
+func promptCMD(line string, u *User) {
+	u.Prompt = line
+	u.formatPrompt()
 }
 
 func listBansCMD(_ string, u *User) {
@@ -712,6 +720,23 @@ func commandsRestCMD(_ string, u *User) {
 func manCMD(rest string, u *User) {
 	if rest == "" {
 		u.room.broadcast(Devbot, "What command do you want help with?")
+		return
+	}
+
+	if rest == "prompt" {
+		u.room.broadcast(Devbot, `prompt <prompt> sets your prompt
+
+You can use some bash PS1 tags in it.  
+The supported tags are:  
+* \\u: your user name
+* \\h, \\H: devzat colored like your username
+* \\t, \\T: the time in your preferred formatting
+* \\w: the current room
+* \\W: the current room with #main aliased to ~
+* \\S: a space character
+* \\$: $ for normal users, # for admins
+
+The default prompt is "\\u:\\S".`)
 		return
 	}
 

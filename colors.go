@@ -263,12 +263,8 @@ func (u *User) changeColor(colorName string) error {
 	//	styleFG = style
 	//}
 	//u.Name = styleBG.apply(styleFG.apply(u.Name))
-	u.resetPrompt()
+	u.formatPrompt()
 	return nil
-}
-
-func (u *User) resetPrompt() {
-	u.term.SetPrompt(u.Name + ": ")
 }
 
 func applyColorToData(data string, color string, colorBG string) (string, error) {
@@ -386,4 +382,20 @@ func getStyle(name string) (*Style, error) {
 		return customColor, nil
 	}
 	return nil, errors.New(`Which color? Choose from ` + colorNameWithColor("random") + `, ` + colorNameWithColor("bg-random") + `, ` + ColorHelpMsg)
+}
+
+// Return the msg string with the same colors as the reference string
+func copyColor(msg string, ref string) string {
+	stripedMsg := stripansi.Strip(msg)
+	colorTokens := tokenizeAnsi(ref)
+	ret := ""
+	for i, c := range stripedMsg {
+		token := colorTokens[i%len(colorTokens)]
+		token = strings.ReplaceAll(token, "\033[39m", "") // Remove reset to default foreground and background
+		tokenByte := []byte(strings.ReplaceAll(token, "\033[49m", ""))
+		tokenByte[len(tokenByte)-1] = byte(c)
+		ret += string(tokenByte)
+	}
+	ret += "\033[39m\033[49m"
+	return ret
 }

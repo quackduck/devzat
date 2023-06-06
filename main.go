@@ -53,11 +53,13 @@ type Room struct {
 // User represents a user connected to the SSH server.
 // Exported fields represent ones saved to disk. (see also: User.savePrefs())
 type User struct {
-	Name     string
-	Pronouns []string
-	Bio      string
-	session  ssh.Session
-	term     *terminal.Terminal
+	Name            string
+	Prompt          string
+	formattedPrompt string
+	Pronouns        []string
+	Bio             string
+	session         ssh.Session
+	term            *terminal.Terminal
 
 	room      *Room
 	messaging *User // currently messaging this User in a DM
@@ -420,6 +422,7 @@ func newUser(s ssh.Session) *User {
 		u.changeColor("bg-random") //nolint:errcheck // we know "bg-random" is a valid color
 	}
 
+	u.Prompt = "\\u:\\S"
 	timeoutChan := make(chan bool)
 	timedOut := false
 	go func() { // timeout to minimize inactive connections
@@ -652,7 +655,7 @@ func (u *User) pickUsernameQuietly(possibleName string) error {
 	possibleName = rmBadWords(possibleName)
 
 	u.Name, _ = applyColorToData(possibleName, u.Color, u.ColorBG) //nolint:errcheck // we haven't changed the color so we know it's valid
-	u.resetPrompt()
+	u.formatPrompt()
 	return nil
 }
 
@@ -737,6 +740,51 @@ func (u *User) changeRoom(r *Room) {
 	u.room.broadcast("", Green.Paint(" --> ")+u.Name+" has joined "+Blue.Paint(u.room.name))
 }
 
+func (u *User) formatPrompt() {
+	u.formattedPrompt = ""
+	last_escaped := false
+	for _, c := range u.Prompt {
+		if c == '\\' {
+			last_escaped = true
+		} else if last_escaped {
+			last_escaped = false
+			switch c {
+			case 'u':
+				u.formattedPrompt += u.Name
+			case 'w':
+				u.formattedPrompt += copyColor(u.room.name, u.Name)
+			case 'W':
+				if u.room.name == "#main" {
+					u.formattedPrompt += copyColor("~", u.Name)
+				} else {
+					u.formattedPrompt += copyColor("~/"+u.room.name[1:], u.Name)
+				}
+			case 't', 'T':
+				u.formattedPrompt += fmtTime(u, time.Now())
+			case 'h', 'H':
+				u.formattedPrompt += copyColor("devzat", u.Name)
+			case 'S':
+				u.formattedPrompt += " "
+			case '$':
+				if auth(u) {
+					u.formattedPrompt += "#"
+				} else {
+					u.formattedPrompt += "$"
+				}
+			default:
+				u.formattedPrompt += string(c)
+			}
+		} else {
+			u.formattedPrompt += string(c)
+		}
+	}
+	u.showPrompt()
+}
+
+func (u *User) showPrompt() {
+	u.term.SetPrompt(u.formattedPrompt)
+}
+
 func (u *User) repl() {
 	for {
 		u.lastInteract = time.Now()
@@ -773,7 +821,7 @@ func (u *User) repl() {
 		}
 		line = strings.TrimSpace(line)
 
-		u.resetPrompt()
+		u.showPrompt()
 
 		if hasNewlines {
 			calculateLinesTaken(u, u.Name+": "+line, u.winWidth)
