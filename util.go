@@ -2,10 +2,14 @@ package main
 
 import (
 	"bytes"
+	trueRand "crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/x509"
 	_ "embed"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"math"
 	"math/rand"
@@ -174,7 +178,7 @@ func readBans() {
 		Log.Println(err)
 		return
 	} else if err != nil {
-		err = os.WriteFile(Config.DataDir + string(os.PathSeparator) + "bans.json", []byte("[]"), 0644)
+		err = os.WriteFile(Config.DataDir+string(os.PathSeparator)+"bans.json", []byte("[]"), 0644)
 		if err != nil {
 			Log.Println(err)
 			return
@@ -364,4 +368,23 @@ func fmtTime(u *User, lastStamp time.Time) string {
 		return lastStamp.In(u.Timezone.Location).Format("15:04")
 	}
 	return lastStamp.In(u.Timezone.Location).Format("3:04")
+}
+
+// See if the public key is there and if it is not, try to create.
+func checkKey(keyPath string) {
+	privateKey, err := rsa.GenerateKey(trueRand.Reader, 4096)
+	if err != nil {
+		return
+	}
+
+	// generate and write private key as PEM
+	privateKeyFile, err := os.Create(keyPath)
+	defer privateKeyFile.Close()
+	if err != nil {
+		return
+	}
+	privateKeyPEM := &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)}
+	if err := pem.Encode(privateKeyFile, privateKeyPEM); err != nil {
+		return
+	}
 }
