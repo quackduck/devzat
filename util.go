@@ -379,10 +379,10 @@ func checkKey(keyPath string) {
 
 	// generate and write private key as PEM
 	privateKeyFile, err := os.Create(keyPath)
-	defer privateKeyFile.Close()
 	if err != nil {
 		return
 	}
+	defer privateKeyFile.Close()
 	privateKeyPEM := &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)}
 	if err := pem.Encode(privateKeyFile, privateKeyPEM); err != nil {
 		return
