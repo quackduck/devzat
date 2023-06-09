@@ -173,6 +173,17 @@ func readBans() {
 	if err != nil && !os.IsNotExist(err) { // if there is an error and it is not a "file does not exist" error
 		Log.Println(err)
 		return
+	} else if err != nil {
+		err = os.WriteFile(Config.DataDir + string(os.PathSeparator) + "bans.json", []byte("[]"), 0644)
+		if err != nil {
+			Log.Println(err)
+			return
+		}
+		f, err = os.Open(Config.DataDir + string(os.PathSeparator) + "bans.json")
+		if err != nil {
+			Log.Println(err)
+			return
+		}
 	}
 	defer f.Close()
 	err = json.NewDecoder(f).Decode(&Bans)
