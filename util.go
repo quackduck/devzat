@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"math"
 	"math/rand"
@@ -366,19 +367,30 @@ func fmtTime(u *User, lastStamp time.Time) string {
 
 // See if the public key is there and if it is not, try to create.
 func checkKey(keyPath string) {
-	privateKey, err := rsa.GenerateKey(trueRand.Reader, 4096)
-	if err != nil {
-		return
-	}
+	if _, err := os.Stat(keyPath); err == nil {
+		// Key exists, everything is fine and dandy.
+	} else if errors.Is(err, os.ErrNotExist) {
+		Log.Printf("No private key found in path `%v`, generating a new one.\n")
 
-	// generate and write private key as PEM
-	privateKeyFile, err := os.Create(keyPath)
-	if err != nil {
-		return
-	}
-	defer privateKeyFile.Close()
-	privateKeyPEM := &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)}
-	if err := pem.Encode(privateKeyFile, privateKeyPEM); err != nil {
-		return
+		privateKey, err := rsa.GenerateKey(trueRand.Reader, 4096)
+		if err != nil {
+			Log.Printf("Error, unable to generate private key %v\n", err)
+			return
+		}
+
+		// generate and write private key as PEM
+		privateKeyFile, err := os.Create(keyPath)
+		if err != nil {
+			Log.Printf("Error, unable to create file for the private key: %v\n", err)
+			return
+		}
+		defer privateKeyFile.Close()
+		privateKeyPEM := &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)}
+		if err := pem.Encode(privateKeyFile, privateKeyPEM); err != nil {
+			Log.Printf("Error, unable to encode private key: %v\n", err)
+			return
+		}
+	} else {
+		Log.Printf("Error, unexpected error value is checkKey: %v\n", err)
 	}
 }
