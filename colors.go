@@ -58,21 +58,7 @@ var (
 		{"sunset", func(a string) string { return applyHueRange(335, 480, a, false) }},
 		{"bg-sunset", func(a string) string { return applyHueRange(335, 480, a, true) }},
 		{"rainbow", func(a string) string { return rainbow(a, false) }},
-		{"bg-rainbow", func(a string) string { return rainbow(a, true) }}},
-		{"ocean", buildStyle(TrueColor.WithHex("#0077be").WithBgHex("#00a3cc"))},
-		{"coral", buildStyle(TrueColor.WithHex("#ff7f50").WithBgHex("#ff8c69"))},
-		{"emerald", buildStyle(TrueColor.WithHex("#50c878").WithBgHex("#00ff7f"))},
-		{"lavender", buildStyle(TrueColor.WithHex("#e6e6fa").WithBgHex("#d8bfd8"))},
-		{"midnight", buildStyle(TrueColor.WithHex("#191970").WithBgHex("#000080"))},
-		{"peach", buildStyle(TrueColor.WithHex("#ffe5b4").WithBgHex("#ffdab9"))},
-		{"ruby", buildStyle(TrueColor.WithHex("#e0115f").WithBgHex("#9b111e"))},
-		{"sapphire", buildStyle(TrueColor.WithHex("#0f52ba").WithBgHex("#082567"))},
-		{"teal", buildStyle(TrueColor.WithHex("#008080").WithBgHex("#2f4f4f"))},
-		{"violet", buildStyle(TrueColor.WithHex("#ee82ee").WithBgHex("#9400d3"))},
-		{"goldenrod", buildStyle(TrueColor.WithHex("#daa520").WithBgHex("#b8860b"))},
-		{"turquoise", buildStyle(TrueColor.WithHex("#40e0d0").WithBgHex("#00ced1"))},
-		{"magenta", buildStyle(TrueColor.WithHex("#ff00ff").WithBgHex("#8b008b"))},
-		{"lime", buildStyle(TrueColor.WithHex("#00ff00").WithBgHex("#32cd32"))}
+		{"bg-rainbow", func(a string) string { return rainbow(a, true) }}}
 	ColorHelpMsg = ""
 )
 
