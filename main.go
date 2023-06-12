@@ -264,8 +264,13 @@ func (r *Room) broadcastNoBridges(senderName, msg string) {
 	msg = r.findMention(strings.ReplaceAll(msg, "@everyone", Green.Paint("everyone\a")))
 	//go func() {
 	//r.usersMutex.RLock()
+	//timeAtStart := time.Now()
 	for i := 0; i < len(r.users); i++ { // updates when new users join or old users leave. it is okay to read concurrently.
+		//if time.Since(timeAtStart) > time.Second*3 {
+		//	go r.users[i].writeln(senderName, msg)
+		//} else {
 		r.users[i].writeln(senderName, msg)
+		//}
 	}
 	//r.usersMutex.RUnlock()
 	//}()
@@ -374,7 +379,9 @@ func newUser(s ssh.Session) *User {
 
 	go func() {
 		for win := range winChan {
-			u.winWidth = win.Width
+			if win.Width > 0 {
+				u.winWidth = win.Width
+			}
 		}
 	}()
 
@@ -834,7 +841,7 @@ func (u *User) repl() {
 		}
 
 		AntispamMessages[u.id]++
-		time.AfterFunc(5*time.Second, func() {
+		time.AfterFunc(15*time.Second, func() {
 			AntispamMessages[u.id]--
 		})
 		if AntispamMessages[u.id] >= 30 {
