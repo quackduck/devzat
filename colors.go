@@ -58,7 +58,7 @@ var (
 		{"sunset", func(a string) string { return applyHueRange(335, 480, a, false) }},
 		{"bg-sunset", func(a string) string { return applyHueRange(335, 480, a, true) }},
 		{"rainbow", func(a string) string { return rainbow(a, false) }},
-		{"bg-rainbow", func(a string) string { return rainbow(a, true) }}}
+		{"bg-rainbow", func(a string) string { return rainbow(a, true) }}},
 		{"ocean", buildStyle(TrueColor.WithHex("#0077be").WithBgHex("#00a3cc"))},
 		{"coral", buildStyle(TrueColor.WithHex("#ff7f50").WithBgHex("#ff8c69"))},
 		{"emerald", buildStyle(TrueColor.WithHex("#50c878").WithBgHex("#00ff7f"))},
@@ -72,7 +72,7 @@ var (
 		{"goldenrod", buildStyle(TrueColor.WithHex("#daa520").WithBgHex("#b8860b"))},
 		{"turquoise", buildStyle(TrueColor.WithHex("#40e0d0").WithBgHex("#00ced1"))},
 		{"magenta", buildStyle(TrueColor.WithHex("#ff00ff").WithBgHex("#8b008b"))},
-		{"lime", buildStyle(TrueColor.WithHex("#00ff00").WithBgHex("#32cd32"))},
+		{"lime", buildStyle(TrueColor.WithHex("#00ff00").WithBgHex("#32cd32"))}
 	ColorHelpMsg = ""
 )
 
