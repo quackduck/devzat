@@ -370,7 +370,7 @@ func checkKey(keyPath string) {
 	if _, err := os.Stat(keyPath); err == nil {
 		// Key exists, everything is fine and dandy.
 	} else if errors.Is(err, os.ErrNotExist) {
-		Log.Printf("No private key found in path `%v`, generating a new one.\n")
+		Log.Printf("No private key found in path `%v`, generating a new one.\n", keyPath)
 
 		privateKey, err := rsa.GenerateKey(trueRand.Reader, 4096)
 		if err != nil {
