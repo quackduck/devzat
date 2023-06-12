@@ -178,16 +178,10 @@ func readBans() {
 		Log.Println(err)
 		return
 	} else if err != nil {
-		err = os.WriteFile(Config.DataDir+string(os.PathSeparator)+"bans.json", []byte("[]"), 0644)
-		if err != nil {
-			Log.Println(err)
-			return
-		}
-		f, err = os.Open(Config.DataDir + string(os.PathSeparator) + "bans.json")
-		if err != nil {
-			Log.Println(err)
-			return
-		}
+		// When starting the server, the bans are already initialized as an
+		// empty map. Returning here keeps is that way which is what to do when
+		// no bans have been registered.
+		return
 	}
 	defer f.Close()
 	err = json.NewDecoder(f).Decode(&Bans)
