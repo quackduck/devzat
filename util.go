@@ -175,13 +175,10 @@ func saveBans() {
 
 func readBans() {
 	f, err := os.Open(Config.DataDir + string(os.PathSeparator) + "bans.json")
-	if err != nil && !os.IsNotExist(err) { // if there is an error and it is not a "file does not exist" error
-		Log.Println(err)
-		return
-	} else if err != nil {
-		// When starting the server, the bans are already initialized as an
-		// empty map. Returning here keeps is that way which is what to do when
-		// no bans have been registered.
+	if err != nil {
+		if !os.IsNotExist(err) {
+			Log.Println(err)
+		}
 		return
 	}
 	defer f.Close()
