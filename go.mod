@@ -26,6 +26,7 @@ require (
 require (
 	github.com/MichaelMure/go-term-text v0.3.1 // indirect
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
+	github.com/caarlos0/sshmarshal v0.1.0
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/dghubble/sling v1.4.1 // indirect
 	github.com/disintegration/imaging v1.6.2 // indirect

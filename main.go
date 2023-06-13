@@ -160,6 +160,7 @@ func main() {
 		Log.Printf("Starting a Devzat server on port %d and profiling on port %d\n", Config.Port, Config.ProfilePort)
 	}
 	go getMsgsFromSlack()
+	checkKey(Config.KeyFile)
 	if !Config.Private { // allow non-sshkey logins on a non-private server
 		go func() {
 			fmt.Println("Also serving on port", Config.AltPort)

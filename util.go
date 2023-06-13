@@ -2,10 +2,12 @@ package main
 
 import (
 	"bytes"
+	"crypto/ed25519"
 	"crypto/sha256"
 	_ "embed"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"math"
 	"math/rand"
@@ -16,8 +18,11 @@ import (
 	"time"
 
 	"github.com/acarl005/stripansi"
+	"github.com/caarlos0/sshmarshal"
+	"github.com/fatih/color"
 	"github.com/gliderlabs/ssh"
 	markdown "github.com/quackduck/go-term-markdown"
+	cryptoSSH "golang.org/x/crypto/ssh"
 )
 
 var (
@@ -170,8 +175,10 @@ func saveBans() {
 
 func readBans() {
 	f, err := os.Open(Config.DataDir + string(os.PathSeparator) + "bans.json")
-	if err != nil && !os.IsNotExist(err) { // if there is an error and it is not a "file does not exist" error
-		Log.Println(err)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			Log.Println(err)
+		}
 		return
 	}
 	defer f.Close()
@@ -353,4 +360,53 @@ func fmtTime(u *User, lastStamp time.Time) string {
 		return lastStamp.In(u.Timezone.Location).Format("15:04")
 	}
 	return lastStamp.In(u.Timezone.Location).Format("3:04")
+}
+
+// Check if the private key is there and if it is not, try to create it.
+func checkKey(keyPath string) {
+	_, err := os.Stat(keyPath)
+	if err == nil {
+		// Key exists, everything is fine and dandy.
+		return
+	}
+	if !os.IsNotExist(err) { // the error is not a not-exist error. i.e. the file exists but there's some other problem with it
+		Log.Printf("Error while checking for SSH keys in [%v]: %v\n", keyPath, err)
+		return
+	}
+
+	Log.Printf("Generating new SSH server private key at %v\n", keyPath)
+	privkey, pubkey, err := genKey()
+	if err != nil {
+		Log.Printf("Error while generating keypair: %v\n", err)
+		return
+	}
+	privkeyFile, err := os.Create(keyPath)
+	if err != nil {
+		Log.Printf("Error while creating a file for the private key: %v\n", err)
+		return
+	}
+	defer privkeyFile.Close()
+	blk, err := sshmarshal.MarshalPrivateKey(privkey, "")
+	if err != nil {
+		Log.Printf("Error while marshalling private key: %v\n", err)
+		return
+	}
+	if err := pem.Encode(privkeyFile, blk); err != nil {
+		Log.Printf("Error while encoding private key: %v\n", err)
+		return
+	}
+	Log.Println("Keys successfully generated!\nWhile the public key is not necessary for server operation, it may be useful to save it:")
+	Log.Println(color.YellowString(string(cryptoSSH.MarshalAuthorizedKey(pubkey))))
+}
+
+func genKey() (ed25519.PrivateKey, ssh.PublicKey, error) {
+	pub, priv, err := ed25519.GenerateKey(nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	sshPubKey, err := cryptoSSH.NewPublicKey(pub)
+	if err != nil {
+		return nil, nil, err
+	}
+	return priv, sshPubKey, nil
 }
