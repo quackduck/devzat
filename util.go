@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
-	"errors"
 	"fmt"
 	"math"
 	"math/rand"
@@ -373,7 +372,7 @@ func checkKey(keyPath string) {
 		// Key exists, everything is fine and dandy.
 		return
 	}
-	if !errors.Is(err, os.ErrNotExist) { // the error is not a not-exist error. i.e. the file exists but there's some other problem with it
+	if !os.IsNotExist(err) { // the error is not a not-exist error. i.e. the file exists but there's some other problem with it
 		Log.Printf("Error while checking for SSH keys in [%v]: %v\n", keyPath, err)
 		return
 	}
