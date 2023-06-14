@@ -60,6 +60,7 @@ var (
 		{"pwd", pwdCMD, "", "Show your current room"},
 		//		{"sixel", sixelCMD, "<png url>", "Render an image in high quality"},
 		{"shrug", shrugCMD, "", `¯\\\_(ツ)\_/¯`}, // won't actually run, here just to show in docs
+		{"uname", unameCMD, "", "show build informations"},
 	}
 	SecretCMDs = []CMD{
 		{"ls", lsCMD, "???", "???"},
@@ -70,6 +71,8 @@ var (
 		{":q", exitCMD, "", "This is an alias of exit"},          // appease the Vim user
 		{":wq", exitCMD, "", "This is an alias of exit"},         // appease the Vim user, that wants to save
 	}
+
+	unameMsg = "No uname output available. To have one, you must build Devzat using `build-script.sh`."
 )
 
 const (
@@ -789,4 +792,8 @@ func lsCMD(rest string, u *User) {
 
 func commandsCMD(_ string, u *User) {
 	u.room.broadcast("", "Commands  \n"+autogenCommands(MainCMDs))
+}
+
+func unameCMD(rest string, u *User) {
+	u.room.broadcast("", unameMsg)
 }
