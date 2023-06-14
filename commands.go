@@ -61,6 +61,7 @@ var (
 		//		{"sixel", sixelCMD, "<png url>", "Render an image in high quality"},
 		{"shrug", shrugCMD, "", `¯\\\_(ツ)\_/¯`}, // won't actually run, here just to show in docs
 		{"uname", unameCMD, "", "show build informations"},
+		{"uptime", uptimeCMD, "", "show how long the server have been running"},
 	}
 	SecretCMDs = []CMD{
 		{"ls", lsCMD, "???", "???"},
@@ -796,4 +797,8 @@ func commandsCMD(_ string, u *User) {
 
 func unameCMD(rest string, u *User) {
 	u.room.broadcast("", unameMsg)
+}
+
+func uptimeCMD(rest string, u *User) {
+	u.room.broadcast("", printPrettyDuration(time.Since(StartupTime)))
 }
