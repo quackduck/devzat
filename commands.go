@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
@@ -73,7 +74,10 @@ var (
 		{":wq", exitCMD, "", "This is an alias of exit"},         // appease the Vim user, that wants to save
 	}
 
-	unameMsg = "No uname output available. To have one, you must build Devzat using `build-script.sh`."
+	unameCommit = ""
+	unameTz     = ""
+	unameDate   = ""
+	unameTime   = ""
 )
 
 const (
@@ -796,7 +800,12 @@ func commandsCMD(_ string, u *User) {
 }
 
 func unameCMD(rest string, u *User) {
-	u.room.broadcast("", unameMsg)
+	if unameCommit == "" || unameTz == "" || unameDate == "" || unameTime == "" {
+		u.room.broadcast("", "No uname output available. To have one, you must build Devzat using `build-script.sh`.")
+	} else {
+		msg := fmt.Sprintf("Built from commit %v on the %v at %v (%v)", unameCommit, unameDate, unameTime, unameTz)
+		u.room.broadcast("", msg)
+	}
 }
 
 func uptimeCMD(rest string, u *User) {
