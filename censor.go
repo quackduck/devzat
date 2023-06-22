@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"goaway"
+	"goaway "github.com/TwiN/go-away"
 )
 
 func main() {
