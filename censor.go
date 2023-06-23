@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"goaway "github.com/TwiN/go-away"
+	"goaway "github.com/CaenJones/goaway"
 )
 
 func main() {
-	text := "This is a sample text with some words that may trigger the profanity filter."
+	text := "My stupid iphone broke on the last stupid day before retirement."
 
 	// Split the text into words
 	words := splitTextIntoWords(text)
