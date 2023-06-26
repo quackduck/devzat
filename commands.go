@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/alecthomas/chroma"
 	chromastyles "github.com/alecthomas/chroma/styles"
+	"github.com/fatih/color"
 	markdown "github.com/quackduck/go-term-markdown"
 	"github.com/quackduck/term"
 	"github.com/shurcooL/tictactoe"
@@ -61,8 +61,8 @@ var (
 		{"pwd", pwdCMD, "", "Show your current room"},
 		//		{"sixel", sixelCMD, "<png url>", "Render an image in high quality"},
 		{"shrug", shrugCMD, "", `¯\\\_(ツ)\_/¯`}, // won't actually run, here just to show in docs
-		{"uname", unameCMD, "", "show build informations"},
-		{"uptime", uptimeCMD, "", "show how long the server have been running"},
+		{"uname", unameCMD, "", "Show build info"},
+		{"uptime", uptimeCMD, "", "Show server uptime"},
 	}
 	SecretCMDs = []CMD{
 		{"ls", lsCMD, "???", "???"},
@@ -75,8 +75,6 @@ var (
 	}
 
 	unameCommit = ""
-	unameTz     = ""
-	unameDate   = ""
 	unameTime   = ""
 )
 
@@ -800,14 +798,13 @@ func commandsCMD(_ string, u *User) {
 }
 
 func unameCMD(rest string, u *User) {
-	if unameCommit == "" || unameTz == "" || unameDate == "" || unameTime == "" {
-		u.room.broadcast("", "No uname output available. To have one, you must build Devzat using `build-script.sh`.")
-	} else {
-		msg := fmt.Sprintf("Built from commit %v on the %v at %v (%v)", unameCommit, unameDate, unameTime, unameTz)
-		u.room.broadcast("", msg)
+	if unameCommit == "" || unameTime == "" {
+		u.room.broadcast("", "No uname output available. Build Devzat with `"+color.HiYellowString(`go build -ldflags "-X 'main.unameCommit=$(git rev-parse --short HEAD)' -X 'main.unameTime=$(date)'"`)+"` to enable.")
+		return
 	}
+	u.room.broadcast("", "Devzat "+unameCommit+": "+unameTime)
 }
 
 func uptimeCMD(rest string, u *User) {
-	u.room.broadcast("", printPrettyDuration(time.Since(StartupTime)))
+	u.room.broadcast("", time.Since(StartupTime).Round(time.Second).String())
 }
