@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
+	"math"
 	"math/rand"
 	"sort"
 	"strconv"
@@ -805,6 +807,20 @@ func unameCMD(rest string, u *User) {
 	u.room.broadcast("", "Devzat "+unameCommit+": "+unameTime)
 }
 
+func floor(f float64) int {
+	return int(math.Floor(f))
+}
+
 func uptimeCMD(rest string, u *User) {
-	u.room.broadcast("", time.Since(StartupTime).Round(time.Second).String())
+	uptime := time.Since(StartupTime).Round(time.Second)
+	hours := floor(uptime.Hours())
+	minutes := floor(uptime.Minutes()) - (60 * hours)
+	seconds := floor(uptime.Seconds()) - (60 * (minutes + (60 * hours)))
+	daysStr := ""
+	if hours > 23 {
+		daysStr = fmt.Sprintf("%v days, ", hours/24)
+		hours = hours % 24
+	}
+	msg := fmt.Sprintf("up %s%02d:%02d:%02d", daysStr, hours, minutes, seconds)
+	u.room.broadcast("", msg)
 }
