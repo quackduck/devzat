@@ -3,7 +3,7 @@ scp -o StrictHostKeyChecking=no -r -P 4242 *.yml *.go plugin go.sum go.mod ubunt
 echo Copied files
 ssh -o StrictHostKeyChecking=no -p 4242 ubuntu@150.136.142.44 <<EOL # Unquote so lines are expanded
 	cd ~/devzat
-	go build -ldflags "-X 'main.unameCommit=$(git rev-parse --short HEAD)' -X 'main.unameTime=$(date)'" && echo Built
+	go build -ldflags "-X 'main.unameCommit=$(git rev-parse HEAD)' -X 'main.unameTime=$(date)'" && echo Built
 	echo $SERVER_PASS | sudo -S pkill devzat && echo Killed
 	sleep 2
 	echo $SERVER_PASS | sudo -S pkill -9 devzat && echo Killed with SIGKILL

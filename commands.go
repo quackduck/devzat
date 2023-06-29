@@ -801,13 +801,13 @@ func commandsCMD(_ string, u *User) {
 
 func unameCMD(rest string, u *User) {
 	if unameCommit == "" || unameTime == "" {
-		u.room.broadcast("", "No uname output available. Build Devzat with `"+color.HiYellowString(`go build -ldflags "-X 'main.unameCommit=$(git rev-parse --short HEAD)' -X 'main.unameTime=$(date)'"`)+"` to enable.")
+		u.room.broadcast("", "No uname output available. Build Devzat with `"+color.HiYellowString(`go build -ldflags "-X 'main.unameCommit=$(git rev-parse HEAD)' -X 'main.unameTime=$(date)'"`)+"` to enable.")
 		return
 	}
-	u.room.broadcast("", "Devzat "+unameCommit+": "+unameTime)
+	u.room.broadcast("", "Devzat ("+unameCommit+") "+unameTime)
 }
 
 func uptimeCMD(rest string, u *User) {
 	uptime := time.Since(StartupTime)
-	u.room.broadcast("", fmt.Sprintf("up %v days, %02d:%02d:%02d", int(uptime.Hours() / 24), int(math.Mod(uptime.Hours(), 24)), int(math.Mod(uptime.Minutes(), 60)), int(math.Mod(uptime.Seconds(), 60))))
+	u.room.broadcast("", fmt.Sprintf("up %v days, %02d:%02d:%02d", int(uptime.Hours()/24), int(math.Mod(uptime.Hours(), 24)), int(math.Mod(uptime.Minutes(), 60)), int(math.Mod(uptime.Seconds(), 60))))
 }
