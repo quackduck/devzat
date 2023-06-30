@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
+	"math"
 	"math/rand"
 	"sort"
 	"strconv"
@@ -13,6 +15,7 @@ import (
 
 	"github.com/alecthomas/chroma"
 	chromastyles "github.com/alecthomas/chroma/styles"
+	"github.com/fatih/color"
 	markdown "github.com/quackduck/go-term-markdown"
 	"github.com/quackduck/term"
 	"github.com/shurcooL/tictactoe"
@@ -60,6 +63,8 @@ var (
 		{"pwd", pwdCMD, "", "Show your current room"},
 		//		{"sixel", sixelCMD, "<png url>", "Render an image in high quality"},
 		{"shrug", shrugCMD, "", `¯\\\_(ツ)\_/¯`}, // won't actually run, here just to show in docs
+		{"uname", unameCMD, "", "Show build info"},
+		{"uptime", uptimeCMD, "", "Show server uptime"},
 	}
 	SecretCMDs = []CMD{
 		{"ls", lsCMD, "???", "???"},
@@ -70,6 +75,9 @@ var (
 		{":q", exitCMD, "", "This is an alias of exit"},          // appease the Vim user
 		{":wq", exitCMD, "", "This is an alias of exit"},         // appease the Vim user, that wants to save
 	}
+
+	unameCommit = ""
+	unameTime   = ""
 )
 
 const (
@@ -789,4 +797,17 @@ func lsCMD(rest string, u *User) {
 
 func commandsCMD(_ string, u *User) {
 	u.room.broadcast("", "Commands  \n"+autogenCommands(MainCMDs))
+}
+
+func unameCMD(rest string, u *User) {
+	if unameCommit == "" || unameTime == "" {
+		u.room.broadcast("", "No uname output available. Build Devzat with `"+color.HiYellowString(`go build -ldflags "-X 'main.unameCommit=$(git rev-parse HEAD)' -X 'main.unameTime=$(date)'"`)+"` to enable.")
+		return
+	}
+	u.room.broadcast("", "Devzat ("+unameCommit+") "+unameTime)
+}
+
+func uptimeCMD(rest string, u *User) {
+	uptime := time.Since(StartupTime)
+	u.room.broadcast("", fmt.Sprintf("up %v days, %02d:%02d:%02d", int(uptime.Hours()/24), int(math.Mod(uptime.Hours(), 24)), int(math.Mod(uptime.Minutes(), 60)), int(math.Mod(uptime.Seconds(), 60))))
 }
