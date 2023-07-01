@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
-	"goaway "github.com/CaenJones/goaway"
+	"strings"
+
+	"github.com/CaenJones/goaway"
 )
 
 func main() {
@@ -23,38 +25,13 @@ func main() {
 // splitTextIntoWords splits the given text into a slice of words
 func splitTextIntoWords(text string) []string {
 	// Split the text by whitespace
-	words := make([]string, 0)
-	currentWord := ""
-	for _, char := range text {
-		if char == ' ' {
-			// Add the current word to the slice
-			if currentWord != "" {
-				words = append(words, currentWord)
-				currentWord = ""
-			}
-		} else {
-			// Append the character to the current word
-			currentWord += string(char)
-		}
-	}
-
-	// Add the last word to the slice (if any)
-	if currentWord != "" {
-		words = append(words, currentWord)
-	}
-
+	words := strings.Fields(text)
 	return words
 }
 
 // joinWordsIntoText joins the given slice of words into a string
 func joinWordsIntoText(words []string) string {
 	// Join the words with a space separator
-	text := ""
-	for i, word := range words {
-		if i > 0 {
-			text += " "
-		}
-		text += word
-	}
+	text := strings.Join(words, " ")
 	return text
 }
