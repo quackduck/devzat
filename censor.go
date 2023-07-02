@@ -1,37 +1,29 @@
 package main
 
 import (
-	"fmt"
-	"strings"
-
-	"github.com/CaenJones/goaway"
+	"encoding/base64"
+	goaway "github.com/TwiN/go-away"
 )
 
-func main() {
-	text := "My stupid iphone broke on the last stupid day before retirement."
+var detector = goaway.NewProfanityDetector().WithSanitizeSpaces(false).WithFalsePositivesFunc(goaway.DefaultFalsePositives)
 
-	// Split the text into words
-	words := splitTextIntoWords(text)
-
-	// Filter out blocked words
-	filteredWords := goaway.FilterBlockedWords(words)
-
-	// Join the filtered words back into a string
-	filteredText := joinWordsIntoText(filteredWords)
-
-	fmt.Println(filteredText)
+func rmBadWords(text string) string {
+	if !Config.Censor {
+		return text
+	}
+	return detector.Censor(text)
 }
 
-// splitTextIntoWords splits the given text into a slice of words
-func splitTextIntoWords(text string) []string {
-	// Split the text by whitespace
-	words := strings.Fields(text)
-	return words
-}
-
-// joinWordsIntoText joins the given slice of words into a string
-func joinWordsIntoText(words []string) string {
-	// Join the words with a space separator
-	text := strings.Join(words, " ")
-	return text
+func init() {
+	okayIshWords := []string{"ZnVjaw==", "Y3JhcA==", "c2hpdA==", "YXJzZQ==", "YXNz", "YnV0dA==", "cGlzcw=="} // base 64 encoded okay-ish swears
+	for i := 0; i < len(goaway.DefaultProfanities); i++ {
+		for _, okayIshWord := range okayIshWords {
+			okayIshWordb, _ := base64.StdEncoding.DecodeString(okayIshWord)
+			if goaway.DefaultProfanities[i] == string(okayIshWordb) {
+				goaway.DefaultProfanities = append(goaway.DefaultProfanities[:i], goaway.DefaultProfanities[i+1:]...)
+				i-- // so we don't skip the next word
+				break
+			}
+		}
+	}
 }
