@@ -3,11 +3,11 @@ module devzat
 go 1.18
 
 require (
+	devzat/plugin v0.0.0-00010101000000-000000000000
 	github.com/TwiN/go-away v1.6.10
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/alecthomas/chroma v0.10.0
 	github.com/bwmarrin/discordgo v0.27.1
-	github.com/crazy3lf/colorconv v1.2.0
 	github.com/dghubble/go-twitter v0.0.0-20221104224141-912508c3888b
 	github.com/dghubble/oauth1 v0.7.2
 	github.com/gliderlabs/ssh v0.3.5
@@ -18,10 +18,11 @@ require (
 	github.com/shurcooL/tictactoe v0.0.0-20210613024444-e573ff1376a3
 	github.com/slack-go/slack v0.12.2
 	golang.org/x/image v0.7.0
-	google.golang.org/grpc v1.54.0
-	google.golang.org/protobuf v1.30.0
+	google.golang.org/grpc v1.56.1
 	gopkg.in/yaml.v2 v2.4.0
 )
+
+replace devzat/plugin => ./plugin
 
 require (
 	github.com/MichaelMure/go-term-text v0.3.1 // indirect
@@ -50,4 +51,5 @@ require (
 	golang.org/x/term v0.7.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
+	google.golang.org/protobuf v1.31.0 // indirect
 )
