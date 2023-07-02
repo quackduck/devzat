@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/base64"
-	goaway "github.com/TwiN/go-away"
+	goaway "github.com/CaenJones/go-away"
 )
 
 var detector = goaway.NewProfanityDetector().WithSanitizeSpaces(false).WithFalsePositivesFunc(goaway.DefaultFalsePositives)
