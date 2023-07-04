@@ -41,8 +41,16 @@ func (s *Session) Close() error {
 	return s.conn.Close()
 }
 
-func (s *Session) RegisterListener() error {
+func (s *Session) RegisterListener(middleware, once *bool, regex *string) error {
 	client, err := s.pluginClient.RegisterListener(context.Background())
+	if err != nil {
+		return err
+	}
+	err = client.Send(&plugin.ListenerClientData{Data: &plugin.ListenerClientData_Listener{Listener: &plugin.Listener{
+		Middleware: middleware,
+		Once:       once,
+		Regex:      regex,
+	}}})
 	if err != nil {
 		return err
 	}
