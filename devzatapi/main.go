@@ -8,9 +8,18 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
+type Message struct {
+	Room,
+	From,
+	Data,
+	DMTo string
+}
+
 type Session struct {
 	conn         *grpc.ClientConn
 	pluginClient plugin.PluginClient
+
+	LastError error
 }
 
 // NewSession connects to the Devzat server and creates a session. The address should be in the form of "host:port".
@@ -33,7 +42,7 @@ func NewSession(address string, token string, name string) (*Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Session{conn, plugin.NewPluginClient(conn)}, nil
+	return &Session{conn: conn, pluginClient: plugin.NewPluginClient(conn)}, nil
 }
 
 // Close closes the session.
@@ -41,23 +50,47 @@ func (s *Session) Close() error {
 	return s.conn.Close()
 }
 
-func (s *Session) RegisterListener(middleware, once *bool, regex *string) error {
+func (s *Session) RegisterListener(middleware, once bool, regex string) (messageChan chan Message, middlewareResponseChan chan string, err error) {
 	client, err := s.pluginClient.RegisterListener(context.Background())
 	if err != nil {
-		return err
+		return nil, nil, err
+	}
+	pointerRegex := &regex
+	if regex == "" {
+		pointerRegex = nil
 	}
 	err = client.Send(&plugin.ListenerClientData{Data: &plugin.ListenerClientData_Listener{Listener: &plugin.Listener{
-		Middleware: middleware,
-		Once:       once,
-		Regex:      regex,
+		Middleware: &middleware,
+		Once:       &once,
+		Regex:      pointerRegex,
 	}}})
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
-	for {
-		_, err = client.Recv()
-		if err != nil {
-			return err
+	messageChan = make(chan Message)
+	go func() {
+		for {
+			e, err := client.Recv()
+			if err != nil {
+				s.LastError = err
+				continue
+			}
+			messageChan <- Message{Room: e.Room, From: e.From, Data: e.Msg}
 		}
+	}()
+	if !middleware {
+		return messageChan, nil, nil
 	}
+	middlewareResponseChan = make(chan string)
+	go func() {
+		for {
+			response := <-middlewareResponseChan
+			err := client.Send(&plugin.ListenerClientData{Data: &plugin.ListenerClientData_Response{Response: &plugin.MiddlewareResponse{Msg: &response}}})
+			if err != nil {
+				s.LastError = err
+				return
+			}
+		}
+	}()
+	return messageChan, middlewareResponseChan, nil
 }
