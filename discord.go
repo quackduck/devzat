@@ -140,7 +140,7 @@ func discordMessageHandler(_ *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	h := sha1.Sum([]byte(m.Author.ID))
 	i, _ := strconv.ParseInt(hex.EncodeToString(h[:2]), 16, 0) // two bytes as an int
-	name := m.Author.Username
+	name := m.Author.GlobalName
 	if m.Member != nil && m.Member.Nick != "" {
 		name = m.Member.Nick
 	}
