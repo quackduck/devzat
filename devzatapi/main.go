@@ -12,12 +12,14 @@ type Message struct {
 	Room,
 	From,
 	Data string
+	Error error
 }
 
 type CmdInvocation struct {
 	Room,
 	From,
 	Args string
+	Error error
 }
 
 type Session struct {
@@ -55,10 +57,11 @@ func (s *Session) Close() error {
 	return s.conn.Close()
 }
 
+// check s.LastError when sending a response and message.Error when reading messages.
 func (s *Session) RegisterListener(middleware, once bool, regex string) (messageChan chan Message, middlewareResponseChan chan string, err error) {
 	client, err := s.pluginClient.RegisterListener(context.Background())
 	if err != nil {
-		return nil, nil, err
+		return
 	}
 	pointerRegex := &regex
 	if regex == "" {
@@ -70,22 +73,26 @@ func (s *Session) RegisterListener(middleware, once bool, regex string) (message
 		Regex:      pointerRegex,
 	}}})
 	if err != nil {
-		return nil, nil, err
+		return
 	}
+
 	messageChan = make(chan Message)
+	var e *plugin.Event
 	go func() {
 		for {
-			e, err := client.Recv()
+			e, err = client.Recv()
 			if err != nil {
-				s.LastError = err
+				messageChan <- Message{Error: err}
 				continue
 			}
 			messageChan <- Message{Room: e.Room, From: e.From, Data: e.Msg}
 		}
 	}()
+
 	if !middleware {
-		return messageChan, nil, nil
+		return
 	}
+
 	middlewareResponseChan = make(chan string)
 	go func() {
 		for {
@@ -97,7 +104,8 @@ func (s *Session) RegisterListener(middleware, once bool, regex string) (message
 			}
 		}
 	}()
-	return messageChan, middlewareResponseChan, nil
+
+	return
 }
 
 func (s *Session) SendMessage(room, from, msg, dmTo string) error {
@@ -118,6 +126,7 @@ func (s *Session) SendMessage(room, from, msg, dmTo string) error {
 	return err
 }
 
+// read CmdInvocation.Error each time
 func (s *Session) RegisterCmd(name, argsInfo, info string) (chan CmdInvocation, error) {
 	client, err := s.pluginClient.RegisterCmd(context.Background(), &plugin.CmdDef{
 		Name:     name,
@@ -132,7 +141,7 @@ func (s *Session) RegisterCmd(name, argsInfo, info string) (chan CmdInvocation, 
 		for {
 			invoc, err := client.Recv()
 			if err != nil {
-				s.LastError = err
+				cmdInvocChan <- CmdInvocation{Error: err}
 				continue
 			}
 			cmdInvocChan <- CmdInvocation{Room: invoc.Room, From: invoc.From, Args: invoc.Args}
