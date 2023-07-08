@@ -14,6 +14,12 @@ type Message struct {
 	Data string
 }
 
+type CmdInvocation struct {
+	Room,
+	From,
+	Args string
+}
+
 type Session struct {
 	conn         *grpc.ClientConn
 	pluginClient plugin.PluginClient
@@ -22,7 +28,7 @@ type Session struct {
 }
 
 // NewSession connects to the Devzat server and creates a session. The address should be in the form of "host:port".
-func NewSession(address string, token string, name string) (*Session, error) {
+func NewSession(address string, token string) (*Session, error) {
 	conn, err := grpc.Dial(address,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithStreamInterceptor(
@@ -110,4 +116,27 @@ func (s *Session) SendMessage(room, from, msg, dmTo string) error {
 		EphemeralTo: dmToPtr,
 	})
 	return err
+}
+
+func (s *Session) RegisterCmd(name, argsInfo, info string) (chan CmdInvocation, error) {
+	client, err := s.pluginClient.RegisterCmd(context.Background(), &plugin.CmdDef{
+		Name:     name,
+		ArgsInfo: argsInfo,
+		Info:     info,
+	})
+	if err != nil {
+		return nil, err
+	}
+	cmdInvocChan := make(chan CmdInvocation)
+	go func() {
+		for {
+			invoc, err := client.Recv()
+			if err != nil {
+				s.LastError = err
+				continue
+			}
+			cmdInvocChan <- CmdInvocation{Room: invoc.Room, From: invoc.From, Args: invoc.Args}
+		}
+	}()
+	return cmdInvocChan, nil
 }
