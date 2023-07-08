@@ -11,8 +11,7 @@ import (
 type Message struct {
 	Room,
 	From,
-	Data,
-	DMTo string
+	Data string
 }
 
 type Session struct {
@@ -93,4 +92,22 @@ func (s *Session) RegisterListener(middleware, once bool, regex string) (message
 		}
 	}()
 	return messageChan, middlewareResponseChan, nil
+}
+
+func (s *Session) SendMessage(room, from, msg, dmTo string) error {
+	fromPtr := &from
+	if from == "" {
+		fromPtr = nil
+	}
+	dmToPtr := &dmTo
+	if dmTo == "" {
+		dmToPtr = nil
+	}
+	_, err := s.pluginClient.SendMessage(context.Background(), &plugin.Message{
+		Room:        room,
+		From:        fromPtr,
+		Msg:         msg,
+		EphemeralTo: dmToPtr,
+	})
+	return err
 }
