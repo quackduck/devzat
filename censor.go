@@ -29,7 +29,12 @@ func init() {
 		}
 	}
 
-	detector = goaway.NewProfanityDetector().WithSanitizeSpaces(false).WithFalsePositivesFunc(goaway.DefaultFalsePositives)
+	detector = goaway.NewProfanityDetector().WithSanitizeSpaces(false).WithFalsePositivesFunc(DefaultFalsePositives)
+}
+
+// DefaultFalsePositives is a function that returns true for any word
+func DefaultFalsePositives(word string) bool {
+	return true
 }
 
 func main() {
