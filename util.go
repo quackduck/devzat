@@ -395,8 +395,7 @@ func checkKey(keyPath string) {
 		Log.Printf("Error while encoding private key: %v\n", err)
 		return
 	}
-	Log.Println("Keys successfully generated!\nWhile the public key is not necessary for server operation, it may be useful to save it:")
-	Log.Println(color.YellowString(string(cryptoSSH.MarshalAuthorizedKey(pubkey))))
+	Log.Println("Keys successfully generated!\nWhile the public key is not necessary for server operation, it may be useful to save it:\n" + color.YellowString(string(cryptoSSH.MarshalAuthorizedKey(pubkey))))
 }
 
 func genKey() (ed25519.PrivateKey, ssh.PublicKey, error) {

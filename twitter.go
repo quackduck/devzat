@@ -72,4 +72,10 @@ func twitterInit() { // called by init() in config.go
 	token := oauth1.NewToken(Integrations.Twitter.AccessToken, Integrations.Twitter.AccessTokenSecret)
 	httpClient := config.Client(oauth1.NoContext, token)
 	Client = twitter.NewClient(httpClient)
+	_, _, err := Client.Accounts.VerifyCredentials(nil)
+	if err != nil {
+		Log.Println("Twitter auth failed:", err)
+		Integrations.Twitter = nil
+		return
+	}
 }
