@@ -3,13 +3,11 @@ package main
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"math/rand"
 	"os"
 	"strconv"
 	"strings"
 
 	"github.com/acarl005/stripansi"
-	"github.com/jwalton/gchalk"
 	"github.com/quackduck/term"
 	"github.com/slack-go/slack"
 )
@@ -20,20 +18,6 @@ var (
 	SlackRTM   *slack.RTM
 	SlackBotID string
 )
-
-func getRandomColor() gchalk.Style {
-	colors := []gchalk.Style{
-		gchalk.Red,
-		gchalk.Green,
-		gchalk.Yellow,
-		gchalk.Blue,
-		gchalk.Magenta,
-		gchalk.Cyan,
-	}
-
-	idx := rand.Intn(len(colors))
-	return colors[idx]
-}
 
 func getMsgsFromSlack() {
 	if Integrations.Slack == nil {
@@ -62,8 +46,7 @@ func getMsgsFromSlack() {
 			h := sha1.Sum([]byte(u.ID))
 			i, _ := strconv.ParseInt(hex.EncodeToString(h[:2]), 16, 0) // two bytes as an int
 			name := strings.Fields(u.RealName)[0]
-			color := getRandomColor()
-			uslack.Name = gchalk.Bold.Into(color).Call(Integrations.Slack.Prefix + " " + name)
+			uslack.Name = Yellow.Paint(Integrations.Slack.Prefix+" ") + (Styles[int(i)%len(Styles)]).apply(name)
 			if Integrations.Discord != nil {
 				DiscordChan <- DiscordMsg{
 					senderName: Integrations.Slack.Prefix + " " + name,
@@ -80,10 +63,6 @@ func getMsgsFromSlack() {
 			return
 		}
 	}
-}
-
-func User(User invalid type) {
-	panic("unimplemented")
 }
 
 func slackInit() { // called by init() in config.go
