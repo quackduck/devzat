@@ -35,13 +35,13 @@ func NewSession(address string, token string) (*Session, error) {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithStreamInterceptor(
 			func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
-				metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
+				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
 				return streamer(ctx, desc, cc, method, opts...)
 			},
 		),
 		grpc.WithUnaryInterceptor(
 			func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-				metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
+				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
 				return invoker(ctx, method, req, reply, cc, opts...)
 			},
 		),
@@ -98,7 +98,7 @@ func (s *Session) RegisterListener(middleware, once bool, regex string) (message
 		for {
 			response := <-middlewareResponseChan
 			err := client.Send(&plugin.ListenerClientData{Data: &plugin.ListenerClientData_Response{Response: &plugin.MiddlewareResponse{Msg: &response}}})
-			if err != nil {
+			if err != nil { // TODO: users can miss an error if they check too fast. use an error channel?
 				s.LastError = err
 				return
 			}

@@ -284,7 +284,7 @@ func getMiddlewareResult(u *User, line string) string {
 	// Middleware hook
 	if len(ListenersMiddleware) > 0 {
 		for i := range ListenersMiddleware {
-			ListenersMiddleware[i] <- &pb.Event{
+			ListenersMiddleware[i] <- &pb.Event{ // TODO: make sure ListenersMiddleware[i] actually exists when something finally appears on the channel
 				Room: u.room.name,
 				From: stripansi.Strip(u.Name),
 				Msg:  line,

@@ -1,4 +1,4 @@
-module devzatapi
+module github.com/quackduck/devzat/devzatapi
 
 go 1.20
 
