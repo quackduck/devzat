@@ -3,14 +3,15 @@ package main
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
 
 	"github.com/acarl005/stripansi"
+	"github.com/jwalton/gchalk"
 	"github.com/quackduck/term"
 	"github.com/slack-go/slack"
-	"github.com/jwalton/gchalk"
 )
 
 var (
@@ -79,6 +80,10 @@ func getMsgsFromSlack() {
 			return
 		}
 	}
+}
+
+func User(User invalid type) {
+	panic("unimplemented")
 }
 
 func slackInit() { // called by init() in config.go
