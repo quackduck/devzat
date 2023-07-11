@@ -10,57 +10,57 @@ import (
 
 	"github.com/acarl005/stripansi"
 	chromastyles "github.com/alecthomas/chroma/styles"
-	"github.com/fatih/color"
+	"github.com/jwalton/gchalk"
 	markdown "github.com/quackduck/go-term-markdown"
 )
 
 var (
-    White  = color.New(color.FgWhite)
-    Red    = color.New(color.FgRed)
-    Green  = color.New(color.FgGreen)
-    Cyan   = color.New(color.FgCyan)
-    Magenta = color.New(color.FgMagenta)
-    Yellow = color.New(color.FgYellow)
-    Orange = color.New(color.FgHiYellow)
-    Blue   = color.New(color.FgBlue)
-    Styles = []*color.Color{
-        {"white", White},
-        {"red", Red},
-        {"coral", color.New(color.FgHiRed)},
-        {"green", Green},
-        {"sky", color.New(color.FgHiCyan)},
-        {"cyan", Cyan},
-        {"magenta", Magenta},
-        {"pink", color.New(color.FgHiMagenta)},
-        {"rose", color.New(color.FgHiRed)},
-        {"cranberry", color.New(color.FgHiBlack)},
-        {"lavender", color.New(color.FgHiBlack).Add(color.BgMagenta)},
-        {"fire", color.New(color.FgHiYellow)},
-        {"pastelgreen", color.New(color.FgGreen)},
-        {"olive", color.New(color.FgHiBlack).Add(color.BgGreen)},
-        {"yellow", Yellow},
-        {"orange", Orange},
-        {"blue", Blue},
-    }
-    SecretStyles = []*color.Color{
-        {"elitedino", color.New(color.FgHiBlack).Add(color.BgRed)},
-        {"ukraine", color.New(color.FgHiBlack).Add(color.BgHiYellow)},
-        {"easter", color.New(color.FgMagenta).Add(color.BgYellow)},
-        {"baby", color.New(color.FgMagenta).Add(color.BgBlue)},
-        {"hacker", color.New(color.FgHiGreen).Add(color.BgBlack)},
-        {"l33t", color.New(color.BgHiBlack)},
-        {"whiten", color.New(color.BgWhite)},
-        {"trans", color.New(color.FgHiBlue).Add(color.BgHiMagenta)},
-        {"gay", color.New(color.FgRed).Add(color.BgHiMagenta)},
-        {"lesbian", color.New(color.FgHiRed).Add(color.BgHiBlack)},
-        {"bi", color.New(color.FgHiMagenta).Add(color.BgHiBlue)},
-        {"sunset", color.New(color.FgHiBlack).Add(color.BgHiYellow)},
-        {"bg-sunset", color.New(color.BgHiYellow)},
-        {"rainbow", color.New(color.FgHiBlack).Add(color.BgHiCyan)},
-        {"bg-rainbow", color.New(color.BgHiCyan)},
-    }
+	TrueColor = gchalk.New(gchalk.ForceLevel(gchalk.LevelAnsi16m))
+	Chalk     = gchalk.New(gchalk.ForceLevel(gchalk.LevelAnsi256))
+	Green     = ansi256(1, 5, 1)
+	Red       = ansi256(5, 1, 1)
+	Cyan      = ansi256(1, 5, 5)
+	Magenta   = ansi256(5, 1, 5)
+	Yellow    = ansi256(5, 5, 1)
+	Orange    = ansi256(5, 3, 0)
+	Blue      = ansi256(0, 3, 5)
+	White     = ansi256(5, 5, 5)
+	Styles    = []*Style{
+		{"white", buildStyle(White)},
+		{"red", buildStyle(Red)},
+		{"coral", buildStyle(ansi256(5, 2, 2))},
+		{"green", buildStyle(Green)},
+		{"sky", buildStyle(ansi256(3, 5, 5))},
+		{"cyan", buildStyle(Cyan)},
+		{"magenta", buildStyle(Magenta)},
+		{"pink", buildStyle(ansi256(5, 3, 4))},
+		{"rose", buildStyle(ansi256(5, 0, 2))},
+		{"cranberry", buildStyle(ansi256(3, 0, 1))},
+		{"lavender", buildStyle(ansi256(4, 2, 5))},
+		{"fire", buildStyle(ansi256(5, 2, 0))},
+		{"pastelgreen", buildStyle(ansi256(0, 5, 3))},
+		{"olive", buildStyle(ansi256(2, 3, 0))},
+		{"yellow", buildStyle(Yellow)},
+		{"orange", buildStyle(Orange)},
+		{"blue", buildStyle(Blue)}}
+	SecretStyles = []*Style{
+		{"elitedino", buildStyle(ansi256(5, 0, 0))},
+		{"ukraine", buildStyle(TrueColor.WithHex("#005bbb").WithBgHex("#ffd500"))},
+		{"easter", buildStyle(Chalk.WithRGB(255, 51, 255).WithBgRGB(255, 255, 0))},
+		{"baby", buildStyle(Chalk.WithRGB(255, 51, 255).WithBgRGB(102, 102, 255))},
+		{"hacker", buildStyle(Chalk.WithRGB(0, 255, 0).WithBgRGB(0, 0, 0))},
+		{"l33t", buildStyleNoStrip(Chalk.WithBgBrightBlack())},
+		{"whiten", buildStyleNoStrip(Chalk.WithBgWhite())},
+		{"trans", makeFlag([]string{"#5BCEFA", "#F5A9B8", "#FFFFFF", "#F5A9B8", "#5BCEFA"})},
+		{"gay", makeFlag([]string{"#FF0018", "#FFA52C", "#FFFF41", "#008018", "#0000F9", "#86007D"})},
+		{"lesbian", makeFlag([]string{"#D62E02", "#FD9855", "#FFFFFF", "#D161A2", "#A20160"})},
+		{"bi", makeFlag([]string{"#D60270", "#D60270", "#9B4F96", "#0038A8", "#0038A8"})},
+		{"sunset", func(a string) string { return applyHueRange(335, 480, a, false) }},
+		{"bg-sunset", func(a string) string { return applyHueRange(335, 480, a, true) }},
+		{"rainbow", func(a string) string { return rainbow(a, false) }},
+		{"bg-rainbow", func(a string) string { return rainbow(a, true) }}}
+	ColorHelpMsg = ""
 )
-
 
 func colorNameWithColor(c string) string {
 	style, _ := getStyle(c)
@@ -134,13 +134,14 @@ func applyHueRange(start, end float64, a string, bg bool) string {
 	return buf.String()
 }
 
-func applyStyles(styles []*color.Color, a string) string {
-    buf := strings.Builder{}
-    colorOffset := rand.Intn(len(styles))
-    for i, s := range tokenizeAnsi(a) {
-        buf.WriteString(styles[(colorOffset+i)%len(styles)].Sprint(s))
-    }
-    return buf.String()
+func applyStyles(styles []*Style, a string) string {
+	//a = stripansi.Strip(a)
+	buf := strings.Builder{}
+	colorOffset := rand.Intn(len(styles))
+	for i, s := range tokenizeAnsi(a) {
+		buf.WriteString(styles[(colorOffset+i)%len(styles)].apply(s))
+	}
+	return buf.String()
 }
 
 func applyMulticolor(colors []*gchalk.Builder, a string) string {
@@ -218,43 +219,26 @@ func bgAnsi256(r, g, b uint8) *gchalk.Builder {
 
 // Applies color from name
 func (u *User) changeColor(colorName string) error {
-    if strings.Contains(colorName, "bg") {
-        if names := strings.Fields(colorName); len(names) > 1 { // do we need to separate bg and fg colors?
-            fgColors := make([]string, 0, len(names)-1)
-            bgColors := make([]string, 0, len(names))
-            for _, name := range names {
-                if strings.HasPrefix(name, "bg") {
-                    bgColors = append(bgColors, name)
-                } else {
-                    fgColors = append(fgColors, name)
-                }
-            }
-            if len(fgColors) != 0 { // if no fg colors, carry on normally
-                err := u.changeColor(strings.Join(fgColors, " "))
-                if err != nil {
-                    return err
-                }
-                return u.changeColor(strings.Join(bgColors, " "))
-            }
-        }
-    }
-
-    style, err := getStyle(colorName)
-    if err != nil {
-        return err
-    }
-
-    if strings.HasPrefix(colorName, "bg") {
-        u.ColorBG = style.Name() // update bg color
-    } else {
-        u.Color = style.Name() // update fg color
-    }
-
-    u.Name, _ = applyColorToData(u.Name, u.Color, u.ColorBG)
-    u.formatPrompt()
-    return nil
-}
-
+	if strings.Contains(colorName, "bg") {
+		if names := strings.Fields(colorName); len(names) > 1 { // do we need to separate bg and fg colors?
+			fgColors := make([]string, 0, len(names)-1)
+			bgColors := make([]string, 0, len(names))
+			for _, name := range names {
+				if strings.HasPrefix(name, "bg") {
+					bgColors = append(bgColors, name)
+				} else {
+					fgColors = append(fgColors, name)
+				}
+			}
+			if len(fgColors) != 0 { // if no fg colors, carry on normally
+				err := u.changeColor(strings.Join(fgColors, " "))
+				if err != nil {
+					return err
+				}
+				return u.changeColor(strings.Join(bgColors, " "))
+			}
+		}
+	}
 	style, err := getStyle(colorName)
 	if err != nil {
 		return err
@@ -355,38 +339,49 @@ func getCustomColor(name string) (*Style, error) {
 }
 
 // Turns name into a style (defaults to nil)
-func getStyle(name string) (*color.Color, error) {
-    name = strings.TrimSpace(name)
-    if names := strings.Fields(name); len(names) > 1 {
-        styleSlice := make([]*color.Color, len(names))
-        newName := ""
-        for i := range names {
-            style := getStyle(names[i])
-            if style == nil {
-                return nil, errors.New("Unknown color: " + names[i])
-            }
-            styleSlice[i] = style
-            newName += style.Name() + " "
-        }
+func getStyle(name string) (*Style, error) {
+	name = strings.TrimSpace(name)
+	if names := strings.Fields(name); len(names) > 1 {
+		styleSlice := make([]*Style, len(names))
+		newName := ""
+		for i := range names {
+			style, err := getStyle(names[i])
+			if err != nil {
+				return nil, err
+			}
+			styleSlice[i] = style
+			newName += style.name + " "
+		}
 
-        return &color.Color{Name: newName[:len(newName)-1], ApplyFunc: func(a string) string {
-            return applyStyles(styleSlice, a)
-        }}, nil
-    }
-
-    for _, style := range Styles {
-        if style.Name() == name {
-            return style, nil
-        }
-    }
-
-    for _, style := range SecretStyles {
-        if style.Name() == name {
-            return style, nil
-        }
-    }
-
-    return nil, errors.New(`Which color? Choose from ` + colorNameWithColor("random") + `, ` + colorNameWithColor("bg-random") + `, ` + ColorHelpMsg)
+		return &Style{newName[:len(newName)-1], func(a string) string {
+			return applyStyles(styleSlice, a)
+		}}, nil
+	}
+	switch name {
+	case "random":
+		r, g, b := rand.Intn(6), rand.Intn(6), rand.Intn(6)
+		return &Style{fmt.Sprintf("%03d", r*100+g*10+b), buildStyle(ansi256(uint8(r), uint8(g), uint8(b)))}, nil
+	case "bg-random":
+		r, g, b := rand.Intn(6), rand.Intn(6), rand.Intn(6)
+		return &Style{fmt.Sprintf("%03d", r*100+g*10+b), buildStyleNoStrip(bgAnsi256(uint8(r), uint8(g), uint8(b)))}, nil
+	case "bg-off":
+		return &Style{"bg-off", func(a string) string { return a }}, nil // no background
+	}
+	namedColor := getNamedColor(name)
+	if namedColor != nil {
+		return namedColor, nil
+	}
+	if strings.HasPrefix(name, "#") {
+		return &Style{name, buildStyle(Chalk.WithHex(name))}, nil
+	}
+	customColor, err := getCustomColor(name)
+	if err != nil {
+		return nil, err
+	}
+	if customColor != nil {
+		return customColor, nil
+	}
+	return nil, errors.New(`Which color? Choose from ` + colorNameWithColor("random") + `, ` + colorNameWithColor("bg-random") + `, ` + ColorHelpMsg)
 }
 
 // Return the msg string with the same colors as the reference string
