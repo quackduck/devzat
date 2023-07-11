@@ -62,6 +62,12 @@ Devzat uses public keys to identify users. If you are denied access: `foo@devzat
 
 This error may happen because you do not have an SSH key pair. Generate one with the command `ssh-keygen` if this is the case. (you can usually check if you have a key pair by making sure a file of this form: `~/.ssh/id_*` exists)
 
+## Gitpod single click install !EXPERIMENTAL!
+
+Gitpod has the ability to host a private Devzat server for you and your friends, keep in mind that this is EXPERIMENTAL!
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/quackduck/devzat)
+
 ### Help
 
 ```text
