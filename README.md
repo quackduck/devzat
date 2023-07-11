@@ -62,9 +62,21 @@ Devzat uses public keys to identify users. If you are denied access: `foo@devzat
 
 This error may happen because you do not have an SSH key pair. Generate one with the command `ssh-keygen` if this is the case. (you can usually check if you have a key pair by making sure a file of this form: `~/.ssh/id_*` exists)
 
-## Gitpod single click install !EXPERIMENTAL!
+## Gitpod single click install
 
-Gitpod has the ability to host a private Devzat server for you and your friends, keep in mind that this is EXPERIMENTAL!
+Gitpod has the ability to host a private Devzat server for you and your friends. In order to open it publicly, follow the following steps:
+
+You can currently copy/paste a simple SSH command to get command line access to your workspace from the Gitpod dashboard.
+
+    Visit your workspace list in Gitpod
+    View a running Gitpod workspace (in this case, devzat) and click the more actions menu
+    Select “connect via SSH”
+    Navigate to the “Access Token” tab
+    Copy paste the selected command
+
+    More info here: https://www.gitpod.io/docs/references/ides-and-editors/command-line
+
+When running the devzat setup, you will also have to click "make public" on all popup windows on the bottom right of your console.
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/quackduck/devzat)
 
