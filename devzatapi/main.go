@@ -12,21 +12,19 @@ type Message struct {
 	Room,
 	From,
 	Data string
-	Error error
 }
 
 type CmdInvocation struct {
 	Room,
 	From,
 	Args string
-	Error error
 }
 
 type Session struct {
 	conn         *grpc.ClientConn
 	pluginClient plugin.PluginClient
 
-	LastError error
+	ErrorChan chan error
 }
 
 // NewSession connects to the Devzat server and creates a session. The address should be in the form of "host:port".
@@ -49,7 +47,7 @@ func NewSession(address string, token string) (*Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Session{conn: conn, pluginClient: plugin.NewPluginClient(conn)}, nil
+	return &Session{conn: conn, pluginClient: plugin.NewPluginClient(conn), ErrorChan: make(chan error)}, nil
 }
 
 // Close closes the session.
@@ -57,7 +55,14 @@ func (s *Session) Close() error {
 	return s.conn.Close()
 }
 
-// check s.LastError when sending a response and message.Error when reading messages.
+// RegisterListener allows for message monitoring and intercepting/editing.
+// Set middleware to true if you want to intercept and edit messages.
+// Set once to true if you want to unregister the listener after the first message is received.
+// Set regex to a valid regex string if you want to only receive messages that match the regex.
+// The messageChan will receive messages that match the regex.
+// The middlewareResponseChan is used to send back the edited message. You must send a response if middleware is true
+// even if you don't edit the message.
+// Make sure to always read from ErrorChan when sending a response and when reading messages.
 func (s *Session) RegisterListener(middleware, once bool, regex string) (messageChan chan Message, middlewareResponseChan chan string, err error) {
 	client, err := s.pluginClient.RegisterListener(context.Background())
 	if err != nil {
@@ -82,10 +87,12 @@ func (s *Session) RegisterListener(middleware, once bool, regex string) (message
 		for {
 			e, err = client.Recv()
 			if err != nil {
-				messageChan <- Message{Error: err}
+				messageChan <- Message{}
+				s.ErrorChan <- err
 				continue
 			}
 			messageChan <- Message{Room: e.Room, From: e.From, Data: e.Msg}
+			s.ErrorChan <- nil
 		}
 	}()
 
@@ -98,10 +105,11 @@ func (s *Session) RegisterListener(middleware, once bool, regex string) (message
 		for {
 			response := <-middlewareResponseChan
 			err := client.Send(&plugin.ListenerClientData{Data: &plugin.ListenerClientData_Response{Response: &plugin.MiddlewareResponse{Msg: &response}}})
-			if err != nil { // TODO: users can miss an error if they check too fast. use an error channel?
-				s.LastError = err
-				return
+			if err != nil {
+				s.ErrorChan <- err
+				continue
 			}
+			s.ErrorChan <- nil
 		}
 	}()
 
@@ -141,10 +149,12 @@ func (s *Session) RegisterCmd(name, argsInfo, info string) (chan CmdInvocation, 
 		for {
 			invoc, err := client.Recv()
 			if err != nil {
-				cmdInvocChan <- CmdInvocation{Error: err}
+				cmdInvocChan <- CmdInvocation{}
+				s.ErrorChan <- err
 				continue
 			}
 			cmdInvocChan <- CmdInvocation{Room: invoc.Room, From: invoc.From, Args: invoc.Args}
+			s.ErrorChan <- nil
 		}
 	}()
 	return cmdInvocChan, nil

@@ -16,7 +16,7 @@ func main() {
 	}
 	for {
 		msg := <-messageChan
-		if msg.Error != nil {
+		if err = <-s.ErrorChan; err != nil {
 			panic(err)
 		}
 		if msg.Data == "ping" {

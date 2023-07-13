@@ -76,6 +76,5 @@ func twitterInit() { // called by init() in config.go
 	if err != nil {
 		Log.Println("Twitter auth failed:", err)
 		Integrations.Twitter = nil
-		return
 	}
 }
