@@ -2,7 +2,8 @@ package devzatapi
 
 import (
 	"context"
-	"devzat/plugin"
+
+	"github.com/quackduck/devzat/plugin"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"

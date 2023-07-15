@@ -3,7 +3,7 @@ module github.com/quackduck/devzat/devzatapi
 go 1.20
 
 require (
-	devzat/plugin v0.0.0-00010101000000-000000000000
+	github.com/quackduck/devzat/plugin v0.0.0-20230715201334-cc16f25360de
 	google.golang.org/grpc v1.56.1
 )
 
@@ -16,4 +16,4 @@ require (
 	google.golang.org/protobuf v1.31.0 // indirect
 )
 
-replace devzat/plugin => ../plugin
+replace github.com/quackduck/devzat/plugin => ../plugin
