@@ -16,4 +16,4 @@ require (
 	google.golang.org/protobuf v1.31.0 // indirect
 )
 
- replace devzat/plugin => ../plugin
+replace devzat/plugin => ../plugin

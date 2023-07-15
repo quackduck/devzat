@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/quackduck/devzat/devzatapi"
 	"os"
+
+	"github.com/quackduck/devzat/devzatapi"
 )
 
 func main() {

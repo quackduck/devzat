@@ -56,13 +56,14 @@ func (s *Session) Close() error {
 }
 
 // RegisterListener allows for message monitoring and intercepting/editing.
-// Set middleware to true if you want to intercept and edit messages.
-// Set once to true if you want to unregister the listener after the first message is received.
-// Set regex to a valid regex string if you want to only receive messages that match the regex.
-// The messageChan will receive messages that match the regex.
-// The middlewareResponseChan is used to send back the edited message. You must send a response if middleware is true
+// Set middleware to true to intercept and edit messages.
+// Set once to true to unregister the listener after the first message is received.
+// Set regex to a valid regex string to only receive messages that match the regex.
+//
+// messageChan will receive messages that match the regex.
+// middlewareResponseChan is used to send back the edited message. You must send a response if middleware is true
 // even if you don't edit the message.
-// Make sure to always read from ErrorChan when sending a response and when reading messages.
+// Always read from ErrorChan when sending a response and when reading messages.
 func (s *Session) RegisterListener(middleware, once bool, regex string) (messageChan chan Message, middlewareResponseChan chan string, err error) {
 	client, err := s.pluginClient.RegisterListener(context.Background())
 	if err != nil {

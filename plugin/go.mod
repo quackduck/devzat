@@ -1,4 +1,4 @@
-module devzat/plugin
+module github.com/quackduck/devzat/plugin
 
 go 1.20
 
