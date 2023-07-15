@@ -3,11 +3,11 @@ package main
 import (
 	"os"
 
-	"github.com/quackduck/devzat/devzatapi"
+	api "github.com/quackduck/devzat/devzatapi"
 )
 
 func main() {
-	s, err := devzatapi.NewSession("devzat.hackclub.com:5556", os.Getenv("DEVZAT_TOKEN"))
+	s, err := api.NewSession("devzat.hackclub.com:5556", os.Getenv("DEVZAT_TOKEN"))
 	if err != nil {
 		panic(err)
 	}
@@ -22,7 +22,7 @@ func main() {
 		}
 		if msg.Data == "ping" {
 			middlewareResponseChan <- "pong"
-			err = s.SendMessage(msg.Room, "examplebot", "Did you say ping? I think you meant pong.", "")
+			err = s.SendMessage(api.Message{Room: msg.Room, From: "examplebot", Data: "Did you say ping? I think you meant pong."})
 			if err != nil {
 				panic(err)
 			}

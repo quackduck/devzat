@@ -12,10 +12,11 @@ import (
 type Message struct {
 	Room,
 	From,
-	Data string
+	Data,
+	DMTo string
 }
 
-type CmdInvocation struct {
+type CmdCall struct {
 	Room,
 	From,
 	Args string
@@ -118,46 +119,41 @@ func (s *Session) RegisterListener(middleware, once bool, regex string) (message
 	return
 }
 
-func (s *Session) SendMessage(room, from, msg, dmTo string) error {
-	fromPtr := &from
-	if from == "" {
+func (s *Session) SendMessage(m Message) error {
+	if m.Data == "" {
+		return nil
+	}
+	fromPtr := &m.From
+	if m.From == "" {
 		fromPtr = nil
 	}
-	dmToPtr := &dmTo
-	if dmTo == "" {
+	dmToPtr := &m.DMTo
+	if m.DMTo == "" {
 		dmToPtr = nil
 	}
 	_, err := s.pluginClient.SendMessage(context.Background(), &plugin.Message{
-		Room:        room,
+		Room:        m.Room,
 		From:        fromPtr,
-		Msg:         msg,
+		Msg:         m.Data,
 		EphemeralTo: dmToPtr,
 	})
 	return err
 }
 
-// read CmdInvocation.Error each time
-func (s *Session) RegisterCmd(name, argsInfo, info string) (chan CmdInvocation, error) {
+func (s *Session) RegisterCmd(name, argsInfo, info string, onCmd func(CmdCall, error)) error {
 	client, err := s.pluginClient.RegisterCmd(context.Background(), &plugin.CmdDef{
 		Name:     name,
 		ArgsInfo: argsInfo,
 		Info:     info,
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
-	cmdInvocChan := make(chan CmdInvocation)
 	go func() {
 		for {
-			invoc, err := client.Recv()
-			if err != nil {
-				cmdInvocChan <- CmdInvocation{}
-				s.ErrorChan <- err
-				continue
-			}
-			cmdInvocChan <- CmdInvocation{Room: invoc.Room, From: invoc.From, Args: invoc.Args}
-			s.ErrorChan <- nil
+			i, err := client.Recv()
+			onCmd(CmdCall{Room: i.Room, From: i.From, Args: i.Args}, err)
 		}
 	}()
-	return cmdInvocChan, nil
+	return nil
 }
