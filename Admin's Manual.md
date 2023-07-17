@@ -5,14 +5,10 @@ This document is for those who want to manage a self-hosted Devzat server.
 Feel free to make a [new issue](https://github.com/quackduck/devzat/issues) if something doesn't work.
 
 
-## Recommended Specs
-  * 1 Core
-  * 0.5 GB RAM
-  * 20 GB Storage
-  * 50 MBPS network speed or higher
+## Resource Usage
+As Devzat is a command-line based program, it does not need much in the way of computing power. 
+You can run it on any device you choose or on a pico board!
 
- Any Linux-based OS will work well with Devzat. We recommend ubuntu 22.04 LTS (as of 2023).
- 
 ## Installation
 ```shell
 git clone https://github.com/quackduck/devzat
