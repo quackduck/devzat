@@ -546,7 +546,7 @@ func (u *User) close(msg string) {
 	if u.isBridge {
 		return
 	}
-	if u.session != nil {
+	if u.session == nil {
 		return
 	}
 	u.session.Close()
