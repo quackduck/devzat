@@ -546,8 +546,10 @@ func (u *User) close(msg string) {
 	if u.isBridge {
 		return
 	}
-	u.session.Close()
-	u.session = nil
+	if u.session != nil {
+		u.session.Close()
+		u.session = nil
+	}
 	err := u.savePrefs()
 	if err != nil {
 		Log.Println(err) // not much else we can do
@@ -798,9 +800,7 @@ func (u *User) repl() {
 		u.lastInteract = time.Now()
 		line, err := u.term.ReadLine()
 		if err == io.EOF {
-			if u.session != nil {
-				u.close(u.Name + " has left the chat")
-			}
+			u.close(u.Name + " has left the chat")
 			return
 		}
 

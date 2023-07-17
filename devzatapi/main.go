@@ -152,6 +152,9 @@ func (s *Session) RegisterCmd(name, argsInfo, info string, onCmd func(CmdCall, e
 	go func() {
 		for {
 			i, err := client.Recv()
+			if err != nil {
+				i = &plugin.CmdInvocation{}
+			}
 			onCmd(CmdCall{Room: i.Room, From: i.From, Args: i.Args}, err)
 		}
 	}()
