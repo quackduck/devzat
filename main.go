@@ -547,9 +547,10 @@ func (u *User) close(msg string) {
 		return
 	}
 	if u.session != nil {
-		u.session.Close()
-		u.session = nil
+		return
 	}
+	u.session.Close()
+	u.session = nil
 	err := u.savePrefs()
 	if err != nil {
 		Log.Println(err) // not much else we can do
