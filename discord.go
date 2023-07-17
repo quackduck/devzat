@@ -148,7 +148,7 @@ func discordMessageHandler(_ *discordgo.Session, m *discordgo.MessageCreate) {
 
 	msgContent := strings.TrimSpace(m.ContentWithMentionsReplaced())
 	if Integrations.Slack != nil {
-		SlackChan <- Integrations.Discord.Prefix + " " + m.Author.Username + ": " + msgContent // send this discord message to slack
+		SlackChan <- Integrations.Discord.Prefix + " " + name + ": " + msgContent // send this discord message to slack
 	}
 	runCommands(msgContent, DiscordUser)
 }
