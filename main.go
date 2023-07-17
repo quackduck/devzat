@@ -565,6 +565,9 @@ func (u *User) close(msg string) {
 }
 
 func (u *User) ban(banner string) {
+	if u.addr == "" && u.id == "" {
+		return
+	}
 	Bans = append(Bans, Ban{u.addr, u.id})
 	saveBans()
 	uid := u.id
