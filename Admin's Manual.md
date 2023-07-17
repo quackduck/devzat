@@ -7,7 +7,7 @@ Feel free to make a [new issue](https://github.com/quackduck/devzat/issues) if s
 
 ## Resource Usage
 As Devzat is a command-line based program, it does not need much in the way of computing power. 
-You can run it on any device you choose or on a pico board!
+You can run it on any device you choose or on a pi zero!
 
 ## Installation
 ```shell
