@@ -654,9 +654,23 @@ func (u *User) pickUsernameQuietly(possibleName string) error {
 				break // allow selecting the same name as before the user tried to change it
 			}
 			u.writeln("", "Your username is already in use. Pick a different one:")
+		} else if isWebsiteOrIP(possibleName) {
+			u.writeln("", "Your username cannot be a website or IP address. Pick a different one:")
 		} else { // valid name
 			break
 		}
+	}
+	return err
+}
+
+// isWebsiteOrIP checks if the given string resembles a website or an IP address.
+func isWebsiteOrIP(s string) bool {
+	// Regular expression to match common website and IP address patterns.
+	// This is a simplified version, and you can customize it based on your specific needs.
+	websiteOrIPRegex := `^(https?://)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*/?$|^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$`
+	match, _ := regexp.MatchString(websiteOrIPRegex, s)
+	return match
+}
 
 		u.term.SetPrompt("> ")
 		possibleName, err = u.term.ReadLine()
