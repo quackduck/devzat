@@ -11,9 +11,10 @@ import (
 )
 
 var (
-	StartupTime = time.Now()
-	Client      *twitter.Client
-	AllowTweet  = true
+	StartupTime         = time.Now()
+	Client              *twitter.Client
+	AllowTweet          = true
+	lastTwitterErrorDay time.Time // Track the day of the last Twitter error
 )
 
 func sendCurrentUsersTwitterMessage() {
@@ -51,15 +52,23 @@ func sendCurrentUsersTwitterMessage() {
 		for _, us := range MainRoom.users {
 			names = append(names, us.Name)
 		}
-		t, _, err := Client.Statuses.Update("People on Devzat rn: "+stripansi.Strip(fmt.Sprint(names))+"\nJoin em with \"ssh devzat.hackclub.com\"\nUptime: "+printPrettyDuration(time.Since(StartupTime)), nil)
+		tweetContent := "People on Devzat rn: " + stripansi.Strip(fmt.Sprint(names)) +
+			"\nJoin em with \"ssh devzat.hackclub.com\"\nUptime: " + printPrettyDuration(time.Since(StartupTime))
+
+		// Try to post the tweet
+		t, _, err := Client.Statuses.Update(tweetContent, nil)
 		if err != nil {
-			if !strings.Contains(err.Error(), "twitter: 187 Status is a duplicate.") {
-				MainRoom.broadcast(Devbot, "err: "+err.Error())
+			// Handle Twitter errors
+			if isDuplicateStatusError(err) {
+				Log.Println("Ignoring duplicate tweet.")
+			} else if !isSameDay(time.Now(), lastTwitterErrorDay) {
+				MainRoom.broadcast(Devbot, "Error sending tweet. Please try again later.")
+				lastTwitterErrorDay = time.Now()
 			}
-			Log.Println("Got twitter err", err)
+			Log.Println("Failed to send tweet:", err)
 			return
 		}
-		MainRoom.broadcast(Devbot, "https\\://twitter.com/"+t.User.ScreenName+"/status/"+t.IDStr)
+		MainRoom.broadcast(Devbot, "https://twitter.com/"+t.User.ScreenName+"/status/"+t.IDStr)
 	}()
 }
 
