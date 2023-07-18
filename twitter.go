@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 	"time"
-	"os"
 
 	"github.com/acarl005/stripansi"
 	"github.com/dghubble/go-twitter/twitter" //nolint:staticcheck // library deprecated
@@ -16,8 +15,6 @@ var (
 	Client      *twitter.Client
 	AllowTweet  = true
 )
-
-const twitterLogFilename = "twitter_logs.txt"
 
 func sendCurrentUsersTwitterMessage() {
 	if Integrations.Twitter == nil {
@@ -59,30 +56,14 @@ func sendCurrentUsersTwitterMessage() {
 		t, _, err := Client.Statuses.Update(tweetText, nil)
 		if err != nil {
 			if !strings.Contains(err.Error(), "twitter: 187 Status is a duplicate.") {
-				// Log the error to the file
-				logErrorToFile(err)
+				// Log the error to the file using Log.Println
+				Log.Println("Twitter error:", err)
 			}
 			Log.Println("Got twitter err", err)
 			return
 		}
 		MainRoom.broadcast(Devbot, "https\\://twitter.com/"+t.User.ScreenName+"/status/"+t.IDStr)
 	}()
-}
-
-func logErrorToFile(err error) {
-	file, err := os.OpenFile(twitterLogFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		Log.Println("Error opening twitter log file:", err)
-		return
-	}
-	defer file.Close()
-
-	logTime := time.Now().Format("2006-01-02 15:04:05")
-	logEntry := fmt.Sprintf("[%s] Error: %s\n", logTime, err.Error())
-
-	if _, err = file.WriteString(logEntry); err != nil {
-		Log.Println("Error writing to twitter log file:", err)
-	}
 }
 
 func twitterInit() { // called by init() in config.go
