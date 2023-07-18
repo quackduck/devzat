@@ -18,6 +18,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	"regexp"
 
 	"github.com/acarl005/stripansi"
 	"github.com/gliderlabs/ssh"
