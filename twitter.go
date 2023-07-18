@@ -52,8 +52,6 @@ func sendCurrentUsersTwitterMessage() {
 			names = append(names, us.Name)
 		}
 		tweetText := "People on Devzat rn: " + stripansi.Strip(fmt.Sprint(names)) + "\nJoin em with \"ssh devzat.hackclub.com\"\nUptime: " + printPrettyDuration(time.Since(StartupTime))
-
-		t, _, err := Client.Statuses.Update(tweetText, nil)
 		if err != nil {
 			if !strings.Contains(err.Error(), "twitter: 187 Status is a duplicate.") {
 				// Log the error to the file using Log.Println
