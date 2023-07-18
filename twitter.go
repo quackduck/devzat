@@ -56,7 +56,6 @@ func sendCurrentUsersTwitterMessage() {
 		t, _, err := Client.Statuses.Update(tweetText, nil)
 		if err != nil {
 			if !strings.Contains(err.Error(), "twitter: 187 Status is a duplicate.") {
-				// Log the error to the file using Log.Println
 				Log.Println("Twitter error:", err)
 			}
 			Log.Println("Got twitter err", err)
