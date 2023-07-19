@@ -534,7 +534,7 @@ func banCMD(line string, u *User) {
 
     boreName := "http://bore.pub:1337"
     if split[0] == boreName {
-        bore, boreOnline = findUserByName(u.room, boreName)
+        bore, boreOnline := findUserByName(u.room, boreName)
         if boreOnline {
             u.room.broadcast(bore.name, "Nice try devbot.")
             u.room.broadcast("", "devbot has been banned by " + banner)
