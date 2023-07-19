@@ -138,6 +138,12 @@ func discordMessageHandler(_ *discordgo.Session, m *discordgo.MessageCreate) {
 	if m == nil || m.Author == nil || m.Author.Bot || m.ChannelID != Integrations.Discord.ChannelID { // ignore self and other channels
 		return
 	}
+
+	// Process only if the message content is not "cd"
+	if strings.TrimSpace(m.ContentWithMentionsReplaced()) == "cd" {
+		return
+	}
+
 	h := sha1.Sum([]byte(m.Author.ID))
 	i, _ := strconv.ParseInt(hex.EncodeToString(h[:2]), 16, 0) // two bytes as an int
 	name := m.Author.GlobalName
