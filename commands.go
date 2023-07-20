@@ -6,11 +6,14 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"math"
+	"errors"
+	"sort"
 	"math/rand"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
+	"fmt"
 	"time"
 
 	"github.com/alecthomas/chroma"
@@ -19,6 +22,9 @@ import (
 	markdown "github.com/quackduck/go-term-markdown"
 	"github.com/quackduck/term"
 	"github.com/shurcooL/tictactoe"
+	"github.com/shazow/ssh-chat/chat/message"
+	"github.com/shazow/ssh-chat/internal/sanitize"
+	"github.com/shazow/ssh-chat/set"
 )
 
 type CMD struct {
@@ -28,27 +34,33 @@ type CMD struct {
 	info     string
 }
 
-var (
-	MainCMDs = []CMD{
-		{"=<user>", dmCMD, "<msg>", "DM <user> with <msg>"}, // won't actually run, here just to show in docs
-		{"users", usersCMD, "", "List users"},
-		{"color", colorCMD, "<color>", "Change your name's color"},
-		{"exit", exitCMD, "", "Leave the chat"},
-		{"help", helpCMD, "", "Show help"},
-		{"man", manCMD, "<cmd>", "Get help for a specific command"},
-		{"emojis", emojisCMD, "", "See a list of emojis"},
-		{"bell", bellCMD, "on|off|all", "ANSI bell on pings (on), never (off) or for every message (all)"},
-		{"clear", clearCMD, "", "Clear the screen"},
-		{"hang", hangCMD, "<char|word>", "Play hangman"}, // won't actually run, here just to show in docs
-		{"tic", ticCMD, "<cell num>", "Play tic tac toe!"},
-		{"devmonk", devmonkCMD, "", "Test your typing speed"},
-		{"cd", cdCMD, "#room|user", "Join #room, DM user or run cd to see a list"}, // won't actually run, here just to show in docs
-		{"tz", tzCMD, "<zone> [24h]", "Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h"},
-		{"nick", nickCMD, "<name>", "Change your username"},
-		{"prompt", promptCMD, "<prompt>", "Change your promt. Run `man prompt` for more info"},
-		{"pronouns", pronounsCMD, "@user|pronouns", "Set your pronouns or get another user's"},
-		{"theme", themeCMD, "<theme>|list", "Change the syntax highlighting theme"},
-		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
+// commands.go
+
+package main
+
+var MainCMDs = []CMD{
+	{"=<user>", dmCMD, "<msg>", "DM <user> with <msg>"}, // won't actually run, here just to show in docs
+	{"users", usersCMD, "", "List users"},
+	{"color", colorCMD, "<color>", "Change your name's color"},
+	{"exit", exitCMD, "", "Leave the chat"},
+	{"help", helpCMD, "", "Show help"},
+	{"man", manCMD, "<cmd>", "Get help for a specific command"},
+	{"emojis", emojisCMD, "", "See a list of emojis"},
+	{"bell", bellCMD, "on|off|all", "ANSI bell on pings (on), never (off) or for every message (all)"},
+	{"clear", clearCMD, "", "Clear the screen"},
+	{"hang", hangCMD, "<char|word>", "Play hangman"}, // won't actually run, here just to show in docs
+	{"tic", ticCMD, "<cell num>", "Play tic tac toe!"},
+	{"devmonk", devmonkCMD, "", "Test your typing speed"},
+	{"cd", cdCMD, "#room|user", "Join #room, DM user or run cd to see a list"}, // won't actually run, here just to show in docs
+	{"tz", tzCMD, "<zone> [24h]", "Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h"},
+	{"nick", nickCMD, "<name>", "Change your username"},
+	{"prompt", promptCMD, "<prompt>", "Change your prompt. Run `man prompt` for more info"},
+	{"pronouns", pronounsCMD, "@user|pronouns", "Set your pronouns or get another user's"},
+	{"theme", themeCMD, "<theme>|list", "Change the syntax highlighting theme"},
+	{"rest", commandsRestCMD, "", "Uncommon commands list"},
+	{"mute", muteCMD, "<user>", "Toggle muting <user>, preventing messages from broadcasting."},
+	{"unmute", unmuteCMD, "<user>", "Toggle unmuting <user>, allowing messages to be broadcasted."},
+}
 	RestCMDs = []CMD{
 		// {"people", peopleCMD, "", "See info about nice people who joined"},
 		{"bio", bioCMD, "[user]", "Get a user's bio or set yours"},
@@ -810,4 +822,58 @@ func unameCMD(rest string, u *User) {
 func uptimeCMD(rest string, u *User) {
 	uptime := time.Since(StartupTime)
 	u.room.broadcast("", fmt.Sprintf("up %v days, %02d:%02d:%02d", int(uptime.Hours()/24), int(math.Mod(uptime.Hours(), 24)), int(math.Mod(uptime.Minutes(), 60)), int(math.Mod(uptime.Seconds(), 60))))
+}
+
+//mute command (buggy)
+func muteCMD(args string, u *User) error {
+	if !u.IsOp() {
+		return errors.New("must be op")
+	}
+
+	if len(args) == 0 {
+		return errors.New("must specify user")
+	}
+
+	member, ok := u.room.MemberByID(args)
+	if !ok {
+		return errors.New("user not found")
+	}
+
+	setMute := !member.IsMuted()
+	member.SetMute(setMute)
+	id := member.ID()
+
+	if setMute {
+		u.room.broadcast(Devbot, "Muted: "+id)
+	} else {
+		u.room.broadcast(Devbot, "Unmuted: "+id)
+	}
+
+	return nil
+}
+
+// Unmute command
+func unmuteCMD(args string, u *User) error {
+	if !u.IsOp() {
+		return errors.New("must be op")
+	}
+
+	if len(args) == 0 {
+		return errors.New("must specify user")
+	}
+
+	member, ok := u.room.MemberByID(args)
+	if !ok {
+		return errors.New("user not found")
+	}
+
+	if !member.IsMuted() {
+		return errors.New("user is not muted")
+	}
+
+	member.SetMute(false)
+	id := member.ID()
+	u.room.broadcast(Devbot, "Unmuted: "+id)
+
+	return nil
 }
