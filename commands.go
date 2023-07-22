@@ -827,18 +827,3 @@ func neofetchCMD(line string, u *User) {
 	// Convert the content to a string and print it
 	fmt.Println(string(content))
 }
-
-// Assuming you have a User struct defined like this:
-type User struct {
-	// User fields
-}
-
-// Then you can add the "neofetch" command to the struct like this:
-var commands = []Command{
-	{
-		Name:        "neofetch",
-		HandlerFunc: neofetchCMD,
-		Description: "apease the Arch user (mostly)",
-	},
-
-}
