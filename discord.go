@@ -138,6 +138,13 @@ func discordMessageHandler(_ *discordgo.Session, m *discordgo.MessageCreate) {
 	if m == nil || m.Author == nil || m.Author.Bot || m.ChannelID != Integrations.Discord.ChannelID { // ignore self and other channels
 		return
 	}
+
+	// Process only if the message starts with "cd " or "cd\n"
+	msgContent := strings.TrimSpace(m.ContentWithMentionsReplaced())
+	if strings.HasPrefix(msgContent, "cd ") || msgContent == "cd" {
+		return
+	}
+
 	h := sha1.Sum([]byte(m.Author.ID))
 	i, _ := strconv.ParseInt(hex.EncodeToString(h[:2]), 16, 0) // two bytes as an int
 	name := m.Author.GlobalName
@@ -146,7 +153,6 @@ func discordMessageHandler(_ *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	DiscordUser.Name = Magenta.Paint(Integrations.Discord.Prefix+" ") + (Styles[int(i)%len(Styles)]).apply(name)
 
-	msgContent := strings.TrimSpace(m.ContentWithMentionsReplaced())
 	if Integrations.Slack != nil {
 		SlackChan <- Integrations.Discord.Prefix + " " + name + ": " + msgContent // send this discord message to slack
 	}
