@@ -817,10 +817,15 @@ func uptimeCMD(rest string, u *User) {
 }
 
 func neofetchCMD() {
-	// Read ASCII art from the "neofetch.txt" file
-	asciiArt, err := ioutil.ReadFile("neofetch.txt")
-	if err != nil {
-		fmt.Println("Error reading neofetch.txt:", err)
-		return
-	}
+    fileName := "neofetch.txt"
+
+    // Read the content of the file
+    content, err := ioutil.ReadFile(fileName)
+    if err != nil {
+        fmt.Println("Error reading the file:", err)
+        return
+    }
+
+    // Convert the content to a string and print it
+    fmt.Println(string(content))
 }
