@@ -814,9 +814,9 @@ func uptimeCMD(rest string, u *User) {
 	u.room.broadcast("", fmt.Sprintf("up %v days, %02d:%02d:%02d", int(uptime.Hours()/24), int(math.Mod(uptime.Hours(), 24)), int(math.Mod(uptime.Minutes(), 60)), int(math.Mod(uptime.Seconds(), 60))))
 }
 
-// MuteCommand
+// MuteCommand mutes a specific user.
 func MuteCommand(room *Room, msg message.CommandMsg) error {
-	id := strings.TrimSpace(strings.TrimLeft(msg.Body(), "/mute"))
+	id := strings.TrimSpace(strings.TrimPrefix(msg.Body(), "/ignore"))
 	if id == "" {
 		// Print muted names, if any.
 		var names []string
@@ -832,7 +832,7 @@ func MuteCommand(room *Room, msg message.CommandMsg) error {
 			systemMsg = fmt.Sprintf("%d muted: %s", len(names), strings.Join(names, ", "))
 		}
 
-		room.Send(message.NewSystemMsg(systemMsg, msg.From()))
+		msg.From().Send(message.NewSystemMsg(systemMsg))
 		return nil
 	}
 
@@ -852,13 +852,13 @@ func MuteCommand(room *Room, msg message.CommandMsg) error {
 		return err
 	}
 
-	room.Send(message.NewSystemMsg(fmt.Sprintf("Muted: %s", target.Name()), msg.From()))
+	msg.From().Send(message.NewSystemMsg(fmt.Sprintf("Muted: %s", target.Name())))
 	return nil
 }
 
-// UnmuteCommand
+// UnmuteCommand unmutes a specific user.
 func UnmuteCommand(room *Room, msg message.CommandMsg) error {
-	id := strings.TrimSpace(strings.TrimLeft(msg.Body(), "/unmute"))
+	id := strings.TrimSpace(strings.TrimPrefix(msg.Body(), "/unignore"))
 	if id == "" {
 		return errors.New("must specify user")
 	}
@@ -867,6 +867,6 @@ func UnmuteCommand(room *Room, msg message.CommandMsg) error {
 		return err
 	}
 
-	room.Send(message.NewSystemMsg(fmt.Sprintf("Unmuted: %s", id), msg.From()))
+	msg.From().Send(message.NewSystemMsg(fmt.Sprintf("Unmuted: %s", id)))
 	return nil
 }
