@@ -12,6 +12,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"io/ioutil"
 
 	"github.com/alecthomas/chroma"
 	chromastyles "github.com/alecthomas/chroma/styles"
@@ -74,6 +75,9 @@ var (
 		{"colour", colorCMD, "???", "This is an alias of color"}, // appease the british
 		{":q", exitCMD, "", "This is an alias of exit"},          // appease the Vim user
 		{":wq", exitCMD, "", "This is an alias of exit"},         // appease the Vim user, that wants to save
+		{"finger", lsCMD, "???", "This is an alias of id"}, // appease the Linux / Unix user
+		{"del", rmCMD, "???", "This is an alias of rm"}, //apease the MS-DOS user :)
+		{"neofetch", neofetchCMD, "???", "???"}, //apease the Arch user (mostly)
 	}
 
 	unameCommit = ""
@@ -810,4 +814,13 @@ func unameCMD(rest string, u *User) {
 func uptimeCMD(rest string, u *User) {
 	uptime := time.Since(StartupTime)
 	u.room.broadcast("", fmt.Sprintf("up %v days, %02d:%02d:%02d", int(uptime.Hours()/24), int(math.Mod(uptime.Hours(), 24)), int(math.Mod(uptime.Minutes(), 60)), int(math.Mod(uptime.Seconds(), 60))))
+}
+
+func neofetchCMD() {
+	// Read ASCII art from the "neofetch.txt" file
+	asciiArt, err := ioutil.ReadFile("neofetch.txt")
+	if err != nil {
+		fmt.Println("Error reading neofetch.txt:", err)
+		return
+	}
 }
