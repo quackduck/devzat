@@ -839,4 +839,6 @@ var commands = []Command{
 		Name:        "neofetch",
 		HandlerFunc: neofetchCMD,
 		Description: "apease the Arch user (mostly)",
-	}
+	},
+
+}
