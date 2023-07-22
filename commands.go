@@ -8,7 +8,6 @@ import (
 	"math"
 	"math/rand"
 	"sort"
-	"errors"
 	"strconv"
 	"strings"
 	"sync"
@@ -21,7 +20,6 @@ import (
 	"github.com/quackduck/term"
 	"github.com/shurcooL/tictactoe"
 	"github.com/shazow/ssh-chat/chat/message"	//needs to be manually imported
-	"github.com/shazow/ssh-chat/internal/sanitize"	//needs to be manually imported
 	"github.com/shazow/ssh-chat/set"	//needs to be manually imported
 )
 
@@ -59,8 +57,6 @@ var (
 		{"id", idCMD, "<user>", "Get a unique ID for a user (hashed key)"},
 		{"admins", adminsCMD, "", "Print the ID (hashed key) for all admins"},
 		{"eg-code", exampleCodeCMD, "[big]", "Example syntax-highlighted code"},
-		{"mute", muteCMD, "<user>", "Mute USER, preventing their messages from broadcasting"},
-		{"unmute", unmuteCMD, "<user>", "Unmute USER, allowing their messages to be broadcasted again"},
 		{"lsbans", listBansCMD, "", "List banned IDs"},
 		{"ban", banCMD, "<user>", "Ban <user> (admin)"},
 		{"unban", unbanCMD, "<IP|ID> [dur]", "Unban a person and optionally, for a duration (admin)"},
@@ -818,44 +814,59 @@ func uptimeCMD(rest string, u *User) {
 	u.room.broadcast("", fmt.Sprintf("up %v days, %02d:%02d:%02d", int(uptime.Hours()/24), int(math.Mod(uptime.Hours(), 24)), int(math.Mod(uptime.Minutes(), 60)), int(math.Mod(uptime.Seconds(), 60))))
 }
 
-//mutecmd 
-func MuteCommand(c *Client, msg message.CommandMsg) error {
-	args := msg.Args()
-	if len(args) == 0 {
-		return errors.New("must specify user")
+// MuteCommand
+func MuteCommand(room *Room, msg message.CommandMsg) error {
+	id := strings.TrimSpace(strings.TrimLeft(msg.Body(), "/mute"))
+	if id == "" {
+		// Print muted names, if any.
+		var names []string
+		msg.From().ignored.Each(func(item string) error {
+			names = append(names, item)
+			return nil
+		})
+
+		var systemMsg string
+		if len(names) == 0 {
+			systemMsg = "0 users muted."
+		} else {
+			systemMsg = fmt.Sprintf("%d muted: %s", len(names), strings.Join(names, ", "))
+		}
+
+		room.Send(message.NewSystemMsg(systemMsg, msg.From()))
+		return nil
 	}
 
-	member, ok := c.room.MemberByID(args[0])
-	if !ok {
-		return errors.New("user not found")
-	}
-
-	if member.ID() == c.ID() {
+	if id == msg.From().ID() {
 		return errors.New("cannot mute yourself")
 	}
 
-	member.SetMuted(true)
-	c.room.Send(message.NewSystemMsg(fmt.Sprintf("You have muted: %s", member.Name()), c))
+	target, ok := room.MemberByID(id)
+	if !ok {
+		return fmt.Errorf("user not found: %s", id)
+	}
+
+	err := msg.From().ignored.Add(id)
+	if err == set.ErrCollision {
+		return fmt.Errorf("user already muted: %s", id)
+	} else if err != nil {
+		return err
+	}
+
+	room.Send(message.NewSystemMsg(fmt.Sprintf("Muted: %s", target.Name()), msg.From()))
 	return nil
 }
 
-//unmutecmd
-func UnmuteCommand(c *Client, msg message.CommandMsg) error {
-	args := msg.Args()
-	if len(args) == 0 {
+// UnmuteCommand
+func UnmuteCommand(room *Room, msg message.CommandMsg) error {
+	id := strings.TrimSpace(strings.TrimLeft(msg.Body(), "/unmute"))
+	if id == "" {
 		return errors.New("must specify user")
 	}
 
-	member, ok := c.room.MemberByID(args[0])
-	if !ok {
-		return errors.New("user not found")
+	if err := msg.From().ignored.Remove(id); err != nil {
+		return err
 	}
 
-	if member.ID() == c.ID() {
-		return errors.New("cannot unmute yourself")
-	}
-
-	member.SetMuted(false)
-	c.room.Send(message.NewSystemMsg(fmt.Sprintf("You have unmuted: %s", member.Name()), c))
+	room.Send(message.NewSystemMsg(fmt.Sprintf("Unmuted: %s", id), msg.From()))
 	return nil
 }
