@@ -814,16 +814,29 @@ func uptimeCMD(rest string, u *User) {
 	u.room.broadcast("", fmt.Sprintf("up %v days, %02d:%02d:%02d", int(uptime.Hours()/24), int(math.Mod(uptime.Hours(), 24)), int(math.Mod(uptime.Minutes(), 60)), int(math.Mod(uptime.Seconds(), 60))))
 }
 
-func neofetchCMD() {
-    fileName := "neofetch.txt"
+func neofetchCMD(line string, u *User) {
+	fileName := "neofetch.txt"
 
-    // Read the content of the file
-    content, err := ioutil.ReadFile(fileName)
-    if err != nil {
-        fmt.Println("Error reading the file:", err)
-        return
-    }
+	// Read the content of the file
+	content, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		fmt.Println("Error reading the file:", err)
+		return
+	}
 
-    // Convert the content to a string and print it
-    fmt.Println(string(content))
+	// Convert the content to a string and print it
+	fmt.Println(string(content))
 }
+
+// Assuming you have a User struct defined like this:
+type User struct {
+	// User fields
+}
+
+// Then you can add the "neofetch" command to the struct like this:
+var commands = []Command{
+	{
+		Name:        "neofetch",
+		HandlerFunc: neofetchCMD,
+		Description: "apease the Arch user (mostly)",
+	}
