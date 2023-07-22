@@ -7,16 +7,18 @@ import (
 	_ "image/png"
 	"math"
 	"math/rand"
+	"os"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
-	"io/ioutil"
 
 	"github.com/alecthomas/chroma"
 	chromastyles "github.com/alecthomas/chroma/styles"
 	"github.com/fatih/color"
+	"github.com/jwalton/gchalk"
 	markdown "github.com/quackduck/go-term-markdown"
 	"github.com/quackduck/term"
 	"github.com/shurcooL/tictactoe"
@@ -75,7 +77,7 @@ var (
 		{"colour", colorCMD, "???", "This is an alias of color"}, // appease the british
 		{":q", exitCMD, "", "This is an alias of exit"},          // appease the Vim user
 		{":wq", exitCMD, "", "This is an alias of exit"},         // appease the Vim user, that wants to save
-		{"neofetch", neofetchCMD, "???", "???"}, //apease the Arch user (mostly)
+		{"neofetch", neofetchCMD, "???", "???"},                  //apease the Arch user (mostly)
 	}
 
 	unameCommit = ""
@@ -814,16 +816,48 @@ func uptimeCMD(rest string, u *User) {
 	u.room.broadcast("", fmt.Sprintf("up %v days, %02d:%02d:%02d", int(uptime.Hours()/24), int(math.Mod(uptime.Hours(), 24)), int(math.Mod(uptime.Minutes(), 60)), int(math.Mod(uptime.Seconds(), 60))))
 }
 
-func neofetchCMD(line string, u *User) {
-	fileName := "neofetch.txt"
-
-	// Read the content of the file
-	content, err := ioutil.ReadFile(fileName)
+func neofetchCMD(_ string, u *User) {
+	content, err := os.ReadFile(Config.DataDir + "/neofetch.txt")
 	if err != nil {
-		fmt.Println("Error reading the file:", err)
+		u.room.broadcast("", "Error reading "+Config.DataDir+"/neofetch.txt: "+err.Error())
 		return
 	}
-
-	// Convert the content to a string and print it
-	fmt.Println(string(content))
+	contentSplit := strings.Split(string(content), "\n")
+	uptime := time.Since(StartupTime)
+	uptimeStr := fmt.Sprintf("%v days, %v hours, %v minutes", int(uptime.Hours()/24), int(math.Mod(uptime.Hours(), 24)), int(math.Mod(uptime.Minutes(), 60)))
+	memstats := runtime.MemStats{}
+	runtime.ReadMemStats(&memstats)
+	userHost := os.Getenv("USER") + "@" + os.Getenv("HOSTNAME")
+	colorSwatch1 := "\u001B[30m\u001B[40m   \u001B[31m\u001B[41m   \u001B[32m\u001B[42m   \u001B[33m\u001B[43m   \u001B[34m\u001B[44m   \u001B[35m\u001B[45m   \u001B[36m\u001B[46m   \u001B[37m\u001B[47m   \u001B[m"
+	colorSwatch2 := "\u001B[38;5;8m\u001B[48;5;8m   \u001B[38;5;9m\u001B[48;5;9m   \u001B[38;5;10m\u001B[48;5;10m   \u001B[38;5;11m\u001B[48;5;11m   \u001B[38;5;12m\u001B[48;5;12m   \u001B[38;5;13m\u001B[48;5;13m   \u001B[38;5;14m\u001B[48;5;14m   \u001B[38;5;15m\u001B[48;5;15m   \u001B[m"
+	properties := []struct {
+		Key   string
+		Value string
+	}{
+		{"", userHost},
+		{"", strings.Repeat("-", len(userHost))},
+		{"OS", "Devzat"},
+		{"Uptime", uptimeStr},
+		{"Packages", fmt.Sprint(len(PluginCMDs)+len(MainCMDs)+len(RestCMDs)) + " commands"},
+		{"Shell", "devzat"},
+		{"Memory", fmt.Sprintf("%v MiB alloc / %v MiB sys, %v GC cycles", memstats.Alloc/1024/1024, memstats.Sys/1024/1024, memstats.NumGC)},
+		{"", ""},
+		{"", colorSwatch1},
+		{"", colorSwatch2},
+	}
+	result := ""
+	green := gchalk.RGB(0, 255, 0)
+	for i, l := range contentSplit {
+		result += l
+		if i < len(properties) {
+			p := properties[i]
+			if p.Key != "" && p.Value != "" {
+				result += "   " + green(p.Key) + ": " + p.Value
+			} else if p.Value != "" {
+				result += "   " + p.Value
+			}
+		}
+		result += "  \n"
+	}
+	u.room.broadcast("", result)
 }
