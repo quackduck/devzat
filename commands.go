@@ -787,7 +787,6 @@ func lsCMD(rest string, u *User) {
 		for _, us := range u.room.users {
 			s += us.id + " " + us.Name + "  \n"
 		}
-        s += strings.Repeat("0", 64) + Devbot + " \n"
 		u.room.broadcast("", s)
 		return
 	}
