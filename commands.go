@@ -803,7 +803,7 @@ func lsCMD(rest string, u *User) {
 	for _, us := range u.room.users {
 		usersList += us.Name + Blue.Paint("/ ")
 	}
-    userList += Devbot + Blue.Paint("/ ")
+    usersList += Devbot + Blue.Paint("/ ")
 	u.room.broadcast("", "README.md "+usersList+roomList)
 }
 
