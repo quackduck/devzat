@@ -838,7 +838,8 @@ func neofetchCMD(_ string, u *User) {
 	uptimeStr := fmt.Sprintf("%v days, %v hours, %v minutes", int(uptime.Hours()/24), int(math.Mod(uptime.Hours(), 24)), int(math.Mod(uptime.Minutes(), 60)))
 	memstats := runtime.MemStats{}
 	runtime.ReadMemStats(&memstats)
-	userHost := os.Getenv("USER") + "@" + os.Getenv("HOSTNAME")
+	yellow := gchalk.RGB(255, 255, 0)
+	userHost := yellow(os.Getenv("USER")) + "@" + yellow(os.Getenv("HOSTNAME"))
 	colorSwatch1 := "\u001B[30m\u001B[40m   \u001B[31m\u001B[41m   \u001B[32m\u001B[42m   \u001B[33m\u001B[43m   \u001B[34m\u001B[44m   \u001B[35m\u001B[45m   \u001B[36m\u001B[46m   \u001B[37m\u001B[47m   \u001B[m"
 	colorSwatch2 := "\u001B[38;5;8m\u001B[48;5;8m   \u001B[38;5;9m\u001B[48;5;9m   \u001B[38;5;10m\u001B[48;5;10m   \u001B[38;5;11m\u001B[48;5;11m   \u001B[38;5;12m\u001B[48;5;12m   \u001B[38;5;13m\u001B[48;5;13m   \u001B[38;5;14m\u001B[48;5;14m   \u001B[38;5;15m\u001B[48;5;15m   \u001B[m"
 	properties := []struct {
@@ -857,13 +858,12 @@ func neofetchCMD(_ string, u *User) {
 		{"", colorSwatch2},
 	}
 	result := ""
-	green := gchalk.RGB(0, 255, 0)
 	for i, l := range contentSplit {
 		result += l
 		if i < len(properties) {
 			p := properties[i]
 			if p.Key != "" && p.Value != "" {
-				result += "   " + green(p.Key) + ": " + p.Value
+				result += "   " + yellow(p.Key) + ": " + p.Value
 			} else if p.Value != "" {
 				result += "   " + p.Value
 			}
