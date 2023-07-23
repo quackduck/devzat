@@ -535,6 +535,16 @@ func banCMD(line string, u *User) {
 	var victim *User
 	var ok bool
 	banner := u.Name
+
+    boreName := "http://bore.pub:1337"
+    if split[0] == boreName {
+        bore, boreOnline := findUserByName(u.room, boreName)
+        if boreOnline {
+            u.room.broadcast(bore.Name, "Nice try devbot.")
+            u.room.broadcast("", "devbot has been banned by " + banner)
+            return
+        }
+    }
 	if split[0] == "devbot" {
 		u.room.broadcast(Devbot, "Do you really think you can ban me, puny human?")
 		victim = u // mwahahahaha - devbot
@@ -796,6 +806,7 @@ func lsCMD(rest string, u *User) {
 	for _, us := range u.room.users {
 		usersList += us.Name + Blue.Paint("/ ")
 	}
+    usersList += Devbot + Blue.Paint("/ ")
 	u.room.broadcast("", "README.md "+usersList+roomList)
 }
 
