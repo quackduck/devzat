@@ -2,11 +2,11 @@ package devzatapi
 
 import (
 	"context"
-
 	"github.com/quackduck/devzat/plugin"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	"time"
 )
 
 type Message struct {
@@ -143,7 +143,7 @@ func (s *Session) SendMessage(m Message) error {
 // RegisterCmd registers a command.
 // onCmd is called when the command is used.
 // If onCmd returns true, the client stops listening for command usages.
-func (s *Session) RegisterCmd(name, argsInfo, info string, onCmd func(CmdCall, error) bool) error {
+func (s *Session) RegisterCmd(name, argsInfo, info string, onCmd func(CmdCall, error)) error {
 	client, err := s.pluginClient.RegisterCmd(context.Background(), &plugin.CmdDef{
 		Name:     name,
 		ArgsInfo: argsInfo,
@@ -156,12 +156,23 @@ func (s *Session) RegisterCmd(name, argsInfo, info string, onCmd func(CmdCall, e
 		for {
 			i, err := client.Recv()
 			if err != nil {
+				if isErrEOF(err) {
+					time.Sleep(time.Second * 2)
+					client, err = s.pluginClient.RegisterCmd(context.Background(), &plugin.CmdDef{
+						Name:     name,
+						ArgsInfo: argsInfo,
+						Info:     info,
+					})
+					continue
+				}
 				i = &plugin.CmdInvocation{}
 			}
-			if onCmd(CmdCall{Room: i.Room, From: i.From, Args: i.Args}, err) {
-				break
-			}
+			onCmd(CmdCall{Room: i.Room, From: i.From, Args: i.Args}, err)
 		}
 	}()
 	return nil
+}
+
+func isErrEOF(err error) bool {
+	return err.Error() == "rpc error: code = Unavailable desc = error reading from server: EOF"
 }
