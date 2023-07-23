@@ -140,7 +140,10 @@ func (s *Session) SendMessage(m Message) error {
 	return err
 }
 
-func (s *Session) RegisterCmd(name, argsInfo, info string, onCmd func(CmdCall, error)) error {
+// RegisterCmd registers a command.
+// onCmd is called when the command is used.
+// If onCmd returns true, the client stops listening for command usages.
+func (s *Session) RegisterCmd(name, argsInfo, info string, onCmd func(CmdCall, error) bool) error {
 	client, err := s.pluginClient.RegisterCmd(context.Background(), &plugin.CmdDef{
 		Name:     name,
 		ArgsInfo: argsInfo,
@@ -155,7 +158,9 @@ func (s *Session) RegisterCmd(name, argsInfo, info string, onCmd func(CmdCall, e
 			if err != nil {
 				i = &plugin.CmdInvocation{}
 			}
-			onCmd(CmdCall{Room: i.Room, From: i.From, Args: i.Args}, err)
+			if onCmd(CmdCall{Room: i.Room, From: i.From, Args: i.Args}, err) {
+				break
+			}
 		}
 	}()
 	return nil
