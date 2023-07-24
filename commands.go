@@ -873,17 +873,6 @@ func neofetchCMD(_ string, u *User) {
 	}
 	u.room.broadcast("", result)
 }
-package main
-
-import (
-	"fmt"
-	"math/rand"
-	"time"
-)
-
-type User struct {
-	room string
-}
 
 // MAGIC 8 BALL!!!
 func eightBallCMD(_ string, u *User) {
