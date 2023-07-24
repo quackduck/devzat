@@ -923,5 +923,6 @@ func getMagic8BallResponse() string {
 }
 
 func returneightball() {
-	eightBallCMD()
+    user := &User{} 
+    eightBallCMD("", user)
 }
