@@ -873,6 +873,17 @@ func neofetchCMD(_ string, u *User) {
 	}
 	u.room.broadcast("", result)
 }
+package main
+
+import (
+	"fmt"
+	"math/rand"
+	"time"
+)
+
+type User struct {
+	room string
+}
 
 // MAGIC 8 BALL!!!
 func eightBallCMD(_ string, u *User) {
@@ -883,13 +894,13 @@ func eightBallCMD(_ string, u *User) {
 	if command == "8-ball" {
 		response := getMagic8BallResponse()
 
-		// Print the response
-		fmt.Println(response)
+		// Broadcast the response to the room
+		u.room.broadcast("8-ball", response)
 	} else if command == "" {
 		// Easter egg message
-		fmt.Println("Thanks to hackclub for creating me!")
+		u.room.broadcast("8-ball", "Thanks to hackclub for creating me!")
 	} else {
-		fmt.Println("Command not recognized.")
+		u.room.broadcast("8-ball", "Command not recognized.")
 	}
 }
 
@@ -916,11 +927,26 @@ func getMagic8BallResponse() string {
 		"Outlook not so good.",
 		"Very doubtful.",
 	}
-	
+
 	index := rand.Intn(len(responses))
 
 	return responses[index]
 }
+
+// Simulating the broadcast function since the actual implementation might depend on your setup.
+func (r *User) broadcast(command, message string) {
+	fmt.Printf("[%s] %s\n", command, message)
+}
+
+func returneightball() {
+	user := &User{room: "chat-room"}
+	eightBallCMD("", user)
+}
+
+func main() {
+	returneightball()
+}
+
 
 func returneightball() {
 u.room.broadcast("8-ball", response)
