@@ -884,7 +884,7 @@ func eightBallCMD(_ string, u *User) {
 		response := getMagic8BallResponse()
 
 		// Print the response
-		fmt.Println(response)
+		u.room.broadcast("8-ball", response)
 	} else if command == "" {
 		// Easter egg message
 		fmt.Println("Thanks to hackclub for creating me!")
@@ -920,9 +920,4 @@ func getMagic8BallResponse() string {
 	index := rand.Intn(len(responses))
 
 	return responses[index]
-}
-
-func returneightball() {
-    user := &User{} 
-    eightBallCMD("", user)
 }
