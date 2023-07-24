@@ -894,13 +894,13 @@ func eightBallCMD(_ string, u *User) {
 	if command == "8-ball" {
 		response := getMagic8BallResponse()
 
-		// Broadcast the response to the room
-		u.room.broadcast("8-ball", response)
+		// Print the response
+		fmt.Println(response)
 	} else if command == "" {
 		// Easter egg message
-		u.room.broadcast("8-ball", "Thanks to hackclub for creating me!")
+		fmt.Println("Thanks to hackclub for creating me!")
 	} else {
-		u.room.broadcast("8-ball", "Command not recognized.")
+		fmt.Println("Command not recognized.")
 	}
 }
 
@@ -927,27 +927,13 @@ func getMagic8BallResponse() string {
 		"Outlook not so good.",
 		"Very doubtful.",
 	}
-
+	
 	index := rand.Intn(len(responses))
 
 	return responses[index]
 }
 
-// Simulating the broadcast function since the actual implementation might depend on your setup.
-func (r *User) broadcast(command, message string) {
-	fmt.Printf("[%s] %s\n", command, message)
-}
-
 func returneightball() {
-	user := &User{room: "chat-room"}
-	eightBallCMD("", user)
-}
-
-func main() {
-	returneightball()
-}
-
-
-func returneightball() {
+    user := &User{} 
 u.room.broadcast("8-ball", response)
 }
