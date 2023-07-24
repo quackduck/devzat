@@ -807,7 +807,7 @@ func lsCMD(rest string, u *User) {
 	for _, us := range u.room.users {
 		usersList += us.Name + Blue.Paint("/ ")
 	}
-    usersList += Devbot + Blue.Paint("/ ")
+	usersList += Devbot + Blue.Paint("/ ")
 	u.room.broadcast("", "README.md "+usersList+roomList)
 }
 
@@ -872,23 +872,14 @@ func neofetchCMD(_ string, u *User) {
 		result += "  \n"
 	}
 	u.room.broadcast("", result)
-}// MAGIC 8 BALL!!!
+}
+
+// MAGIC 8 BALL!!!
 func eightBallCMD(_ string, u *User) {
-	rand.Seed(time.Now().UnixNano())
+	response := getMagic8BallResponse()
 
-	command := "8-ball"
-
-	if command == "8-ball" {
-		response := getMagic8BallResponse()
-
-		// Print the response
-		fmt.Println(response)
-	} else if command == "" {
-		// Easter egg message
-		fmt.Println("Thanks to hackclub for creating me!")
-	} else {
-		fmt.Println("Command not recognized.")
-	}
+	// Print the response
+	u.room.broadcast("8-Ball", response)
 }
 
 func getMagic8BallResponse() string {
@@ -914,13 +905,8 @@ func getMagic8BallResponse() string {
 		"Outlook not so good.",
 		"Very doubtful.",
 	}
-	
-	index := rand.Intn(len(responses))
 
-	u.room.broadcast("8-ball", response)
-}
+	i := rand.Intn(len(responses))
 
-func returneightball() {
-    user := &User{} 
-    eightBallCMD("", user)
+	return responses[i]
 }
