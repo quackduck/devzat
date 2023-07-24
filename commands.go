@@ -77,6 +77,7 @@ var (
 		{"colour", colorCMD, "???", "This is an alias of color"}, // appease the british
 		{":q", exitCMD, "", "This is an alias of exit"},          // appease the Vim user
 		{":wq", exitCMD, "", "This is an alias of exit"},         // appease the Vim user, that wants to save
+		{"8-ball", eightBallCMD, "", "Bad Magic 8-ball from HC"}, // appease the HC users on the 8-Ball channel
 		{"neofetch", neofetchCMD, "???", "???"},                  //apease the Arch user (mostly)
 	}
 
@@ -871,4 +872,63 @@ func neofetchCMD(_ string, u *User) {
 		result += "  \n"
 	}
 	u.room.broadcast("", result)
+}
+
+// eightBallCMD is the main function that handles the Magic 8 Ball command.
+func eightBallCMD() {
+	// Seed the random number generator with the current time
+	rand.Seed(time.Now().UnixNano())
+
+	// Simulate receiving the command from the chat (replace this with your actual command input)
+	command := "8-ball"
+
+	if command == "8-ball" {
+		// Get a random response from the Magic 8 Ball
+		response := getMagic8BallResponse()
+
+		// Print the response
+		fmt.Println(response)
+	} else if command == "" {
+		// Easter egg message
+		fmt.Println("Thanks to hackclub for creating me!")
+	} else {
+		// Handle other commands here
+		fmt.Println("Command not recognized.")
+	}
+}
+
+// getMagic8BallResponse returns a random Magic 8 Ball response.
+func getMagic8BallResponse() string {
+	responses := []string{
+		"It is certain.",
+		"It is decidedly so.",
+		"Without a doubt.",
+		"Yes, definitely.",
+		"You may rely on it.",
+		"As I see it, yes.",
+		"Most likely.",
+		"Outlook good.",
+		"Yes.",
+		"Signs point to yes.",
+		"Reply hazy, try again.",
+		"Ask again later.",
+		"Better not tell you now.",
+		"Cannot predict now.",
+		"Concentrate and ask again.",
+		"Don't count on it.",
+		"My reply is no.",
+		"My sources say no.",
+		"Outlook not so good.",
+		"Very doubtful.",
+	}
+
+	// Generate a random index to select a response from the list
+	index := rand.Intn(len(responses))
+
+	return responses[index]
+}
+
+func main() {
+	// Call the Magic 8 Ball command function
+	eightBallCMD()
 }
