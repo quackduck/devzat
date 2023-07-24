@@ -875,7 +875,7 @@ func neofetchCMD(_ string, u *User) {
 }
 
 // MAGIC 8 BALL!!!
-func eightBallCMD() {
+func eightBallCMD(_ string, u *User) {
 	rand.Seed(time.Now().UnixNano())
 
 	command := "8-ball"
@@ -922,6 +922,6 @@ func getMagic8BallResponse() string {
 	return responses[index]
 }
 
-func main() {
+func returneightball() {
 	eightBallCMD()
 }
