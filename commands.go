@@ -29,7 +29,6 @@ type CMD struct {
 	run      func(line string, u *User)
 	argsInfo string
 	info     string
-	returneightball func(line string, u *User)
 }
 
 var (
