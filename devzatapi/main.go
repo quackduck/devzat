@@ -2,11 +2,12 @@ package devzatapi
 
 import (
 	"context"
+	"errors"
 	"github.com/quackduck/devzat/plugin"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
-	"time"
+	"io"
 )
 
 type Message struct {
@@ -67,19 +68,27 @@ func (s *Session) Close() error {
 // even if you don't edit the message.
 // Always read from ErrorChan when sending a response and when reading messages.
 func (s *Session) RegisterListener(middleware, once bool, regex string) (messageChan chan Message, middlewareResponseChan chan string, err error) {
-	client, err := s.pluginClient.RegisterListener(context.Background())
-	if err != nil {
-		return
+	var client plugin.Plugin_RegisterListenerClient
+	setup := func() error {
+		client, err = s.pluginClient.RegisterListener(context.Background())
+		if err != nil {
+			return err
+		}
+		pointerRegex := &regex
+		if regex == "" {
+			pointerRegex = nil
+		}
+		err = client.Send(&plugin.ListenerClientData{Data: &plugin.ListenerClientData_Listener{Listener: &plugin.Listener{
+			Middleware: &middleware,
+			Once:       &once,
+			Regex:      pointerRegex,
+		}}})
+		if err != nil {
+			return err
+		}
+		return nil
 	}
-	pointerRegex := &regex
-	if regex == "" {
-		pointerRegex = nil
-	}
-	err = client.Send(&plugin.ListenerClientData{Data: &plugin.ListenerClientData_Listener{Listener: &plugin.Listener{
-		Middleware: &middleware,
-		Once:       &once,
-		Regex:      pointerRegex,
-	}}})
+	err = setup()
 	if err != nil {
 		return
 	}
@@ -90,6 +99,13 @@ func (s *Session) RegisterListener(middleware, once bool, regex string) (message
 		for {
 			e, err = client.Recv()
 			if err != nil {
+				if isErrEOF(err) {
+					// set up new stream
+					err = setup()
+					if err == nil {
+						continue
+					}
+				}
 				messageChan <- Message{}
 				s.ErrorChan <- err
 				continue
@@ -109,6 +125,13 @@ func (s *Session) RegisterListener(middleware, once bool, regex string) (message
 			response := <-middlewareResponseChan
 			err := client.Send(&plugin.ListenerClientData{Data: &plugin.ListenerClientData_Response{Response: &plugin.MiddlewareResponse{Msg: &response}}})
 			if err != nil {
+				if isErrEOF(err) {
+					// set up new stream
+					err = setup()
+					if err == nil {
+						continue
+					}
+				}
 				s.ErrorChan <- err
 				continue
 			}
@@ -157,13 +180,11 @@ func (s *Session) RegisterCmd(name, argsInfo, info string, onCmd func(CmdCall, e
 			i, err := client.Recv()
 			if err != nil {
 				if isErrEOF(err) {
-					time.Sleep(time.Second * 2)
-					client, err = s.pluginClient.RegisterCmd(context.Background(), &plugin.CmdDef{
-						Name:     name,
-						ArgsInfo: argsInfo,
-						Info:     info,
-					})
-					continue
+					// set up new stream
+					client, err = s.pluginClient.RegisterCmd(context.Background(), &plugin.CmdDef{Name: name, ArgsInfo: argsInfo, Info: info})
+					if err == nil {
+						continue
+					}
 				}
 				i = &plugin.CmdInvocation{}
 			}
@@ -174,5 +195,6 @@ func (s *Session) RegisterCmd(name, argsInfo, info string, onCmd func(CmdCall, e
 }
 
 func isErrEOF(err error) bool {
-	return err.Error() == "rpc error: code = Unavailable desc = error reading from server: EOF"
+	return errors.Is(err, io.EOF)
+	//return err.Error() == "rpc error: code = Unavailable desc = error reading from server: EOF"
 }
