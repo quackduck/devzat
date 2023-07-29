@@ -46,6 +46,7 @@ func NewSession(address string, token string) (*Session, error) {
 				return invoker(ctx, method, req, reply, cc, opts...)
 			},
 		),
+		grpc.WithDefaultCallOptions(grpc.WaitForReady(true)),
 	)
 	if err != nil {
 		return nil, err
