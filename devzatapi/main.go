@@ -4,8 +4,10 @@ import (
 	"context"
 	"github.com/quackduck/devzat/plugin"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	"time"
 )
 
 type Message struct {
@@ -30,6 +32,8 @@ type Session struct {
 
 // NewSession connects to the Devzat server and creates a session. The address should be in the form of "host:port".
 func NewSession(address string, token string) (*Session, error) {
+	backoffConfig := backoff.DefaultConfig
+	backoffConfig.Multiplier = 1.1
 	conn, err := grpc.Dial(address,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithStreamInterceptor(
@@ -45,6 +49,7 @@ func NewSession(address string, token string) (*Session, error) {
 			},
 		),
 		grpc.WithDefaultCallOptions(grpc.WaitForReady(true)),
+		grpc.WithConnectParams(grpc.ConnectParams{Backoff: backoffConfig, MinConnectTimeout: time.Second * 20}),
 	)
 	if err != nil {
 		return nil, err
