@@ -2,12 +2,10 @@ package devzatapi
 
 import (
 	"context"
-	"errors"
 	"github.com/quackduck/devzat/plugin"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
-	"io"
 )
 
 type Message struct {
@@ -196,6 +194,6 @@ func (s *Session) RegisterCmd(name, argsInfo, info string, onCmd func(CmdCall, e
 }
 
 func isErrEOF(err error) bool {
-	return errors.Is(err, io.EOF)
-	//return err.Error() == "rpc error: code = Unavailable desc = error reading from server: EOF"
+	//return errors.Is(err, io.EOF)
+	return err.Error() == "rpc error: code = Unavailable desc = error reading from server: EOF"
 }
