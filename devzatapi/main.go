@@ -70,7 +70,7 @@ func (s *Session) Close() error {
 // messageChan will receive messages that match the regex.
 // middlewareResponseChan is used to send back the edited message. You must send a response if middleware is true
 // even if you don't edit the message.
-// Always read from ErrorChan when sending a response and when reading messages.
+// See example/main.go for correct usage of this function.
 func (s *Session) RegisterListener(middleware, once bool, regex string) (messageChan chan Message, middlewareResponseChan chan string, err error) {
 	var client plugin.Plugin_RegisterListenerClient
 	setup := func() error {
@@ -110,12 +110,10 @@ func (s *Session) RegisterListener(middleware, once bool, regex string) (message
 						continue
 					}
 				}
-				messageChan <- Message{}
 				s.ErrorChan <- err
 				continue
 			}
 			messageChan <- Message{Room: e.Room, From: e.From, Data: e.Msg}
-			s.ErrorChan <- nil
 		}
 	}()
 
@@ -139,7 +137,6 @@ func (s *Session) RegisterListener(middleware, once bool, regex string) (message
 				s.ErrorChan <- err
 				continue
 			}
-			s.ErrorChan <- nil
 		}
 	}()
 

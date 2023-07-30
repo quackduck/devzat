@@ -11,23 +11,25 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	messageChan, middlewareResponseChan, err := s.RegisterListener(true, false, "")
+	messageChan, middlewareResponseChan, err := s.RegisterListener(true, false, "orange|apple")
 	if err != nil {
 		panic(err)
 	}
 	for {
-		msg := <-messageChan
-		if err = <-s.ErrorChan; err != nil {
+		select {
+		case err = <-s.ErrorChan:
 			panic(err)
-		}
-		if msg.Data == "ping" {
-			middlewareResponseChan <- "pong"
-			err = s.SendMessage(api.Message{Room: msg.Room, From: "examplebot", Data: "Did you say ping? I think you meant pong."})
+		case msg := <-messageChan:
+			if msg.Data == "orange" {
+				middlewareResponseChan <- "🍊"
+				err = s.SendMessage(api.Message{Room: msg.Room, From: "citrusbot", Data: "mmm... citrusy"})
+			} else { // has to be apple because of the regex we set
+				middlewareResponseChan <- "🍎"
+				err = s.SendMessage(api.Message{Room: msg.Room, From: "applebot", Data: "mmm... appley"})
+			}
 			if err != nil {
 				panic(err)
 			}
-		} else {
-			middlewareResponseChan <- msg.Data
 		}
 	}
 }
