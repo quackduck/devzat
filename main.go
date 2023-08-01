@@ -492,10 +492,13 @@ func newUser(s ssh.Session) *User {
 	switch len(MainRoom.users) - 1 {
 	case 0:
 		u.writeln("", Blue.Paint("Welcome to the chat. There are no more users"))
+		u.writeln("", Blue.Paint("See Devzat status at any time by going to: https://stats.uptimerobot.com/1o71JCn6Ow"))
 	case 1:
 		u.writeln("", Yellow.Paint("Welcome to the chat. There is one more user"))
+		u.writeln("", Yellow.Paint("See Devzat status at any time by going to: https://stats.uptimerobot.com/1o71JCn6Ow"))
 	default:
 		u.writeln("", Green.Paint("Welcome to the chat. There are", strconv.Itoa(len(MainRoom.users)-1), "more users"))
+		u.writeln("", Green.Paint("See Devzat status at any time by going to: https://stats.uptimerobot.com/1o71JCn6Ow"))
 	}
 	MainRoom.broadcast("", Green.Paint(" --> ")+u.Name+" has joined the chat")
 	return u
