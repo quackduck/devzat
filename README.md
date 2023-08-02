@@ -1,4 +1,8 @@
-# Devzat
+<img src="https://github.com/quackduck/devzat/assets/38882631/046fbb4d-dff2-41e9-a61c-271d0820473e" style="height: 100px; border-radius: 50px;" />
+
+***
+
+<!-- <img src="https://github.com/quackduck/devzat/assets/38882631/bf38beed-9041-4cfc-a21e-4f97781d95a5" style="width: 250px;" /> -->
 
 <a href="https://www.producthunt.com/posts/devzat?utm_source=badge-top-post-badge&utm_medium=badge&utm_souce=badge-devzat" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=298678&theme=light&period=daily" alt="Devzat - Chat with other devs over SSH in your Terminal | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
 
