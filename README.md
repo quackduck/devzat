@@ -43,6 +43,8 @@ We also have a Slack bridge! If you're on the [Hack Club](https://hackclub.com) 
 
 Feel free to make a [new issue](https://github.com/quackduck/devzat/issues) if something doesn't work.
 
+See the [status site](https://stats.uptimerobot.com/kxMQqfYk4y) of the main Devzat server to check if it might be down.
+
 ### Want to host your own instance?
 
 Quick start:
