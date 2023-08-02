@@ -372,9 +372,9 @@ func lsTokensCMD(_ string, u *User) {
 		return
 	}
 	msg := "Tokens:  \n"
-	tokenNumberFormatFlag := "%0" + fmt.Sprint(len(fmt.Sprint(len(Tokens)))) + "d"
+	fmtString := "%" + fmt.Sprint(len(fmt.Sprint(len(Tokens)))) + "d"
 	for t := range Tokens {
-		msg += Cyan.Cyan(fmt.Sprintf(tokenNumberFormatFlag, t+1)) + ". " + shasum(t) + "\t" + Tokens[t] + "  \n"
+		msg += Cyan.Cyan(fmt.Sprintf(fmtString, t+1)) + ". " + shasum(t) + "\t" + Tokens[t] + "  \n"
 	}
 	u.writeln(Devbot, msg)
 }
