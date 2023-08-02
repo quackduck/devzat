@@ -68,7 +68,7 @@ var (
 		{"shrug", shrugCMD, "", `¯\\\_(ツ)\_/¯`}, // won't actually run, here just to show in docs
 		{"uname", unameCMD, "", "Show build info"},
 		{"uptime", uptimeCMD, "", "Show server uptime"},
-		{"8ball", EightBallCMD, "", "Magic 8 Ball"},
+		{"8ball", EightBallCMD, "<question>", "Always tells the truth."},
 	}
 	SecretCMDs = []CMD{
 		{"ls", lsCMD, "???", "???"},
