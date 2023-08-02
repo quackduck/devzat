@@ -878,7 +878,7 @@ func EightBallCMD(_ string, u *User) {
 	response := getMagic8BallResponse()
 
 	// Print the response
-	u.room.broadcast("8-Ball", response)
+	u.room.broadcast("8ball", response)
 }
 
 func getMagic8BallResponse() string {
