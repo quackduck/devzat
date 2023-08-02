@@ -10,7 +10,6 @@ import (
 	"net"
 	"os"
 	"regexp"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -373,10 +372,11 @@ func lsTokensCMD(_ string, u *User) {
 		return
 	}
 	msg := "Tokens:  \n"
-	i := 0
+	fmtString := "%" + fmt.Sprint(len(fmt.Sprint(len(Tokens)))) + "d"
+	i := 1
 	for t := range Tokens {
+		msg += Cyan.Cyan(fmt.Sprintf(fmtString, i)) + ". " + shasum(t) + "\t" + Tokens[t] + "  \n"
 		i++
-		msg += Cyan.Cyan(strconv.Itoa(i+1)) + ". " + shasum(t) + "\t" + Tokens[t] + "  \n"
 	}
 	u.writeln(Devbot, msg)
 }
