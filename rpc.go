@@ -373,8 +373,10 @@ func lsTokensCMD(_ string, u *User) {
 	}
 	msg := "Tokens:  \n"
 	fmtString := "%" + fmt.Sprint(len(fmt.Sprint(len(Tokens)))) + "d"
+	i := 1
 	for t := range Tokens {
-		msg += Cyan.Cyan(fmt.Sprintf(fmtString, t+1)) + ". " + shasum(t) + "\t" + Tokens[t] + "  \n"
+		msg += Cyan.Cyan(fmt.Sprintf(fmtString, i)) + ". " + shasum(t) + "\t" + Tokens[t] + "  \n"
+		i++
 	}
 	u.writeln(Devbot, msg)
 }
