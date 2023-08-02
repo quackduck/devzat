@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://github.com/CaenJones/Devzat-readme-update/blob/main/src/Welcome%20To%20@(4).png?raw=true" alt="Logo">
+  <img src="https://github.com/CaenJones/devzat/blob/main/devzat-data/Welcome%20To%20@(4).png?raw=true" alt="Logo">
 </div>
 
 Devzat is a chatroom right into your terminal! You can join on any device via SSH or our Slack and Discord integrations. We are a community of programmers, hobyists, or people just looking to socialize. You can join us by opening your terminal and typing:
