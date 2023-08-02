@@ -883,6 +883,6 @@ func EightBallCMD(_ string, u *User) {
 		"Don't count on it, ", "My reply is no, ", "My sources say no, ", "Outlook not so good, ",
 		"Very doubtful, ",
 	}
-	time.Sleep(time.Second*rand.Intn(10))
+	time.Sleep(time.Second*time.Duration(rand.Intn(10)))
 	u.room.broadcast("8ball", responses[rand.Intn(len(responses))] + u.Name)
 }
