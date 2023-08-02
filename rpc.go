@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net"
 	"os"
 	"regexp"
@@ -374,9 +375,11 @@ func lsTokensCMD(_ string, u *User) {
 	}
 	msg := "Tokens:  \n"
 	i := 0
+	tokenNumberSize := int(math.Log10(float64(len(Tokens)))) + 1
+	tokenNumberFormatFlag := "%0" + strconv.Itoa(tokenNumberSize) + "d"
 	for t := range Tokens {
+		msg += Cyan.Cyan(fmt.Sprintf(tokenNumberFormatFlag, i+1)) + ". " + shasum(t) + "\t" + Tokens[t] + "  \n"
 		i++
-		msg += Cyan.Cyan(strconv.Itoa(i+1)) + ". " + shasum(t) + "\t" + Tokens[t] + "  \n"
 	}
 	u.writeln(Devbot, msg)
 }
