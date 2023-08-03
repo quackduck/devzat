@@ -359,11 +359,11 @@ func getStyle(name string) (*Style, error) {
 	}
 	switch name {
 	case "random":
-		r, g, b := rand.Intn(6), rand.Intn(6), rand.Intn(6)
-		return &Style{fmt.Sprintf("%03d", r*100+g*10+b), buildStyle(ansi256(uint8(r), uint8(g), uint8(b)))}, nil
+		r, g, b := rand.Intn(256), rand.Intn(256), rand.Intn(256) // generate random hex color
+		return &Style{fmt.Sprintf("#%02x%02x%02x", r, g, b), buildStyle(Chalk.WithRGB(uint8(r), uint8(g), uint8(b)))}, nil
 	case "bg-random":
-		r, g, b := rand.Intn(6), rand.Intn(6), rand.Intn(6)
-		return &Style{fmt.Sprintf("%03d", r*100+g*10+b), buildStyleNoStrip(bgAnsi256(uint8(r), uint8(g), uint8(b)))}, nil
+		r, g, b := rand.Intn(256), rand.Intn(256), rand.Intn(256)
+		return &Style{fmt.Sprintf("bg-#%02x%02x%02x", r, g, b), buildStyleNoStrip(Chalk.WithBgRGB(uint8(r), uint8(g), uint8(b)))}, nil
 	case "bg-off":
 		return &Style{"bg-off", func(a string) string { return a }}, nil // no background
 	}
