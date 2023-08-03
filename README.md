@@ -66,7 +66,8 @@ Krish [@krishnerkar_](https://twitter.com/krishnerkar_):  [_"SHIT! THIS IS SO DO
 Amrit [@astro_shenava](https://twitter.com/astro_shenava): _"Super cool man"_  
 Mudrank [@mudrankgupta](https://twitter.com/mudrankgupta): "🔥🚀🚀"
 
-From Hack Club:  
+<h3>From Hack Club:<h3/>
+  
 **[Caleb Denio](https://calebden.io), [Safin Singh](https://safin.dev), [Eleeza](https://github.com/E-Lee-Za)   
 [Jubril](https://github.com/s1ntaxe770r), [Sarthak Mohanty](https://sarthakmohanty.me)    
 [Sam Poder](http://sampoder.com), [Rishi Kothari](http://rishi.cx)    
