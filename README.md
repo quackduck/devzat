@@ -2,7 +2,9 @@
   <img src="https://github.com/CaenJones/Devzat-readme-update/blob/main/src/Welcome%20To%20@(4).png?raw=true" alt="Logo">
 </div>
 
-Devzat is a chatroom right into your terminal! You can join on any device via SSH or our Slack and Discord integrations. We are a community of programmers, hobyists, or people just looking to socialize. You can join us by opening your terminal and typing:
+Devzat is a chatroom right into your terminal! You can join on any device via SSH or our Slack and Discord integrations. We are a community of programmers, hobyists, or people just looking to socialize.
+
+ <h3>Join Devzat via SSH</h3>
 
 ```sh
 ssh devzat.hackclub.com
@@ -25,6 +27,8 @@ See the [status site](https://stats.uptimerobot.com/kxMQqfYk4y) of the main Devz
 
 [![asciicast](https://asciinema.org/a/477083.svg)](https://asciinema.org/a/477083?speed=3)
 
+<h3>Self-host your own Devzat instance</h3>
+
 If you want to self host your own instance, you can grab basicly any LINUX/UNIX device with an internet connection and golang installed, and paste these commands in:
 ```shell
 git clone https://github.com/quackduck/devzat && cd devzat
@@ -40,11 +44,13 @@ See the [Admin's Manual](Admin's%20Manual.md) for more info and configuration do
 
 Devzat has a plugin API you can use to integrate your own services: [documentation](plugin/README.md). Feel free to add a plugin to the main instance. Just ask for a token on the server.
 
+<h3>We are still growing!</h3>
+
 Devzat has a vibrant community, and it is still growing! Join today to make some friends, or start your own server today!
 [![Stargazers over time](https://starchart.cc/quackduck/devzat.svg)](https://starchart.cc/quackduck/devzat)
 
 
-People who you might know who have joined:
+<h3>People who you might know who have joined:<h3/>
 
 Zach Latta - Founder of Hack Club: _"omg amazing! this is so awesome"_  
 Ant Wilson - Co founder, Supabase: [_"brilliant!"_](https://twitter.com/AntWilson/status/1396444302721445889)  
