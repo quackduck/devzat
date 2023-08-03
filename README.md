@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://github.com/CaenJones/devzat/blob/main/devzat-data/Welcome%20To%20@(4).png?raw=true" alt="Logo">
+  <img src="https://github.com/CaenJones/Devzat-readme-update/blob/main/src/Welcome%20To%20@(4).png?raw=true" alt="Logo">
 </div>
 
 Devzat is a chatroom right into your terminal! You can join on any device via SSH or our Slack and Discord integrations. We are a community of programmers, hobyists, or people just looking to socialize. You can join us by opening your terminal and typing:
@@ -33,13 +33,14 @@ ssh-keygen -qN '' -f devzat-sshkey # new ssh host key for the server
 devzat # run! the default config is used & written automatically
 ```
 These commands download, build, setup and run a Devzat server listening on port 2221, the default port (change by setting `$PORT`).
+If you have trouble connecting to your devzat instance, you might be a pubkey issue so try to connect through port 443
 
-When self-hosting an instance, Devzat can integrate with Slack and/or Discord to bridge messages, and Twitter to post new-user announcements. 
+When self-hosting, Devzat can integrate with Slack and/or Discord to bridge messages, and Twitter to post new-user announcements. 
 See the [Admin's Manual](Admin's%20Manual.md) for more info and configuration documentation.
 
 Devzat has a plugin API you can use to integrate your own services: [documentation](plugin/README.md). Feel free to add a plugin to the main instance. Just ask for a token on the server.
 
-Devzat has a vibrant community, and it is still growing! Join today to make some friends, or start your own community!
+Devzat has a vibrant community, and it is still growing! Join today to make some friends, or start your own server today!
 [![Stargazers over time](https://starchart.cc/quackduck/devzat.svg)](https://starchart.cc/quackduck/devzat)
 
 
