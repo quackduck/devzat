@@ -41,6 +41,7 @@ clear                     Clear the screen
 cd        #room|user      Join #room, DM user or run cd to see a list
 tz        <zone> [24h]    Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h
 nick      <name>          Change your username
-pwd                     Show your current room
-id       <user>         Get a unique ID for a user (hashed key)
-
+pwd                       Show your current room
+id        <user>          Get a unique ID for a user (hashed key)
+'''
+abcdf
