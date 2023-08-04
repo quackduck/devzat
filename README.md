@@ -45,4 +45,3 @@ pwd                     Show your current room
 id       <user>         Get a unique ID for a user (hashed key)
 '''
 
-
