@@ -44,7 +44,7 @@ Devzat has lots of cool fetures, games, and some secrets... Here are some basic 
    pwd                     Show your current room
    id       <user>         Get a unique ID for a user (hashed key)
 '''
-Type CMDS in the chat to get the full list
+Type CMDS in the chat to get the full list.
 
 <h3>Self-host your own Devzat instance</h3>
 
@@ -56,7 +56,7 @@ ssh-keygen -qN '' -f devzat-sshkey # new ssh host key for the server
 devzat # run! the default config is used & written automatically
 ```
 These commands download, build, setup and run a Devzat server listening on port 2221, the default port (change by setting `$PORT`).
-If you have trouble connecting to your devzat instance, you might be a pubkey issue so try to connect through port 443
+If you have trouble connecting to your devzat instance, you might be a pubkey issue so try to connect through port 443.
 
 When self-hosting, Devzat can integrate with Slack and/or Discord to bridge messages, and Twitter to post new-user announcements. 
 See the [Admin's Manual](Admin's%20Manual.md) for more info and configuration documentation.
