@@ -28,6 +28,23 @@ See the [status site](https://stats.uptimerobot.com/kxMQqfYk4y) of the main Devz
 
 [![asciicast](https://asciinema.org/a/477083.svg)](https://asciinema.org/a/477083?speed=3)
 
+<h3>Some Commands to get you started...</h3>
+Devzat has lots of cool fetures, games, and some secrets... Here are some basic commands to get you up and running!
+'''DevzatCMDs
+   =<user>   <msg>           DM <user> with <msg>
+   color     <color>         Change your name's color
+   exit                      Leave the chat
+   man       <cmd>           Get help for a specific command
+   bell      on|off|all      ANSI bell on pings (on), never (off) or for every message (all)
+   clear                     Clear the screen
+   cd        #room|user      Join #room, DM user or run cd to see a list
+   tz        <zone> [24h]    Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h
+   nick      <name>          Change your username
+   pwd                     Show your current room
+   id       <user>         Get a unique ID for a user (hashed key)
+'''
+Type CMDS in the chat to get the full list
+
 <h3>Self-host your own Devzat instance</h3>
 
 If you want to self host your own instance, you can grab basicly any LINUX/UNIX device with an internet connection and golang installed, and paste these commands in:
