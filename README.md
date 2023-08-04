@@ -31,7 +31,7 @@ See the [status site](https://stats.uptimerobot.com/kxMQqfYk4y) of the main Devz
 <h3>Some Commands to get you started...</h3>
 Devzat has lots of cool fetures, games, and some secrets... Here are some basic commands to get you up and running!
 
-```
+```shell
 =<user>   <msg>           DM <user> with <msg>
 color     <color>         Change your name's color
 exit                      Leave the chat
