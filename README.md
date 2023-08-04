@@ -43,5 +43,5 @@ tz        <zone> [24h]    Set your IANA timezone (like tz Asia/Dubai) and option
 nick      <name>          Change your username
 pwd                     Show your current room
 id       <user>         Get a unique ID for a user (hashed key)
-'''
+
 
