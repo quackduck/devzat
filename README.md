@@ -43,7 +43,7 @@ Devzat has lots of cool fetures, games, and some secrets... Here are some basic 
    nick      <name>          Change your username
    pwd                     Show your current room
    id       <user>         Get a unique ID for a user (hashed key)
-'''
+/
 Type CMDS in the chat to get the full list.
 
 <h3>Self-host your own Devzat instance</h3>
