@@ -74,9 +74,5 @@ From Hack Club:
 [Amogh Chaubey](https://amogh.sh), [Ella](https://ella.cx/), [Hugo Hu](https://github.com/Hugoyhu)
 [Matthew Stanciu](https://matthewstanciu.me/), [Tanishq Soni](https://tanishqsoni.me)**
 
-
-<div align="center">
-<a href="https://www.producthunt.com/posts/devzat?utm_source=badge-top-post-badge&utm_medium=badge&utm_souce=badge-devzat" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=298678&theme=light&period=daily" alt="Devzat - Chat with other devs over SSH in your Terminal | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
-  
 ### *Made by [Ishan Goel](https://twitter.com/usrbinishan/) with feature ideas and contributions from friends.
 </div>
