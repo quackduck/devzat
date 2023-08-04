@@ -30,7 +30,6 @@ See the [status site](https://stats.uptimerobot.com/kxMQqfYk4y) of the main Devz
 
 <h3>Some Commands to get you started...</h3>
 Devzat has lots of cool fetures, games, and some secrets... Here are some basic commands to get you up and running!
-
 ```text
    =<user>   <msg>           DM <user> with <msg>
    color     <color>         Change your name's color
@@ -43,18 +42,18 @@ Devzat has lots of cool fetures, games, and some secrets... Here are some basic 
    nick      <name>          Change your username
    pwd                     Show your current room
    id       <user>         Get a unique ID for a user (hashed key)
-/
+'''
 Type CMDS in the chat to get the full list.
 
 <h3>Self-host your own Devzat instance</h3>
 
 If you want to self host your own instance, you can grab basicly any LINUX/UNIX device with an internet connection and golang installed, and paste these commands in:
-```shell
+'''Shell
 git clone https://github.com/quackduck/devzat && cd devzat
 go install # or build, if you want to keep things pwd
 ssh-keygen -qN '' -f devzat-sshkey # new ssh host key for the server
 devzat # run! the default config is used & written automatically
-```
+'''
 These commands download, build, setup and run a Devzat server listening on port 2221, the default port (change by setting `$PORT`).
 If you have trouble connecting to your devzat instance, you might be a pubkey issue so try to connect through port 443.
 
