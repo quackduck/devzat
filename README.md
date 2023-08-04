@@ -1,5 +1,7 @@
 <div align="center">
-  <img src="https://github.com/CaenJones/Devzat-readme-update/blob/main/src/Welcome%20To%20@(4).png?raw=true" alt="Logo">
+  <img src="https://github.com/CaenJones/Devzat-readme-update/blob/main/src/Welcome%20To%20@(4).png?raw=true" alt="Logo"> 
+<div align="center">
+<a href="https://www.producthunt.com/posts/devzat?utm_source=badge-top-post-badge&utm_medium=badge&utm_souce=badge-devzat" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=298678&theme=light&period=daily" alt="Devzat - Chat with other devs over SSH in your Terminal | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
 </div>
 
 Devzat is a chatroom right into your terminal! You can join on any device via SSH or our Slack and Discord integrations. We are a community of programmers, hobyists, or people just looking to socialize.
@@ -52,34 +54,26 @@ Devzat has a vibrant community, and it is still growing! Join today to make some
 
 <h3>People who you might know who have joined</h3>
 
-Zach Latta - Founder of Hack Club: "omg amazing! this is so awesome"
-Ant Wilson - Co founder, Supabase: "brilliant!" [Twitter](https://twitter.com/AntWilson/status/1396444302721445889)
-Bereket [@heybereket](https://twitter.com/heybereket): "this is pretty cool"
-Ayush [@ayshptk](https://twitter.com/ayshptk): "Can I double star the repo somehow :pleading_face:"
-Sanketh [@SankethYS](https://twitter.com/SankethYS): "Heck! How does this work. So cool."
-Tony Dinh [@tdinh_me](https://twitter.com/tdinh_me): "supeer cool, oh, open source as well? yeah"
-Srushti [@srushtiuniverse](https://twitter.com/srushtiuniverse): "Yess it's awesome. I tried it."
-Surjith [@surjithctly](https://twitter.com/surjithctly): "Whoa, who made this?"
-Arav [@HeyArav](https://twitter.com/HeyArav): "Okay, this is actually super awesome." [Tweet](https://twitter.com/tregsthedev/status/1384180393893498880)
-Harsh [@harshb__](https://twitter.com/harshb__): "im gonna come here everyday to chill when i get bored of studying lol, this is so cool"
-Krish [@krishnerkar_](https://twitter.com/krishnerkar_): "SHIT! THIS IS SO DOPE" [Tweet](https://twitter.com/krishnerkar_/status/1384173042616573960)
-Amrit [@astro_shenava](https://twitter.com/astro_shenava): "Super cool man"
+Zach Latta - Founder of Hack Club: _"omg amazing! this is so awesome"_  
+Ant Wilson - Co founder, Supabase: [_"brilliant!"_](https://twitter.com/AntWilson/status/1396444302721445889)  
+Bereket [@heybereket](https://twitter.com/heybereket): _"this is pretty cool"_  
+Ayush [@ayshptk](https://twitter.com/ayshptk): _"Can I double star the repo somehow :pleading_face:"_  
+Sanketh [@SankethYS](https://twitter.com/SankethYS): _"Heck! How does this work. So cool."_  
+Tony Dinh [@tdinh_me](https://twitter.com/tdinh_me): _"supeer cool, oh, open source as well? yeah"_  
+Srushti [@srushtiuniverse](https://twitter.com/srushtiuniverse): _"Yess it's awesome. I tried it."_  
+Surjith [@surjithctly](https://twitter.com/surjithctly): _"Whoa, who made this?"_  
+Arav [@HeyArav](https://twitter.com/HeyArav): [_"Okay, this is actually super awesome."_](https://twitter.com/tregsthedev/status/1384180393893498880)  
+Harsh [@harshb__](https://twitter.com/harshb__): _"im gonna come here everyday to chill when i get bored of studying lol, this is so cool"_
+Krish [@krishnerkar_](https://twitter.com/krishnerkar_):  [_"SHIT! THIS IS SO DOPE"_](https://twitter.com/krishnerkar_/status/1384173042616573960)  
+Amrit [@astro_shenava](https://twitter.com/astro_shenava): _"Super cool man"_  
 Mudrank [@mudrankgupta](https://twitter.com/mudrankgupta): "🔥🚀🚀"
 
-<h3>From Hack Club:</h3>
-
-- [Caleb Denio](https://calebden.io)
-- [Safin Singh](https://safin.dev)
-- [Eleeza](https://github.com/E-Lee-Za)
-- [Jubril](https://github.com/s1ntaxe770r)
-- [Sarthak Mohanty](https://sarthakmohanty.me)
-- [Sam Poder](http://sampoder.com)
-- [Rishi Kothari](http://rishi.cx)
-- [Amogh Chaubey](https://amogh.sh)
-- [Ella](https://ella.cx/)
-- [Hugo Hu](https://github.com/Hugoyhu)
-- [Matthew Stanciu](https://matthewstanciu.me/)
-- [Tanishq Soni](https://tanishqsoni.me)
+From Hack Club:  
+**[Caleb Denio](https://calebden.io), [Safin Singh](https://safin.dev), [Eleeza](https://github.com/E-Lee-Za)   
+[Jubril](https://github.com/s1ntaxe770r), [Sarthak Mohanty](https://sarthakmohanty.me)    
+[Sam Poder](http://sampoder.com), [Rishi Kothari](http://rishi.cx)    
+[Amogh Chaubey](https://amogh.sh), [Ella](https://ella.cx/), [Hugo Hu](https://github.com/Hugoyhu)
+[Matthew Stanciu](https://matthewstanciu.me/), [Tanishq Soni](https://tanishqsoni.me)**
 
 
 <div align="center">
