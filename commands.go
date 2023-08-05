@@ -51,7 +51,7 @@ var (
 		{"prompt", promptCMD, "<prompt>", "Change your promt. Run `man prompt` for more info"},
 		{"pronouns", pronounsCMD, "@user|pronouns", "Set your pronouns or get another user's"},
 		{"theme", themeCMD, "<theme>|list", "Change the syntax highlighting theme"},
-		{"joke", jokeCMD, "", "Gives you the programming joke of the day!"}, //is there something funny?
+		{"joke", jokeCMD, "", "Gives you the programming joke!"}, //is there something funny?
 		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
 	RestCMDs = []CMD{
 		// {"people", peopleCMD, "", "See info about nice people who joined"},
