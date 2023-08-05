@@ -51,6 +51,7 @@ var (
 		{"prompt", promptCMD, "<prompt>", "Change your promt. Run `man prompt` for more info"},
 		{"pronouns", pronounsCMD, "@user|pronouns", "Set your pronouns or get another user's"},
 		{"theme", themeCMD, "<theme>|list", "Change the syntax highlighting theme"},
+		{"joke", jokeCMD, "", "Gives you the programming joke of the day!"}, //is there something funny?
 		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
 	RestCMDs = []CMD{
 		// {"people", peopleCMD, "", "See info about nice people who joined"},
@@ -887,4 +888,35 @@ func EightBallCMD(_ string, u *User) {
 		time.Sleep(time.Second * time.Duration(rand.Intn(10)))
 		u.room.broadcast("8ball", responses[rand.Intn(len(responses))]+u.Name)
 	}()
+
+func jokeCMD() (string, error) {
+	url := "https://v2.jokeapi.dev/joke/Programming,Dark,Pun?blacklistFlags=nsfw,religious,political,racist,sexist,explicit&format=txt"
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("failed to fetch joke, status code: %d", resp.StatusCode)
+	}
+
+	jokeBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	joke := string(jokeBytes)
+	return joke, nil
+	
+	{
+		joke, err := jokeCMD()
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	fmt.Println("Joke of the day:")
+	fmt.Println(joke)
+	}
 }
