@@ -51,7 +51,7 @@ var (
 		{"prompt", promptCMD, "<prompt>", "Change your promt. Run `man prompt` for more info"},
 		{"pronouns", pronounsCMD, "@user|pronouns", "Set your pronouns or get another user's"},
 		{"theme", themeCMD, "<theme>|list", "Change the syntax highlighting theme"},
-		{"joke", getRandomProgrammingJoke, "", "Gives you the programming joke!"}, //is there something funny?
+		{"joke", jokeCMD, "", "Gives you a funny joke!"}, //is there something funny?
 		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
 	RestCMDs = []CMD{
 		// {"people", peopleCMD, "", "See info about nice people who joined"},
@@ -889,29 +889,25 @@ func EightBallCMD(_ string, u *User) {
 		u.room.broadcast("8ball", responses[rand.Intn(len(responses))]+u.Name)
 	}()
 
-	var programmingJokes = []string{
-	"Why do programmers prefer dark mode? Because light attracts bugs.",
-	"Why do programmers always mix up Christmas and Halloween? Because Oct 31 == Dec 25.",
-	"Knock, knock.\nWho's there?\nvery.\nvery who?\nError 404: Joke not found.",
-	"Why do programmers hate nature? It has too many bugs.",
-	"How many programmers does it take to change a light bulb? None, that's a hardware problem.",
-	"Why did the programmer quit his job? Because he didn't get arrays.",
-	"How do you comfort a JavaScript bug? You console it.",
-	"Why did the developer go broke? Because he used up all his cache.",
-	"Why did the programmer get stuck in the shower? He couldn't find the right SOAP.",
-	"What's the object-oriented way to become wealthy? Inheritance.",
-	"How do you comfort a grammar nazi? There, their, they're.",
-	"Why did the programmer plant a tree? So he could see a binary tree.",
-}
-
-func getRandomProgrammingJoke() string {
+	func main() {
 	rand.Seed(time.Now().UnixNano())
-	return programmingJokes[rand.Intn(len(programmingJokes))]
+
+	printRandomJoke()
 }
 
-func main() {
-	joke := getRandomProgrammingJoke()
+func jokeCMD() {
+	jokes := []string{
+	"Why do programmers prefer dark mode? Because light attracts bugs!",
+	"Why do programmers always mix up Christmas and Halloween? Because Oct 31 == Dec 25!",
+	"Why don't programmers like nature? It has too many bugs.",
+	"Knock, knock.\nWho’s there?\n[Interrupting cow.]\n[Interrupting cow wh--]\nMOO!",
+	"A SQL query walks into a bar, walks up to two tables, and asks... 'Can I join you?'",
+	"How many programmers does it take to change a light bulb? None, that's a hardware problem.",
+	}
+
+	randomIndex := rand.Intn(len(jokes))
+
+	joke := jokes[randomIndex]
 	fmt.Printf("MainRoom.broadcast(Devbot, \"%s\")\n", joke)
 }
-
 }
