@@ -748,8 +748,6 @@ u.room.broadcast(Devbot, []string{
 "skull :skull:",
 },
 u.room.broadcast(Devbot, "To see the complete list, go to: https://github.com/ikatyang/emoji-cheat-sheet/blob/master/README.md"),
-		 
-}
 
 func commandsRestCMD(_ string, u *User) {
 	u.room.broadcast("", "The rest  \n"+autogenCommands(RestCMDs))
