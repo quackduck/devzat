@@ -746,7 +746,7 @@ u.room.broadcast(Devbot, []string{
 "sunglasses :sunglasses:",
 "confused :confused:",
 "skull :skull:",
-}, 90)
+}
 u.room.broadcast(Devbot, "To see the complete list, go to: https://github.com/ikatyang/emoji-cheat-sheet/blob/master/README.md")
 }
 
