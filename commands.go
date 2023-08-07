@@ -735,7 +735,7 @@ func pronounsCMD(line string, u *User) {
 func emojisCMD(_ string, u *User) {
 u.room.broadcast(Devbot, "Hey! Here are some emojis to get you started: to post them in the chat, just type :emoji_text:")
 u.room.broadcast(Devbot, "To see the complete list, go to: https://github.com/ikatyang/emoji-cheat-sheet/blob/master/README.md")
-u.room.broadcast(Devbot, []string{
+u.room.broadcast(Devbot {
 "grinning :grinning:",
 "yum :yum:",
 "thinking :thinking:",
@@ -747,7 +747,7 @@ u.room.broadcast(Devbot, []string{
 "sunglasses :sunglasses:",
 "confused :confused:",
 "skull :skull:",
-},
+}
 	 
 func commandsRestCMD(_ string, u *User) {
 	u.room.broadcast("", "The rest  \n"+autogenCommands(RestCMDs))
