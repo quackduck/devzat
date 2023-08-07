@@ -733,22 +733,23 @@ func pronounsCMD(line string, u *User) {
 }
 
 func emojisCMD(_ string, u *User) {
-u.room.broadcast(Devbot, "Hey! Here are some emojis to get you started: to post them in the chat, just type :emoji_text:")
-u.room.broadcast(Devbot, "To see the complete list, go to: https://github.com/ikatyang/emoji-cheat-sheet/blob/master/README.md")
-u.room.broadcast(Devbot {
-"grinning :grinning:",
-"yum :yum:",
-"thinking :thinking:",
-"zipper_mouth_face :zipper_mouth_face:",
-"neutral_face :neutral_face:",
-"roll_eyes :roll_eyes:", //best one so far
-"sleepy :sleepy:",
-"face_with_thermometer :face_with_thermometer:",
-"sunglasses :sunglasses:",
-"confused :confused:",
-"skull :skull:",
-},
-	 
+	u.room.broadcast(Devbot, `See the complete list at https://github.com/ikatyang/emoji-cheat-sheet/blob/master/README.md.  
+Here are a few examples (type :emoji_text: to use):  
+doughnut :doughnut:  
+yum :yum:  
+joy :joy:  
+thinking :thinking:  
+smile :smile:  
+zipper_mouth_face :zipper_mouth_face:  
+kangaroo :kangaroo:  
+sleepy :sleepy:  
+hot_pepper :hot_pepper:  
+face_with_thermometer :face_with_thermometer:  
+dumpling :dumpling:  
+sunglasses :sunglasses:  
+skull :skull:`)
+}
+
 func commandsRestCMD(_ string, u *User) {
 	u.room.broadcast("", "The rest  \n"+autogenCommands(RestCMDs))
 }
