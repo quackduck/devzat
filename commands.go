@@ -733,7 +733,7 @@ func pronounsCMD(line string, u *User) {
 }
 
 func emojisCMD(_ string, u *User) {
-	u.room.broadcast(Devbot, `See the complete list at https://github.com/ikatyang/emoji-cheat-sheet/blob/master/README.md.  
+	u.room.broadcast(Devbot, `See the complete list at https://github.com/ikatyang/emoji-cheat-sheet/  
 Here are a few examples (type :emoji_text: to use):  
 doughnut :doughnut:  
 yum :yum:  
