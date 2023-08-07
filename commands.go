@@ -743,7 +743,7 @@ Here are a few examples (type :emoji_text: to use):
 :zipper_mouth_face: zipper_mouth_face  
 :kangaroo: kangaroo  
 :sleepy: sleepy  
-:hot_pepper: hot_pepper  
+:hot_pepper:  hot_pepper  
 :face_with_thermometer: face_with_thermometer  
 :dumpling: dumpling  
 :sunglasses: sunglasses  
