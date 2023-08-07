@@ -747,7 +747,7 @@ u.room.broadcast(Devbot {
 "sunglasses :sunglasses:",
 "confused :confused:",
 "skull :skull:",
-}
+},
 	 
 func commandsRestCMD(_ string, u *User) {
 	u.room.broadcast("", "The rest  \n"+autogenCommands(RestCMDs))
