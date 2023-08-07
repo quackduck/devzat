@@ -733,7 +733,21 @@ func pronounsCMD(line string, u *User) {
 }
 
 func emojisCMD(_ string, u *User) {
-	u.room.broadcast(Devbot, "Check out https\\://github.com/ikatyang/emoji-cheat-sheet")
+	u.room.broadcast(Devbot, `See the complete list at https://github.com/ikatyang/emoji-cheat-sheet/  
+Here are a few examples (type :emoji_text: to use):  
+doughnut :doughnut:  
+yum :yum:  
+joy :joy:  
+thinking :thinking:  
+smile :smile:  
+zipper_mouth_face :zipper_mouth_face:  
+kangaroo :kangaroo:  
+sleepy :sleepy:  
+hot_pepper :hot_pepper:  
+face_with_thermometer :face_with_thermometer:  
+dumpling :dumpling:  
+sunglasses :sunglasses:  
+skull :skull:`)
 }
 
 func commandsRestCMD(_ string, u *User) {
