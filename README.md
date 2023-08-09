@@ -133,7 +133,11 @@ The rest
 When self-hosting an instance, Devzat can integrate with Slack and/or Discord to bridge messages, and Twitter to post new-user announcements. 
 See the [Admin's Manual](Admin's%20Manual.md) for more info.
 
-Devzat has a plugin API you can use to integrate your own services: [documentation](plugin/README.md). Feel free to add a plugin to the main instance. Just ask for a token on the server.
+Devzat now has an integration with WolfRam Alpha, allowing users to ask questions to the API. This plugin is now avilible for  your own Devzat instance! :tada:
+
+For more details and installation instructions, please check out the [plugin page](https://github.com/quackduck/devzat-wolframbot#installation).
+
+Devzat has an API you can use to create your own services: [documentation](plugin/README.md). Feel free to add a plugin to the main instance. Just ask for a token on the server.
 
 
 ## Stargazers over time
