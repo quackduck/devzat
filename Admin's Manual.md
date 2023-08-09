@@ -122,6 +122,7 @@ discord:
 ```
 
 #### Using the WolfRam Alpha integration
+<sup>Original instructions from : https://github.com/quackduck/devzat-wolframbot<sub>
 
 Devzat now has support for the WolfRam Alpha API, enabling users to ask questions and get answers straight from the terminal!
 To get started, you just need to create a WolfRam Alpha account and get your API key.
@@ -134,7 +135,6 @@ To get started, you just need to create a WolfRam Alpha account and get your API
 You should see the following message in the chat if everything was set up right:
 `wolfram: I am online.`
 
-<sup>Original instructions from : https://github.com/quackduck/devzat-wolframbot<sub>
 #### Using the Twitter integration
 
 Devzat supports sending updates about who is online to Twitter. You need to make a new Twitter app through a [Twitter developer account](https://developer.twitter.com/en/apply/user)
