@@ -160,3 +160,4 @@ There are 4 environment variables you can set to quickly disable integrations on
 * `DEVZAT_OFFLINE_SLACK=true` will disable Slack
 * `DEVZAT_OFFLINE_RPC=true` will disable the gRPC server
 * `DEVZAT_OFFLINE=true` will disable all integrations.
+
