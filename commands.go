@@ -529,10 +529,12 @@ func unbanIDorIP(toUnban string) bool {
 
 func banCMD(line string, u *User) {
 	split := strings.Split(line, " ")
+	
 	if len(split) == 0 {
 		u.room.broadcast(Devbot, "Which user do you want to ban?")
 		return
 	}
+	
 	var victim *User
 	var ok bool
 	banner := u.Name
@@ -548,7 +550,7 @@ func banCMD(line string, u *User) {
 	}
 	if split[0] == "devbot" {
 		u.room.broadcast(Devbot, "Do you really think you can ban me, puny human?")
-		victim = u // mwahahahaha - devbot
+		victim = u
 		banner = Devbot
 	} else if !auth(u) {
 		u.room.broadcast(Devbot, "Not authorized")
@@ -558,6 +560,12 @@ func banCMD(line string, u *User) {
 		return
 	}
 
+	// assign the ban reason if it is provided
+	var banReason string
+	if len(split) > 2 {
+		banReason = " for reason: " + split[2]
+	}
+
 	// check if the ban is for a certain duration
 	if len(split) > 1 {
 		dur, err := time.ParseDuration(split[1])
@@ -565,14 +573,14 @@ func banCMD(line string, u *User) {
 			u.room.broadcast(Devbot, "I couldn't parse that as a duration")
 			return
 		}
-		victim.ban(victim.Name + " has been banned by " + banner + " for " + dur.String())
+		victim.ban(victim.Name + " has been banned by " + banner + " for " + dur.String() + banReason)
 		go func(id string) {
 			time.Sleep(dur)
 			unbanIDorIP(id)
-		}(victim.id) // evaluate id now, call unban with that value later
+		}(victim.id)
 		return
 	}
-	victim.ban(victim.Name + " has been banned by " + banner)
+	victim.ban(victim.Name + " has been banned by " + banner + banReason)
 }
 
 func kickCMD(line string, u *User) {
