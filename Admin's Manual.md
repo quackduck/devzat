@@ -121,20 +121,6 @@ discord:
     compact_mode: true # optional: disables avatars so messages take up less vertical space
 ```
 
-#### Using the WolfRam Alpha integration
-<sup>Original instructions from : https://github.com/quackduck/devzat-wolframbot<sub>
-
-Devzat now has support for the WolfRam Alpha API, enabling users to ask questions and get answers straight from the terminal!
-To get started, you just need to create a WolfRam Alpha account and get your API key.
-
-1. Download the repo (`git clone https://github.com/quackduck/devzat-wolframbot`)
-2. Compile with `go build`
-3. Set the environment variables `WOLFRAM_APP_ID` (get the free API [here](https://products.wolframalpha.com/api)) and `DEVZAT_TOKEN` (ask the server admin to grant you one).
-4. Run `./wolframbot <host>:<port>`
-
-You should see the following message in the chat if everything was set up right:
-`wolfram: I am online.`
-
 #### Using the Twitter integration
 
 Devzat supports sending updates about who is online to Twitter. You need to make a new Twitter app through a [Twitter developer account](https://developer.twitter.com/en/apply/user)
@@ -174,4 +160,3 @@ There are 4 environment variables you can set to quickly disable integrations on
 * `DEVZAT_OFFLINE_SLACK=true` will disable Slack
 * `DEVZAT_OFFLINE_RPC=true` will disable the gRPC server
 * `DEVZAT_OFFLINE=true` will disable all integrations.
-
