@@ -808,8 +808,6 @@ func (u *User) repl() {
 			return
 		}
 
-		line = getMiddlewareResult(u, line)
-
 		line += "\n"
 		hasNewlines := false
 		//oldPrompt := u.Name + ": "
