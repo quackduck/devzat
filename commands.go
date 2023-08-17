@@ -488,9 +488,23 @@ func nickCMD(line string, u *User) {
 }
 
 func promptCMD(line string, u *User) {
-	u.Prompt = line
-	u.formatPrompt()
+    err := setPrompt(line, u)
+    if err != nil {
+        fmt.Println("Error setting prompt:", err)
+        return
+    }
+    u.formatPrompt()
 }
+
+func setPrompt(line string, u *User) error {
+    if line == "" {
+        return errors.New("Empty prompt")
+    }
+
+    u.Prompt = line
+    return nil
+}
+
 
 func listBansCMD(_ string, u *User) {
 	msg := "Bans by ID:  \n"
