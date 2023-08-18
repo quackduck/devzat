@@ -14,7 +14,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"errors"
 
 	"github.com/alecthomas/chroma"
 	chromastyles "github.com/alecthomas/chroma/styles"
@@ -489,23 +488,15 @@ func nickCMD(line string, u *User) {
 }
 
 func promptCMD(line string, u *User) {
-    err := setPrompt(line, u)
-    if err != nil {
-        fmt.Println("Error setting prompt:", err)
-        return
-    }
-    u.formatPrompt()
-}
-
-func setPrompt(line string, u *User) error {
-    if line == "" {
-        return errors.New("Empty prompt")
-    }
-
     u.Prompt = line
-    return nil
-}
+    u.formatPrompt()
 
+    if line == "" {
+        fmt.Println("(Your prompt is now empty. Did you mean to get more info about your prompt? Run man prompt for more info)")
+    } else {
+        fmt.Println("Prompt set successfully")
+    }
+}
 
 func listBansCMD(_ string, u *User) {
 	msg := "Bans by ID:  \n"
