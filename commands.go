@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"errors"
 
 	"github.com/alecthomas/chroma"
 	chromastyles "github.com/alecthomas/chroma/styles"
