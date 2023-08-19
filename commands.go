@@ -492,8 +492,8 @@ func promptCMD(line string, u *User) {
     u.formatPrompt()
 
     if line == "" {
-	User.broadcast(Devbot, ("Your prompt is now empty. Did you mean to get more info about your prompt? Run man prompt for more info")
-	          }
+        User.broadcast(Devbot, "Your prompt is now empty. Did you mean to get more info about your prompt? Run man prompt for more info")
+    }
 }
 
 func listBansCMD(_ string, u *User) {
