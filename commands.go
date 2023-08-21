@@ -490,6 +490,9 @@ func nickCMD(line string, u *User) {
 func promptCMD(line string, u *User) {
 	u.Prompt = line
 	u.formatPrompt()
+	if line == "" {
+		u.writeln(Devbot, "(Your prompt is now empty. Did you mean to get more info about your prompt? Run `man prompt` for more info)")
+	}
 }
 
 func listBansCMD(_ string, u *User) {
