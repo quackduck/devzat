@@ -19,7 +19,6 @@ import (
 	chromastyles "github.com/alecthomas/chroma/styles"
 	"github.com/fatih/color"
 	"github.com/jwalton/gchalk"
-	markdown "github.com/quackduck/go-term-markdown"
 	"github.com/quackduck/term"
 	"github.com/shurcooL/tictactoe"
 )
@@ -679,13 +678,15 @@ func init() { // add Matt Gleich's blackbird theme from https://github.com/black
 }
 
 func themeCMD(line string, u *User) {
+	// TODO: make this work with glamour
+	u.room.broadcast(Devbot, "Themes do not currently work because Devzat is switching to using glamour for rendering.")
 	if line == "list" {
 		u.room.broadcast(Devbot, "Available themes: "+strings.Join(chromastyles.Names(), ", "))
 		return
 	}
 	for _, name := range chromastyles.Names() {
 		if name == line {
-			markdown.CurrentTheme = chromastyles.Get(name)
+			//markdown.CurrentTheme = chromastyles.Get(name)
 			u.room.broadcast(Devbot, "Theme set to "+name)
 			return
 		}

@@ -19,9 +19,10 @@ import (
 
 	"github.com/acarl005/stripansi"
 	"github.com/caarlos0/sshmarshal"
+	"github.com/charmbracelet/glamour"
 	"github.com/fatih/color"
 	"github.com/gliderlabs/ssh"
-	markdown "github.com/quackduck/go-term-markdown"
+	//markdown "github.com/quackduck/go-term-markdown"
 	cryptoSSH "golang.org/x/crypto/ssh"
 )
 
@@ -136,14 +137,35 @@ func mdRender(a string, beforeMessageLen int, lineWidth int) string {
 	if strings.Contains(a, "![") && strings.Contains(a, "](") {
 		lineWidth = int(math.Min(float64(lineWidth/2), 200)) // max image width is 200
 	}
-	md := strings.TrimSuffix(string(markdown.Render(a, lineWidth, beforeMessageLen)), "\n")
-	if md == "" {
+
+	glamourStyle := glamour.DarkStyleConfig
+	glamourStyle.Document.Color = nil
+	glamourStyle.Document.Margin = nil
+	r, _ := glamour.NewTermRenderer(glamour.WithEmoji(), glamour.WithStyles(glamourStyle), glamour.WithWordWrap(lineWidth-beforeMessageLen))
+	md, err := r.Render(a)
+	if err != nil {
+		MainRoom.broadcast(Devbot, err.Error())
 		return ""
 	}
-	if len(md) < beforeMessageLen {
-		return md
+	md = addLeftPad(md, beforeMessageLen)
+	return md
+	//md := strings.TrimSuffix(, "\n")
+	//if md == "" {
+	//	return ""
+	//}
+	//if len(md) < beforeMessageLen {
+	//	return md
+	//}
+	//return md[beforeMessageLen:]
+}
+
+func addLeftPad(a string, pad int) string {
+	split := strings.Split(a, "\n")
+	for i := 1; i < len(split); i++ { // skip first line
+		split[i] = strings.Repeat(" ", pad) + split[i]
 	}
-	return md[beforeMessageLen:]
+	a = strings.Join(split, "\n")
+	return a
 }
 
 // Returns true and the User with the same name if the username is taken, false and nil otherwise
