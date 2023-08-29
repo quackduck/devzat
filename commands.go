@@ -58,8 +58,8 @@ var (
 		{"admins", adminsCMD, "", "Print the ID (hashed key) for all admins"},
 		{"eg-code", exampleCodeCMD, "[big]", "Example syntax-highlighted code"},
 		{"lsbans", listBansCMD, "", "List banned IDs"},
-		{"ban", banCMD, "<user>", "Ban <user> (admin)"},
-		{"unban", unbanCMD, "<IP|ID> [dur]", "Unban a person and optionally, for a duration (admin)"},
+		{"ban", banCMD, "<user> [reason] [dur]", "Ban <user> and optionally, with a reason or duration (admin)"},
+		{"unban", unbanCMD, "<IP|ID> [dur]", "Unban a person (admin)"},
 		{"kick", kickCMD, "<user>", "Kick <user> (admin)"},
 		{"art", asciiArtCMD, "", "Show some panda art"},
 		{"pwd", pwdCMD, "", "Show your current room"},
@@ -115,6 +115,7 @@ func runCommands(line string, u *User) {
 	}
 
 	// Now we know it is not a DM, so this is a safe place to add the hook for sending the event to plugins
+	line = getMiddlewareResult(u, line)
 	sendMessageToPlugins(line, u)
 
 	switch currCmd {
@@ -488,6 +489,9 @@ func nickCMD(line string, u *User) {
 func promptCMD(line string, u *User) {
 	u.Prompt = line
 	u.formatPrompt()
+	if line == "" {
+		u.writeln(Devbot, "(Your prompt is now empty. Did you mean to get more info about your prompt? Run `man prompt` for more info)")
+	}
 }
 
 func listBansCMD(_ string, u *User) {
@@ -535,16 +539,8 @@ func banCMD(line string, u *User) {
 	var victim *User
 	var ok bool
 	banner := u.Name
+	banReason := "" // Initial ban reason is an empty string
 
-	boreName := "http://bore.pub:1337"
-	if split[0] == boreName {
-		bore, boreOnline := findUserByName(u.room, boreName)
-		if boreOnline {
-			u.room.broadcast(bore.Name, "Nice try devbot.")
-			u.room.broadcast("", "devbot has been banned by "+banner)
-			return
-		}
-	}
 	if split[0] == "devbot" {
 		u.room.broadcast(Devbot, "Do you really think you can ban me, puny human?")
 		victim = u // mwahahahaha - devbot
@@ -557,21 +553,24 @@ func banCMD(line string, u *User) {
 		return
 	}
 
-	// check if the ban is for a certain duration
 	if len(split) > 1 {
-		dur, err := time.ParseDuration(split[1])
+		dur, err := time.ParseDuration(split[len(split)-1])
 		if err != nil {
-			u.room.broadcast(Devbot, "I couldn't parse that as a duration")
+			split[len(split)-1] = "" // there's no duration so don't trim anything from the reason
+		}
+		if len(split) > 2 {
+			banReason = strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(line, split[0]), split[len(split)-1]))
+		}
+		if err == nil { // there was a duration
+			victim.ban(victim.Name + " has been banned by " + banner + " for " + dur.String() + " " + banReason)
+			go func(id string) {
+				time.Sleep(dur)
+				unbanIDorIP(id)
+			}(victim.id) // evaluate id now, call unban with that value later
 			return
 		}
-		victim.ban(victim.Name + " has been banned by " + banner + " for " + dur.String())
-		go func(id string) {
-			time.Sleep(dur)
-			unbanIDorIP(id)
-		}(victim.id) // evaluate id now, call unban with that value later
-		return
 	}
-	victim.ban(victim.Name + " has been banned by " + banner)
+	victim.ban(victim.Name + " has been banned by " + banner + " " + banReason)
 }
 
 func kickCMD(line string, u *User) {
@@ -734,7 +733,21 @@ func pronounsCMD(line string, u *User) {
 }
 
 func emojisCMD(_ string, u *User) {
-	u.room.broadcast(Devbot, "Check out https\\://github.com/ikatyang/emoji-cheat-sheet")
+	u.room.broadcast(Devbot, `See the complete list at https://github.com/ikatyang/emoji-cheat-sheet/  
+Here are a few examples (type :emoji_text: to use):  
+:doughnut: doughnut  
+:yum: yum  
+:joy: joy  
+:thinking: thinking  
+:smile: smile  
+:zipper_mouth_face: zipper_mouth_face  
+:kangaroo: kangaroo  
+:sleepy: sleepy  
+:hot_pepper:  hot_pepper  
+:face_with_thermometer: face_with_thermometer  
+:dumpling: dumpling  
+:sunglasses: sunglasses  
+:skull: skull`)
 }
 
 func commandsRestCMD(_ string, u *User) {
