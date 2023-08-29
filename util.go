@@ -141,7 +141,7 @@ func mdRender(a string, beforeMessageLen int, lineWidth int) string {
 	glamourStyle := glamour.DarkStyleConfig
 	glamourStyle.Document.Color = nil
 	glamourStyle.Document.Margin = nil
-	r, _ := glamour.NewTermRenderer(glamour.WithEmoji(), glamour.WithStyles(glamourStyle), glamour.WithWordWrap(lineWidth-beforeMessageLen))
+	r, _ := glamour.NewTermRenderer(glamour.WithEmoji(), glamour.WithStyles(glamourStyle), glamour.WithWordWrap(lineWidth-beforeMessageLen), glamour.WithPreservedNewLines())
 	md, err := r.Render(a)
 	if err != nil {
 		MainRoom.broadcast(Devbot, err.Error())
