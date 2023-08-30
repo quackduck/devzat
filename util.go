@@ -133,7 +133,7 @@ func cleanName(name string) string {
 }
 
 func mdRender(a string, beforeMessageLen int, lineWidth int) string {
-	a = strings.ReplaceAll(a, "https://", "https\\://")
+	//a = strings.ReplaceAll(a, "https://", "https\\://")
 	if strings.Contains(a, "![") && strings.Contains(a, "](") {
 		lineWidth = int(math.Min(float64(lineWidth/2), 200)) // max image width is 200
 	}
@@ -147,8 +147,7 @@ func mdRender(a string, beforeMessageLen int, lineWidth int) string {
 		MainRoom.broadcast(Devbot, err.Error())
 		return ""
 	}
-	md = addLeftPad(md, beforeMessageLen)
-	return md
+	return addLeftPad(strings.TrimSpace(md), beforeMessageLen)
 	//md := strings.TrimSuffix(, "\n")
 	//if md == "" {
 	//	return ""
