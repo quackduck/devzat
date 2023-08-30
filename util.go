@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	stdcolor "image/color"
 	"math"
 	"math/rand"
 	"os"
@@ -20,6 +21,8 @@ import (
 	"github.com/acarl005/stripansi"
 	"github.com/caarlos0/sshmarshal"
 	"github.com/charmbracelet/glamour"
+	"github.com/charmbracelet/glamour/ansi"
+	"github.com/eliukblau/pixterm/pkg/ansimage"
 	"github.com/fatih/color"
 	"github.com/gliderlabs/ssh"
 	//markdown "github.com/quackduck/go-term-markdown"
@@ -134,20 +137,26 @@ func cleanName(name string) string {
 
 func mdRender(a string, beforeMessageLen int, lineWidth int) string {
 	//a = strings.ReplaceAll(a, "https://", "https\\://")
-	if strings.Contains(a, "![") && strings.Contains(a, "](") {
-		lineWidth = int(math.Min(float64(lineWidth/2), 200)) // max image width is 200
-	}
+	//if strings.Contains(a, "![") && strings.Contains(a, "](") {
+	//	lineWidth = int(math.Min(float64(lineWidth/2), 200)) // max image width is 200
+	//}
 
 	glamourStyle := glamour.DarkStyleConfig
 	glamourStyle.Document.Color = nil
 	glamourStyle.Document.Margin = nil
+	glamourStyle.Image = ansi.StylePrimitive{Format: "\n<img>{{.text}}</img>\n"}
+	glamourStyle.ImageText.Format = "Image: {{.text}}"
+	glamourStyle.Table.StyleBlock.StylePrimitive.Prefix = "\x1b[0m" // ansi reset: hack to stop space in front of table from being erased
 	r, _ := glamour.NewTermRenderer(glamour.WithEmoji(), glamour.WithStyles(glamourStyle), glamour.WithWordWrap(lineWidth-beforeMessageLen), glamour.WithPreservedNewLines())
 	md, err := r.Render(a)
 	if err != nil {
 		MainRoom.broadcast(Devbot, err.Error())
 		return ""
 	}
-	return addLeftPad(strings.TrimSpace(md), beforeMessageLen)
+	//fmt.Println("before: `" + md + "`\nafter:`" + strings.TrimSuffix(strings.TrimSpace(md), "\n") + "`")
+	//fmt.Println(strconv.Quote(strings.TrimSuffix(strings.TrimSpace(md), "\n")))
+	md = addLeftPad(strings.TrimSuffix(replaceImgs(md, lineWidth), "\n"), beforeMessageLen)
+	return md
 	//md := strings.TrimSuffix(, "\n")
 	//if md == "" {
 	//	return ""
@@ -156,6 +165,27 @@ func mdRender(a string, beforeMessageLen int, lineWidth int) string {
 	//	return md
 	//}
 	//return md[beforeMessageLen:]
+}
+
+func replaceImgs(md string, width int) string {
+	if !strings.Contains(md, "<img>") {
+		return md
+	}
+	start := strings.Index(md, "<img>")
+	end := strings.Index(md, "</img>")
+	if end == -1 {
+		return md
+	}
+	imgStart := start + 5
+	imgEnd := end
+	img := md[imgStart:imgEnd]
+
+	i, err := ansimage.NewScaledFromURL(img, math.MaxInt32, width/2, stdcolor.Transparent, ansimage.ScaleModeFit, ansimage.NoDithering)
+	if err != nil {
+		return md
+	}
+	img = i.Render()
+	return replaceImgs(md[:start]+img+md[end+6:], width)
 }
 
 func addLeftPad(a string, pad int) string {

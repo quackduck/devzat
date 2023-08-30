@@ -12,6 +12,7 @@ require (
 	github.com/charmbracelet/glamour v0.6.0
 	github.com/dghubble/go-twitter v0.0.0-20221104224141-912508c3888b
 	github.com/dghubble/oauth1 v0.7.2
+	github.com/eliukblau/pixterm v1.3.1
 	github.com/fatih/color v1.15.0
 	github.com/gliderlabs/ssh v0.3.5
 	github.com/jwalton/gchalk v1.3.0
@@ -31,6 +32,7 @@ require (
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/dghubble/sling v1.4.1 // indirect
+	github.com/disintegration/imaging v1.6.2 // indirect
 	github.com/dlclark/regexp2 v1.10.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
