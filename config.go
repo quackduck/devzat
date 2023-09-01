@@ -98,30 +98,30 @@ func init() {
 
 	errCheck := func(err error) {
 		if err != nil {
-			fmt.Println("err: " + err.Error())
+			panic("err: " + err.Error())
 			os.Exit(0) // match `return` behavior
 		}
 	}
 
+	var d []byte
 	if _, err := os.Stat(cfgFile); err != nil {
 		if os.IsNotExist(err) {
-			fmt.Println("Config file not found, so writing the default one to " + cfgFile)
+			fmt.Println("Config file not found, so using the default one and writing it to " + cfgFile)
 
-			d, err := yaml.Marshal(Config)
+			d, err = yaml.Marshal(Config)
 			errCheck(err)
 			err = os.WriteFile(cfgFile, d, 0644)
-			errCheck(err)
-			return
 		}
 		errCheck(err)
+	} else {
+		d, err = os.ReadFile(cfgFile)
+		errCheck(err)
+		err = yaml.UnmarshalStrict(d, &Config)
+		errCheck(err)
+		fmt.Println("Config loaded from " + cfgFile)
 	}
-	d, err := os.ReadFile(cfgFile)
-	errCheck(err)
-	err = yaml.UnmarshalStrict(d, &Config)
-	errCheck(err)
-	fmt.Println("Config loaded from " + cfgFile)
 
-	err = os.MkdirAll(Config.DataDir, 0755)
+	err := os.MkdirAll(Config.DataDir, 0755)
 	errCheck(err)
 
 	logfile, err := os.OpenFile(Config.DataDir+string(os.PathSeparator)+"log.txt", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0666)
