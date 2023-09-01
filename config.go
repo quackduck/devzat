@@ -98,7 +98,7 @@ func init() {
 
 	errCheck := func(err error) {
 		if err != nil {
-			panic("err: " + err.Error())
+			fmt.Println("err: " + err.Error())
 			os.Exit(0) // match `return` behavior
 		}
 	}
