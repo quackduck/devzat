@@ -9,9 +9,12 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"image"
 	stdcolor "image/color"
+	"io"
 	"math"
 	"math/rand"
+	"net/http"
 	"os"
 	"runtime/debug"
 	"strings"
@@ -135,7 +138,7 @@ func cleanName(name string) string {
 	return s
 }
 
-func mdRender(a string, beforeMessageLen int, lineWidth int) string {
+func mdRender(a string, beforeMessageLen int, lineWidth int, imageCache map[string][]byte) string {
 	//a = strings.ReplaceAll(a, "https://", "https\\://")
 	//if strings.Contains(a, "![") && strings.Contains(a, "](") {
 	//	lineWidth = int(math.Min(float64(lineWidth/2), 200)) // max image width is 200
@@ -155,7 +158,7 @@ func mdRender(a string, beforeMessageLen int, lineWidth int) string {
 	}
 	//fmt.Println("before: `" + md + "`\nafter:`" + strings.TrimSuffix(strings.TrimSpace(md), "\n") + "`")
 	//fmt.Println(strconv.Quote(strings.TrimSuffix(strings.TrimSpace(md), "\n")))
-	md = addLeftPad(strings.TrimSuffix(replaceImgs(md, lineWidth), "\n"), beforeMessageLen)
+	md = addLeftPad(strings.TrimSuffix(replaceImgs(md, lineWidth, imageCache), "\n"), beforeMessageLen)
 	return md
 	//md := strings.TrimSuffix(, "\n")
 	//if md == "" {
@@ -167,7 +170,7 @@ func mdRender(a string, beforeMessageLen int, lineWidth int) string {
 	//return md[beforeMessageLen:]
 }
 
-func replaceImgs(md string, width int) string {
+func replaceImgs(md string, width int, cache map[string][]byte) string {
 	if !strings.Contains(md, "<img>") {
 		return md
 	}
@@ -179,13 +182,43 @@ func replaceImgs(md string, width int) string {
 	imgStart := start + 5
 	imgEnd := end
 	img := md[imgStart:imgEnd]
+	img = strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(img), "\n", ""), " ", "")
 
-	i, err := ansimage.NewScaledFromURL(img, math.MaxInt32, width/2, stdcolor.Transparent, ansimage.ScaleModeFit, ansimage.NoDithering)
+	if data, ok := cache[img]; ok {
+		i, err := ansimage.NewScaledFromReader(bytes.NewReader(data), math.MaxInt32, width/2, stdcolor.Transparent, ansimage.ScaleModeFit, ansimage.NoDithering)
+		if err != nil {
+			return replaceImgs(md[:start]+img+" (error rendering)"+md[end+6:], width, cache)
+		}
+		img = i.Render()
+		return replaceImgs(md[:start]+img+md[end+6:], width, cache)
+	}
+
+	client := http.Client{Timeout: 5 * time.Second}
+	res, err := client.Get(img)
 	if err != nil {
-		return md
+		return replaceImgs(md[:start]+img+" (error fetching image)"+md[end+6:], width, cache)
+	}
+	if res.StatusCode != http.StatusOK {
+		return replaceImgs(md[:start]+img+"(error: http: "+http.StatusText(res.StatusCode)+")"+md[end+6:], width, cache)
+	}
+	limitReader := io.LimitReader(res.Body, 30*1024*1024) // 30 megabyte limit
+	// https://github.com/golang/go/issues/12512#issuecomment-137981217
+	header := new(bytes.Buffer)
+	config, _, err := image.DecodeConfig(io.TeeReader(limitReader, header))
+	if err != nil || config.Width > 4032 || config.Height > 3024 {
+		return replaceImgs(md[:start]+img+" (too large to render)"+md[end+6:], width, cache)
+	}
+	buf := new(bytes.Buffer)
+	i, err := ansimage.NewScaledFromReader(io.TeeReader(io.MultiReader(header, limitReader), buf), math.MaxInt32, width/2, stdcolor.Transparent, ansimage.ScaleModeFit, ansimage.NoDithering)
+	if err != nil {
+		return replaceImgs(md[:start]+img+" (error rendering)"+md[end+6:], width, cache)
+	}
+	if cache != nil {
+		cache[img] = buf.Bytes()
 	}
 	img = i.Render()
-	return replaceImgs(md[:start]+img+md[end+6:], width)
+
+	return replaceImgs(md[:start]+img+md[end+6:], width, cache)
 }
 
 func addLeftPad(a string, pad int) string {
