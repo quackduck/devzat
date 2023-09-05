@@ -138,7 +138,7 @@ func cleanName(name string) string {
 	return s
 }
 
-func mdRender(a string, beforeMessageLen int, lineWidth int, imageCache map[string][]byte) string {
+func mdRender(a string, beforeMessageLen int, lineWidth int, imageCache map[string]image.Image) string {
 	//a = strings.ReplaceAll(a, "https://", "https\\://")
 	//if strings.Contains(a, "![") && strings.Contains(a, "](") {
 	//	lineWidth = int(math.Min(float64(lineWidth/2), 200)) // max image width is 200
@@ -170,7 +170,7 @@ func mdRender(a string, beforeMessageLen int, lineWidth int, imageCache map[stri
 	//return md[beforeMessageLen:]
 }
 
-func replaceImgs(md string, width int, cache map[string][]byte) string {
+func replaceImgs(md string, width int, cache map[string]image.Image) string {
 	if !strings.Contains(md, "<img>") {
 		return md
 	}
@@ -181,44 +181,47 @@ func replaceImgs(md string, width int, cache map[string][]byte) string {
 	}
 	imgStart := start + 5
 	imgEnd := end
-	img := md[imgStart:imgEnd]
-	img = strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(img), "\n", ""), " ", "")
+	imgText := md[imgStart:imgEnd]
+	imgText = strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(imgText), "\n", ""), " ", "")
 
-	if data, ok := cache[img]; ok {
-		i, err := ansimage.NewScaledFromReader(bytes.NewReader(data), math.MaxInt32, width/2, stdcolor.Transparent, ansimage.ScaleModeFit, ansimage.NoDithering)
+	if img, ok := cache[imgText]; ok {
+		i, err := ansimage.NewScaledFromImage(img, math.MaxInt32, width/2, stdcolor.Transparent, ansimage.ScaleModeFit, ansimage.NoDithering)
 		if err != nil {
-			return replaceImgs(md[:start]+img+" (error rendering)"+md[end+6:], width, cache)
+			return replaceImgs(md[:start]+imgText+" (error rendering)"+md[end+6:], width, cache)
 		}
-		img = i.Render()
-		return replaceImgs(md[:start]+img+md[end+6:], width, cache)
+		imgText = i.Render()
+		return replaceImgs(md[:start]+imgText+md[end+6:], width, cache)
 	}
 
 	client := http.Client{Timeout: 5 * time.Second}
-	res, err := client.Get(img)
+	res, err := client.Get(imgText)
 	if err != nil {
-		return replaceImgs(md[:start]+img+" (error fetching image)"+md[end+6:], width, cache)
+		return replaceImgs(md[:start]+imgText+" (error fetching image)"+md[end+6:], width, cache)
 	}
 	if res.StatusCode != http.StatusOK {
-		return replaceImgs(md[:start]+img+"(error: http: "+http.StatusText(res.StatusCode)+")"+md[end+6:], width, cache)
+		return replaceImgs(md[:start]+imgText+"(error: http: "+http.StatusText(res.StatusCode)+")"+md[end+6:], width, cache)
 	}
 	limitReader := io.LimitReader(res.Body, 30*1024*1024) // 30 megabyte limit
 	// https://github.com/golang/go/issues/12512#issuecomment-137981217
 	header := new(bytes.Buffer)
 	config, _, err := image.DecodeConfig(io.TeeReader(limitReader, header))
 	if err != nil || config.Width > 4032 || config.Height > 3024 {
-		return replaceImgs(md[:start]+img+" (too large to render)"+md[end+6:], width, cache)
+		return replaceImgs(md[:start]+imgText+" (invalid or too large to render)"+md[end+6:], width, cache)
 	}
-	buf := new(bytes.Buffer)
-	i, err := ansimage.NewScaledFromReader(io.TeeReader(io.MultiReader(header, limitReader), buf), math.MaxInt32, width/2, stdcolor.Transparent, ansimage.ScaleModeFit, ansimage.NoDithering)
+	img, _, err := image.Decode(io.MultiReader(header, limitReader))
 	if err != nil {
-		return replaceImgs(md[:start]+img+" (error rendering)"+md[end+6:], width, cache)
+		return replaceImgs(md[:start]+imgText+" (error decoding image)"+md[end+6:], width, cache)
+	}
+	i, err := ansimage.NewScaledFromImage(img, math.MaxInt32, width/2, stdcolor.Transparent, ansimage.ScaleModeFit, ansimage.NoDithering)
+	if err != nil {
+		return replaceImgs(md[:start]+imgText+" (error rendering)"+md[end+6:], width, cache)
 	}
 	if cache != nil {
-		cache[img] = buf.Bytes()
+		cache[imgText] = img
 	}
-	img = i.Render()
+	imgText = i.Render()
 
-	return replaceImgs(md[:start]+img+md[end+6:], width, cache)
+	return replaceImgs(md[:start]+imgText+md[end+6:], width, cache)
 }
 
 func addLeftPad(a string, pad int) string {

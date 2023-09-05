@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"image"
 	"io"
 	"math"
 	"math/rand"
@@ -263,7 +264,7 @@ func (r *Room) broadcastNoBridges(senderName, msg string) {
 		return
 	}
 	msg = r.findMention(strings.ReplaceAll(msg, "@everyone", Green.Paint("everyone\a")))
-	imgCache := make(map[string][]byte, 1)
+	imgCache := make(map[string]image.Image, 1)
 	//go func() {
 	//r.usersMutex.RLock()
 	//timeAtStart := time.Now()
@@ -585,7 +586,7 @@ func (u *User) ban(banner string) {
 
 func (u *User) writeln(senderName string, msg string) { u.writelnWithImageCache(senderName, msg, nil) }
 
-func (u *User) writelnWithImageCache(senderName string, msg string, cache map[string][]byte) {
+func (u *User) writelnWithImageCache(senderName string, msg string, cache map[string]image.Image) {
 	if strings.Contains(msg, u.Name) { // is a ping
 		msg += "\a"
 	}
