@@ -94,7 +94,7 @@ func autogenCommands(cmds []CMD) string {
 	b := new(bytes.Buffer)
 	w := tabwriter.NewWriter(b, 0, 0, 2, ' ', 0)
 	for _, cmd := range cmds {
-		w.Write([]byte("   " + cmd.name + "\t" + cmd.argsInfo + "\t_" + cmd.info + "_  \n")) //nolint:errcheck // bytes.Buffer is never going to err out
+		w.Write([]byte("   " + color.HiCyanString(cmd.name) + "\t" + cmd.argsInfo + "\t_" + cmd.info + "_  \n")) //nolint:errcheck // bytes.Buffer is never going to err out
 	}
 	w.Flush()
 	return b.String()
