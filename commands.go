@@ -32,7 +32,7 @@ type CMD struct {
 
 var (
 	MainCMDs = []CMD{
-		{"=<user>", dmCMD, "`msg`", "DM `user` with `msg`"}, // won't actually run, here just to show in docs
+		{"=`user`", dmCMD, "`msg`", "DM `user` with `msg`"}, // won't actually run, here just to show in docs
 		{"users", usersCMD, "", "List users"},
 		{"color", colorCMD, "`color`", "Change your name's color"},
 		{"exit", exitCMD, "", "Leave the chat"},
