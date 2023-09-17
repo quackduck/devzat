@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -275,6 +276,8 @@ func (r *Room) broadcastNoBridges(senderName, msg string) {
 		r.users[i].writelnWithImageCache(senderName, msg, imgCache)
 		//}
 	}
+	debug.FreeOSMemory()
+	//runtime.GC()
 	//r.usersMutex.RUnlock()
 	//}()
 	if r == MainRoom && len(Backlog) > 0 {
