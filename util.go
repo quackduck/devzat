@@ -205,7 +205,7 @@ func replaceImgs(md string, width int, cache map[string]image.Image) string {
 	// https://github.com/golang/go/issues/12512#issuecomment-137981217
 	header := new(bytes.Buffer)
 	config, _, err := image.DecodeConfig(io.TeeReader(limitReader, header))
-	if err != nil || config.Width > 4032 || config.Height > 3024 {
+	if err != nil || config.Width > 4032*2 || config.Height > 3024*2 {
 		return replaceImgs(md[:start]+imgText+" (invalid or too large to render)"+md[end+6:], width, cache)
 	}
 	img, _, err := image.Decode(io.MultiReader(header, limitReader))
