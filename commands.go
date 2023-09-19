@@ -867,7 +867,7 @@ func neofetchCMD(_ string, u *User) {
 		{"Uptime", uptimeStr},
 		{"Packages", fmt.Sprint(len(PluginCMDs)+len(MainCMDs)+len(RestCMDs)) + " commands"},
 		{"Shell", "devzat"},
-		{"Memory", fmt.Sprintf("%v MiB alloc / %v MiB total, %v GC cycles", memstats.Alloc/1024/1024, memstats.TotalAlloc/1024/1024, memstats.NumGC)},
+		{"Memory", fmt.Sprintf("%v MiB alloc / %v MiB sys, %v GC cycles", memstats.Alloc/1024/1024, memstats.Sys/1024/1024, memstats.NumGC)},
 		{"", ""},
 		{"", colorSwatch1},
 		{"", colorSwatch2},
