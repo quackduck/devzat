@@ -121,9 +121,11 @@ discord:
     compact_mode: true # optional: disables avatars so messages take up less vertical space
 ```
 
-#### Using the Twitter integration
+#### Using the X integration
 
-Devzat supports sending updates about who is online to Twitter. You need to make a new Twitter app through a [Twitter developer account](https://developer.twitter.com/en/apply/user)
+Devzat supports sending updates about who is online on the X social media platform. However, because of the switch from free to paid API keys, ![API Key Pricing](https://global.discourse-cdn.com/twitter/original/3X/b/4/b42b6b7e4db2db3f51db70b439e9f111105db04d.png) This feture no longer is no longer updated. If you want to improve the X bridges functionality, feel free to submit a PR. If you wish to continue, please follow the steps below.
+
+First, create a new app through a [Twitter developer account](https://developer.twitter.com/en/apply/user).
 
 Now add in the relevant keys to your integration config file:
 ```yaml
