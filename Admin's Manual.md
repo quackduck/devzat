@@ -122,11 +122,11 @@ discord:
 ```
 
 #### Using the X integration
-Devzat supports sending updates about who is online on the X social media platform. However, because of the switch from free to paid API keys, This feture no longer is no longer updated.
+Devzat supports sending updates about who is online on the X social media platform. However, because of the switch from free to paid API keys, This feature no longer is no longer updated.
 
 ![API Key Pricing](https://global.discourse-cdn.com/twitter/original/3X/b/4/b42b6b7e4db2db3f51db70b439e9f111105db04d.png)
 
-If you want to improve the X bridges functionality, feel free to submit a PR. If you wish to continue, please follow the steps below.
+If you want to improve or update the X bridges functionality, feel free to submit a PR. If you wish to continue, please follow the steps below:
 
 First, create a new app through a [Twitter developer account](https://developer.twitter.com/en/apply/user).
 
