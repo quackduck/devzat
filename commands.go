@@ -19,7 +19,6 @@ import (
 	chromastyles "github.com/alecthomas/chroma/styles"
 	"github.com/fatih/color"
 	"github.com/jwalton/gchalk"
-	markdown "github.com/quackduck/go-term-markdown"
 	"github.com/quackduck/term"
 	"github.com/shurcooL/tictactoe"
 )
@@ -33,42 +32,42 @@ type CMD struct {
 
 var (
 	MainCMDs = []CMD{
-		{"=<user>", dmCMD, "<msg>", "DM <user> with <msg>"}, // won't actually run, here just to show in docs
+		{"=`user`", dmCMD, "`msg`", "DM `user` with `msg`"}, // won't actually run, here just to show in docs
 		{"users", usersCMD, "", "List users"},
-		{"color", colorCMD, "<color>", "Change your name's color"},
+		{"color", colorCMD, "`color`", "Change your name's color"},
 		{"exit", exitCMD, "", "Leave the chat"},
 		{"help", helpCMD, "", "Show help"},
-		{"man", manCMD, "<cmd>", "Get help for a specific command"},
+		{"man", manCMD, "`cmd`", "Get help for a specific command"},
 		{"emojis", emojisCMD, "", "See a list of emojis"},
 		{"bell", bellCMD, "on|off|all", "ANSI bell on pings (on), never (off) or for every message (all)"},
 		{"clear", clearCMD, "", "Clear the screen"},
-		{"hang", hangCMD, "<char|word>", "Play hangman"}, // won't actually run, here just to show in docs
-		{"tic", ticCMD, "<cell num>", "Play tic tac toe!"},
+		{"hang", hangCMD, "`char`|`word`", "Play hangman"}, // won't actually run, here just to show in docs
+		{"tic", ticCMD, "`cell num`", "Play tic tac toe!"},
 		{"devmonk", devmonkCMD, "", "Test your typing speed"},
-		{"cd", cdCMD, "#room|user", "Join #room, DM user or run cd to see a list"}, // won't actually run, here just to show in docs
-		{"tz", tzCMD, "<zone> [24h]", "Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h"},
-		{"nick", nickCMD, "<name>", "Change your username"},
-		{"prompt", promptCMD, "<prompt>", "Change your promt. Run `man prompt` for more info"},
-		{"pronouns", pronounsCMD, "@user|pronouns", "Set your pronouns or get another user's"},
-		{"theme", themeCMD, "<theme>|list", "Change the syntax highlighting theme"},
+		{"cd", cdCMD, "#`room`|`user`", "Join #room, DM user or run cd to see a list"}, // won't actually run, here just to show in docs
+		{"tz", tzCMD, "`zone` [24h]", "Set your IANA timezone (like tz Asia/Dubai) and optionally set 24h"},
+		{"nick", nickCMD, "`name`", "Change your username"},
+		{"prompt", promptCMD, "`prompt`", "Change your prompt. Run `man prompt` for more info"},
+		{"pronouns", pronounsCMD, "`@user`|`pronouns`", "Set your pronouns or get another user's"},
+		{"theme", themeCMD, "`name`|list", "Change the syntax highlighting theme"},
 		{"rest", commandsRestCMD, "", "Uncommon commands list"}}
 	RestCMDs = []CMD{
 		// {"people", peopleCMD, "", "See info about nice people who joined"},
-		{"bio", bioCMD, "[user]", "Get a user's bio or set yours"},
-		{"id", idCMD, "<user>", "Get a unique ID for a user (hashed key)"},
+		{"bio", bioCMD, "[`user`]", "Get a user's bio or set yours"},
+		{"id", idCMD, "`user`", "Get a unique ID for a user (hashed key)"},
 		{"admins", adminsCMD, "", "Print the ID (hashed key) for all admins"},
 		{"eg-code", exampleCodeCMD, "[big]", "Example syntax-highlighted code"},
 		{"lsbans", listBansCMD, "", "List banned IDs"},
-		{"ban", banCMD, "<user> [reason] [dur]", "Ban <user> and optionally, with a reason or duration (admin)"},
-		{"unban", unbanCMD, "<IP|ID> [dur]", "Unban a person (admin)"},
-		{"kick", kickCMD, "<user>", "Kick <user> (admin)"},
+		{"ban", banCMD, "`user` [`reason`] [`dur`]", "Ban <user> and optionally, with a reason or duration (admin)"},
+		{"unban", unbanCMD, "IP|ID [dur]", "Unban a person (admin)"},
+		{"kick", kickCMD, "`user`", "Kick <user> (admin)"},
 		{"art", asciiArtCMD, "", "Show some panda art"},
 		{"pwd", pwdCMD, "", "Show your current room"},
 		//		{"sixel", sixelCMD, "<png url>", "Render an image in high quality"},
 		{"shrug", shrugCMD, "", `¯\\\_(ツ)\_/¯`}, // won't actually run, here just to show in docs
 		{"uname", unameCMD, "", "Show build info"},
 		{"uptime", uptimeCMD, "", "Show server uptime"},
-		{"8ball", EightBallCMD, "<question>", "Always tells the truth."},
+		{"8ball", eightBallCMD, "`question`", "Always tells the truth."},
 	}
 	SecretCMDs = []CMD{
 		{"ls", lsCMD, "???", "???"},
@@ -678,13 +677,15 @@ func init() { // add Matt Gleich's blackbird theme from https://github.com/black
 }
 
 func themeCMD(line string, u *User) {
+	// TODO: make this work with glamour
+	u.room.broadcast(Devbot, "Themes do not currently work because Devzat is switching to using glamour for rendering.")
 	if line == "list" {
 		u.room.broadcast(Devbot, "Available themes: "+strings.Join(chromastyles.Names(), ", "))
 		return
 	}
 	for _, name := range chromastyles.Names() {
 		if name == line {
-			markdown.CurrentTheme = chromastyles.Get(name)
+			//markdown.CurrentTheme = chromastyles.Get(name)
 			u.room.broadcast(Devbot, "Theme set to "+name)
 			return
 		}
@@ -887,7 +888,7 @@ func neofetchCMD(_ string, u *User) {
 	u.room.broadcast("", result)
 }
 
-func EightBallCMD(_ string, u *User) {
+func eightBallCMD(_ string, u *User) {
 	responses := []string{
 		"It is certain, ", "It is decidedly so, ", "Without a doubt, ", "Yes, definitely, ",
 		"You may rely on it, ", "As I see it, yes, ", "Most likely, ", "Outlook good, ",

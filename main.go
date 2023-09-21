@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"image"
 	"io"
 	"math"
 	"math/rand"
@@ -13,6 +14,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -263,6 +265,7 @@ func (r *Room) broadcastNoBridges(senderName, msg string) {
 		return
 	}
 	msg = r.findMention(strings.ReplaceAll(msg, "@everyone", Green.Paint("everyone\a")))
+	imgCache := make(map[string]image.Image, 1)
 	//go func() {
 	//r.usersMutex.RLock()
 	//timeAtStart := time.Now()
@@ -270,9 +273,11 @@ func (r *Room) broadcastNoBridges(senderName, msg string) {
 		//if time.Since(timeAtStart) > time.Second*3 {
 		//	go r.users[i].writeln(senderName, msg)
 		//} else {
-		r.users[i].writeln(senderName, msg)
+		r.users[i].writelnWithImageCache(senderName, msg, imgCache)
 		//}
 	}
+	debug.FreeOSMemory()
+	//runtime.GC()
 	//r.usersMutex.RUnlock()
 	//}()
 	if r == MainRoom && len(Backlog) > 0 {
@@ -582,7 +587,9 @@ func (u *User) ban(banner string) {
 	}
 }
 
-func (u *User) writeln(senderName string, msg string) {
+func (u *User) writeln(senderName string, msg string) { u.writelnWithImageCache(senderName, msg, nil) }
+
+func (u *User) writelnWithImageCache(senderName string, msg string, cache map[string]image.Image) {
 	if strings.Contains(msg, u.Name) { // is a ping
 		msg += "\a"
 	}
@@ -591,17 +598,17 @@ func (u *User) writeln(senderName string, msg string) {
 	thisUserIsDMSender := strings.HasSuffix(senderName, " <- ")
 	if senderName != "" {
 		if thisUserIsDMSender || strings.HasSuffix(senderName, " -> ") { // TODO: kinda hacky DM detection
-			msg = strings.TrimSpace(mdRender(msg, lenString(senderName), u.winWidth))
+			msg = strings.TrimSpace(mdRender(msg, lenString(senderName), u.winWidth, cache))
 			msg = senderName + msg
 			if !thisUserIsDMSender {
 				msg += "\a"
 			}
 		} else {
-			msg = strings.TrimSpace(mdRender(msg, lenString(senderName)+2, u.winWidth))
+			msg = strings.TrimSpace(mdRender(msg, lenString(senderName)+2, u.winWidth, cache))
 			msg = senderName + ": " + msg
 		}
 	} else {
-		msg = strings.TrimSpace(mdRender(msg, 0, u.winWidth)) // No sender
+		msg = strings.TrimSpace(mdRender(msg, 0, u.winWidth, cache)) // No sender
 	}
 	if time.Since(u.lastTimestamp) > time.Minute {
 		u.lastTimestamp = time.Now()

@@ -9,9 +9,14 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"github.com/disintegration/imaging"
+	"image"
+	"io"
 	"math"
 	"math/rand"
+	"net/http"
 	"os"
+	"runtime"
 	"runtime/debug"
 	"strings"
 	"text/tabwriter"
@@ -19,9 +24,12 @@ import (
 
 	"github.com/acarl005/stripansi"
 	"github.com/caarlos0/sshmarshal"
+	"github.com/charmbracelet/glamour"
+	"github.com/charmbracelet/glamour/ansi"
+	//"github.com/eliukblau/pixterm/pkg/ansimage"
 	"github.com/fatih/color"
 	"github.com/gliderlabs/ssh"
-	markdown "github.com/quackduck/go-term-markdown"
+	//markdown "github.com/quackduck/go-term-markdown"
 	cryptoSSH "golang.org/x/crypto/ssh"
 )
 
@@ -87,7 +95,7 @@ func autogenCommands(cmds []CMD) string {
 	b := new(bytes.Buffer)
 	w := tabwriter.NewWriter(b, 0, 0, 2, ' ', 0)
 	for _, cmd := range cmds {
-		w.Write([]byte("   " + cmd.name + "\t" + cmd.argsInfo + "\t_" + cmd.info + "_  \n")) //nolint:errcheck // bytes.Buffer is never going to err out
+		w.Write([]byte("   " + Chalk.Bold(cmd.name) + "\t" + cmd.argsInfo + "\t_" + cmd.info + "_  \n")) //nolint:errcheck // bytes.Buffer is never going to err out
 	}
 	w.Flush()
 	return b.String()
@@ -131,19 +139,132 @@ func cleanName(name string) string {
 	return s
 }
 
-func mdRender(a string, beforeMessageLen int, lineWidth int) string {
-	a = strings.ReplaceAll(a, "https://", "https\\://")
-	if strings.Contains(a, "![") && strings.Contains(a, "](") {
-		lineWidth = int(math.Min(float64(lineWidth/2), 200)) // max image width is 200
-	}
-	md := strings.TrimSuffix(string(markdown.Render(a, lineWidth, beforeMessageLen)), "\n")
-	if md == "" {
+func mdRender(a string, beforeMessageLen int, lineWidth int, imageCache map[string]image.Image) string {
+	//a = strings.ReplaceAll(a, "https://", "https\\://")
+	//if strings.Contains(a, "![") && strings.Contains(a, "](") {
+	//	lineWidth = int(math.Min(float64(lineWidth/2), 200)) // max image width is 200
+	//}
+
+	glamourStyle := glamour.DarkStyleConfig
+	glamourStyle.Document.Color = nil
+	glamourStyle.Document.Margin = nil
+	glamourStyle.Image = ansi.StylePrimitive{Format: "\n<img>{{.text}}</img>\n"}
+	glamourStyle.ImageText.Format = "Image: {{.text}}"
+	glamourStyle.Table.StyleBlock.StylePrimitive.Prefix = "\x1b[0m" // ansi reset: hack to stop space in front of table from being erased
+	r, _ := glamour.NewTermRenderer(glamour.WithEmoji(), glamour.WithStyles(glamourStyle), glamour.WithWordWrap(lineWidth-beforeMessageLen), glamour.WithPreservedNewLines())
+	md, err := r.Render(a)
+	if err != nil {
+		MainRoom.broadcast(Devbot, err.Error())
 		return ""
 	}
-	if len(md) < beforeMessageLen {
+	//fmt.Println("before: `" + md + "`\nafter:`" + strings.TrimSuffix(strings.TrimSpace(md), "\n") + "`")
+	//fmt.Println(strconv.Quote(strings.TrimSuffix(strings.TrimSpace(md), "\n")))
+	md = addLeftPad(strings.TrimSuffix(replaceImgs(md, lineWidth, imageCache), "\n"), beforeMessageLen)
+	return md
+	//md := strings.TrimSuffix(, "\n")
+	//if md == "" {
+	//	return ""
+	//}
+	//if len(md) < beforeMessageLen {
+	//	return md
+	//}
+	//return md[beforeMessageLen:]
+}
+
+func replaceImgs(md string, width int, cache map[string]image.Image) string {
+	if !strings.Contains(md, "<img>") {
 		return md
 	}
-	return md[beforeMessageLen:]
+	start := strings.Index(md, "<img>")
+	end := strings.Index(md, "</img>")
+	if end == -1 {
+		return md
+	}
+	imgStart := start + 5
+	imgEnd := end
+	imgText := md[imgStart:imgEnd]
+	imgText = strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(imgText), "\n", ""), " ", "")
+
+	if img, ok := cache[imgText]; ok {
+		//i, err := ansimage.NewScaledFromImage(img, math.MaxInt32, width/2, stdcolor.Transparent, ansimage.ScaleModeFit, ansimage.NoDithering)
+		//if err != nil {
+		//	return replaceImgs(md[:start]+imgText+" (error rendering)"+md[end+6:], width, cache)
+		//}
+		//imgText = i.Render()
+		imgText = imgRender(img, width/2)
+		return replaceImgs(md[:start]+imgText+md[end+6:], width, cache)
+	}
+
+	client := http.Client{Timeout: 5 * time.Second}
+	res, err := client.Get(imgText)
+	if err != nil {
+		return replaceImgs(md[:start]+imgText+" (error fetching image)"+md[end+6:], width, cache)
+	}
+	if res.StatusCode != http.StatusOK {
+		return replaceImgs(md[:start]+imgText+"(error: http: "+http.StatusText(res.StatusCode)+")"+md[end+6:], width, cache)
+	}
+	limitReader := io.LimitReader(res.Body, 30*1024*1024) // 30 megabyte limit
+	// https://github.com/golang/go/issues/12512#issuecomment-137981217
+	header := new(bytes.Buffer)
+	//memStats("before image.DecodeConfig")
+	config, _, err := image.DecodeConfig(io.TeeReader(limitReader, header))
+	if err != nil || config.Width > 4032*2 || config.Height > 3024*2 {
+		return replaceImgs(md[:start]+imgText+" (invalid or too large to render)"+md[end+6:], width, cache)
+	}
+	//fmt.Println(config)
+	//memStats("before image.Decode")
+	//buf := new(bytes.Buffer)
+	//img, _, err := image.Decode(io.TeeReader(io.MultiReader(header, limitReader), buf))
+	img, _, err := image.Decode(io.MultiReader(header, limitReader))
+	if err != nil {
+		return replaceImgs(md[:start]+imgText+" (error decoding image)"+md[end+6:], width, cache)
+	}
+	//memStats("after image.Decode")
+	//i, err := ansimage.NewScaledFromImage(img, math.MaxInt32, width/2, stdcolor.Transparent, ansimage.ScaleModeFit, ansimage.NoDithering)
+	//if err != nil {
+	//	return replaceImgs(md[:start]+imgText+" (error rendering)"+md[end+6:], width, cache)
+	//}
+	if cache != nil {
+		cache[imgText] = img
+	}
+	//imgText = i.Render()
+	imgText = imgRender(img, width/2)
+
+	return replaceImgs(md[:start]+imgText+md[end+6:], width, cache)
+}
+
+func memStats(note string) {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	fmt.Printf("Alloc = %v MiB %s\n", m.Alloc/1024/1024, note)
+}
+
+func imgRender(img image.Image, width int) string {
+	result := ""
+	//fmt.Println("starting")
+	//memStats("before fit")
+	img = imaging.Fit(img, width, math.MaxInt32, imaging.Lanczos)
+	//memStats("after fit")
+	//fmt.Println("done fitting")
+	for y := 0; y < img.Bounds().Dy(); y += 2 {
+		for x := 0; x < img.Bounds().Dx(); x++ {
+			r1, g1, b1, _ := img.At(x, y).RGBA()
+			r2, g2, b2, _ := img.At(x, y+1).RGBA()
+			result += fmt.Sprintf("\x1b[38;2;%d;%d;%dm\x1b[48;2;%d;%d;%dm▀", r1/256, g1/256, b1/256, r2/256, g2/256, b2/256)
+		}
+		result += "\x1b[0m\n"
+	}
+	//fmt.Println("done render")
+	return result
+}
+
+func addLeftPad(a string, pad int) string {
+	split := strings.Split(a, "\n")
+	for i := 1; i < len(split); i++ { // skip first line
+		split[i] = strings.Repeat(" ", pad) + split[i]
+	}
+	a = strings.Join(split, "\n")
+	return a
 }
 
 // Returns true and the User with the same name if the username is taken, false and nil otherwise

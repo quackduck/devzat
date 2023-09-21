@@ -9,9 +9,7 @@ import (
 	"strings"
 
 	"github.com/acarl005/stripansi"
-	chromastyles "github.com/alecthomas/chroma/styles"
 	"github.com/jwalton/gchalk"
-	markdown "github.com/quackduck/go-term-markdown"
 )
 
 var (
@@ -68,7 +66,7 @@ func colorNameWithColor(c string) string {
 }
 
 func init() {
-	markdown.CurrentTheme = chromastyles.ParaisoDark
+	//markdown.CurrentTheme = chromastyles.ParaisoDark
 	ColorHelpMsg = strings.Join(func() []string {
 		colors := make([]string, 0, len(Styles))
 		for i := range Styles {
