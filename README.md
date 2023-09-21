@@ -130,7 +130,7 @@ The rest
 
 ## Integrations
 
-When self-hosting an instance, Devzat can integrate with Slack and/or Discord to bridge messages, and use the X social-meida platform to post new-user announcements. 
+When self-hosting an instance, Devzat can integrate with Slack and/or Discord to bridge messages, and use the X social-meida platform to post new-user announcements (now requires payment). 
 See the [Admin's Manual](Admin's%20Manual.md) for more info.
 
 Devzat has a plugin API you can use to integrate your own services: [documentation](plugin/README.md). Feel free to add a plugin to the main instance. Just ask for a token on the server.
