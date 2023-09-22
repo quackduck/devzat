@@ -5,7 +5,7 @@ import (
 	goaway "github.com/TwiN/go-away"
 )
 
-var detector = goaway.NewProfanityDetector().WithSanitizeSpaces(false)
+var detector = goaway.NewProfanityDetector().WithSanitizeSpaces(false).WithWholeWordMatch(true)
 
 func rmBadWords(text string) string {
 	if !Config.Censor {
