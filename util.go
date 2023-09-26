@@ -9,14 +9,12 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"github.com/disintegration/imaging"
 	"image"
 	"io"
 	"math"
 	"math/rand"
 	"net/http"
 	"os"
-	"runtime"
 	"runtime/debug"
 	"strings"
 	"text/tabwriter"
@@ -26,6 +24,7 @@ import (
 	"github.com/caarlos0/sshmarshal"
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/glamour/ansi"
+	"github.com/disintegration/imaging"
 	//"github.com/eliukblau/pixterm/pkg/ansimage"
 	"github.com/fatih/color"
 	"github.com/gliderlabs/ssh"
@@ -140,11 +139,6 @@ func cleanName(name string) string {
 }
 
 func mdRender(a string, beforeMessageLen int, lineWidth int, imageCache map[string]image.Image) string {
-	//a = strings.ReplaceAll(a, "https://", "https\\://")
-	//if strings.Contains(a, "![") && strings.Contains(a, "](") {
-	//	lineWidth = int(math.Min(float64(lineWidth/2), 200)) // max image width is 200
-	//}
-
 	glamourStyle := glamour.DarkStyleConfig
 	glamourStyle.Document.Color = nil
 	glamourStyle.Document.Margin = nil
@@ -157,18 +151,8 @@ func mdRender(a string, beforeMessageLen int, lineWidth int, imageCache map[stri
 		MainRoom.broadcast(Devbot, err.Error())
 		return ""
 	}
-	//fmt.Println("before: `" + md + "`\nafter:`" + strings.TrimSuffix(strings.TrimSpace(md), "\n") + "`")
-	//fmt.Println(strconv.Quote(strings.TrimSuffix(strings.TrimSpace(md), "\n")))
 	md = addLeftPad(strings.TrimSuffix(replaceImgs(md, lineWidth, imageCache), "\n"), beforeMessageLen)
 	return md
-	//md := strings.TrimSuffix(, "\n")
-	//if md == "" {
-	//	return ""
-	//}
-	//if len(md) < beforeMessageLen {
-	//	return md
-	//}
-	//return md[beforeMessageLen:]
 }
 
 func replaceImgs(md string, width int, cache map[string]image.Image) string {
@@ -186,11 +170,6 @@ func replaceImgs(md string, width int, cache map[string]image.Image) string {
 	imgText = strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(imgText), "\n", ""), " ", "")
 
 	if img, ok := cache[imgText]; ok {
-		//i, err := ansimage.NewScaledFromImage(img, math.MaxInt32, width/2, stdcolor.Transparent, ansimage.ScaleModeFit, ansimage.NoDithering)
-		//if err != nil {
-		//	return replaceImgs(md[:start]+imgText+" (error rendering)"+md[end+6:], width, cache)
-		//}
-		//imgText = i.Render()
 		imgText = imgRender(img, width/2)
 		return replaceImgs(md[:start]+imgText+md[end+6:], width, cache)
 	}
@@ -206,46 +185,25 @@ func replaceImgs(md string, width int, cache map[string]image.Image) string {
 	limitReader := io.LimitReader(res.Body, 30*1024*1024) // 30 megabyte limit
 	// https://github.com/golang/go/issues/12512#issuecomment-137981217
 	header := new(bytes.Buffer)
-	//memStats("before image.DecodeConfig")
 	config, _, err := image.DecodeConfig(io.TeeReader(limitReader, header))
 	if err != nil || config.Width > 4032*2 || config.Height > 3024*2 {
 		return replaceImgs(md[:start]+imgText+" (invalid or too large to render)"+md[end+6:], width, cache)
 	}
-	//fmt.Println(config)
-	//memStats("before image.Decode")
-	//buf := new(bytes.Buffer)
-	//img, _, err := image.Decode(io.TeeReader(io.MultiReader(header, limitReader), buf))
 	img, _, err := image.Decode(io.MultiReader(header, limitReader))
 	if err != nil {
 		return replaceImgs(md[:start]+imgText+" (error decoding image)"+md[end+6:], width, cache)
 	}
-	//memStats("after image.Decode")
-	//i, err := ansimage.NewScaledFromImage(img, math.MaxInt32, width/2, stdcolor.Transparent, ansimage.ScaleModeFit, ansimage.NoDithering)
-	//if err != nil {
-	//	return replaceImgs(md[:start]+imgText+" (error rendering)"+md[end+6:], width, cache)
-	//}
 	if cache != nil {
 		cache[imgText] = img
 	}
-	//imgText = i.Render()
 	imgText = imgRender(img, width/2)
 
 	return replaceImgs(md[:start]+imgText+md[end+6:], width, cache)
 }
 
-func memStats(note string) {
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-	fmt.Printf("Alloc = %v MiB %s\n", m.Alloc/1024/1024, note)
-}
-
 func imgRender(img image.Image, width int) string {
 	result := ""
-	//fmt.Println("starting")
-	//memStats("before fit")
 	img = imaging.Fit(img, width, math.MaxInt32, imaging.Lanczos)
-	//memStats("after fit")
-	//fmt.Println("done fitting")
 	for y := 0; y < img.Bounds().Dy(); y += 2 {
 		for x := 0; x < img.Bounds().Dx(); x++ {
 			r1, g1, b1, _ := img.At(x, y).RGBA()
@@ -254,7 +212,6 @@ func imgRender(img image.Image, width int) string {
 		}
 		result += "\x1b[0m\n"
 	}
-	//fmt.Println("done render")
 	return result
 }
 
