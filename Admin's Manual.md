@@ -122,9 +122,7 @@ discord:
 ```
 
 #### Using the Twitter integration
-Devzat supports sending updates about who is online on Twitter. However, please note that Twitter has switched to paid API keys.
-
-![API Key Pricing](https://global.discourse-cdn.com/twitter/original/3X/b/4/b42b6b7e4db2db3f51db70b439e9f111105db04d.png)
+Devzat supports sending updates about who is online on Twitter. However, please note that Twitter has switched to paid API keys. In order to setup the bridge please replicate the following steps on your devzat instance:
 
 First, create a new app through a [Twitter developer account](https://developer.twitter.com/en/apply/user).
 
