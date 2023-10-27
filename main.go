@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "embed"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"image"
@@ -895,11 +896,45 @@ func calculateLinesTaken(u *User, s string, width int) {
 }
 
 // bansContains reports if the addr or id is found in the bans list
-func bansContains(b []Ban, addr string, id string) bool {
+func bansContains(b []Ban, addr string, id string) bool { //caen wuz here
 	for i := 0; i < len(b); i++ {
 		if b[i].Addr == addr || b[i].ID == id {
 			return true
 		}
 	}
 	return false
+}
+
+func logUserActivity(user *User, action string) {
+    timestamp := time.Now().Format("2010-03-07 15:04:05")
+    message := ""
+
+    switch action {
+    case "login":
+        message = fmt.Sprintf("%s joined at %s", user.Name, timestamp)
+    case "logout":
+        message = fmt.Sprintf("%s left at %s", user.Name, timestamp)
+    default:
+        message = "Invalid action"
+    }
+
+    file, err := os.OpenFile("users.csv", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+    if err != nil {
+        fmt.Println("Error opening file:", err)
+        return
+    }
+    defer file.Close()
+
+    writer := csv.NewWriter(file)
+
+    record := []string{user.Name, action, timestamp}
+    if err := writer.Write(record); err != nil {
+        fmt.Println("Error writing to CSV:", err)
+    }
+
+    writer.Flush()
+
+    if err := writer.Error(); err != nil {
+        fmt.Println("Error flushing CSV writer:", err)
+    }
 }
