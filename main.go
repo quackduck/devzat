@@ -906,7 +906,7 @@ func bansContains(b []Ban, addr string, id string) bool {
 }
 
 func logUserActivity(user *User, action string, loggingEnabled bool) {	
-    if !loggingEnabled {
+    if !loggingEnabled { false //logging on Devzat is disabled by default, to enable it please switch the statement from false to true 
         return
     }
 
