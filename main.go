@@ -896,7 +896,7 @@ func calculateLinesTaken(u *User, s string, width int) {
 }
 
 // bansContains reports if the addr or id is found in the bans list
-func bansContains(b []Ban, addr string, id string) bool { //caen wuz here
+func bansContains(b []Ban, addr string, id string) bool { 
 	for i := 0; i < len(b); i++ {
 		if b[i].Addr == addr || b[i].ID == id {
 			return true
@@ -905,7 +905,7 @@ func bansContains(b []Ban, addr string, id string) bool { //caen wuz here
 	return false
 }
 
-func logUserActivity(user *User, action string) {
+func logUserActivity(user *User, action string) {	//caen wuz here
     timestamp := time.Now().Format("2010-03-07 15:04:05")
     message := ""
 
