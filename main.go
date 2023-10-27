@@ -905,7 +905,11 @@ func bansContains(b []Ban, addr string, id string) bool {
 	return false
 }
 
-func logUserActivity(user *User, action string) {	//caen wuz here
+func logUserActivity(user *User, action string, loggingEnabled bool) {	
+    if !loggingEnabled {
+        return
+    }
+
     timestamp := time.Now().Format("2010-03-07 15:04:05")
     message := ""
 
@@ -918,12 +922,12 @@ func logUserActivity(user *User, action string) {	//caen wuz here
         message = "Invalid action"
     }
 
-    file, err := os.OpenFile("users.csv", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-    if err != nil {
-        fmt.Println("Error opening file:", err)
-        return
-    }
-    defer file.Close()
+ file, err := os.OpenFile("users.csv", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+if err != nil {
+    fmt.Println("Error opening file:", err)
+    return
+}
+defer file.Close()
 
     writer := csv.NewWriter(file)
 
