@@ -911,7 +911,6 @@ func logUserActivity(user *User, action string, loggingEnabled bool) {
   }
 	
    timestamp := time.Now().Format("2010-03-07 15:04:05")
-   message := ""
 
    switch action {
    case "login":
