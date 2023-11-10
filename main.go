@@ -905,14 +905,11 @@ func bansContains(b []Ban, addr string, id string) bool {
 	return false
 }
 
-func logUserActivity(user *User, action string, loggingEnabled bool) {
+func logUserActivity(user *User, action string, loggingEnabled) {
 	if !loggingEnabled { false
 		// logging on devzat is disabled by default, to enable logging please switch the statement to true
 		return // If logging is not enabled, exit the function immediately
 	}
-
-	timestamp := time.Now().Format("2010-03-07 15:04:05")
-	message := ""
 
 	switch action {
 	case "login":
