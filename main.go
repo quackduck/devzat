@@ -906,39 +906,40 @@ func bansContains(b []Ban, addr string, id string) bool {
 }
 
 func logUserActivity(user *User, action string, loggingEnabled bool) {
-  if !loggingEnabled { false //logging on devzat is disabled by default, to enable logging please switch the statement to true
-     return // If logging is not enabled, it exits the function immediately
-  }
-	
-   timestamp := time.Now().Format("2010-03-07 15:04:05")
+	if !loggingEnabled { false
+		// logging on devzat is disabled by default, to enable logging please switch the statement to true
+		return // If logging is not enabled, exit the function immediately
+	}
 
-   switch action {
-   case "login":
-       message = fmt.Sprintf("%s joined at %s", user.Name, timestamp)
-   case "logout":
-       message = fmt.Sprintf("%s left at %s", user.Name, timestamp)
-   default:
-       message = "Invalid Action"
-   }
+	timestamp := time.Now().Format("2010-03-07 15:04:05")
+	message := ""
 
-   file, err := os.OpenFile("users.csv", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-   if err != nil {
-       fmt.Println("Error Opening CSV File:", err)
-       return
-   }
-   defer file.Close()
+	switch action {
+	case "login":
+		message = fmt.Sprintf("%s joined at %s", user.Name, timestamp)
+	case "logout":
+		message = fmt.Sprintf("%s left at %s", user.Name, timestamp)
+	default:
+		message = "Invalid Action"
+	}
 
-   writer := csv.NewWriter(file)
+	file, err := os.OpenFile("users.csv", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println("Error Opening CSV File:", err)
+		return
+	}
+	defer file.Close()
 
-   record := []string{user.Name, action, timestamp}
-   if err := writer.Write(record); err != nil {
-       fmt.Println("Error writing to CSV File:", err)
-   }
+	writer := csv.NewWriter(file)
 
-   writer.Flush()
+	record := []string{user.Name, action, timestamp}
+	if err := writer.Write(record); err != nil {
+		fmt.Println("Error writing to CSV File:", err)
+	}
 
-   if err := writer.Error(); err != nil {
-       fmt.Println("Error flushing CSV writer:", err)
-	   //todo: add averages for user join times and messages sent
-   }
+	writer.Flush()
+
+	if err := writer.Error(); err != nil {
+		fmt.Println("Error flushing CSV writer:", err)
+	}
 }
