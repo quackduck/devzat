@@ -905,7 +905,7 @@ func bansContains(b []Ban, addr string, id string) bool {
 	return false
 }
 
-func logUserActivity(user *User, action string, loggingEnabled) {
+func logUserActivity(user *User, action string, loggingEnabled bool) {
 	if !loggingEnabled { false
 		// logging on devzat is disabled by default, to enable logging please switch the statement to true
 		return // If logging is not enabled, exit the function immediately
