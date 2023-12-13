@@ -122,8 +122,7 @@ discord:
 ```
 
 #### Using the Twitter integration
-
-Devzat supports sending updates about who is online to Twitter. You need to make a new Twitter app through a [Twitter developer account](https://developer.twitter.com/en/apply/user)
+Devzat supports posting updates about who is online to Twitter. Start by creating a new app through a [Twitter developer account](https://developer.twitter.com/en/apply/user) (note: Twitter's API is now paid).
 
 Now add in the relevant keys to your integration config file:
 ```yaml
