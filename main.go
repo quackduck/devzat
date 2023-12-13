@@ -69,6 +69,7 @@ type User struct {
 	Bell          bool
 	PingEverytime bool
 	isBridge      bool
+	IsMuted       bool
 	FormatTime24  bool
 
 	Color   string

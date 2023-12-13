@@ -60,6 +60,8 @@ var (
 		{"lsbans", listBansCMD, "", "List banned IDs"},
 		{"ban", banCMD, "`user` [`reason`] [`dur`]", "Ban <user> and optionally, with a reason or duration (admin)"},
 		{"unban", unbanCMD, "IP|ID [dur]", "Unban a person (admin)"},
+		{"mute", muteCMD, "`user`", "Mute <user> (admin)"},
+		{"unmute", unmuteCMD, "`user`", "Unmute <user> (admin)"},
 		{"kick", kickCMD, "`user`", "Kick <user> (admin)"},
 		{"art", asciiArtCMD, "", "Show some panda art"},
 		{"pwd", pwdCMD, "", "Show your current room"},
@@ -99,6 +101,11 @@ func init() {
 // which case some commands will not be run (such as ./tz and ./exit)
 func runCommands(line string, u *User) {
 	line = rmBadWords(line)
+
+	if u.IsMuted {
+		u.writeln(u.Name, line)
+		return
+	}
 
 	if line == "" {
 		return
@@ -589,6 +596,32 @@ func kickCMD(line string, u *User) {
 		return
 	}
 	victim.close(victim.Name + Red.Paint(" has been kicked by ") + u.Name)
+}
+
+func muteCMD(line string, u *User) {
+	victim, ok := findUserByName(u.room, line)
+	if !ok {
+		u.room.broadcast("", "User not found")
+		return
+	}
+	if !auth(u) && victim.id != u.id {
+		u.room.broadcast(Devbot, "Not authorized")
+		return
+	}
+	victim.IsMuted = true
+}
+
+func unmuteCMD(line string, u *User) {
+	victim, ok := findUserByName(u.room, line)
+	if !ok {
+		u.room.broadcast("", "User not found")
+		return
+	}
+	if !auth(u) && victim.id != u.id {
+		u.room.broadcast(Devbot, "Not authorized")
+		return
+	}
+	victim.IsMuted = false
 }
 
 func colorCMD(rest string, u *User) {
