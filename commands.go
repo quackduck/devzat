@@ -135,6 +135,9 @@ func runCommands(line string, u *User) {
 	case "shrug":
 		shrugCMD(strings.TrimSpace(strings.TrimPrefix(line, "shrug")), u)
 		return
+	case "mute":
+		muteCMD(strings.TrimSpace(strings.TrimPrefix(line, "mute")), u)
+		return
 	}
 
 	if u.isBridge {
