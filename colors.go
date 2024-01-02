@@ -50,6 +50,7 @@ var (
 		{"l33t", buildStyleNoStrip(Chalk.WithBgBrightBlack())},
 		{"whiten", buildStyleNoStrip(Chalk.WithBgWhite())},
 		{"trans", makeFlag([]string{"#5BCEFA", "#F5A9B8", "#FFFFFF", "#F5A9B8", "#5BCEFA"})},
+		{"enby", makeFlag([]string{"#FCF45E", "#FFFFFF", "#915DC9", "#000000"})},
 		{"gay", makeFlag([]string{"#FF0018", "#FFA52C", "#FFFF41", "#008018", "#0000F9", "#86007D"})},
 		{"lesbian", makeFlag([]string{"#D62E02", "#FD9855", "#FFFFFF", "#D161A2", "#A20160"})},
 		{"bi", makeFlag([]string{"#D60270", "#D60270", "#9B4F96", "#0038A8", "#0038A8"})},
