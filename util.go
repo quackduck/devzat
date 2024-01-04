@@ -202,17 +202,17 @@ func replaceImgs(md string, width int, cache map[string]image.Image) string {
 }
 
 func imgRender(img image.Image, width int) string {
-	result := ""
+	var builder strings.Builder
 	img = imaging.Fit(img, width, math.MaxInt32, imaging.Lanczos)
 	for y := 0; y < img.Bounds().Dy(); y += 2 {
 		for x := 0; x < img.Bounds().Dx(); x++ {
 			r1, g1, b1, _ := img.At(x, y).RGBA()
 			r2, g2, b2, _ := img.At(x, y+1).RGBA()
-			result += fmt.Sprintf("\x1b[38;2;%d;%d;%dm\x1b[48;2;%d;%d;%dm▀", r1/256, g1/256, b1/256, r2/256, g2/256, b2/256)
+			builder.WriteString(fmt.Sprintf("\x1b[38;2;%d;%d;%dm\x1b[48;2;%d;%d;%dm▀", r1/256, g1/256, b1/256, r2/256, g2/256, b2/256))
 		}
-		result += "\x1b[0m\n"
+		builder.WriteString("\x1b[0m\n")
 	}
-	return result
+	return builder.String()
 }
 
 func addLeftPad(a string, pad int) string {

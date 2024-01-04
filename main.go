@@ -33,6 +33,7 @@ var (
 	Bans                       = make([]Ban, 0, 10)
 	IDandIPsToTimesJoinedInMin = make(map[string]int, 10) // ban type has addr and id
 	AntispamMessages           = make(map[string]int)
+	TORIPs                     = make(map[string]bool)
 
 	Devbot = Green.Paint("devbot")
 )
@@ -146,6 +147,21 @@ func main() {
 		}
 		os.Exit(0)
 	}()
+
+	// read tor list from https://www.dan.me.uk/torlist/?exit
+	resp, err := http.Get("https://www.dan.me.uk/torlist/?exit")
+	if err != nil {
+		Log.Println(err)
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		Log.Println(err)
+	}
+	for _, ip := range strings.Split(string(body), "\n") {
+		TORIPs[ip] = true
+	}
+
 	ssh.Handle(func(s ssh.Session) {
 		go keepSessionAlive(s)
 		u := newUser(s)
@@ -394,7 +410,7 @@ func newUser(s ssh.Session) *User {
 
 	Log.Println("Connected " + u.Name + " [" + u.id + "]")
 
-	if bansContains(Bans, u.addr, u.id) {
+	if bansContains(Bans, u.addr, u.id) || TORIPs[u.addr] {
 		Log.Println("Rejected " + u.Name + " [" + host + "] (banned)")
 		u.writeln(Devbot, "**You are banned**. If you feel this was a mistake, please reach out to the server admin. Include the following information: [ID "+u.id+"]")
 		s.Close()
