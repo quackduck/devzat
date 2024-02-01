@@ -801,15 +801,15 @@ func manCMD(rest string, u *User) {
 
 You can use some bash PS1 tags in it.  
 The supported tags are:  
-* \\u: your user name
-* \\h, \\H: devzat colored like your username
-* \\t, \\T: the time in your preferred formatting
-* \\w: the current room
-* \\W: the current room with #main aliased to ~
-* \\S: a space character
-* \\$: $ for normal users, # for admins
+* \u: your user name
+* \h, \H: devzat colored like your username
+* \t, \T: the time in your preferred formatting
+* \w: the current room
+* \W: the current room with #main aliased to ~
+* \S: a space character
+* \$: $ for normal users, # for admins
 
-The default prompt is "\\u:\\S".`)
+The default prompt is "\u:\S".`)
 		return
 	}
 
