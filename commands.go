@@ -665,7 +665,7 @@ Interesting features:
 
 For replacing newlines, I often use https\://bulkseotools.com/add-remove-line-breaks.php.
 
-Join the Devzat discord server: https://discord.gg/5AUjJvBHeT
+Join the Devzat discord server: https://discord.gg/yERQNTBbD5
 
 Made by Ishan Goel with feature ideas from friends.  
 Thanks to Caleb Denio for lending his server!`)
