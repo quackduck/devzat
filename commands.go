@@ -70,6 +70,7 @@ var (
 		{"uname", unameCMD, "", "Show build info"},
 		{"uptime", uptimeCMD, "", "Show server uptime"},
 		{"8ball", eightBallCMD, "`question`", "Always tells the truth."},
+		{"rmdir", rmdirCMD, "#`room`", "Remove an empty room"},
 	}
 	SecretCMDs = []CMD{
 		{"ls", lsCMD, "???", "???"},
@@ -937,4 +938,19 @@ func eightBallCMD(_ string, u *User) {
 		time.Sleep(time.Second * time.Duration(rand.Intn(10)))
 		u.room.broadcast("8ball", responses[rand.Intn(len(responses))]+u.Name)
 	}()
+}
+
+func rmdirCMD(rest string, u *User) {
+	if rest == "#main" {
+		u.room.broadcast("", "rmdir: failed to remove '"+rest+"': Operation not permitted")
+	} else if room, ok := Rooms[rest]; ok {
+		if len(room.users) == 0 {
+			delete(Rooms, rest)
+			u.room.broadcast("", "rmdir: removing directory, '"+rest+"'")
+		} else {
+			u.room.broadcast("", "rmdir: failed to remove '"+rest+"': Room not empty")
+		}
+	} else {
+		u.room.broadcast("", "rmdir: failed to remove '"+rest+"': No such room")
+	}
 }
