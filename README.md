@@ -22,10 +22,11 @@ Try it out:
 ssh devzat.hackclub.com
 ```
 
-You can log in with a nickname:
+If it's your first time login in, you can choose your nickname with the SSH username. For example, if you want to be called "john", you can do:
 ```sh
-ssh nickname@devzat.hackclub.com
+ssh john@devzat.hackclub.com
 ```
+If you want to change your nickname after the first login, you should use the `nick` command.
 
 If you're under a firewall, you can still join on port 443:
 ```sh
