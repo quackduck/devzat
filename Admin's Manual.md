@@ -5,16 +5,34 @@ This document is for those who want to manage a self-hosted Devzat server.
 Feel free to make a [new issue](https://github.com/quackduck/devzat/issues) if something doesn't work.
 
 ## Installation
+
+First of all, clone the repository
 ```shell
 git clone https://github.com/quackduck/devzat
 cd devzat
 ```
+
+### Manual
 To compile Devzat, you will need Go installed with a minimum version of 1.17.
 
 Now run `go install` to install the Devzat binary globally, or run `go build` to build and keep the binary in the working directory.
 
 You may need to generate a new key pair for your server using the `ssh-keygen` command. When prompted, save as `devzat-sshkey` since this is the default location (it can be changed in the config).
 While you can use the same key pair that your user account has, it is recommended to use a new key pair.
+
+### Using docker
+
+There is a Dockerfile in the project's repository
+
+Build devzat's image by executing
+```shell
+docker build . -t devzat:latest
+```
+
+Run the image while making the container's port available to the host
+```shell
+docker run -p 8080:8080 devzat:latest 
+```
 
 ## Usage
 
