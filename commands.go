@@ -583,15 +583,12 @@ func banCMD(line string, u *User) {
 			banReason = strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(line, split[0]), split[len(split)-1]))
 		}
 		if err == nil { // there was a duration
-			victim.ban(victim.Name + " has been banned by " + banner + " for " + dur.String() + " " + banReason)
-			go func(id string) {
-				time.Sleep(dur)
-				unbanIDorIP(id)
-			}(victim.id) // evaluate id now, call unban with that value later
+			unbanTime := time.Now().Add(dur)
+			victim.ban(victim.Name+" has been banned by "+banner+" for "+dur.String()+" "+banReason, true, unbanTime)
 			return
 		}
 	}
-	victim.ban(victim.Name + " has been banned by " + banner + " " + banReason)
+	victim.ban(victim.Name+" has been banned by "+banner+" "+banReason, false, time.Now())
 }
 
 func kickCMD(line string, u *User) {
