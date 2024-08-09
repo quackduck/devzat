@@ -463,7 +463,7 @@ func newUser(s ssh.Session) *User {
 		IDandIPsToTimesJoinedInMin[u.id]--
 	})
 	if IDandIPsToTimesJoinedInMin[u.addr] > 6 || IDandIPsToTimesJoinedInMin[u.id] > 6 {
-		u.ban("", false, time.Now())
+		u.banForever("")
 		MainRoom.broadcast(Devbot, u.Name+" has been banned automatically. ID: "+u.id)
 		return nil
 	}
@@ -614,14 +614,23 @@ func (u *User) close(msg string) {
 	u.room.broadcast("", Red.Paint(" <-- ")+msg)
 }
 
-func (u *User) ban(banner string, useTime bool, unbanTime time.Time) {
+func (u *User) banForever(banMsg string) {
+	u.ban(banMsg, false, time.Now())
+}
+
+func (u *User) banTemporarily(banMsg string, banDuration time.Duration) {
+	unbanTime := time.Now().Add(banDuration)
+	u.ban(banMsg, true, unbanTime)
+}
+
+func (u *User) ban(banMsg string, useTime bool, unbanTime time.Time) {
 	if u.addr == "" && u.id == "" {
 		return
 	}
 	Bans = append(Bans, Ban{u.addr, u.id, useTime, unbanTime})
 	saveBans()
 	uid := u.id
-	u.close(banner)
+	u.close(banMsg)
 	for i := range Rooms { // close all users that have this id (including this user)
 		for j := 0; j < len(Rooms[i].users); j++ {
 			if Rooms[i].users[j].id == uid {
@@ -905,8 +914,7 @@ func (u *User) repl() {
 		if AntispamMessages[u.id] >= 50 {
 			if getBan(Bans, u.addr, u.id) == nil {
 				oneMonth, _ := time.ParseDuration("730h")
-				Bans = append(Bans, Ban{u.addr, u.id, true, time.Now().Add(oneMonth)})
-				saveBans()
+				u.banTemporarily("", oneMonth)
 			}
 			u.writeln(Devbot, "anti-spam triggered")
 			u.close(Red.Paint(u.Name + " has been banned for spamming"))
