@@ -480,3 +480,28 @@ func genKey() (ed25519.PrivateKey, ssh.PublicKey, error) {
 	}
 	return priv, sshPubKey, nil
 }
+
+func formatDuration(d time.Duration) string {
+	seconds := int(d.Seconds())
+	minutes := seconds / 60
+	seconds = seconds % 60
+	ret := fmt.Sprintf("%v seconds", seconds)
+	if minutes == 0 {
+		return ret
+	}
+
+	hours := minutes / 60
+	minutes = minutes % 60
+	ret = fmt.Sprintf("%v minutes, and %v", minutes, ret)
+	if hours == 0 {
+		return ret
+	}
+
+	days := hours / 24
+	hours = hours % 24
+	ret = fmt.Sprintf("%v hours, %v", hours, ret)
+	if days == 0 {
+		return ret
+	}
+	return fmt.Sprintf("%v days, %v", days, ret)
+}

@@ -438,7 +438,8 @@ func newUser(s ssh.Session) *User {
 			Log.Println("Rejected " + u.Name + " [" + host + "] (banned)")
 			u.writeln(Devbot, "**You are banned**. If you feel this was a mistake, please reach out to the server admin. Include the following information: [ID "+u.id+"]")
 			if banInfo.UseTime {
-				u.writeln(Devbot, "You will be unbaned on "+banInfo.UnbanTime.Format(time.RFC3339))
+				when := time.Until(banInfo.UnbanTime)
+				u.writeln(Devbot, "You will be unbaned in "+formatDuration(when)+".")
 			}
 			s.Close()
 			return nil
