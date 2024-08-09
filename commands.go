@@ -559,6 +559,7 @@ func banCMD(line string, u *User) {
 	}
 	var victim *User
 	var ok bool
+	bannedByDevbot := false
 	banner := u.Name
 	banReason := "" // Initial ban reason is an empty string
 
@@ -566,6 +567,7 @@ func banCMD(line string, u *User) {
 		u.room.broadcast(Devbot, "Do you really think you can ban me, puny human?")
 		victim = u // mwahahahaha - devbot
 		banner = Devbot
+		bannedByDevbot = true
 	} else if !auth(u) {
 		u.room.broadcast(Devbot, "Not authorized")
 		return
@@ -574,10 +576,13 @@ func banCMD(line string, u *User) {
 		return
 	}
 
-	if len(split) > 1 {
-		dur, err := time.ParseDuration(split[len(split)-1])
-		if err != nil {
-			split[len(split)-1] = "" // there's no duration so don't trim anything from the reason
+	if len(split) > 1 || bannedByDevbot {
+		dur, err := time.ParseDuration("1m")
+		if !bannedByDevbot {
+			dur, err = time.ParseDuration(split[len(split)-1])
+			if err != nil {
+				split[len(split)-1] = "" // there's no duration so don't trim anything from the reason
+			}
 		}
 		if len(split) > 2 {
 			banReason = strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(line, split[0]), split[len(split)-1]))
