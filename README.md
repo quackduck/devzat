@@ -61,6 +61,17 @@ devzat # run! the default config is used & written automatically
 ```
 These commands download, build, setup and run a Devzat server listening on port 2221, the default port (change by setting `$PORT`).
 
+Docker start:
+```shell
+git clone https://github.com/quackduck/devzat && cd devzat
+docker build -t devzat .
+docker run -d --name devzat -p 2222:22 devzat
+
+# Start enjoying
+ssh yourname@127.0.0.1 -p 2222 
+```
+
+
 Check out the [Admin's Manual](Admin's%20Manual.md) for complete self-host documentation!
 
 ### Permission denied?
