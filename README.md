@@ -65,10 +65,36 @@ Docker start:
 ```shell
 git clone https://github.com/quackduck/devzat && cd devzat
 docker build -t devzat .
-docker run -d --name devzat -p 2222:22 devzat
+docker run -d --name devzat -p 2221:2221 -p 443:443 devzat  # Or consider using docker compose
 
 # Start enjoying
 ssh yourname@127.0.0.1 -p 2222 
+```
+
+Docker Compose:
+First use:
+```shell
+git clone https://github.com/quackduck/devzat && cd devzat
+docker build -t devzat .
+```
+
+Create a docker-compose.yml file in the appropriate location:
+```yaml
+---
+services:
+  devzat:
+    image: devzat
+    container_name: devzat
+    environment:
+      - DEVZAT_CONFIG=/etc/devzat/devzat.yml  #Create it by referring to the sample configuration file
+    volumes:
+      - ./devzat.yml:/etc/devzat/devzat.yml
+      - ./data:/opt/devzat
+    ports:
+      - "2221:2221"
+      - "443:443"
+      #- "5555:5555" #Optional
+    restart: always
 ```
 
 
