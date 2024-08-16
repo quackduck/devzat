@@ -62,7 +62,7 @@ func discordInit() {
 		for msg := range DiscordChan {
 			txt := strings.ReplaceAll(msg.msg, "@everyone", "@\\everyone")
 			if Integrations.Discord.CompactMode {
-				err = sendDiscordCompactMessage(msg, txt, err, sess)
+				sendDiscordCompactMessage(msg, txt, sess)
 			} else {
 				avatar := createDiscordImage(msg.senderName)
 				avatarHash := shasum(avatar)
@@ -83,7 +83,7 @@ func discordInit() {
 					}
 					users = append(users, "", Devbot)
 					if len(users) > 13 {
-						err = sendDiscordCompactMessage(msg, txt, err, sess)
+						sendDiscordCompactMessage(msg, txt, sess)
 						continue
 					}
 					for _, wh := range webhooks {
@@ -98,7 +98,7 @@ func discordInit() {
 							err = sess.WebhookDelete(wh.ID, discordgo.WithRetryOnRatelimit(false))
 							if err != nil {
 								Log.Println("Error deleting Discord webhook:", err)
-								err = sendDiscordCompactMessage(msg, txt, err, sess)
+								sendDiscordCompactMessage(msg, txt, sess)
 								continue
 							}
 							webhookIndex := -1
@@ -117,7 +117,7 @@ func discordInit() {
 					webhook, err = sess.WebhookCreate(Integrations.Discord.ChannelID, avatarHash, avatar, discordgo.WithRetryOnRatelimit(false))
 					if err != nil {
 						Log.Println("Error creating Discord webhook:", err)
-						err = sendDiscordCompactMessage(msg, txt, err, sess)
+						sendDiscordCompactMessage(msg, txt, sess)
 						continue
 					}
 					webhooks = append(webhooks, webhook)
@@ -132,7 +132,7 @@ func discordInit() {
 				)
 				if err != nil {
 					Log.Println("Error sending Discord message:", err)
-					err = sendDiscordCompactMessage(msg, txt, err, sess)
+					sendDiscordCompactMessage(msg, txt, sess)
 					continue
 				}
 			}
@@ -146,18 +146,17 @@ func discordInit() {
 	Log.Println("Connected to Discord with bot ID", sess.State.User.ID, "as", sess.State.User.Username)
 }
 
-func sendDiscordCompactMessage(msg DiscordMsg, txt string, err error, sess *discordgo.Session) error {
+func sendDiscordCompactMessage(msg DiscordMsg, txt string, sess *discordgo.Session) {
 	var toSend string
 	if msg.senderName == "" {
 		toSend = strings.ReplaceAll(stripansi.Strip("["+msg.channel+"] "+txt), `\n`, "\n")
 	} else {
 		toSend = strings.ReplaceAll(stripansi.Strip("["+msg.channel+"] **"+msg.senderName+"**: "+txt), `\n`, "\n")
 	}
-	_, err = sess.ChannelMessageSend(Integrations.Discord.ChannelID, toSend)
+	_, err := sess.ChannelMessageSend(Integrations.Discord.ChannelID, toSend)
 	if err != nil {
 		Log.Println("Error sending Discord message:", err)
 	}
-	return err
 }
 
 func discordMessageHandler(_ *discordgo.Session, m *discordgo.MessageCreate) {
