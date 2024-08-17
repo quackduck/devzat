@@ -28,6 +28,12 @@ ssh wenjie@devzat.hackclub.com
 ```
 If you want to change your display name after the first login, you should use the `nick` command.
 
+```sh
+In Chat room:
+OLDnick> nick NEWnick
+NEWnick:
+```
+
 If you're under a firewall, you can still join on port 443:
 ```sh
 ssh devzat.hackclub.com -p 443
@@ -128,7 +134,7 @@ The rest
    pwd                     Show your current room
    shrug                   ¯\_(ツ)_/¯
 ```
-
+tips: `kick` can help kick out your previous id if the nickname is taken due to network delays.
 ## Integrations
 
 When self-hosting an instance, Devzat can integrate with Slack and/or Discord to bridge messages, and Twitter to post new-user announcements.
@@ -168,5 +174,6 @@ From Hack Club:
 [Matthew Stanciu](https://matthewstanciu.me/), [Tanishq Soni](https://tanishqsoni.me)**
 
 Huge thanks to the amazing [Caleb Denio](https://github.com/cjdenio) for lending me the original Devzat server 💖
+
 
 ### *Made by [Ishan Goel](https://twitter.com/usrbinishan/) with feature ideas from friends. Thanks to [Caleb Denio](https://twitter.com/CalebDenio) for lending his server!*
