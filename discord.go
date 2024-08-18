@@ -54,11 +54,12 @@ func discordInit() {
 		webhooks, err = sess.ChannelWebhooks(Integrations.Discord.ChannelID)
 		if err != nil {
 			Log.Println("Error getting Discord webhooks:", err)
-			return
+			webhooks = make([]*discordgo.Webhook, 20)
 		}
 	}
 	DiscordChan = make(chan DiscordMsg, 100)
 	go func() {
+	nextMsg:
 		for msg := range DiscordChan {
 			txt := strings.ReplaceAll(msg.msg, "@everyone", "@\\everyone")
 			if Integrations.Discord.CompactMode {
@@ -68,13 +69,17 @@ func discordInit() {
 				avatarHash := shasum(avatar)
 				var webhook *discordgo.Webhook
 
+				// find the webhook for this user
 				for _, wh := range webhooks {
 					if wh.Name == avatarHash {
 						webhook = wh
 						break
 					}
 				}
-				if webhook == nil && len(webhooks) >= 12 { // delete unused webhooks if there are too many
+				// delete unused webhooks if there are too many and a new one is needed
+				// (discord can only have 15 webhooks per channel)
+				if webhook == nil && len(webhooks) >= 13 {
+					// generate a list of all users in all rooms
 					users := make([]string, 0, 12)
 					for _, room := range Rooms {
 						for _, user := range room.users {
@@ -82,14 +87,18 @@ func discordInit() {
 						}
 					}
 					users = append(users, "", Devbot)
-					if len(users) > 13 {
+					// if there are more users than webhooks we are recreating webhooks all the time which would get us
+					// rate limited by Discord, so just switch to compact mode
+					// TODO: AFK detection?
+					if len(users) >= 13 {
 						sendDiscordCompactMessage(msg, txt, sess)
 						continue
 					}
+					// find a webhook that is not in use
 					for _, wh := range webhooks {
 						found := false
 						for _, user := range users {
-							if wh.Name == shasum(createDiscordImage(user)) {
+							if wh.Name == shasum(createDiscordImage(user)) { // generating all the images is cashed
 								found = true
 								break
 							}
@@ -99,7 +108,7 @@ func discordInit() {
 							if err != nil {
 								Log.Println("Error deleting Discord webhook:", err)
 								sendDiscordCompactMessage(msg, txt, sess)
-								continue
+								continue nextMsg
 							}
 							webhookIndex := -1
 							for i, w := range webhooks {
@@ -113,6 +122,7 @@ func discordInit() {
 						}
 					}
 				}
+				// create a new webhook if there isn't one for the users colors already
 				if webhook == nil {
 					webhook, err = sess.WebhookCreate(Integrations.Discord.ChannelID, avatarHash, avatar, discordgo.WithRetryOnRatelimit(false))
 					if err != nil {
@@ -178,13 +188,22 @@ func discordMessageHandler(_ *discordgo.Session, m *discordgo.MessageCreate) {
 	runCommands(msgContent, DiscordUser)
 }
 
-var cacheSize = 20
+const cacheSize = 20
 
-// basic cache system
-var imageCache = make([]struct {
-	user  string
-	image string
-}, cacheSize)
+var imageCache = make(imgCache)
+
+type imgCache map[string]string
+
+func (i *imgCache) add(user, image string) {
+	if len(*i) >= cacheSize {
+		// remove the first value
+		for k := range *i {
+			delete(*i, k)
+			break
+		}
+	}
+	(*i)[user] = image
+}
 
 func createDiscordImage(user string) string {
 	// a completely transparent one pixel png
@@ -193,16 +212,18 @@ func createDiscordImage(user string) string {
 		// make messages with no sender (eg. command outputs) look seamless
 		return fallback
 	}
-	for i := range imageCache {
-		if imageCache[i].user == user {
-			return imageCache[i].image
-		}
+	// Use image cache if possible
+	if img := imageCache[user]; img != "" {
+		return img
 	}
 	styledTexts, err := ansi.Parse(user)
 	if err != nil {
 		Log.Println("Error parsing ANSI from username while creating Discord avatar:", err)
 		return fallback
 	}
+	// Create an image with the colors of the username
+	// The image uses the width to display each color in the username
+	// and displays the background color on the top and bottom
 	img := image.NewNRGBA(image.Rect(0, 0, len(styledTexts), 3))
 
 	for i := 0; i < len(styledTexts); i++ {
@@ -215,16 +236,12 @@ func createDiscordImage(user string) string {
 		}
 	}
 
+	// Scale the image to 256x256
 	dst := image.NewNRGBA(image.Rect(0, 0, 256, 256))
-	//(&draw.Kernel{
-	//	Support: 10,
-	//	At: func(t float64) float64 {
-	//		return math.Exp(-t * t * 2)
-	//	},
-	//}).Scale(dst, dst.Rect, img, img.Bounds(), draw.Over, nil)
-	//draw.BiLinear.Scale(dst, dst.Rect, img, img.Bounds(), draw.Over, nil)
 	draw.CatmullRom.Scale(dst, dst.Rect, img, img.Bounds(), draw.Over, nil)
 	//draw.NearestNeighbor.Scale(dst, dst.Rect, img, img.Bounds(), draw.Over, nil)
+
+	// Encode the image to base64
 	buff := new(bytes.Buffer)
 	err = png.Encode(buff, dst)
 	if err != nil {
@@ -233,14 +250,6 @@ func createDiscordImage(user string) string {
 	}
 	result := "data:image/png;base64," + base64.StdEncoding.EncodeToString(buff.Bytes())
 
-	if len(imageCache) >= cacheSize {
-		// remove the first value
-		imageCache = imageCache[1:]
-	}
-	imageCache = append(imageCache, struct {
-		user  string
-		image string
-	}{user: user, image: result})
-	//Log.Println("returned", result)
+	imageCache.add(user, result)
 	return result
 }
