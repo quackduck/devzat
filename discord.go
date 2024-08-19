@@ -97,7 +97,7 @@ func discordInit() {
 						continue
 					}
 					// find a webhook that is not in use
-					for _, wh := range webhooks {
+					for i, wh := range webhooks {
 						found := false
 						for _, user := range users {
 							if wh.Name == shasum(createDiscordImage(user)) { // generating all the images is cashed
@@ -112,14 +112,7 @@ func discordInit() {
 								sendDiscordCompactMessage(msg, txt, sess)
 								continue nextMsg
 							}
-							webhookIndex := -1
-							for i, w := range webhooks {
-								if w.ID == wh.ID {
-									webhookIndex = i
-									break
-								}
-							}
-							webhooks = append(webhooks[:webhookIndex], webhooks[webhookIndex+1:]...)
+							webhooks = append(webhooks[:i], webhooks[i+1:]...)
 							break
 						}
 					}
