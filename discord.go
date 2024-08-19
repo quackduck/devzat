@@ -29,6 +29,8 @@ type DiscordMsg struct {
 	channel    string
 }
 
+const maxWebhookCount = 13 // have buffer under the limit of 15 discord has
+
 func discordInit() {
 	if Integrations.Discord == nil {
 		return
@@ -78,9 +80,9 @@ func discordInit() {
 				}
 				// delete unused webhooks if there are too many and a new one is needed
 				// (discord can only have 15 webhooks per channel)
-				if webhook == nil && len(webhooks) >= 13 {
+				if webhook == nil && len(webhooks) > maxWebhookCount {
 					// generate a list of all users in all rooms
-					users := make([]string, 0, 12)
+					users := make([]string, 0, maxWebhookCount)
 					for _, room := range Rooms {
 						for _, user := range room.users {
 							users = append(users, user.Name)
@@ -90,7 +92,7 @@ func discordInit() {
 					// if there are more users than webhooks we are recreating webhooks all the time which would get us
 					// rate limited by Discord, so just switch to compact mode
 					// TODO: AFK detection?
-					if len(users) >= 13 {
+					if len(users) >= maxWebhookCount {
 						sendDiscordCompactMessage(msg, txt, sess)
 						continue
 					}
@@ -190,7 +192,7 @@ func discordMessageHandler(_ *discordgo.Session, m *discordgo.MessageCreate) {
 
 const cacheSize = 20
 
-var imageCache = make(imgCache)
+var imageCache = make(imgCache, cacheSize)
 
 type imgCache map[string]string
 
