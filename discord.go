@@ -56,7 +56,7 @@ func discordInit() {
 		webhooks, err = sess.ChannelWebhooks(Integrations.Discord.ChannelID)
 		if err != nil {
 			Log.Println("Error getting Discord webhooks:", err)
-			webhooks = make([]*discordgo.Webhook, 20)
+			webhooks = make([]*discordgo.Webhook, 0, maxWebhookCount)
 		}
 	}
 	DiscordChan = make(chan DiscordMsg, 100)
