@@ -28,11 +28,7 @@ ssh devzat.hackclub.com
 ssh wenjie@devzat.hackclub.com
 ```
 如果想在首次登录后更改显示名称，应在登录后使用 `nick` 命令。
-```sh
-在聊天室中:
-OLDnick> nick NEWnick
-NEWnick:
-```
+
 
 如果您在防火墙下，您仍然可以通过端口 443 加入：
 ```sh

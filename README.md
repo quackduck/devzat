@@ -28,11 +28,6 @@ ssh wenjie@devzat.hackclub.com
 ```
 If you want to change your display name after the first login, you should use the `nick` command.
 
-```sh
-In Chat room:
-OLDnick> nick NEWnick
-NEWnick:
-```
 
 If you're under a firewall, you can still join on port 443:
 ```sh
