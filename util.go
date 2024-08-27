@@ -411,12 +411,26 @@ func holidaysCheck(u *User) {
 }
 
 func printPrettyDuration(d time.Duration) string {
-	s := d.Round(time.Minute).String()
-	s = s[:len(s)-2] // cut off "0s" at the end
-	if s == "" {     // we cut off the seconds so if there's nothing in the string it means it was made of only seconds.
-		s = "< 1m"
+	seconds := int(d.Seconds())
+	minutes := seconds / 60
+	if minutes == 0 {
+		return "< 1 minute"
 	}
-	return s
+
+	hours := minutes / 60
+	minutes = minutes % 60
+	ret := fmt.Sprintf("%v minutes", minutes)
+	if hours == 0 {
+		return ret
+	}
+
+	days := hours / 24
+	hours = hours % 24
+	ret = fmt.Sprintf("%v hours, and %v", hours, ret)
+	if days == 0 {
+		return ret
+	}
+	return fmt.Sprintf("%v days, %v", days, ret)
 }
 
 func fmtTime(u *User, lastStamp time.Time) string {
@@ -479,29 +493,4 @@ func genKey() (ed25519.PrivateKey, ssh.PublicKey, error) {
 		return nil, nil, err
 	}
 	return priv, sshPubKey, nil
-}
-
-func formatDuration(d time.Duration) string {
-	seconds := int(d.Seconds())
-	minutes := seconds / 60
-	seconds = seconds % 60
-	ret := fmt.Sprintf("%v seconds", seconds)
-	if minutes == 0 {
-		return ret
-	}
-
-	hours := minutes / 60
-	minutes = minutes % 60
-	ret = fmt.Sprintf("%v minutes, and %v", minutes, ret)
-	if hours == 0 {
-		return ret
-	}
-
-	days := hours / 24
-	hours = hours % 24
-	ret = fmt.Sprintf("%v hours, %v", hours, ret)
-	if days == 0 {
-		return ret
-	}
-	return fmt.Sprintf("%v days, %v", days, ret)
 }

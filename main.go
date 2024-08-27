@@ -439,7 +439,7 @@ func newUser(s ssh.Session) *User {
 			u.writeln(Devbot, "**You are banned**. If you feel this was a mistake, please reach out to the server admin. Include the following information: [ID "+u.id+"]")
 			if banInfo.UseTime {
 				when := time.Until(banInfo.UnbanTime)
-				u.writeln(Devbot, "You will be unbaned in "+formatDuration(when)+".")
+				u.writeln(Devbot, "You will be unbaned in "+printPrettyDuration(when)+".")
 			}
 			s.Close()
 			return nil
