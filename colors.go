@@ -54,7 +54,7 @@ var (
 		{"gay", makeFlag([]string{"#FF0018", "#FFA52C", "#FFFF41", "#008018", "#0000F9", "#86007D"})},
 		{"lesbian", makeFlag([]string{"#D62E02", "#FD9855", "#FFFFFF", "#D161A2", "#A20160"})},
 		{"bi", makeFlag([]string{"#D60270", "#D60270", "#9B4F96", "#0038A8", "#0038A8"})},
-		{"pan", makeflag([]string{"#ADD8E6", "#FF69B4", "#FFFFFF", "#FFFF00", "#800080"})},
+		{"pan", makeFlag([]string{"#ADD8E6", "#FF69B4", "#FFFFFF", "#FFFF00", "#800080"})},
 		{"sunset", func(a string) string { return applyHueRange(335, 480, a, false) }},
 		{"bg-sunset", func(a string) string { return applyHueRange(335, 480, a, true) }},
 		{"rainbow", func(a string) string { return rainbow(a, false) }},
