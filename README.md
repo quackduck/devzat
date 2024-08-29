@@ -129,7 +129,7 @@ The rest
    pwd                     Show your current room
    shrug                   ¯\_(ツ)_/¯
 ```
-tips: `kick` can help kick out your previous id if the nickname is taken due to network delays.
+tip: `kick` can help kick out an old session when rejoining if needed
 ## Integrations
 
 When self-hosting an instance, Devzat can integrate with Slack and/or Discord to bridge messages, and Twitter to post new-user announcements.
