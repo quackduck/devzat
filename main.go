@@ -45,6 +45,7 @@ const (
 type Ban struct {
 	Addr      string
 	ID        string
+	Name      string
 	UseTime   bool
 	UnbanTime time.Time
 }
@@ -628,7 +629,7 @@ func (u *User) ban(banMsg string, useTime bool, unbanTime time.Time) {
 	if u.addr == "" && u.id == "" {
 		return
 	}
-	Bans = append(Bans, Ban{u.addr, u.id, useTime, unbanTime})
+	Bans = append(Bans, Ban{u.addr, u.id, stripansi.Strip(u.Name), useTime, unbanTime})
 	saveBans()
 	uid := u.id
 	u.close(banMsg)
