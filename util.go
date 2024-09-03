@@ -414,23 +414,23 @@ func printPrettyDuration(d time.Duration) string {
 	seconds := int(d.Seconds())
 	minutes := seconds / 60
 	if minutes == 0 {
-		return "< 1 minute"
+		return "< 1m"
 	}
 
 	hours := minutes / 60
 	minutes = minutes % 60
-	ret := fmt.Sprintf("%v minutes", minutes)
+	ret := fmt.Sprintf("%vm", minutes)
 	if hours == 0 {
 		return ret
 	}
 
 	days := hours / 24
 	hours = hours % 24
-	ret = fmt.Sprintf("%v hours, and %v", hours, ret)
+	ret = fmt.Sprintf("%vh %v", hours, ret)
 	if days == 0 {
 		return ret
 	}
-	return fmt.Sprintf("%v days, %v", days, ret)
+	return fmt.Sprintf("%vd %v", days, ret)
 }
 
 func fmtTime(u *User, lastStamp time.Time) string {
