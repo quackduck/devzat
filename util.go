@@ -418,12 +418,26 @@ func holidaysCheck(u *User) {
 }
 
 func printPrettyDuration(d time.Duration) string {
-	s := d.Round(time.Minute).String()
-	s = s[:len(s)-2] // cut off "0s" at the end
-	if s == "" {     // we cut off the seconds so if there's nothing in the string it means it was made of only seconds.
-		s = "< 1m"
+	seconds := int(d.Seconds())
+	minutes := seconds / 60
+	if minutes == 0 {
+		return "< 1m"
 	}
-	return s
+
+	hours := minutes / 60
+	minutes = minutes % 60
+	ret := fmt.Sprintf("%vm", minutes)
+	if hours == 0 {
+		return ret
+	}
+
+	days := hours / 24
+	hours = hours % 24
+	ret = fmt.Sprintf("%vh %v", hours, ret)
+	if days == 0 {
+		return ret
+	}
+	return fmt.Sprintf("%vd %v", days, ret)
 }
 
 func fmtTime(u *User, lastStamp time.Time) string {
