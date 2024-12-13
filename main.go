@@ -150,16 +150,17 @@ func main() {
 
 	// read tor list from https://www.dan.me.uk/torlist/?exit
 	resp, err := http.Get("https://www.dan.me.uk/torlist/?exit")
-	if err != nil {
+	if err == nil {
+		defer resp.Body.Close()
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			Log.Println(err)
+		}
+		for _, ip := range strings.Split(string(body), "\n") {
+			TORIPs[ip] = true
+		}
+	} else {
 		Log.Println(err)
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		Log.Println(err)
-	}
-	for _, ip := range strings.Split(string(body), "\n") {
-		TORIPs[ip] = true
 	}
 
 	ssh.Handle(func(s ssh.Session) {
