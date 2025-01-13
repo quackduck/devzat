@@ -2,11 +2,11 @@ package main
 
 import (
 	api "github.com/quackduck/devzat/devzatapi"
+	"os"
 )
 
 func main() {
-	//s, err := api.NewSession("devzat.hackclub.com:5556", os.Getenv("DEVZAT_TOKEN"))
-	s, err := api.NewSession("localhost:5556", "dvz@R1HkT12cOvzc4nbPNUnE1xEdkHIhtnKGQkotDPzCOAc=")
+	s, err := api.NewSession("devzat.hackclub.com:5556", os.Getenv("DEVZAT_TOKEN"))
 	if err != nil {
 		panic(err)
 	}
