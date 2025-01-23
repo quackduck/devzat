@@ -346,16 +346,9 @@ func devbotChat(room *Room, line string) {
 	}
 	if strings.Contains(line, "rocket") || strings.Contains(line, "spacex") || strings.Contains(line, "tesla") {
 		devbotRespond(room, []string{
-			":rocket:",
-			"I like rockets",
-			"SpaceX",
+			":skull:",
+			"another day another exploded rocket",
 			"Elon Musk sus"}, 80)
-	}
-	if strings.Contains(line, "elon") {
-		devbotRespond(room, []string{"When something is important enough, you do it even if the odds are not in your favor. - Elon",
-			"I do think there is a lot of potential if you have a compelling product - Elon",
-			"If you're trying to create a company, it's like baking a cake. You have to have all the ingredients in the right proportion. - Elon",
-			"Patience is a virtue, and I'm learning patience. It's a tough lesson. - Elon"}, 75)
 	}
 	if !strings.Contains(line, "start") && strings.Contains(line, "star") {
 		devbotRespond(room, []string{"Someone say :star:?",
