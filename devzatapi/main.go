@@ -71,7 +71,7 @@ func (s *Session) Close() error {
 // middlewareResponseChan is used to send back the edited message. You must send a response if middleware is true
 // even if you don't edit the message.
 // See example/main.go for correct usage of this function.
-func (s *Session) RegisterListener(middleware, once bool, regex string) (messageChan chan Message, middlewareResponseChan chan string, err error) {
+func (s *Session) RegisterListener(middleware, once bool, regex string, colorNames, systemMessages bool) (messageChan chan Message, middlewareResponseChan chan string, err error) {
 	var client plugin.Plugin_RegisterListenerClient
 	setup := func() error {
 		client, err = s.pluginClient.RegisterListener(context.Background())
@@ -83,9 +83,11 @@ func (s *Session) RegisterListener(middleware, once bool, regex string) (message
 			pointerRegex = nil
 		}
 		err = client.Send(&plugin.ListenerClientData{Data: &plugin.ListenerClientData_Listener{Listener: &plugin.Listener{
-			Middleware: &middleware,
-			Once:       &once,
-			Regex:      pointerRegex,
+			Middleware:     &middleware,
+			Once:           &once,
+			Regex:          pointerRegex,
+			ColorNames:     &colorNames,
+			SystemMessages: &systemMessages,
 		}}})
 		if err != nil {
 			return err
