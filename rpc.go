@@ -63,6 +63,8 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 
 	isMiddleware := listener.Middleware != nil && *listener.Middleware
 	isOnce := listener.Once != nil && *listener.Once
+	isColorNames := listener.ColorNames != nil && *listener.ColorNames
+	isSystemMessages := listener.SystemMessages != nil && *listener.SystemMessages
 
 	var regex *regexp.Regexp
 	if listener.Regex != nil {
@@ -112,6 +114,19 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 				sendNilResponse()
 			}
 			continue
+		}
+
+		if !isColorNames {
+			message.(*pb.Event).From = stripansi.Strip(message.(*pb.Event).From)
+			message.(*pb.Event).Msg = stripansi.Strip(message.(*pb.Event).Msg)
+		}
+
+		// This isn't a very nice solution to detect system messages
+		if !isSystemMessages {
+			switch message.(*pb.Event).From {
+			case Devbot, "":
+				continue
+			}
 		}
 
 		err = stream.Send(message.(*pb.Event))
@@ -259,12 +274,12 @@ func runPluginCMDs(u *User, currCmd string, args string) (found bool) {
 }
 
 // Hook that is called when a user sends a message (not private DMs)
-func sendMessageToPlugins(line string, u *User) {
+func sendMessageToPlugins(line, user, room string) {
 	if len(ListenersNonMiddleware) > 0 {
 		for _, l := range ListenersNonMiddleware {
 			l <- &pb.Event{
-				Room: u.room.name,
-				From: stripansi.Strip(u.Name),
+				Room: room,
+				From: user,
 				Msg:  line,
 			}
 		}
@@ -273,7 +288,7 @@ func sendMessageToPlugins(line string, u *User) {
 
 var middlewareLock = new(sync.Mutex)
 
-func getMiddlewareResult(u *User, line string) string {
+func getMiddlewareResult(user, room, line string) string {
 	if Integrations.RPC == nil {
 		return line
 	}
@@ -283,8 +298,8 @@ func getMiddlewareResult(u *User, line string) string {
 	// Middleware hook
 	for i := 0; i < len(ListenersMiddleware); i++ {
 		ListenersMiddleware[i] <- &pb.Event{
-			Room: u.room.name,
-			From: stripansi.Strip(u.Name),
+			Room: room,
+			From: user,
 			Msg:  line,
 		}
 		if res := (<-ListenersMiddleware[i]).(*pb.ListenerClientData_Response).Response.Msg; res != nil {

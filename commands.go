@@ -122,10 +122,6 @@ func runCommands(line string, u *User) {
 		return
 	}
 
-	// Now we know it is not a DM, so this is a safe place to add the hook for sending the event to plugins
-	line = getMiddlewareResult(u, line)
-	sendMessageToPlugins(line, u)
-
 	switch currCmd {
 	case "hang":
 		hangCMD(strings.TrimSpace(strings.TrimPrefix(line, "hang")), u)
