@@ -164,6 +164,7 @@ func replaceImgs(md string, width int, cache map[string]image.Image) string {
 	if end == -1 {
 		return md
 	}
+	
 	imgStart := start + 5
 	imgEnd := end
 	imgText := md[imgStart:imgEnd]
