@@ -197,7 +197,7 @@ func (s *pluginServer) SendMessage(ctx context.Context, msg *pb.Message) (*pb.Me
 		if r == nil {
 			return nil, status.Error(codes.InvalidArgument, "Room does not exist")
 		}
-		r.broadcast(msg.GetFrom(), msg.Msg)
+		r.broadcast(msg.GetFrom(), msg.Msg, true)
 	}
 	return &pb.MessageRes{}, nil
 }
