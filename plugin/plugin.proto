@@ -34,6 +34,8 @@ message Listener {
   // Regex to match against to determine if this listener should be called
   // Does not include slashes or flags
   optional string regex = 3;
+  optional bool colorNames = 4;
+  optional bool systemMessages = 5;
 }
 
 message MiddlewareResponse {
