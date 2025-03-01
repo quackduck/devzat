@@ -62,16 +62,38 @@ func (s *Session) Close() error {
 	return s.conn.Close()
 }
 
+// ListenerOption is run on the listener before it is registered
+type ListenerOption func(listener *plugin.Listener)
+
+// WithColorNames lets the plugin receive names with the ANSI color codes still attached
+//
+// (when used in combination with WithSystemMessages other uses of ANSI colors will also not be hidden)
+func WithColorNames() ListenerOption {
+	return func(listener *plugin.Listener) {
+		var val = true
+		listener.ColorNames = &val
+	}
+}
+
+// WithSystemMessages lets the plugin receive and change all messages not just ones sent by users
+func WithSystemMessages() ListenerOption {
+	return func(listener *plugin.Listener) {
+		var val = true
+		listener.SystemMessages = &val
+	}
+}
+
 // RegisterListener allows for message monitoring and intercepting/editing.
 // Set middleware to true to intercept and edit messages.
 // Set once to true to unregister the listener after the first message is received.
 // Set regex to a valid regex string to only receive messages that match the regex.
+// Set any number of options to activate their effects.
 //
 // messageChan will receive messages that match the regex.
 // middlewareResponseChan is used to send back the edited message. You must send a response if middleware is true
 // even if you don't edit the message.
 // See example/main.go for correct usage of this function.
-func (s *Session) RegisterListener(middleware, once bool, regex string, colorNames, systemMessages bool) (messageChan chan Message, middlewareResponseChan chan string, err error) {
+func (s *Session) RegisterListener(middleware, once bool, regex string, options ...ListenerOption) (messageChan chan Message, middlewareResponseChan chan string, err error) {
 	var client plugin.Plugin_RegisterListenerClient
 	setup := func() error {
 		client, err = s.pluginClient.RegisterListener(context.Background())
@@ -82,13 +104,15 @@ func (s *Session) RegisterListener(middleware, once bool, regex string, colorNam
 		if regex == "" {
 			pointerRegex = nil
 		}
-		err = client.Send(&plugin.ListenerClientData{Data: &plugin.ListenerClientData_Listener{Listener: &plugin.Listener{
-			Middleware:     &middleware,
-			Once:           &once,
-			Regex:          pointerRegex,
-			ColorNames:     &colorNames,
-			SystemMessages: &systemMessages,
-		}}})
+		listener := &plugin.Listener{
+			Middleware: &middleware,
+			Once:       &once,
+			Regex:      pointerRegex,
+		}
+		for _, option := range options {
+			option(listener)
+		}
+		err = client.Send(&plugin.ListenerClientData{Data: &plugin.ListenerClientData_Listener{Listener: listener}})
 		if err != nil {
 			return err
 		}
