@@ -212,7 +212,8 @@ func (r *Room) broadcast(senderName, msg string, isPluginMessage ...bool) {
 
 	// Now we know it is not a DM, so this is a safe place to add the hook for sending the event to plugins
 	if len(isPluginMessage) == 0 {
-		// this is the only way to make sure Plugins don't receive their own messages...
+		// isPluginMessage is passed in when the message is broadcast by a plugin message
+		// we won't send that message to plugins b/c many plugins will go into an infinite loop reacting to their own message
 		msg = getMiddlewareResult(senderName, r.name, msg)
 		sendMessageToPlugins(msg, senderName, r.name)
 	}
