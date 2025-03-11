@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/acarl005/stripansi"
-	"github.com/caarlos0/sshmarshal"
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/glamour/ansi"
 	"github.com/disintegration/imaging"
@@ -458,7 +457,7 @@ func checkKey(keyPath string) {
 		return
 	}
 	defer privkeyFile.Close()
-	blk, err := sshmarshal.MarshalPrivateKey(privkey, "")
+	blk, err := cryptoSSH.MarshalPrivateKey(privkey, "")
 	if err != nil {
 		Log.Printf("Error while marshalling private key: %v\n", err)
 		return
