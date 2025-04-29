@@ -135,6 +135,10 @@ func runCommands(line string, u *User) {
 	case "mute":
 		muteCMD(strings.TrimSpace(strings.TrimPrefix(line, "mute")), u)
 		return
+	case "clear":
+		if clear_if_rest_empty(strings.TrimSpace(strings.TrimPrefix(line, "clear")), u) {
+			return
+		}
 	}
 
 	if u.isBridge {
@@ -226,6 +230,16 @@ func hangCMD(rest string, u *User) {
 
 func clearCMD(_ string, u *User) {
 	u.term.Write([]byte("\033[H\033[2J"))
+}
+
+// If rest is empty, run the clear command and return true.
+// Otherwise, return false.
+func clear_if_rest_empty(rest string, u *User) bool {
+	if rest == "" {
+		clearCMD(rest, u)
+		return true
+	}
+	return false
 }
 
 func usersCMD(_ string, u *User) {
