@@ -566,6 +566,10 @@ func banCMD(line string, u *User) {
 		u.room.broadcast(Devbot, "Do you really think you can ban me, puny human?")
 		victim = u // mwahahahaha - devbot
 		banner = Devbot
+	} else if split[0] == "caen" {
+		u.room.broadcast(Devbot, "imagine")
+		victim = u 
+		banner = Devbot
 	} else if !auth(u) {
 		u.room.broadcast(Devbot, "Not authorized")
 		return
