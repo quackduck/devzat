@@ -176,7 +176,7 @@ func performTestBan(t *testing.T, id0 string, id1 string, id2 string, id3 string
 	r.users[1].id = id1
 	r.users[2].id = id2
 	r.users[3].id = id3
-	r.users[0].ban("Tim is a meany")
+	r.users[0].banForever("Tim is a meany")
 	if len(r.users) != 4-usersBanned {
 		t.Log("Error,", usersBanned, "users should have been kicked but", 4-len(r.users), "have been kicked.")
 		t.Fail()
