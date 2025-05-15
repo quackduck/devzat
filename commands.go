@@ -516,6 +516,7 @@ func promptCMD(line string, u *User) {
 }
 
 func listBansCMD(_ string, u *User) {
+	garbageCollectBans()
 	msg := "Bans by ID:  \n"
 	for i := 0; i < len(Bans); i++ {
 		msg += Cyan.Cyan(strconv.Itoa(i+1)) + ". " + Bans[i].ID + " (" + Bans[i].Name + ")  \n"

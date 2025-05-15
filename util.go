@@ -234,7 +234,17 @@ func userDuplicate(r *Room, a string) (*User, bool) {
 	return nil, false
 }
 
+// Removes from the list of bans the ones that are expired
+func garbageCollectBans() {
+	for i := 0; i < len(Bans); i++ {
+		if Bans[i].UseTime && Bans[i].UnbanTime.Before(time.Now()) {
+			unbanIDorIP(Bans[i].ID)
+		}
+	}
+}
+
 func saveBans() {
+	garbageCollectBans()
 	f, err := os.Create(Config.DataDir + string(os.PathSeparator) + "bans.json")
 	if err != nil {
 		Log.Println(err)
