@@ -516,9 +516,10 @@ func promptCMD(line string, u *User) {
 }
 
 func listBansCMD(_ string, u *User) {
+	garbageCollectBans()
 	msg := "Bans by ID:  \n"
 	for i := 0; i < len(Bans); i++ {
-		msg += Cyan.Cyan(strconv.Itoa(i+1)) + ". " + Bans[i].ID + "  \n"
+		msg += Cyan.Cyan(strconv.Itoa(i+1)) + ". " + Bans[i].ID + " (" + Bans[i].Name + ")  \n"
 	}
 	u.room.broadcast(Devbot, msg)
 }
@@ -559,6 +560,7 @@ func banCMD(line string, u *User) {
 	}
 	var victim *User
 	var ok bool
+	bannedByDevbot := false
 	banner := u.Name
 	banReason := "" // Initial ban reason is an empty string
 
@@ -566,6 +568,7 @@ func banCMD(line string, u *User) {
 		u.room.broadcast(Devbot, "Do you really think you can ban me, puny human?")
 		victim = u // mwahahahaha - devbot
 		banner = Devbot
+		bannedByDevbot = true
 	} else if !auth(u) {
 		u.room.broadcast(Devbot, "Not authorized")
 		return
@@ -574,24 +577,23 @@ func banCMD(line string, u *User) {
 		return
 	}
 
-	if len(split) > 1 {
-		dur, err := time.ParseDuration(split[len(split)-1])
-		if err != nil {
-			split[len(split)-1] = "" // there's no duration so don't trim anything from the reason
+	if len(split) > 1 || bannedByDevbot {
+		dur, err := time.ParseDuration("1m")
+		if !bannedByDevbot {
+			dur, err = time.ParseDuration(split[len(split)-1])
+			if err != nil {
+				split[len(split)-1] = "" // there's no duration so don't trim anything from the reason
+			}
 		}
 		if len(split) > 2 {
 			banReason = strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(line, split[0]), split[len(split)-1]))
 		}
 		if err == nil { // there was a duration
-			victim.ban(victim.Name + " has been banned by " + banner + " for " + dur.String() + " " + banReason)
-			go func(id string) {
-				time.Sleep(dur)
-				unbanIDorIP(id)
-			}(victim.id) // evaluate id now, call unban with that value later
+			victim.banTemporarily(victim.Name+" has been banned by "+banner+" for "+dur.String()+" "+banReason, dur)
 			return
 		}
 	}
-	victim.ban(victim.Name + " has been banned by " + banner + " " + banReason)
+	victim.banForever(victim.Name + " has been banned by " + banner + " " + banReason)
 }
 
 func kickCMD(line string, u *User) {

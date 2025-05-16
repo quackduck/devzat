@@ -43,8 +43,11 @@ const (
 )
 
 type Ban struct {
-	Addr string
-	ID   string
+	Addr      string
+	ID        string
+	Name      string
+	UseTime   bool
+	UnbanTime time.Time
 }
 
 type Room struct {
@@ -421,11 +424,27 @@ func newUser(s ssh.Session) *User {
 
 	Log.Println("Connected " + u.Name + " [" + u.id + "]")
 
-	if bansContains(Bans, u.addr, u.id) || TORIPs[u.addr] {
-		Log.Println("Rejected " + u.Name + " [" + host + "] (banned)")
-		u.writeln(Devbot, "**You are banned**. If you feel this was a mistake, please reach out to the server admin. Include the following information: [ID "+u.id+"]")
+	if TORIPs[u.addr] {
+		Log.Println("Rejected " + u.Name + " [" + host + "] (Tor IP)")
+		u.writeln(Devbot, "**You are not allowed to join as you are using a Tor IP**")
 		s.Close()
 		return nil
+	}
+
+	banInfo := getBan(Bans, u.addr, u.id)
+	if banInfo != nil {
+		if banInfo.UseTime && banInfo.UnbanTime.Before(time.Now()) {
+			unbanIDorIP(banInfo.ID)
+		} else {
+			Log.Println("Rejected " + u.Name + " [" + host + "] (banned)")
+			u.writeln(Devbot, "**You are banned**. If you feel this was a mistake, please reach out to the server admin. Include the following information: [ID "+u.id+"]")
+			if banInfo.UseTime {
+				when := time.Until(banInfo.UnbanTime)
+				u.writeln(Devbot, "You will be unbaned in "+printPrettyDuration(when)+".")
+			}
+			s.Close()
+			return nil
+		}
 	}
 
 	if Config.Private {
@@ -446,7 +465,7 @@ func newUser(s ssh.Session) *User {
 		IDandIPsToTimesJoinedInMin[u.id]--
 	})
 	if IDandIPsToTimesJoinedInMin[u.addr] > 6 || IDandIPsToTimesJoinedInMin[u.id] > 6 {
-		u.ban("")
+		u.banForever("")
 		MainRoom.broadcast(Devbot, u.Name+" has been banned automatically. ID: "+u.id)
 		return nil
 	}
@@ -597,14 +616,23 @@ func (u *User) close(msg string) {
 	u.room.broadcast("", Red.Paint(" <-- ")+msg)
 }
 
-func (u *User) ban(banner string) {
+func (u *User) banForever(banMsg string) {
+	u.ban(banMsg, false, time.Now())
+}
+
+func (u *User) banTemporarily(banMsg string, banDuration time.Duration) {
+	unbanTime := time.Now().Add(banDuration)
+	u.ban(banMsg, true, unbanTime)
+}
+
+func (u *User) ban(banMsg string, useTime bool, unbanTime time.Time) {
 	if u.addr == "" && u.id == "" {
 		return
 	}
-	Bans = append(Bans, Ban{u.addr, u.id})
+	Bans = append(Bans, Ban{u.addr, u.id, stripansi.Strip(u.Name), useTime, unbanTime})
 	saveBans()
 	uid := u.id
-	u.close(banner)
+	u.close(banMsg)
 	for i := range Rooms { // close all users that have this id (including this user)
 		for j := 0; j < len(Rooms[i].users); j++ {
 			if Rooms[i].users[j].id == uid {
@@ -886,9 +914,9 @@ func (u *User) repl() {
 			u.room.broadcast(Devbot, u.Name+", stop spamming or you could get banned.")
 		}
 		if AntispamMessages[u.id] >= 50 {
-			if !bansContains(Bans, u.addr, u.id) {
-				Bans = append(Bans, Ban{u.addr, u.id})
-				saveBans()
+			if getBan(Bans, u.addr, u.id) == nil {
+				oneMonth, _ := time.ParseDuration("730h")
+				u.banTemporarily("", oneMonth)
 			}
 			u.writeln(Devbot, "anti-spam triggered")
 			u.close(Red.Paint(u.Name + " has been banned for spamming"))
@@ -922,12 +950,12 @@ func calculateLinesTaken(u *User, s string, width int) {
 	//return lines
 }
 
-// bansContains reports if the addr or id is found in the bans list
-func bansContains(b []Ban, addr string, id string) bool {
+// getBan returns the ban element it it exist or nil otherwise
+func getBan(b []Ban, addr string, id string) *Ban {
 	for i := 0; i < len(b); i++ {
 		if b[i].Addr == addr || b[i].ID == id {
-			return true
+			return &b[i]
 		}
 	}
-	return false
+	return nil
 }
