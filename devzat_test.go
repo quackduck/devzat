@@ -51,7 +51,7 @@ func makeDummyRoom() *Room {
 	ret := &Room{name: "DummyRoom", users: []*User{}, usersMutex: sync.RWMutex{}}
 
 	tim := &User{Name: "tim", term: dummyTerm, ColorBG: "bg-off", room: ret, session: dummySession{}}
-	_ = tim.changeColor("red")
+	_ = tim.changeColor("green")
 	tom := &User{Name: "tom", term: dummyTerm, ColorBG: "bg-off", room: ret, session: dummySession{}}
 	_ = tom.changeColor("blue")
 	timtom := &User{Name: "timtom", term: dummyTerm, ColorBG: "bg-off", room: ret, session: dummySession{}}
