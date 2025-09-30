@@ -5,7 +5,7 @@ go 1.22
 toolchain go1.23.1
 
 require (
-	github.com/quackduck/devzat/plugin v0.0.0-20230715201334-cc16f25360de
+	github.com/quackduck/devzat/plugin v0.0.0-20250617152003-518d08bba115
 	google.golang.org/grpc v1.69.4
 )
 
