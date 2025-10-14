@@ -1,0 +1,45 @@
+name: Draft a GitHub release on push to main
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yaml
+
+  check:
+    uses: ./.github/workflows/golangci-lint.yaml
+
+  draft-release:
+    name: Release on push to main
+    runs-on: ubuntu-latest
+    needs: [build, check]
+    steps:
+      - uses: actions/checkout@v5 # needed for tag push
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Generate release notes
+        run: |
+          tree dist/
+          echo "From commit: ${GITHUB_SHA:0:8}" > dist/RELEASE.md
+          echo "Generated on: $(date -u +"%Y-%m-%d %H:%M") UTC" >> dist/RELEASE.md
+          cat dist/RELEASE.md
+
+      - name: Update the latest tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag --force latest && git push --force origin tag latest
+
+      - name: Create a GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/devzat-*
+          tag_name: latest
+          name: Latest Build
+          body_path: dist/RELEASE.md

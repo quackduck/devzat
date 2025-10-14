@@ -5,17 +5,41 @@ on:
     branches:
       - main # Make sure we don't push bad code to main
   pull_request:
+  workflow_call:
 
 jobs:
   build_devzat:
-    runs-on: ubuntu-latest 
+    strategy:
+      matrix:
+        include:
+          - { on: macos-latest, goarch: arm64, goos: darwin }
+          - { on: ubuntu-latest, goarch: amd64, goos: linux }
+          - { on: ubuntu-24.04-arm, goarch: arm64, goos: linux }
+          - { on: windows-latest, goarch: amd64, goos: windows, ext: .exe }
+
+    runs-on: ${{ matrix.on }}
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-go@v3
-      with:
-        go-version: '>=1.18.0'
-        check-latest: true
-    - run: go build # just build for now to verify code compiles, any tests can run here too
-    - run: go test
-    
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ">=1.18.0"
+          check-latest: true
+
+      - name: Set env vars
+        shell: bash
+        run: |
+          echo "GOOS=${{matrix.goos}}" >> "$GITHUB_ENV"
+          echo "GOARCH=${{matrix.goarch}}" >> "$GITHUB_ENV"
+          echo "BIN=devzat-${{matrix.goos}}-${{matrix.goarch}}${{matrix.ext}}" >> "$GITHUB_ENV"
+
+      - name: Build
+        shell: bash
+        run: go build -o "$BIN" -ldflags "-w -s -X 'main.unameCommit=$(git rev-parse HEAD)' -X 'main.unameTime=$(date)'"; ls -l
+      - run: go test
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{env.BIN}}
+          path: ${{env.BIN}}

@@ -1,12 +1,12 @@
 name: golangci-lint
 on:
   push:
-    tags:
-      - v*
     branches:
       - master
       - main
   pull_request:
+  workflow_call:
+
 permissions:
   contents: read
   # Optional: allow read access to pull request. Use with `only-new-issues` option.
@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/setup-go@v3
         with:
-          go-version: '>=1.18.0'
+          go-version: ">=1.18.0"
           check-latest: true
       - uses: actions/checkout@v3
       - name: golangci-lint
@@ -29,4 +29,4 @@ jobs:
           # Optional: show only new issues if it's a pull request. The default value is `false`.
           only-new-issues: true
           args: -e "Error return value of (.+)term.Write\` is not checked" # exclude this error because it's checked whenever a message is sent
-          
+
