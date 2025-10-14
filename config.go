@@ -95,7 +95,7 @@ func init() {
 		cfgFile = "devzat.yml"
 	}
 
-	Log = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile)
+	Log = log.New(io.MultiWriter(os.Stdout, AdminLogWriter{}), "", log.Ldate|log.Ltime|log.Lshortfile)
 
 	errCheck := func(err error) {
 		if err != nil {
@@ -127,7 +127,7 @@ func init() {
 
 	logfile, err := os.OpenFile(Config.DataDir+string(os.PathSeparator)+"log.txt", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0666)
 	errCheck(err)
-	Log.SetOutput(io.MultiWriter(logfile, os.Stdout))
+	Log.SetOutput(io.MultiWriter(logfile, os.Stdout, AdminLogWriter{}))
 
 	if os.Getenv("PORT") != "" {
 		Config.Port, err = strconv.Atoi(os.Getenv("PORT"))
