@@ -135,7 +135,7 @@ func main() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 	go func() {
 		<-c
-		fmt.Println("Shutting down...")
+		Log.Println("Shutting down...")
 		saveBans()
 		time.AfterFunc(time.Second, func() {
 			Log.Println("Broadcast taking too long, exiting server early.")
@@ -186,10 +186,10 @@ func main() {
 	checkKey(Config.KeyFile)
 	if !Config.Private { // allow non-sshkey logins on a non-private server
 		go func() {
-			fmt.Println("Also serving on port", Config.AltPort)
+			Log.Println("Also serving on port", Config.AltPort)
 			err := ssh.ListenAndServe(fmt.Sprintf(":%d", Config.AltPort), nil, ssh.HostKeyFile(Config.KeyFile))
 			if err != nil {
-				fmt.Println(err)
+				Log.Println(err)
 			}
 		}()
 	}
@@ -204,7 +204,7 @@ func main() {
 		}),
 	)
 	if err != nil {
-		fmt.Println(err)
+		Log.Println(err)
 	}
 }
 
@@ -929,7 +929,7 @@ func (u *User) repl() {
 // may contain a bug ("may" because it could be the terminal's fault)
 func calculateLinesTaken(u *User, s string, width int) {
 	s = stripansi.Strip(s)
-	//fmt.Println("`"+s+"`", "width", width)
+	//Log.Println("`"+s+"`", "width", width)
 	pos := 0
 	//lines := 1
 	u.term.Write([]byte("\033[A\033[2K"))
@@ -945,7 +945,7 @@ func calculateLinesTaken(u *User, s string, width int) {
 			//lines++
 			u.term.Write([]byte("\033[A\033[2K"))
 		}
-		//fmt.Println(string(c), "`"+currLine+"`", "pos", pos, "lines", lines)
+		//Log.Println(string(c), "`"+currLine+"`", "pos", pos, "lines", lines)
 	}
 	//return lines
 }
