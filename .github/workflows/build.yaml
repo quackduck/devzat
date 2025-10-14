@@ -35,7 +35,7 @@ jobs:
 
       - name: Build
         shell: bash
-        run: go build -o "$BIN" -ldflags '-w -s'; ls -l
+        run: go build -o "$BIN" -ldflags "-w -s -X 'main.unameCommit=$(git rev-parse HEAD)' -X 'main.unameTime=$(date)'"; ls -l
       - run: go test
 
       - name: Upload artifacts
