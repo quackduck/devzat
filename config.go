@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -96,9 +95,11 @@ func init() {
 		cfgFile = "devzat.yml"
 	}
 
+	Log = log.New(io.MultiWriter(os.Stdout, AdminLogWriter{}), "", log.Ldate|log.Ltime|log.Lshortfile)
+
 	errCheck := func(err error) {
 		if err != nil {
-			fmt.Println("err: " + err.Error())
+			Log.Println("err: " + err.Error())
 			os.Exit(0) // match `return` behavior
 		}
 	}
@@ -106,7 +107,7 @@ func init() {
 	var d []byte
 	if _, err := os.Stat(cfgFile); err != nil {
 		if os.IsNotExist(err) {
-			fmt.Println("Config file not found, so using the default one and writing it to " + cfgFile)
+			Log.Println("Config file not found, so using the default one and writing it to " + cfgFile)
 
 			d, err = yaml.Marshal(Config)
 			errCheck(err)
@@ -118,7 +119,7 @@ func init() {
 		errCheck(err)
 		err = yaml.UnmarshalStrict(d, &Config)
 		errCheck(err)
-		fmt.Println("Config loaded from " + cfgFile)
+		Log.Println("Config loaded from " + cfgFile)
 	}
 
 	err := os.MkdirAll(Config.DataDir, 0755)
@@ -126,7 +127,7 @@ func init() {
 
 	logfile, err := os.OpenFile(Config.DataDir+string(os.PathSeparator)+"log.txt", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0666)
 	errCheck(err)
-	Log = log.New(io.MultiWriter(logfile, os.Stdout), "", log.Ldate|log.Ltime|log.Lshortfile)
+	Log.SetOutput(io.MultiWriter(logfile, os.Stdout, AdminLogWriter{}))
 
 	if os.Getenv("PORT") != "" {
 		Config.Port, err = strconv.Atoi(os.Getenv("PORT"))
@@ -146,7 +147,7 @@ func init() {
 				Integrations.Slack.Prefix = "Slack"
 			}
 			if sl := Integrations.Slack; sl.Token == "" || sl.ChannelID == "" {
-				fmt.Println("error: Slack token or channel ID is missing")
+				Log.Println("error: Slack token or channel ID is missing")
 				os.Exit(0)
 			}
 		}
@@ -155,7 +156,7 @@ func init() {
 				Integrations.Discord.Prefix = "Discord"
 			}
 			if sl := Integrations.Discord; sl.Token == "" || sl.ChannelID == "" {
-				fmt.Println("error: Discord token or channel ID is missing")
+				Log.Println("error: Discord token or channel ID is missing")
 				os.Exit(0)
 			}
 		}
@@ -164,32 +165,32 @@ func init() {
 				tw.AccessTokenSecret == "" ||
 				tw.ConsumerKey == "" ||
 				tw.ConsumerSecret == "" {
-				fmt.Println("error: Twitter credentials are incomplete")
+				Log.Println("error: Twitter credentials are incomplete")
 				os.Exit(0)
 			}
 		}
 
-		fmt.Println("Integration config loaded from " + Config.IntegrationConfig)
+		Log.Println("Integration config loaded from " + Config.IntegrationConfig)
 
 		if os.Getenv("DEVZAT_OFFLINE_SLACK") != "" {
-			fmt.Println("Disabling Slack")
+			Log.Println("Disabling Slack")
 			Integrations.Slack = nil
 		}
 		if os.Getenv("DEVZAT_OFFLINE_DISCORD") != "" {
-			fmt.Println("Disabling Discord")
+			Log.Println("Disabling Discord")
 			Integrations.Discord = nil
 		}
 		if os.Getenv("DEVZAT_OFFLINE_TWITTER") != "" {
-			fmt.Println("Disabling Twitter")
+			Log.Println("Disabling Twitter")
 			Integrations.Twitter = nil
 		}
 		if os.Getenv("DEVZAT_OFFLINE_RPC") != "" {
-			fmt.Println("Disabling RPC")
+			Log.Println("Disabling RPC")
 			Integrations.RPC = nil
 		}
 		// Check for global offline for backwards compatibility
 		if os.Getenv("DEVZAT_OFFLINE") != "" {
-			fmt.Println("Offline mode")
+			Log.Println("Offline mode")
 			Integrations.Slack = nil
 			Integrations.Discord = nil
 			Integrations.Twitter = nil
