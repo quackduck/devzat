@@ -4,7 +4,7 @@ import (
 	"sync"
 )
 
-const adminLogSize = 4
+const adminLogSize = 1024
 
 // This struct contains copied log lines meant to be read by admins.
 // They are stored as a circular buffer for ease of write.
@@ -60,4 +60,8 @@ type AdminLogWriter struct{}
 func (_ AdminLogWriter) Write(p []byte) (int, error) {
 	globalAdminLog.addLine(p)
 	return len(p), nil
+}
+
+func GetAdminLog() []string {
+	return globalAdminLog.formatLogs()
 }

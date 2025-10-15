@@ -71,6 +71,7 @@ var (
 		{"uptime", uptimeCMD, "", "Show server uptime"},
 		{"8ball", eightBallCMD, "`question`", "Always tells the truth."},
 		{"rmdir", rmdirCMD, "#`room`", "Remove an empty room"},
+		{"logs", logsCMD, "", "Show server logs (admin)"},
 	}
 	SecretCMDs = []CMD{
 		{"ls", lsCMD, "???", "???"},
@@ -965,4 +966,20 @@ func rmdirCMD(rest string, u *User) {
 	} else {
 		u.room.broadcast("", "rmdir: failed to remove '"+rest+"': No such room")
 	}
+}
+
+func logsCMD(rest string, u *User) {
+	if rest != "" {
+		return
+	}
+
+	if !auth(u) {
+		u.room.broadcast(Devbot, "Not authorized")
+		return
+	}
+
+	for _, line := range GetAdminLog() {
+		u.writeln(Devbot, line)
+	}
+
 }
