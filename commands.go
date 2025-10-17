@@ -71,7 +71,7 @@ var (
 		{"uptime", uptimeCMD, "", "Show server uptime"},
 		{"8ball", eightBallCMD, "`question`", "Always tells the truth."},
 		{"rmdir", rmdirCMD, "#`room`", "Remove an empty room"},
-		{"logs", logsCMD, "", "Show server logs (admin)"},
+		{"logs", logsCMD, "[`lines`]", "Show server logs (admin)"},
 	}
 	SecretCMDs = []CMD{
 		{"ls", lsCMD, "???", "???"},
@@ -969,8 +969,16 @@ func rmdirCMD(rest string, u *User) {
 }
 
 func logsCMD(rest string, u *User) {
-	if rest != "" {
-		return
+	var lineCount int
+
+	if rest == "" {
+		lineCount = 0
+	} else {
+		var err error
+		lineCount, err = strconv.Atoi(rest)
+		if err != nil {
+			return
+		}
 	}
 
 	if !auth(u) {
@@ -978,7 +986,7 @@ func logsCMD(rest string, u *User) {
 		return
 	}
 
-	for _, line := range GetAdminLog() {
+	for _, line := range GetAdminLog(lineCount) {
 		u.writeln(Devbot, line)
 	}
 
