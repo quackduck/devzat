@@ -37,7 +37,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag --force "$RELEASE" && git push --force origin tag "$RELEASE"
+          git tag "$RELEASE" && git push origin tag "$RELEASE"
 
       - name: Create a GitHub release
         uses: softprops/action-gh-release@v2
