@@ -26,7 +26,10 @@ jobs:
       - name: Generate release notes
         run: |
           tree dist/
-          echo "From commit: ${GITHUB_SHA:0:8}" > dist/RELEASE.md
+          COMMIT="${GITHUB_SHA:0:8}"
+          echo "COMMIT=$COMMIT" >> "$GITHUB_ENV"
+          echo "RELEASE=release-$COMMIT" >> "$GITHUB_ENV"
+          echo "From commit: $COMMIT" > dist/RELEASE.md
           echo "Generated on: $(date -u +"%Y-%m-%d %H:%M") UTC" >> dist/RELEASE.md
           cat dist/RELEASE.md
 
@@ -34,12 +37,12 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag --force latest && git push --force origin tag latest
+          git tag "$RELEASE" && git push origin tag "$RELEASE"
 
       - name: Create a GitHub release
         uses: softprops/action-gh-release@v2
         with:
           files: dist/devzat-*
-          tag_name: latest
-          name: Latest Build
+          tag_name: ${{env.RELEASE}}
+          name: "Build ${{env.COMMIT}}"
           body_path: dist/RELEASE.md
