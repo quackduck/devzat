@@ -26,7 +26,7 @@ jobs:
       - name: Generate release notes
         run: |
           tree dist/
-          COMMIT="${GITHUB_SHA:0:8}"
+          COMMIT="$(git rev-parse --short HEAD)"
           echo "COMMIT=$COMMIT" >> "$GITHUB_ENV"
           echo "RELEASE=release-$COMMIT" >> "$GITHUB_ENV"
           echo "From commit: $COMMIT" > dist/RELEASE.md
