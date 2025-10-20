@@ -9,10 +9,10 @@ const adminLogSize = 1024
 // This struct contains copied log lines meant to be read by admins.
 // They are stored as a circular buffer for ease of write.
 type adminLog struct {
-	logLines         [adminLogSize]string
-	writeIndex       int
+	logLines          [adminLogSize]string
+	writeIndex        int
 	totalWrittenLines int
-	lock             sync.Mutex
+	lock              sync.Mutex
 }
 
 var globalAdminLog = adminLog{totalWrittenLines: 0, writeIndex: 0}
@@ -62,6 +62,10 @@ func (_ AdminLogWriter) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
-func GetAdminLog() []string {
-	return globalAdminLog.formatLogs()
+func GetAdminLog(lineCount int) []string {
+	logs := globalAdminLog.formatLogs()
+	if lineCount <= 0 {
+		return logs
+	}
+	return logs[max(len(logs)-lineCount, 0):]
 }
