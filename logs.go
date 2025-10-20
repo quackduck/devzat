@@ -26,18 +26,14 @@ func (al *adminLog) addLine(p []byte) {
 	al.totalWrittenLines++
 }
 
-func (al *adminLog) formatLogs(lineCount int) []string {
+func (al *adminLog) formatLogs() []string {
 	al.lock.Lock()
 	defer al.lock.Unlock()
 
-	if lineCount <= 0 {
-		lineCount = adminLogSize
-	}
-
 	if al.isLogFull() {
-		return al.formatLogsFull()[al.totalWrittenLines-min(al.totalWrittenLines, lineCount):]
+		return al.formatLogsFull()
 	} else {
-		return al.formatLogsPartial()[al.totalWrittenLines-min(al.totalWrittenLines, lineCount):]
+		return al.formatLogsPartial()
 	}
 }
 
@@ -67,5 +63,9 @@ func (_ AdminLogWriter) Write(p []byte) (int, error) {
 }
 
 func GetAdminLog(lineCount int) []string {
-	return globalAdminLog.formatLogs(lineCount)
+	logs := globalAdminLog.formatLogs()
+	if lineCount <= 0 {
+		return logs
+	}
+	return logs[max(len(logs)-lineCount, 0):]
 }
