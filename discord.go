@@ -148,7 +148,11 @@ func discordMessageHandler(_ *discordgo.Session, m *discordgo.MessageCreate) {
 
 	msgContent := strings.TrimSpace(m.ContentWithMentionsReplaced())
 	if Integrations.Slack != nil {
-		SlackChan <- Integrations.Discord.Prefix + " " + name + ": " + msgContent // send this discord message to slack
+		select {
+		case SlackChan <- Integrations.Discord.Prefix + " " + name + ": " + msgContent: // send this discord message to slack
+		default:
+			Log.Println("Overflow in Slack channel")
+		}
 	}
 	runCommands(msgContent, DiscordUser)
 }
