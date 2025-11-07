@@ -48,11 +48,15 @@ func getMsgsFromSlack() {
 			name := strings.Fields(u.RealName)[0]
 			uslack.Name = Yellow.Paint(Integrations.Slack.Prefix+" ") + (Styles[int(i)%len(Styles)]).apply(name)
 			if Integrations.Discord != nil {
-				DiscordChan <- DiscordMsg{
+				select {
+				case DiscordChan <- DiscordMsg{
 					senderName: Integrations.Slack.Prefix + " " + name,
 					msg:        text,
 					channel:    uslack.room.name,
-				} // send this discord message to slack
+				}: // send this discord message to slack
+				default:
+					Log.Println("Overflow in Discord channel")
+				}
 			}
 			runCommands(text, uslack)
 		case *slack.ConnectedEvent:
