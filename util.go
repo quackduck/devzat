@@ -15,7 +15,6 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
-	"regexp"
 	"runtime/debug"
 	"strings"
 	"text/tabwriter"
@@ -122,16 +121,20 @@ func protectFromPanic() {
 	}
 }
 
-// Keep names less than 27 chars and only with ASCII letters, numbers, and "-"
+// removes arrows, spaces and non-ascii-printable characters
 func cleanName(name string) string {
+	s := ""
 	name = strings.ReplaceAll(strings.TrimSpace(strings.Split(name, "\n")[0]), // use one trimmed line
 		" ", "-")
-	invalidCharactersRegex := regexp.MustCompile(`[^a-zA-Z0-9-]`)
-	name = string(invalidCharactersRegex.ReplaceAll([]byte(name), []byte("")))
 	if len([]rune(name)) > 27 {
 		name = string([]rune(name)[:27])
 	}
-	return name
+	for i := 0; i < len(name); i++ {
+		if 33 <= name[i] && name[i] <= 126 { // ascii printables only: '!' to '~'
+			s += string(name[i])
+		}
+	}
+	return s
 }
 
 func mdRender(a string, beforeMessageLen int, lineWidth int, imageCache map[string]image.Image) string {
@@ -160,7 +163,7 @@ func replaceImgs(md string, width int, cache map[string]image.Image) string {
 	if end == -1 {
 		return md
 	}
-
+	
 	imgStart := start + 5
 	imgEnd := end
 	imgText := md[imgStart:imgEnd]
