@@ -11,10 +11,7 @@ cd devzat
 ```
 To compile Devzat, you will need Go installed with a minimum version of 1.17.
 
-Now run `go install` to install the Devzat binary globally, or run `go build` to build and keep the binary in the working directory.
-
-You may need to generate a new key pair for your server using the `ssh-keygen` command. When prompted, save as `devzat-sshkey` since this is the default location (it can be changed in the config).
-While you can use the same key pair that your user account has, it is recommended to use a new key pair.
+Now run `go install` to install the Devzat binary globally, or run `go build` to build and keep the binary in the working directory. If you run `go install`, Devzat is installed into `$GOPATH`, make sure `$GOPATH` is [added to your PATH](https://go.dev/wiki/SettingGOPATH) .
 
 ## Usage
 
