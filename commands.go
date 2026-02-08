@@ -175,7 +175,7 @@ func dmCMD(rest string, u *User) {
 		return
 	}
 	msg := strings.TrimSpace(strings.TrimPrefix(rest, restSplit[0]))
-	u.writeln(NewPrivateMessage(peer.Name+" <- ", msg, true))
+	u.writeln(NewPrivateMessage(peer.Name, msg, true))
 	if u == peer {
 		devbotRespond(u.room, []string{"You must be really lonely, DMing yourself.",
 			"Don't worry, I won't judge :wink:",
@@ -183,7 +183,7 @@ func dmCMD(rest string, u *User) {
 			"what an idiot"}, 30)
 		return
 	}
-	peer.writeln(NewPrivateMessage(u.Name+" -> ", msg, false))
+	peer.writeln(NewPrivateMessage(u.Name, msg, false))
 }
 
 func hangCMD(rest string, u *User) {
@@ -248,7 +248,7 @@ func usersCMD(_ string, u *User) {
 }
 
 func dmRoomCMD(line string, u *User) {
-	u.writeln(NewPrivateMessage(u.messaging.Name+" <- ", line, true))
+	u.writeln(NewPrivateMessage(u.messaging.Name, line, true))
 	if u == u.messaging {
 		devbotRespond(u.room, []string{"You must be really lonely, DMing yourself.",
 			"Don't worry, I won't judge :wink:",
@@ -256,7 +256,7 @@ func dmRoomCMD(line string, u *User) {
 			"what an idiot"}, 30)
 		return
 	}
-	u.messaging.writeln(NewPrivateMessage(u.Name+" -> ", line, false))
+	u.messaging.writeln(NewPrivateMessage(u.Name, line, false))
 }
 
 // named devmonk at the request of a certain ced

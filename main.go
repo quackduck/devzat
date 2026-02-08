@@ -699,9 +699,15 @@ func (u *User) writelnWithImageCache(msg Message, cache map[string]image.Image) 
 	msg.text = strings.ReplaceAll(msg.text, `\`+"\n", `\n`) // let people escape newlines
 	thisUserIsDMSender := msg.messageType == PrivateMessageSend
 	switch msg.messageType {
-	case PrivateMessageSend, PrivateMessageReceive:
+	case PrivateMessageSend:
 		msg.text = strings.TrimSpace(mdRender(msg.text, lenString(msg.senderName), u.winWidth, cache))
-		msg.text = msg.senderName + msg.text
+		msg.text = msg.senderName + " <- " + msg.text
+		if !thisUserIsDMSender {
+			msg.text += "\a"
+		}
+	case PrivateMessageReceive:
+		msg.text = strings.TrimSpace(mdRender(msg.text, lenString(msg.senderName), u.winWidth, cache))
+		msg.text = msg.senderName + " -> " + msg.text
 		if !thisUserIsDMSender {
 			msg.text += "\a"
 		}

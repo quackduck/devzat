@@ -191,7 +191,7 @@ func (s *pluginServer) SendMessage(ctx context.Context, msg *pb.Message) (*pb.Me
 		if !success {
 			return nil, status.Error(codes.NotFound, "Could not find user "+*msg.EphemeralTo)
 		}
-		u.writeln(NewPrivateMessage(msg.GetFrom()+" -> ", msg.Msg, false))
+		u.writeln(NewPrivateMessage(msg.GetFrom(), msg.Msg, false))
 	} else {
 		r := Rooms[msg.Room]
 		if r == nil {
