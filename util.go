@@ -117,7 +117,7 @@ func keepSessionAlive(s ssh.Session) {
 
 func protectFromPanic() {
 	if i := recover(); i != nil {
-		MainRoom.broadcast(NewMessage(Devbot, "Slap the developers in the face for me, the server almost crashed, also tell them this: "+fmt.Sprint(i)+", stack: "+string(debug.Stack())))
+		MainRoom.broadcast(NewDevbotMessage("Slap the developers in the face for me, the server almost crashed, also tell them this: " + fmt.Sprint(i) + ", stack: " + string(debug.Stack())))
 	}
 }
 
@@ -147,7 +147,7 @@ func mdRender(a string, beforeMessageLen int, lineWidth int, imageCache map[stri
 	r, _ := glamour.NewTermRenderer(glamour.WithEmoji(), glamour.WithStyles(glamourStyle), glamour.WithWordWrap(lineWidth-beforeMessageLen), glamour.WithPreservedNewLines())
 	md, err := r.Render(a)
 	if err != nil {
-		MainRoom.broadcast(NewMessage(Devbot, err.Error()))
+		MainRoom.broadcast(NewDevbotMessage(err.Error()))
 		return ""
 	}
 	md = addLeftPad(strings.TrimSuffix(replaceImgs(md, lineWidth, imageCache), "\n"), beforeMessageLen)
@@ -255,7 +255,7 @@ func saveBans() {
 	j.SetIndent("", "   ")
 	err = j.Encode(Bans)
 	if err != nil {
-		MainRoom.broadcast(NewMessage(Devbot, "error saving bans: "+err.Error()))
+		MainRoom.broadcast(NewDevbotMessage("error saving bans: " + err.Error()))
 		Log.Println(err)
 		return
 	}
@@ -272,7 +272,7 @@ func readBans() {
 	defer f.Close()
 	err = json.NewDecoder(f).Decode(&Bans)
 	if err != nil {
-		MainRoom.broadcast(NewMessage(Devbot, "error reading bans: "+err.Error()))
+		MainRoom.broadcast(NewDevbotMessage("error reading bans: " + err.Error()))
 		Log.Println(err)
 		return
 	}
@@ -377,7 +377,7 @@ func devbotRespond(room *Room, messages []string, chance int) {
 		go func() {
 			time.Sleep(time.Second / 2)
 			pick := messages[rand.Intn(len(messages))]
-			room.broadcast(NewMessage(Devbot, pick))
+			room.broadcast(NewDevbotMessage(pick))
 		}()
 	}
 }
@@ -412,7 +412,7 @@ func holidaysCheck(u *User) {
 
 	for _, h := range holidayList {
 		if currentMonth == h.month && today == h.day {
-			u.writeln(NewMessage("", "!["+h.name+"]("+h.image+")", NoSenderMessage))
+			u.writeln(NewNoSenderMessage("![" + h.name + "](" + h.image + ")"))
 			time.Sleep(time.Second)
 			clearCMD("", u)
 			break

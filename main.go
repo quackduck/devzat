@@ -141,7 +141,7 @@ func main() {
 			os.Exit(4)
 		})
 		for _, r := range Rooms {
-			r.broadcast(NewMessage(Devbot, "Server going down! This is probably because it is being updated. Try joining back immediately.  \n"+
+			r.broadcast(NewDevbotMessage("Server going down! This is probably because it is being updated. Try joining back immediately.  \n" +
 				"If you still can't join, try joining back in 2 minutes. If you _still_ can't join, make an issue at github.com/quackduck/devzat/issues"))
 			for _, u := range r.users {
 				u.savePrefs() //nolint:errcheck
@@ -218,7 +218,7 @@ func (r *Room) broadcast(msg Message) {
 	}
 
 	// Now we know it is not a DM, so this is a safe place to add the hook for sending the event to plugins
-	if msg.messageType != FromPluginMessage {
+	if msg.sendToPlugin {
 		// isPluginMessage is passed in when the message is broadcast by a plugin message
 		// we won't send that message to plugins b/c many plugins will go into an infinite loop reacting to their own message
 		msg.text = getMiddlewareResult(PluginMessage{msg, r.name})
@@ -430,7 +430,7 @@ func newUser(s ssh.Session) *User {
 
 	if TORIPs[u.addr] {
 		Log.Println("Rejected " + u.Name + " [" + host + "] (Tor IP)")
-		u.writeln(NewMessage(Devbot, "**You are not allowed to join as you are using a Tor IP**"))
+		u.writeln(NewDevbotMessage("**You are not allowed to join as you are using a Tor IP**"))
 		s.Close()
 		return nil
 	}
@@ -441,10 +441,10 @@ func newUser(s ssh.Session) *User {
 			unbanIDorIP(banInfo.ID)
 		} else {
 			Log.Println("Rejected " + u.Name + " [" + host + "] (banned)")
-			u.writeln(NewMessage(Devbot, "**You are banned**. If you feel this was a mistake, please reach out to the server admin. Include the following information: [ID "+u.id+"]"))
+			u.writeln(NewDevbotMessage("**You are banned**. If you feel this was a mistake, please reach out to the server admin. Include the following information: [ID " + u.id + "]"))
 			if banInfo.UseTime {
 				when := time.Until(banInfo.UnbanTime)
-				u.writeln(NewMessage(Devbot, "You will be unbaned in "+printPrettyDuration(when)+"."))
+				u.writeln(NewDevbotMessage("You will be unbaned in " + printPrettyDuration(when) + "."))
 			}
 			s.Close()
 			return nil
@@ -456,7 +456,7 @@ func newUser(s ssh.Session) *User {
 		_, isAdmin := Config.Admins[u.id]
 		if !(isAdmin || isOnAllowlist) {
 			Log.Println("Rejected " + u.Name + " [" + u.id + "] (not on allowlist)")
-			u.writeln(NewMessage(Devbot, "You are not on the allowlist of this private server. If this is a mistake, send your id ("+u.id+") to the admin so that they can add you."))
+			u.writeln(NewDevbotMessage("You are not on the allowlist of this private server. If this is a mistake, send your id (" + u.id + ") to the admin so that they can add you."))
 			s.Close()
 			return nil
 		}
@@ -470,7 +470,7 @@ func newUser(s ssh.Session) *User {
 	})
 	if IDandIPsToTimesJoinedInMin[u.addr] > 6 || IDandIPsToTimesJoinedInMin[u.id] > 6 {
 		u.banForever("")
-		MainRoom.broadcast(NewMessage(Devbot, u.Name+" has been banned automatically. ID: "+u.id))
+		MainRoom.broadcast(NewDevbotMessage(u.Name + " has been banned automatically. ID: " + u.id))
 		return nil
 	}
 
@@ -547,13 +547,13 @@ func newUser(s ssh.Session) *User {
 
 	switch len(MainRoom.users) - 1 {
 	case 0:
-		u.writeln(NewMessage("", Blue.Paint("Welcome to the chat. There are no more users"), NoSenderMessage))
+		u.writeln(NewNoSenderMessage(Blue.Paint("Welcome to the chat. There are no more users")))
 	case 1:
-		u.writeln(NewMessage("", Yellow.Paint("Welcome to the chat. There is one more user"), NoSenderMessage))
+		u.writeln(NewNoSenderMessage(Yellow.Paint("Welcome to the chat. There is one more user")))
 	default:
-		u.writeln(NewMessage("", Green.Paint("Welcome to the chat. There are", strconv.Itoa(len(MainRoom.users)-1), "more users"), NoSenderMessage))
+		u.writeln(NewNoSenderMessage(Green.Paint("Welcome to the chat. There are", strconv.Itoa(len(MainRoom.users)-1), "more users")))
 	}
-	MainRoom.broadcast(NewMessage("", Green.Paint(" --> ")+u.Name+" has joined the chat", NoSenderMessage))
+	MainRoom.broadcast(NewNoSenderMessage(Green.Paint(" --> ") + u.Name + " has joined the chat"))
 	return u
 }
 
@@ -617,7 +617,7 @@ func (u *User) close(msg string) {
 	if time.Since(u.joinTime) > time.Minute/2 {
 		msg += ". They were online for " + printPrettyDuration(time.Since(u.joinTime))
 	}
-	u.room.broadcast(NewMessage("", Red.Paint(" <-- ")+msg, NoSenderMessage))
+	u.room.broadcast(NewNoSenderMessage(Red.Paint(" <-- ") + msg))
 }
 
 func (u *User) banForever(banMsg string) {
@@ -651,15 +651,33 @@ type Message struct {
 	senderName string
 	text       string
 
-	messageType MessageType
+	messageType  MessageType
+	sendToPlugin bool
 }
 
-func NewMessage(senderName string, text string, messageType ...MessageType) Message {
-	thisMessageType := DefaultMessage
-	if len(messageType) != 0 {
-		thisMessageType = messageType[0]
+func NewMessage(senderName, text string) Message {
+	return Message{senderName, text, DefaultMessage, true}
+}
+
+func NewDevbotMessage(text string) Message {
+	return Message{Devbot, text, DefaultMessage, true}
+}
+
+func NewNoSenderMessage(text string) Message {
+	return Message{"", text, NoSenderMessage, true}
+}
+
+func NewPrivateMessage(senderName, text string, isSender bool) Message {
+	messageType := PrivateMessageReceive
+	if isSender {
+		messageType = PrivateMessageSend
 	}
-	return Message{senderName, text, thisMessageType}
+	return Message{senderName, text, messageType, true}
+}
+
+func (msg Message) dontSendToPlugin() Message {
+	msg.sendToPlugin = false
+	return msg
 }
 
 type MessageType int
@@ -669,7 +687,6 @@ const (
 	PrivateMessageSend
 	PrivateMessageReceive
 	NoSenderMessage
-	FromPluginMessage
 )
 
 func (u *User) writeln(msg Message) { u.writelnWithImageCache(msg, nil) }
@@ -728,7 +745,7 @@ func (u *User) pickUsername(possibleName string) error {
 		return err
 	}
 	if stripansi.Strip(u.Name) != stripansi.Strip(oldName) && stripansi.Strip(u.Name) != possibleName { // did the name change, and is it not what the User entered?
-		u.room.broadcast(NewMessage(Devbot, oldName+" is now called "+u.Name))
+		u.room.broadcast(NewDevbotMessage(oldName + " is now called " + u.Name))
 	}
 	return nil
 }
@@ -739,12 +756,12 @@ func (u *User) pickUsernameQuietly(possibleName string) error {
 	var err error
 	for {
 		if possibleName == "" || strings.HasPrefix(possibleName, "#") || possibleName == "devbot" || strings.HasPrefix(possibleName, "@") {
-			u.writeln(NewMessage("", "Your username is invalid. Pick a different one:", NoSenderMessage))
+			u.writeln(NewNoSenderMessage("Your username is invalid. Pick a different one:"))
 		} else if otherUser, dup := userDuplicate(u.room, possibleName); dup {
 			if otherUser == u {
 				break // allow selecting the same name as before the user tried to change it
 			}
-			u.writeln(NewMessage("", "Your username is already in use. Pick a different one:", NoSenderMessage))
+			u.writeln(NewNoSenderMessage("Your username is already in use. Pick a different one:"))
 		} else { // valid name
 			break
 		}
@@ -835,14 +852,14 @@ func (u *User) changeRoom(r *Room) {
 		return
 	}
 	u.room.users = remove(u.room.users, u)
-	u.room.broadcast(NewMessage("", u.Name+" is joining "+Blue.Paint(r.name), NoSenderMessage)) // tell the old room
+	u.room.broadcast(NewNoSenderMessage(u.Name + " is joining " + Blue.Paint(r.name))) // tell the old room
 	cleanupRoom(u.room)
 	u.room = r
 	if _, dup := userDuplicate(u.room, u.Name); dup {
 		u.pickUsername("") //nolint:errcheck // if reading input failed the next repl will err out
 	}
 	u.room.users = append(u.room.users, u)
-	u.room.broadcast(NewMessage("", Green.Paint(" --> ")+u.Name+" has joined "+Blue.Paint(u.room.name), NoSenderMessage))
+	u.room.broadcast(NewNoSenderMessage(Green.Paint(" --> ") + u.Name + " has joined " + Blue.Paint(u.room.name)))
 }
 
 func (u *User) formatPrompt() {
@@ -939,14 +956,14 @@ func (u *User) repl() {
 			AntispamMessages[u.id]--
 		})
 		if AntispamMessages[u.id] >= 30 {
-			u.room.broadcast(NewMessage(Devbot, u.Name+", stop spamming or you could get banned."))
+			u.room.broadcast(NewDevbotMessage(u.Name + ", stop spamming or you could get banned."))
 		}
 		if AntispamMessages[u.id] >= 50 {
 			if getBan(Bans, u.addr, u.id) == nil {
 				oneMonth, _ := time.ParseDuration("730h")
 				u.banTemporarily("", oneMonth)
 			}
-			u.writeln(NewMessage(Devbot, "anti-spam triggered"))
+			u.writeln(NewDevbotMessage("anti-spam triggered"))
 			u.close(Red.Paint(u.Name + " has been banned for spamming"))
 			return
 		}
