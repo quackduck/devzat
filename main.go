@@ -702,15 +702,10 @@ func (u *User) writelnWithImageCache(msg Message, cache map[string]image.Image) 
 	case PrivateMessageSend:
 		msg.text = strings.TrimSpace(mdRender(msg.text, lenString(msg.senderName), u.winWidth, cache))
 		msg.text = msg.senderName + " <- " + msg.text
-		if !thisUserIsDMSender {
-			msg.text += "\a"
-		}
 	case PrivateMessageReceive:
 		msg.text = strings.TrimSpace(mdRender(msg.text, lenString(msg.senderName), u.winWidth, cache))
 		msg.text = msg.senderName + " -> " + msg.text
-		if !thisUserIsDMSender {
-			msg.text += "\a"
-		}
+		msg.text += "\a"
 	case DefaultMessage:
 		msg.text = strings.TrimSpace(mdRender(msg.text, lenString(msg.senderName)+2, u.winWidth, cache))
 		msg.text = msg.senderName + ": " + msg.text
