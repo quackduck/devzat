@@ -197,7 +197,15 @@ func (s *pluginServer) SendMessage(ctx context.Context, msg *pb.Message) (*pb.Me
 		if r == nil {
 			return nil, status.Error(codes.InvalidArgument, "Room does not exist")
 		}
-		r.broadcast(NewMessage(msg.GetFrom(), msg.Msg).dontSendToPlugin())
+		// The plugin API doesn't export a function to send messages with no sender, so we must add support for it here.
+		var localMsg Message
+		if msg.GetFrom() == "" {
+			localMsg = NewNoSenderMessage(msg.Msg)
+		} else {
+			localMsg = NewMessage(msg.GetFrom(), msg.Msg)
+		}
+		localMsg = localMsg.dontSendToPlugin()
+		r.broadcast(localMsg)
 	}
 	return &pb.MessageRes{}, nil
 }
