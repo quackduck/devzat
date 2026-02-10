@@ -59,7 +59,7 @@ func sendCurrentUsersTwitterMessage() {
 			Log.Println("Got twitter err", err)
 			return
 		}
-		MainRoom.broadcast(Devbot, "https\\://twitter.com/"+t.User.ScreenName+"/status/"+t.IDStr)
+		MainRoom.broadcast(NewDevbotMessage("https\\://twitter.com/" + t.User.ScreenName + "/status/" + t.IDStr))
 	}()
 }
 

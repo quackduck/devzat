@@ -105,7 +105,7 @@ func runCommands(line string, u *User) {
 	line = rmBadWords(line)
 
 	if u.IsMuted {
-		u.writeln(u.Name, line)
+		u.writeln(NewMessage(u.Name, line))
 		return
 	}
 
@@ -143,9 +143,9 @@ func runCommands(line string, u *User) {
 	}
 
 	if u.isBridge {
-		u.room.broadcastNoBridges(u.Name, line)
+		u.room.broadcastNoBridges(NewMessage(u.Name, line))
 	} else {
-		u.room.broadcast(u.Name, line)
+		u.room.broadcast(NewMessage(u.Name, line))
 	}
 
 	devbotChat(u.room, line)
@@ -166,16 +166,16 @@ func runCommands(line string, u *User) {
 func dmCMD(rest string, u *User) {
 	restSplit := strings.Fields(rest)
 	if len(restSplit) < 2 {
-		u.writeln(Devbot, "You gotta have a message, mate")
+		u.writeln(NewDevbotMessage("You gotta have a message, mate"))
 		return
 	}
 	peer, ok := findUserByName(u.room, restSplit[0])
 	if !ok {
-		u.writeln(Devbot, "No such person lol, who you wanna dm? (you might be in the wrong room)")
+		u.writeln(NewDevbotMessage("No such person lol, who you wanna dm? (you might be in the wrong room)"))
 		return
 	}
 	msg := strings.TrimSpace(strings.TrimPrefix(rest, restSplit[0]))
-	u.writeln(peer.Name+" <- ", msg)
+	u.writeln(NewPrivateMessage(peer.Name, msg, true))
 	if u == peer {
 		devbotRespond(u.room, []string{"You must be really lonely, DMing yourself.",
 			"Don't worry, I won't judge :wink:",
@@ -183,37 +183,37 @@ func dmCMD(rest string, u *User) {
 			"what an idiot"}, 30)
 		return
 	}
-	peer.writeln(u.Name+" -> ", msg)
+	peer.writeln(NewPrivateMessage(u.Name, msg, false))
 }
 
 func hangCMD(rest string, u *User) {
 	if len([]rune(rest)) > 1 {
 		if !u.isBridge {
-			u.writeln(u.Name, "hang "+rest)
-			u.writeln(Devbot, "(that word won't show dw)")
+			u.writeln(NewMessage(u.Name, "hang "+rest))
+			u.writeln(NewDevbotMessage("(that word won't show dw)"))
 		}
 		hangGame = &hangman{rest, 15, " "} // default value of guesses so empty space is given away
-		u.room.broadcast(Devbot, u.Name+" has started a new game of Hangman! Guess letters with hang <letter>")
-		u.room.broadcast(Devbot, "```\n"+hangPrint(hangGame)+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```")
+		u.room.broadcast(NewDevbotMessage(u.Name + " has started a new game of Hangman! Guess letters with hang <letter>"))
+		u.room.broadcast(NewDevbotMessage("```\n" + hangPrint(hangGame) + "\nTries: " + strconv.Itoa(hangGame.triesLeft) + "\n```"))
 		return
 	}
 	if !u.isBridge {
-		u.room.broadcast(u.Name, "hang "+rest)
+		u.room.broadcast(NewMessage(u.Name, "hang "+rest))
 	}
 	if strings.Trim(hangGame.word, hangGame.guesses) == "" {
-		u.room.broadcast(Devbot, "The game has ended. Start a new game with hang <word>")
+		u.room.broadcast(NewDevbotMessage("The game has ended. Start a new game with hang <word>"))
 		return
 	}
 	if len(rest) == 0 {
-		u.room.broadcast(Devbot, "Start a new game with hang <word> or guess with hang <letter>")
+		u.room.broadcast(NewDevbotMessage("Start a new game with hang <word> or guess with hang <letter>"))
 		return
 	}
 	if hangGame.triesLeft == 0 {
-		u.room.broadcast(Devbot, "No more tries! The word was "+hangGame.word)
+		u.room.broadcast(NewDevbotMessage("No more tries! The word was " + hangGame.word))
 		return
 	}
 	if strings.Contains(hangGame.guesses, rest) {
-		u.room.broadcast(Devbot, "You already guessed "+rest)
+		u.room.broadcast(NewDevbotMessage("You already guessed " + rest))
 		return
 	}
 	hangGame.guesses += rest
@@ -221,11 +221,11 @@ func hangCMD(rest string, u *User) {
 		hangGame.triesLeft--
 	}
 	display := hangPrint(hangGame)
-	u.room.broadcast(Devbot, "```\n"+display+"\nTries: "+strconv.Itoa(hangGame.triesLeft)+"\n```")
+	u.room.broadcast(NewDevbotMessage("```\n" + display + "\nTries: " + strconv.Itoa(hangGame.triesLeft) + "\n```"))
 	if strings.Trim(hangGame.word, hangGame.guesses) == "" {
-		u.room.broadcast(Devbot, "You got it! The word was "+hangGame.word)
+		u.room.broadcast(NewDevbotMessage("You got it! The word was " + hangGame.word))
 	} else if hangGame.triesLeft == 0 {
-		u.room.broadcast(Devbot, "No more tries! The word was "+hangGame.word)
+		u.room.broadcast(NewDevbotMessage("No more tries! The word was " + hangGame.word))
 	}
 }
 
@@ -244,11 +244,11 @@ func clear_if_rest_empty(rest string, u *User) bool {
 }
 
 func usersCMD(_ string, u *User) {
-	u.room.broadcast("", printUsersInRoom(u.room))
+	u.room.broadcast(NewNoSenderMessage(printUsersInRoom(u.room)))
 }
 
 func dmRoomCMD(line string, u *User) {
-	u.writeln(u.messaging.Name+" <- ", line)
+	u.writeln(NewPrivateMessage(u.messaging.Name, line, true))
 	if u == u.messaging {
 		devbotRespond(u.room, []string{"You must be really lonely, DMing yourself.",
 			"Don't worry, I won't judge :wink:",
@@ -256,20 +256,20 @@ func dmRoomCMD(line string, u *User) {
 			"what an idiot"}, 30)
 		return
 	}
-	u.messaging.writeln(u.Name+" -> ", line)
+	u.messaging.writeln(NewPrivateMessage(u.Name, line, false))
 }
 
 // named devmonk at the request of a certain ced
 func devmonkCMD(_ string, u *User) {
 	sentences := []string{"I really want to go to work, but I am too sick to drive.", "The fence was confused about whether it was supposed to keep things in or keep things out.", "He found the end of the rainbow and was surprised at what he found there.", "He had concluded that pigs must be able to fly in Hog Heaven.", "I just wanted to tell you I could see the love you have for your child by the way you look at her.", "We will not allow you to bring your pet armadillo along.", "The father died during childbirth.", "I covered my friend in baby oil.", "Cursive writing is the best way to build a race track.", "My Mum tries to be cool by saying that she likes all the same things that I do.", "The sky is clear; the stars are twinkling.", "Flash photography is best used in full sunlight.", "The rusty nail stood erect, angled at a 45-degree angle, just waiting for the perfect barefoot to come along.", "People keep telling me \"orange\" but I still prefer \"pink\".", "Peanut butter and jelly caused the elderly lady to think about her past.", "She always had an interesting perspective on why the world must be flat.", "People who insist on picking their teeth with their elbows are so annoying!", "Joe discovered that traffic cones make excellent megaphones.", "They say people remember important moments in their life well, yet no one even remembers their own birth.", "Purple is the best city in the forest.", "The book is in front of the table.", "Everyone was curious about the large white blimp that appeared overnight.", "He wondered if she would appreciate his toenail collection.", "Situps are a terrible way to end your day.", "He barked orders at his daughters but they just stared back with amusement.", "She couldn't decide of the glass was half empty or half full so she drank it.", "It caught him off guard that space smelled of seared steak.", "There are few things better in life than a slice of pie.", "After exploring the abandoned building, he started to believe in ghosts.", "This is a Japanese doll.", "I've never seen a more beautiful brandy glass filled with wine.", "Don't piss in my garden and tell me you're trying to help my plants grow.", "She looked at the masterpiece hanging in the museum but all she could think is that her five-year-old could do better.", "Nobody loves a pig wearing lipstick.", "She always speaks to him in a loud voice.", "The teens wondered what was kept in the red shed on the far edge of the school grounds.", "I'll have you know I've written over fifty novels", "He didn't understand why the bird wanted to ride the bicycle.", "Potato wedges probably are not best for relationships.", "Baby wipes are made of chocolate stardust.", "Lucifer was surprised at the amount of life at Death Valley.", "She was too busy always talking about what she wanted to do to actually do any of it.", "The sudden rainstorm washed crocodiles into the ocean.", "I used to live in my neighbor's fishpond, but the aesthetic wasn't to my taste.", "He kept telling himself that one day it would all somehow make sense.", "The random sentence generator generated a random sentence about a random sentence.", "The reservoir water level continued to lower while we enjoyed our long shower.", "A song can make or ruin a person’s day if they let it get to them.", "He stomped on his fruit loops and thus became a cereal killer.", "I know many children ask for a pony, but I wanted a bicycle with rockets strapped to it."}
 	text := sentences[rand.Intn(len(sentences))]
-	u.writeln(Devbot, "Okay type this text: \n\n> "+text)
+	u.writeln(NewDevbotMessage("Okay type this text: \n\n> " + text))
 	u.term.SetPrompt("> ")
 	defer u.formatPrompt()
 	start := time.Now()
 	line, err := u.term.ReadLine()
 	if err == term.ErrPasteIndicator { // TODO: doesn't work for some reason?
-		u.room.broadcast(Devbot, "SMH did you know that "+u.Name+" tried to cheat in a typing game?")
+		u.room.broadcast(NewDevbotMessage("SMH did you know that " + u.Name + " tried to cheat in a typing game?"))
 		return
 	}
 	dur := time.Since(start)
@@ -298,44 +298,44 @@ func devmonkCMD(_ string, u *User) {
 		}
 	}
 
-	u.room.broadcast(Devbot, "Okay "+u.Name+", you typed that in "+dur.Truncate(time.Second/10).String()+" so your speed is "+
+	u.room.broadcast(NewDevbotMessage("Okay " + u.Name + ", you typed that in " + dur.Truncate(time.Second/10).String() + " so your speed is " +
 		strconv.FormatFloat(
 			float64(len(strings.Fields(text)))/dur.Minutes(), 'f', 1, 64,
-		)+" wpm"+" with accuracy "+strconv.FormatFloat(accuracy, 'f', 1, 64)+"%",
-	)
+		) + " wpm" + " with accuracy " + strconv.FormatFloat(accuracy, 'f', 1, 64) + "%",
+	))
 }
 
 func ticCMD(rest string, u *User) {
 	if rest == "" {
-		u.room.broadcast(Devbot, "Starting a new game of Tic Tac Toe! The first player is always X.")
-		u.room.broadcast(Devbot, "Play using tic <cell num>")
+		u.room.broadcast(NewDevbotMessage("Starting a new game of Tic Tac Toe! The first player is always X."))
+		u.room.broadcast(NewDevbotMessage("Play using tic <cell num>"))
 		currentPlayer = tictactoe.X
 		tttGame = new(tictactoe.Board)
-		u.room.broadcast(Devbot, "```\n"+" 1 │ 2 │ 3\n───┼───┼───\n 4 │ 5 │ 6\n───┼───┼───\n 7 │ 8 │ 9\n"+"\n```")
+		u.room.broadcast(NewDevbotMessage("```\n" + " 1 │ 2 │ 3\n───┼───┼───\n 4 │ 5 │ 6\n───┼───┼───\n 7 │ 8 │ 9\n" + "\n```"))
 		return
 	}
 	m, err := strconv.Atoi(rest)
 	if err != nil {
-		u.room.broadcast(Devbot, "Make sure you're using a number lol")
+		u.room.broadcast(NewDevbotMessage("Make sure you're using a number lol"))
 		return
 	}
 	if m < 1 || m > 9 {
-		u.room.broadcast(Devbot, "Moves are numbers between 1 and 9!")
+		u.room.broadcast(NewDevbotMessage("Moves are numbers between 1 and 9!"))
 		return
 	}
 	err = tttGame.Apply(tictactoe.Move(m-1), currentPlayer)
 	if err != nil {
-		u.room.broadcast(Devbot, err.Error())
+		u.room.broadcast(NewDevbotMessage(err.Error()))
 		return
 	}
-	u.room.broadcast(Devbot, "```\n"+tttPrint(tttGame.Cells)+"\n```")
+	u.room.broadcast(NewDevbotMessage("```\n" + tttPrint(tttGame.Cells) + "\n```"))
 	if currentPlayer == tictactoe.X {
 		currentPlayer = tictactoe.O
 	} else {
 		currentPlayer = tictactoe.X
 	}
 	if !(tttGame.Condition() == tictactoe.NotEnd) {
-		u.room.broadcast(Devbot, tttGame.Condition().String())
+		u.room.broadcast(NewDevbotMessage(tttGame.Condition().String()))
 		currentPlayer = tictactoe.X
 		tttGame = new(tictactoe.Board)
 	}
@@ -350,25 +350,25 @@ func bellCMD(rest string, u *User) {
 	case "off":
 		u.Bell = false
 		u.PingEverytime = false
-		u.room.broadcast("", "bell off (never)")
+		u.room.broadcast(NewNoSenderMessage("bell off (never)"))
 	case "on":
 		u.Bell = true
 		u.PingEverytime = false
-		u.room.broadcast("", "bell on (pings)")
+		u.room.broadcast(NewNoSenderMessage("bell on (pings)"))
 	case "all":
 		u.Bell = true
 		u.PingEverytime = true
-		u.room.broadcast("", "bell all (every message)")
+		u.room.broadcast(NewNoSenderMessage("bell all (every message)"))
 	case "", "status":
 		if u.PingEverytime {
-			u.room.broadcast("", "bell all (every message)")
+			u.room.broadcast(NewNoSenderMessage("bell all (every message)"))
 		} else if u.Bell {
-			u.room.broadcast("", "bell on (pings)")
+			u.room.broadcast(NewNoSenderMessage("bell on (pings)"))
 		} else { // bell is off
-			u.room.broadcast("", "bell off (never)")
+			u.room.broadcast(NewNoSenderMessage("bell off (never)"))
 		}
 	default:
-		u.room.broadcast(Devbot, "your options are off, on and all")
+		u.room.broadcast(NewDevbotMessage("your options are off, on and all"))
 	}
 }
 
@@ -376,23 +376,23 @@ func cdCMD(rest string, u *User) {
 	defer u.formatPrompt()
 	if u.messaging != nil {
 		u.messaging = nil
-		u.writeln(Devbot, "Left private chat")
+		u.writeln(NewDevbotMessage("Left private chat"))
 		if rest == "" || rest == ".." {
 			return
 		}
 	}
 	if rest == ".." { // cd back into the main room
-		u.room.broadcast(u.Name, "cd "+rest)
+		u.room.broadcast(NewMessage(u.Name, "cd "+rest))
 		if u.room != MainRoom {
 			u.changeRoom(MainRoom)
 		}
 		return
 	}
 	if strings.HasPrefix(rest, "#") {
-		u.room.broadcast(u.Name, "cd "+rest)
+		u.room.broadcast(NewMessage(u.Name, "cd "+rest))
 		if len(rest) > MaxRoomNameLen {
 			rest = rest[0:MaxRoomNameLen]
-			u.room.broadcast(Devbot, "Room name lengths are limited, so I'm shortening it to "+rest+".")
+			u.room.broadcast(NewDevbotMessage("Room name lengths are limited, so I'm shortening it to " + rest + "."))
 		}
 		if v, ok := Rooms[rest]; ok {
 			u.changeRoom(v)
@@ -403,7 +403,7 @@ func cdCMD(rest string, u *User) {
 		return
 	}
 	if rest == "" {
-		u.room.broadcast(u.Name, "cd "+rest)
+		u.room.broadcast(NewMessage(u.Name, "cd "+rest))
 		type kv struct {
 			roomName   string
 			numOfUsers int
@@ -419,28 +419,28 @@ func cdCMD(rest string, u *User) {
 		for _, kv := range ss {
 			roomsInfo += Blue.Paint(kv.roomName) + ": " + printUsersInRoom(Rooms[kv.roomName]) + "  \n"
 		}
-		u.room.broadcast("", "Rooms and users  \n"+strings.TrimSpace(roomsInfo))
+		u.room.broadcast(NewNoSenderMessage("Rooms and users  \n" + strings.TrimSpace(roomsInfo)))
 		return
 	}
 	name := strings.Fields(rest)[0]
 	if len(name) == 0 {
-		u.writeln(Devbot, "You think people have empty names?")
+		u.writeln(NewDevbotMessage("You think people have empty names?"))
 		return
 	}
 	peer, ok := findUserByName(u.room, name)
 	if !ok {
-		u.writeln(Devbot, "No such person lol, who do you want to dm? (you might be in the wrong room)")
+		u.writeln(NewDevbotMessage("No such person lol, who do you want to dm? (you might be in the wrong room)"))
 		return
 	}
 	u.messaging = peer
-	u.writeln(Devbot, "Now in DMs with "+peer.Name+". To leave use cd ..")
+	u.writeln(NewDevbotMessage("Now in DMs with " + peer.Name + ". To leave use cd .."))
 }
 
 func tzCMD(tzArg string, u *User) {
 	defer u.formatPrompt()
 	if tzArg == "" {
 		u.Timezone.Location = nil
-		u.room.broadcast(Devbot, "Enabled relative times!")
+		u.room.broadcast(NewDevbotMessage("Enabled relative times!"))
 		return
 	}
 	tzArgList := strings.Fields(tzArg)
@@ -458,16 +458,16 @@ func tzCMD(tzArg string, u *User) {
 	var err error
 	u.Timezone.Location, err = time.LoadLocation(tz)
 	if err != nil {
-		u.room.broadcast(Devbot, "Weird timezone you have there, use the format Continent/City, the usual US timezones (PST, PDT, EST, EDT...) or check nodatime.org/TimeZones!")
+		u.room.broadcast(NewDevbotMessage("Weird timezone you have there, use the format Continent/City, the usual US timezones (PST, PDT, EST, EDT...) or check nodatime.org/TimeZones!"))
 		return
 	}
 	u.FormatTime24 = len(tzArgList) == 2 && tzArgList[1] == "24h"
-	u.room.broadcast(Devbot, "Changed your timezone!")
+	u.room.broadcast(NewDevbotMessage("Changed your timezone!"))
 }
 
 func bioCMD(line string, u *User) {
 	if line == "" {
-		u.writeln(Devbot, "Your current bio is:  \n> "+u.Bio)
+		u.writeln(NewDevbotMessage("Your current bio is:  \n> " + u.Bio))
 		u.term.SetPrompt("> ")
 		defer u.formatPrompt()
 		for {
@@ -478,7 +478,7 @@ func bioCMD(line string, u *User) {
 			input = strings.TrimSpace(input)
 			if input != "" {
 				if len(input) > MaxBioLen {
-					u.writeln(Devbot, "Your bio is too long. It shouldn't be more than "+strconv.Itoa(MaxBioLen)+" characters.")
+					u.writeln(NewDevbotMessage("Your bio is too long. It shouldn't be more than " + strconv.Itoa(MaxBioLen) + " characters."))
 				}
 				u.Bio = input
 				// make sure it gets saved now so it stays even if the server crashes
@@ -489,19 +489,19 @@ func bioCMD(line string, u *User) {
 	}
 	target, ok := findUserByName(u.room, line)
 	if !ok {
-		u.room.broadcast(Devbot, "Who???")
+		u.room.broadcast(NewDevbotMessage("Who???"))
 		return
 	}
-	u.room.broadcast("", target.Bio)
+	u.room.broadcast(NewDevbotMessage(target.Bio))
 }
 
 func idCMD(line string, u *User) {
 	victim, ok := findUserByName(u.room, line)
 	if !ok {
-		u.room.broadcast("", "User not found")
+		u.room.broadcast(NewDevbotMessage("User not found"))
 		return
 	}
-	u.room.broadcast("", victim.id)
+	u.room.broadcast(NewDevbotMessage(victim.id))
 }
 
 func nickCMD(line string, u *User) {
@@ -512,7 +512,7 @@ func promptCMD(line string, u *User) {
 	u.Prompt = line
 	u.formatPrompt()
 	if line == "" {
-		u.writeln(Devbot, "(Your prompt is now empty. Did you mean to get more info about your prompt? Run `man prompt` for more info)")
+		u.writeln(NewDevbotMessage("(Your prompt is now empty. Did you mean to get more info about your prompt? Run `man prompt` for more info)"))
 	}
 }
 
@@ -522,20 +522,20 @@ func listBansCMD(_ string, u *User) {
 	for i := 0; i < len(Bans); i++ {
 		msg += Cyan.Cyan(strconv.Itoa(i+1)) + ". " + Bans[i].ID + " (" + Bans[i].Name + ")  \n"
 	}
-	u.room.broadcast(Devbot, msg)
+	u.room.broadcast(NewDevbotMessage(msg))
 }
 
 func unbanCMD(toUnban string, u *User) {
 	if !auth(u) {
-		u.room.broadcast(Devbot, "Not authorized")
+		u.room.broadcast(NewDevbotMessage("Not authorized"))
 		return
 	}
 
 	if unbanIDorIP(toUnban) {
-		u.room.broadcast(Devbot, "Unbanned person: "+toUnban)
+		u.room.broadcast(NewDevbotMessage("Unbanned person: " + toUnban))
 		saveBans()
 	} else {
-		u.room.broadcast(Devbot, "I couldn't find that person")
+		u.room.broadcast(NewDevbotMessage("I couldn't find that person"))
 	}
 }
 
@@ -556,7 +556,7 @@ func unbanIDorIP(toUnban string) bool {
 func banCMD(line string, u *User) {
 	split := strings.Split(line, " ")
 	if len(split) == 0 {
-		u.room.broadcast(Devbot, "Which user do you want to ban?")
+		u.room.broadcast(NewDevbotMessage("Which user do you want to ban?"))
 		return
 	}
 	var victim *User
@@ -566,15 +566,15 @@ func banCMD(line string, u *User) {
 	banReason := "" // Initial ban reason is an empty string
 
 	if split[0] == "devbot" {
-		u.room.broadcast(Devbot, "Do you really think you can ban me, puny human?")
+		u.room.broadcast(NewDevbotMessage("Do you really think you can ban me, puny human?"))
 		victim = u // mwahahahaha - devbot
 		banner = Devbot
 		bannedByDevbot = true
 	} else if !auth(u) {
-		u.room.broadcast(Devbot, "Not authorized")
+		u.room.broadcast(NewDevbotMessage("Not authorized"))
 		return
 	} else if victim, ok = findUserByName(u.room, split[0]); !ok {
-		u.room.broadcast("", "User not found")
+		u.room.broadcast(NewDevbotMessage("User not found"))
 		return
 	}
 
@@ -601,15 +601,15 @@ func kickCMD(line string, u *User) {
 	victim, ok := findUserByName(u.room, line)
 	if !ok {
 		if line == "devbot" {
-			u.room.broadcast(Devbot, "You will pay for this")
+			u.room.broadcast(NewDevbotMessage("You will pay for this"))
 			u.close(u.Name + Red.Paint(" has been kicked by ") + Devbot)
 		} else {
-			u.room.broadcast("", "User not found")
+			u.room.broadcast(NewDevbotMessage("User not found"))
 		}
 		return
 	}
 	if !auth(u) && victim.id != u.id {
-		u.room.broadcast(Devbot, "Not authorized")
+		u.room.broadcast(NewDevbotMessage("Not authorized"))
 		return
 	}
 	victim.close(victim.Name + Red.Paint(" has been kicked by ") + u.Name)
@@ -618,11 +618,11 @@ func kickCMD(line string, u *User) {
 func muteCMD(line string, u *User) {
 	victim, ok := findUserByName(u.room, line)
 	if !ok {
-		u.room.broadcast("", "User not found")
+		u.room.broadcast(NewDevbotMessage("User not found"))
 		return
 	}
 	if !auth(u) && victim.id != u.id {
-		u.room.broadcast(Devbot, "Not authorized")
+		u.room.broadcast(NewDevbotMessage("Not authorized"))
 		return
 	}
 	victim.IsMuted = true
@@ -631,11 +631,11 @@ func muteCMD(line string, u *User) {
 func unmuteCMD(line string, u *User) {
 	victim, ok := findUserByName(u.room, line)
 	if !ok {
-		u.room.broadcast("", "User not found")
+		u.room.broadcast(NewDevbotMessage("User not found"))
 		return
 	}
 	if !auth(u) && victim.id != u.id {
-		u.room.broadcast(Devbot, "Not authorized")
+		u.room.broadcast(NewDevbotMessage("Not authorized"))
 		return
 	}
 	victim.IsMuted = false
@@ -643,9 +643,9 @@ func unmuteCMD(line string, u *User) {
 
 func colorCMD(rest string, u *User) {
 	if rest == "which" {
-		u.room.broadcast(Devbot, u.Color+" "+u.ColorBG)
+		u.room.broadcast(NewDevbotMessage(u.Color + " " + u.ColorBG))
 	} else if err := u.changeColor(rest); err != nil {
-		u.room.broadcast(Devbot, err.Error())
+		u.room.broadcast(NewDevbotMessage(err.Error()))
 	}
 }
 
@@ -659,11 +659,11 @@ func adminsCMD(_ string, u *User) {
 		msg += Cyan.Cyan(strconv.Itoa(i)) + ". " + id + "\t" + info + "  \n"
 		i++
 	}
-	u.room.broadcast(Devbot, msg)
+	u.room.broadcast(NewDevbotMessage(msg))
 }
 
 func helpCMD(_ string, u *User) {
-	u.room.broadcast("", `Welcome to Devzat! Devzat is chat over SSH: github.com/quackduck/devzat  
+	u.room.broadcast(NewNoSenderMessage(`Welcome to Devzat! Devzat is chat over SSH: github.com/quackduck/devzat  
 Because there's SSH apps on all platforms, even on mobile, you can join from anywhere.
 
 Run cmds to see a list of commands.
@@ -682,34 +682,34 @@ For replacing newlines, I often use https\://bulkseotools.com/add-remove-line-br
 Join the Devzat discord server: https://discord.gg/yERQNTBbD5
 
 Made by Ishan Goel with feature ideas from friends.  
-Thanks to Caleb Denio for lending his server!`)
+Thanks to Caleb Denio for lending his server!`))
 }
 
 func catCMD(line string, u *User) {
 	if line == "" {
-		u.room.broadcast("", "usage: cat [-benstuv] [file ...]")
+		u.room.broadcast(NewDevbotMessage("usage: cat [-benstuv] [file ...]"))
 	} else if line == "README.md" {
 		helpCMD(line, u)
 	} else {
-		u.room.broadcast("", "cat: "+line+": Permission denied")
+		u.room.broadcast(NewDevbotMessage("cat: " + line + ": Permission denied"))
 	}
 }
 
 func rmCMD(line string, u *User) {
 	if line == "" {
-		u.room.broadcast("", `usage: rm [-f | -i] [-dPRrvW] file ...
-unlink file`)
+		u.room.broadcast(NewNoSenderMessage(`usage: rm [-f | -i] [-dPRrvW] file ...
+unlink file`))
 	} else {
-		u.room.broadcast("", "rm: "+line+": Permission denied, sucker")
+		u.room.broadcast(NewDevbotMessage("rm: " + line + ": Permission denied, sucker"))
 	}
 }
 
 func exampleCodeCMD(line string, u *User) {
 	if line == "big" {
-		u.room.broadcast(Devbot, "```go\npackage main\n\nimport \"fmt\"\n\nfunc sum(nums ...int) {\n    fmt.Print(nums, \" \")\n    total := 0\n    for _, num := range nums {\n        total += num\n    }\n    fmt.Println(total)\n}\n\nfunc main() {\n\n    sum(1, 2)\n    sum(1, 2, 3)\n\n    nums := []int{1, 2, 3, 4}\n    sum(nums...)\n}\n```")
+		u.room.broadcast(NewDevbotMessage("```go\npackage main\n\nimport \"fmt\"\n\nfunc sum(nums ...int) {\n    fmt.Print(nums, \" \")\n    total := 0\n    for _, num := range nums {\n        total += num\n    }\n    fmt.Println(total)\n}\n\nfunc main() {\n\n    sum(1, 2)\n    sum(1, 2, 3)\n\n    nums := []int{1, 2, 3, 4}\n    sum(nums...)\n}\n```"))
 		return
 	}
-	u.room.broadcast(Devbot, "\n```go\npackage main\nimport \"fmt\"\nfunc main() {\n   fmt.Println(\"Example!\")\n}\n```")
+	u.room.broadcast(NewDevbotMessage("\n```go\npackage main\nimport \"fmt\"\nfunc main() {\n   fmt.Println(\"Example!\")\n}\n```"))
 }
 
 func init() { // add Matt Gleich's blackbird theme from https://github.com/blackbirdtheme/vscode/blob/master/themes/blackbird-midnight-color-theme.json#L175
@@ -728,62 +728,62 @@ func init() { // add Matt Gleich's blackbird theme from https://github.com/black
 
 func themeCMD(line string, u *User) {
 	// TODO: make this work with glamour
-	u.room.broadcast(Devbot, "Themes do not currently work because Devzat is switching to using glamour for rendering.")
+	u.room.broadcast(NewDevbotMessage("Themes do not currently work because Devzat is switching to using glamour for rendering."))
 	if line == "list" {
-		u.room.broadcast(Devbot, "Available themes: "+strings.Join(chromastyles.Names(), ", "))
+		u.room.broadcast(NewDevbotMessage("Available themes: " + strings.Join(chromastyles.Names(), ", ")))
 		return
 	}
 	for _, name := range chromastyles.Names() {
 		if name == line {
 			//markdown.CurrentTheme = chromastyles.Get(name)
-			u.room.broadcast(Devbot, "Theme set to "+name)
+			u.room.broadcast(NewDevbotMessage("Theme set to " + name))
 			return
 		}
 	}
-	u.room.broadcast(Devbot, "What theme is that? Use theme list to see what's available.")
+	u.room.broadcast(NewDevbotMessage("What theme is that? Use theme list to see what's available."))
 }
 
 func asciiArtCMD(_ string, u *User) {
-	u.room.broadcast("", Art)
+	u.room.broadcast(NewDevbotMessage(Art))
 }
 
 func pwdCMD(_ string, u *User) {
 	if u.messaging != nil {
-		u.writeln("", u.messaging.Name)
+		u.writeln(NewNoSenderMessage(u.messaging.Name))
 	} else {
-		u.room.broadcast("", u.room.name)
+		u.room.broadcast(NewDevbotMessage(u.room.name))
 	}
 }
 
 func shrugCMD(line string, u *User) {
-	u.room.broadcast(u.Name, line+` ¯\\_(ツ)_/¯`)
+	u.room.broadcast(NewMessage(u.Name, line+` ¯\\_(ツ)_/¯`))
 }
 
 func pronounsCMD(line string, u *User) {
 	args := strings.Fields(line)
 
 	if line == "" {
-		u.room.broadcast(Devbot, "Set pronouns by providing em or query a user's pronouns!")
+		u.room.broadcast(NewDevbotMessage("Set pronouns by providing em or query a user's pronouns!"))
 		return
 	}
 
 	if len(args) == 1 && strings.HasPrefix(args[0], "@") {
 		victim, ok := findUserByName(u.room, args[0][1:])
 		if !ok {
-			u.room.broadcast(Devbot, "Who's that?")
+			u.room.broadcast(NewDevbotMessage("Who's that?"))
 			return
 		}
-		u.room.broadcast(Devbot, victim.Name+"'s pronouns are "+victim.displayPronouns())
+		u.room.broadcast(NewDevbotMessage(victim.Name + "'s pronouns are " + victim.displayPronouns()))
 		return
 	}
 
 	u.Pronouns = strings.Fields(strings.ReplaceAll(strings.ToLower(line), "\n", ""))
 	//u.changeColor(u.Color) // refresh pronouns
-	u.room.broadcast(Devbot, u.Name+" now goes by "+u.displayPronouns())
+	u.room.broadcast(NewDevbotMessage(u.Name + " now goes by " + u.displayPronouns()))
 }
 
 func emojisCMD(_ string, u *User) {
-	u.room.broadcast(Devbot, `See the complete list at https://github.com/ikatyang/emoji-cheat-sheet/  
+	u.room.broadcast(NewDevbotMessage(`See the complete list at https://github.com/ikatyang/emoji-cheat-sheet/  
 Here are a few examples (type :emoji_text: to use):  
 :doughnut: doughnut  
 :yum: yum  
@@ -797,21 +797,21 @@ Here are a few examples (type :emoji_text: to use):
 :face_with_thermometer: face_with_thermometer  
 :dumpling: dumpling  
 :sunglasses: sunglasses  
-:skull: skull`)
+:skull: skull`))
 }
 
 func commandsRestCMD(_ string, u *User) {
-	u.room.broadcast("", "The rest  \n"+autogenCommands(RestCMDs))
+	u.room.broadcast(NewDevbotMessage("The rest  \n" + autogenCommands(RestCMDs)))
 }
 
 func manCMD(rest string, u *User) {
 	if rest == "" {
-		u.room.broadcast(Devbot, "What command do you want help with?")
+		u.room.broadcast(NewDevbotMessage("What command do you want help with?"))
 		return
 	}
 
 	if rest == "prompt" {
-		u.room.broadcast(Devbot, `prompt <prompt> sets your prompt
+		u.room.broadcast(NewDevbotMessage(`prompt <prompt> sets your prompt
 
 You can use some bash PS1 tags in it.  
 The supported tags are:  
@@ -823,21 +823,21 @@ The supported tags are:
 * \S: a space character
 * \$: $ for normal users, # for admins
 
-The default prompt is "\u:\S".`)
+The default prompt is "\u:\S".`))
 		return
 	}
 
 	if cmd, ok := getCMD(rest); ok {
-		u.room.broadcast(Devbot, "Usage: "+cmd.name+" "+cmd.argsInfo+"  \n"+cmd.info)
+		u.room.broadcast(NewDevbotMessage("Usage: " + cmd.name + " " + cmd.argsInfo + "  \n" + cmd.info))
 		return
 	}
 	// Plugin commands
 	if c, ok := PluginCMDs[rest]; ok {
-		u.room.broadcast(Devbot, "Usage: "+rest+" "+c.argsInfo+"  \n"+c.info)
+		u.room.broadcast(NewDevbotMessage("Usage: " + rest + " " + c.argsInfo + "  \n" + c.info))
 		return
 	}
 
-	u.room.broadcast("", "This system has been minimized by removing packages and content that are not required on a system that users do not log into.\n\nTo restore this content, including manpages, you can run the 'unminimize' command. You will still need to ensure the 'man-db' package is installed.")
+	u.room.broadcast(NewDevbotMessage("This system has been minimized by removing packages and content that are not required on a system that users do not log into.\n\nTo restore this content, including manpages, you can run the 'unminimize' command. You will still need to ensure the 'man-db' package is installed."))
 }
 
 func lsCMD(rest string, u *User) {
@@ -847,7 +847,7 @@ func lsCMD(rest string, u *User) {
 			for _, us := range r.users {
 				usersList += us.Name + Blue.Paint("/ ")
 			}
-			u.room.broadcast("", usersList)
+			u.room.broadcast(NewDevbotMessage(usersList))
 			return
 		}
 	}
@@ -856,11 +856,11 @@ func lsCMD(rest string, u *User) {
 		for _, us := range u.room.users {
 			s += us.id + " " + us.Name + "  \n"
 		}
-		u.room.broadcast("", s)
+		u.room.broadcast(NewDevbotMessage(s))
 		return
 	}
 	if rest != "" {
-		u.room.broadcast("", "ls: "+rest+" Permission denied")
+		u.room.broadcast(NewDevbotMessage("ls: " + rest + " Permission denied"))
 		return
 	}
 	roomList := ""
@@ -872,30 +872,30 @@ func lsCMD(rest string, u *User) {
 		usersList += us.Name + Blue.Paint("/ ")
 	}
 	usersList += Devbot + Blue.Paint("/ ")
-	u.room.broadcast("", "README.md "+usersList+roomList)
+	u.room.broadcast(NewDevbotMessage("README.md " + usersList + roomList))
 }
 
 func commandsCMD(_ string, u *User) {
-	u.room.broadcast("", "Commands  \n"+autogenCommands(MainCMDs))
+	u.room.broadcast(NewDevbotMessage("Commands  \n" + autogenCommands(MainCMDs)))
 }
 
 func unameCMD(rest string, u *User) {
 	if unameCommit == "" || unameTime == "" {
-		u.room.broadcast("", "No uname output available. Build Devzat with `"+color.HiYellowString(`go build -ldflags "-X 'main.unameCommit=$(git rev-parse HEAD)' -X 'main.unameTime=$(date)'"`)+"` to enable.")
+		u.room.broadcast(NewDevbotMessage("No uname output available. Build Devzat with `" + color.HiYellowString(`go build -ldflags "-X 'main.unameCommit=$(git rev-parse HEAD)' -X 'main.unameTime=$(date)'"`) + "` to enable."))
 		return
 	}
-	u.room.broadcast("", "Devzat ("+unameCommit+") "+unameTime)
+	u.room.broadcast(NewDevbotMessage("Devzat (" + unameCommit + ") " + unameTime))
 }
 
 func uptimeCMD(rest string, u *User) {
 	uptime := time.Since(StartupTime)
-	u.room.broadcast("", fmt.Sprintf("up %v days, %02d:%02d:%02d", int(uptime.Hours()/24), int(math.Mod(uptime.Hours(), 24)), int(math.Mod(uptime.Minutes(), 60)), int(math.Mod(uptime.Seconds(), 60))))
+	u.room.broadcast(NewDevbotMessage(fmt.Sprintf("up %v days, %02d:%02d:%02d", int(uptime.Hours()/24), int(math.Mod(uptime.Hours(), 24)), int(math.Mod(uptime.Minutes(), 60)), int(math.Mod(uptime.Seconds(), 60)))))
 }
 
 func neofetchCMD(_ string, u *User) {
 	content, err := os.ReadFile(Config.DataDir + "/neofetch.txt")
 	if err != nil {
-		u.room.broadcast("", "Error reading "+Config.DataDir+"/neofetch.txt: "+err.Error())
+		u.room.broadcast(NewDevbotMessage("Error reading " + Config.DataDir + "/neofetch.txt: " + err.Error()))
 		return
 	}
 	contentSplit := strings.Split(string(content), "\n")
@@ -935,7 +935,7 @@ func neofetchCMD(_ string, u *User) {
 		}
 		result += "  \n"
 	}
-	u.room.broadcast("", result)
+	u.room.broadcast(NewDevbotMessage(result))
 }
 
 func eightBallCMD(_ string, u *User) {
@@ -949,22 +949,22 @@ func eightBallCMD(_ string, u *User) {
 	}
 	go func() {
 		time.Sleep(time.Second * time.Duration(rand.Intn(10)))
-		u.room.broadcast("8ball", responses[rand.Intn(len(responses))]+u.Name)
+		u.room.broadcast(NewMessage("8ball", responses[rand.Intn(len(responses))]+u.Name))
 	}()
 }
 
 func rmdirCMD(rest string, u *User) {
 	if rest == "#main" {
-		u.room.broadcast("", "rmdir: failed to remove '"+rest+"': Operation not permitted")
+		u.room.broadcast(NewDevbotMessage("rmdir: failed to remove '" + rest + "': Operation not permitted"))
 	} else if room, ok := Rooms[rest]; ok {
 		if len(room.users) == 0 {
 			delete(Rooms, rest)
-			u.room.broadcast("", "rmdir: removing directory, '"+rest+"'")
+			u.room.broadcast(NewDevbotMessage("rmdir: removing directory, '" + rest + "'"))
 		} else {
-			u.room.broadcast("", "rmdir: failed to remove '"+rest+"': Room not empty")
+			u.room.broadcast(NewDevbotMessage("rmdir: failed to remove '" + rest + "': Room not empty"))
 		}
 	} else {
-		u.room.broadcast("", "rmdir: failed to remove '"+rest+"': No such room")
+		u.room.broadcast(NewDevbotMessage("rmdir: failed to remove '" + rest + "': No such room"))
 	}
 }
 
@@ -982,12 +982,12 @@ func logsCMD(rest string, u *User) {
 	}
 
 	if !auth(u) {
-		u.room.broadcast(Devbot, "Not authorized")
+		u.room.broadcast(NewDevbotMessage("Not authorized"))
 		return
 	}
 
 	for _, line := range GetAdminLog(lineCount) {
-		u.writeln(Devbot, line)
+		u.writeln(NewDevbotMessage(line))
 	}
 
 }

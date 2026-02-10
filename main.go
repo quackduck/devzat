@@ -117,9 +117,8 @@ func (t *tz) MarshalJSON() ([]byte, error) {
 }
 
 type backlogMessage struct {
-	timestamp  time.Time
-	senderName string
-	text       string
+	Message
+	timestamp time.Time
 }
 
 // TODO: have a web dashboard that shows logs
@@ -142,8 +141,8 @@ func main() {
 			os.Exit(4)
 		})
 		for _, r := range Rooms {
-			r.broadcast(Devbot, "Server going down! This is probably because it is being updated. Try joining back immediately.  \n"+
-				"If you still can't join, try joining back in 2 minutes. If you _still_ can't join, make an issue at github.com/quackduck/devzat/issues")
+			r.broadcast(NewDevbotMessage("Server going down! This is probably because it is being updated. Try joining back immediately.  \n" +
+				"If you still can't join, try joining back in 2 minutes. If you _still_ can't join, make an issue at github.com/quackduck/devzat/issues"))
 			for _, u := range r.users {
 				u.savePrefs() //nolint:errcheck
 			}
@@ -208,27 +207,32 @@ func main() {
 	}
 }
 
-func (r *Room) broadcast(senderName, msg string, isPluginMessage ...bool) {
-	if msg == "" {
+type PluginMessage struct {
+	Message
+	room string
+}
+
+func (r *Room) broadcast(msg Message) {
+	if msg.text == "" {
 		return
 	}
 
 	// Now we know it is not a DM, so this is a safe place to add the hook for sending the event to plugins
-	if len(isPluginMessage) == 0 {
+	if msg.sendToPlugin {
 		// isPluginMessage is passed in when the message is broadcast by a plugin message
 		// we won't send that message to plugins b/c many plugins will go into an infinite loop reacting to their own message
-		msg = getMiddlewareResult(senderName, r.name, msg)
-		sendMessageToPlugins(msg, senderName, r.name)
+		msg.text = getMiddlewareResult(PluginMessage{msg, r.name})
+		sendMessageToPlugins(PluginMessage{msg, r.name})
 	}
 
 	if Integrations.Slack != nil || Integrations.Discord != nil {
 		var toSendS string
-		if senderName != "" {
+		if msg.senderName != "" {
 			if Integrations.Slack != nil {
-				toSendS = "[" + r.name + "] *" + senderName + "*: " + msg
+				toSendS = "[" + r.name + "] *" + msg.senderName + "*: " + msg.text
 			}
 		} else {
-			toSendS = "[" + r.name + "] " + msg
+			toSendS = "[" + r.name + "] " + msg.text
 		}
 		if Integrations.Slack != nil {
 			select {
@@ -240,8 +244,8 @@ func (r *Room) broadcast(senderName, msg string, isPluginMessage ...bool) {
 		if Integrations.Discord != nil {
 			select {
 			case DiscordChan <- DiscordMsg{
-				senderName: senderName,
-				msg:        msg,
+				senderName: msg.senderName,
+				msg:        msg.text,
 				channel:    r.name,
 			}:
 			default:
@@ -250,7 +254,7 @@ func (r *Room) broadcast(senderName, msg string, isPluginMessage ...bool) {
 		}
 	}
 
-	r.broadcastNoBridges(senderName, msg)
+	r.broadcastNoBridges(msg)
 }
 
 // findMention finds mentions and colors them
@@ -291,11 +295,11 @@ func (r *Room) findMention(msg string) string {
 	return msg[0:posAt] + r.findMention(msg[posAt:])
 }
 
-func (r *Room) broadcastNoBridges(senderName, msg string) {
-	if msg == "" {
+func (r *Room) broadcastNoBridges(msg Message) {
+	if msg.text == "" {
 		return
 	}
-	msg = r.findMention(strings.ReplaceAll(msg, "@everyone", Green.Paint("everyone\a")))
+	msg.text = r.findMention(strings.ReplaceAll(msg.text, "@everyone", Green.Paint("everyone\a")))
 	imgCache := make(map[string]image.Image, 1)
 	//go func() {
 	//r.usersMutex.RLock()
@@ -304,7 +308,7 @@ func (r *Room) broadcastNoBridges(senderName, msg string) {
 		//if time.Since(timeAtStart) > time.Second*3 {
 		//	go r.users[i].writeln(senderName, msg)
 		//} else {
-		r.users[i].writelnWithImageCache(senderName, msg, imgCache)
+		r.users[i].writelnWithImageCache(msg, imgCache)
 		//}
 	}
 	debug.FreeOSMemory()
@@ -313,7 +317,7 @@ func (r *Room) broadcastNoBridges(senderName, msg string) {
 	//}()
 	if r == MainRoom && len(Backlog) > 0 {
 		Backlog = Backlog[1:]
-		Backlog = append(Backlog, backlogMessage{time.Now(), senderName, msg + "\n"})
+		Backlog = append(Backlog, backlogMessage{msg, time.Now()})
 	}
 }
 
@@ -426,7 +430,7 @@ func newUser(s ssh.Session) *User {
 
 	if TORIPs[u.addr] {
 		Log.Println("Rejected " + u.Name + " [" + host + "] (Tor IP)")
-		u.writeln(Devbot, "**You are not allowed to join as you are using a Tor IP**")
+		u.writeln(NewDevbotMessage("**You are not allowed to join as you are using a Tor IP**"))
 		s.Close()
 		return nil
 	}
@@ -437,10 +441,10 @@ func newUser(s ssh.Session) *User {
 			unbanIDorIP(banInfo.ID)
 		} else {
 			Log.Println("Rejected " + u.Name + " [" + host + "] (banned)")
-			u.writeln(Devbot, "**You are banned**. If you feel this was a mistake, please reach out to the server admin. Include the following information: [ID "+u.id+"]")
+			u.writeln(NewDevbotMessage("**You are banned**. If you feel this was a mistake, please reach out to the server admin. Include the following information: [ID " + u.id + "]"))
 			if banInfo.UseTime {
 				when := time.Until(banInfo.UnbanTime)
-				u.writeln(Devbot, "You will be unbaned in "+printPrettyDuration(when)+".")
+				u.writeln(NewDevbotMessage("You will be unbaned in " + printPrettyDuration(when) + "."))
 			}
 			s.Close()
 			return nil
@@ -452,7 +456,7 @@ func newUser(s ssh.Session) *User {
 		_, isAdmin := Config.Admins[u.id]
 		if !(isAdmin || isOnAllowlist) {
 			Log.Println("Rejected " + u.Name + " [" + u.id + "] (not on allowlist)")
-			u.writeln(Devbot, "You are not on the allowlist of this private server. If this is a mistake, send your id ("+u.id+") to the admin so that they can add you.")
+			u.writeln(NewDevbotMessage("You are not on the allowlist of this private server. If this is a mistake, send your id (" + u.id + ") to the admin so that they can add you."))
 			s.Close()
 			return nil
 		}
@@ -466,7 +470,7 @@ func newUser(s ssh.Session) *User {
 	})
 	if IDandIPsToTimesJoinedInMin[u.addr] > 6 || IDandIPsToTimesJoinedInMin[u.id] > 6 {
 		u.banForever("")
-		MainRoom.broadcast(Devbot, u.Name+" has been banned automatically. ID: "+u.id)
+		MainRoom.broadcast(NewDevbotMessage(u.Name + " has been banned automatically. ID: " + u.id))
 		return nil
 	}
 
@@ -524,7 +528,7 @@ func newUser(s ssh.Session) *User {
 				lastStamp = Backlog[i].timestamp
 				u.rWriteln(fmtTime(u, lastStamp))
 			}
-			u.writeln(Backlog[i].senderName, Backlog[i].text)
+			u.writeln(NewMessage(Backlog[i].senderName, Backlog[i].text))
 		}
 		if time.Since(lastStamp) > time.Minute && u.Timezone.Location != nil {
 			u.rWriteln(fmtTime(u, time.Now()))
@@ -543,13 +547,13 @@ func newUser(s ssh.Session) *User {
 
 	switch len(MainRoom.users) - 1 {
 	case 0:
-		u.writeln("", Blue.Paint("Welcome to the chat. There are no more users"))
+		u.writeln(NewNoSenderMessage(Blue.Paint("Welcome to the chat. There are no more users")))
 	case 1:
-		u.writeln("", Yellow.Paint("Welcome to the chat. There is one more user"))
+		u.writeln(NewNoSenderMessage(Yellow.Paint("Welcome to the chat. There is one more user")))
 	default:
-		u.writeln("", Green.Paint("Welcome to the chat. There are", strconv.Itoa(len(MainRoom.users)-1), "more users"))
+		u.writeln(NewNoSenderMessage(Green.Paint("Welcome to the chat. There are", strconv.Itoa(len(MainRoom.users)-1), "more users")))
 	}
-	MainRoom.broadcast("", Green.Paint(" --> ")+u.Name+" has joined the chat")
+	MainRoom.broadcast(NewNoSenderMessage(Green.Paint(" --> ") + u.Name + " has joined the chat"))
 	return u
 }
 
@@ -613,7 +617,7 @@ func (u *User) close(msg string) {
 	if time.Since(u.joinTime) > time.Minute/2 {
 		msg += ". They were online for " + printPrettyDuration(time.Since(u.joinTime))
 	}
-	u.room.broadcast("", Red.Paint(" <-- ")+msg)
+	u.room.broadcast(NewNoSenderMessage(Red.Paint(" <-- ") + msg))
 }
 
 func (u *User) banForever(banMsg string) {
@@ -643,40 +647,87 @@ func (u *User) ban(banMsg string, useTime bool, unbanTime time.Time) {
 	}
 }
 
-func (u *User) writeln(senderName string, msg string) { u.writelnWithImageCache(senderName, msg, nil) }
+type Message struct {
+	senderName string
+	text       string
 
-func (u *User) writelnWithImageCache(senderName string, msg string, cache map[string]image.Image) {
-	if strings.Contains(msg, u.Name) { // is a ping
-		msg += "\a"
+	messageType  MessageType
+	sendToPlugin bool
+}
+
+func NewMessage(senderName, text string) Message {
+	return Message{senderName, text, DefaultMessage, true}
+}
+
+func NewDevbotMessage(text string) Message {
+	return Message{Devbot, text, DefaultMessage, true}
+}
+
+func NewNoSenderMessage(text string) Message {
+	return Message{"", text, NoSenderMessage, true}
+}
+
+func NewPrivateMessage(senderName, text string, isSender bool) Message {
+	messageType := PrivateMessageReceive
+	if isSender {
+		messageType = PrivateMessageSend
 	}
-	msg = strings.ReplaceAll(msg, `\n`, "\n")
-	msg = strings.ReplaceAll(msg, `\`+"\n", `\n`) // let people escape newlines
-	thisUserIsDMSender := strings.HasSuffix(senderName, " <- ")
-	if senderName != "" {
-		if thisUserIsDMSender || strings.HasSuffix(senderName, " -> ") { // TODO: kinda hacky DM detection
-			msg = strings.TrimSpace(mdRender(msg, lenString(senderName), u.winWidth, cache))
-			msg = senderName + msg
-			if !thisUserIsDMSender {
-				msg += "\a"
-			}
-		} else {
-			msg = strings.TrimSpace(mdRender(msg, lenString(senderName)+2, u.winWidth, cache))
-			msg = senderName + ": " + msg
+	return Message{senderName, text, messageType, true}
+}
+
+func (msg Message) dontSendToPlugin() Message {
+	msg.sendToPlugin = false
+	return msg
+}
+
+type MessageType int
+
+const (
+	DefaultMessage MessageType = iota
+	PrivateMessageSend
+	PrivateMessageReceive
+	NoSenderMessage
+)
+
+func (u *User) writeln(msg Message) { u.writelnWithImageCache(msg, nil) }
+
+func (u *User) writelnWithImageCache(msg Message, cache map[string]image.Image) {
+	if strings.Contains(msg.text, u.Name) { // is a ping
+		msg.text += "\a"
+	}
+	msg.text = strings.ReplaceAll(msg.text, `\n`, "\n")
+	msg.text = strings.ReplaceAll(msg.text, `\`+"\n", `\n`) // let people escape newlines
+	thisUserIsDMSender := msg.messageType == PrivateMessageSend
+	switch msg.messageType {
+	case PrivateMessageSend:
+		msg.text = strings.TrimSpace(mdRender(msg.text, lenString(msg.senderName), u.winWidth, cache))
+		msg.text = msg.senderName + " <- " + msg.text
+		if !thisUserIsDMSender {
+			msg.text += "\a"
 		}
-	} else {
-		msg = strings.TrimSpace(mdRender(msg, 0, u.winWidth, cache)) // No sender
+	case PrivateMessageReceive:
+		msg.text = strings.TrimSpace(mdRender(msg.text, lenString(msg.senderName), u.winWidth, cache))
+		msg.text = msg.senderName + " -> " + msg.text
+		if !thisUserIsDMSender {
+			msg.text += "\a"
+		}
+	case DefaultMessage:
+		msg.text = strings.TrimSpace(mdRender(msg.text, lenString(msg.senderName)+2, u.winWidth, cache))
+		msg.text = msg.senderName + ": " + msg.text
+	case NoSenderMessage:
+		msg.text = strings.TrimSpace(mdRender(msg.text, 0, u.winWidth, cache)) // No sender
 	}
 	if time.Since(u.lastTimestamp) > time.Minute {
 		u.lastTimestamp = time.Now()
 		u.rWriteln(fmtTime(u, u.lastTimestamp))
 	}
-	if u.PingEverytime && senderName != u.Name && !thisUserIsDMSender {
-		msg += "\a"
+	if u.PingEverytime && msg.senderName != u.Name && !thisUserIsDMSender {
+		msg.text += "\a"
 	}
 	if !u.Bell {
-		msg = strings.ReplaceAll(msg, "\a", "")
+		msg.text = strings.ReplaceAll(msg.text, "\a", "")
 	}
-	_, err := u.term.Write([]byte(msg + "\n"))
+	_, err := u.term.Write([]byte(msg.text + "\n"))
 	if err != nil {
 		u.close(u.Name + " has left the chat because of an error writing to their terminal: " + err.Error())
 	}
@@ -700,7 +751,7 @@ func (u *User) pickUsername(possibleName string) error {
 		return err
 	}
 	if stripansi.Strip(u.Name) != stripansi.Strip(oldName) && stripansi.Strip(u.Name) != possibleName { // did the name change, and is it not what the User entered?
-		u.room.broadcast(Devbot, oldName+" is now called "+u.Name)
+		u.room.broadcast(NewDevbotMessage(oldName + " is now called " + u.Name))
 	}
 	return nil
 }
@@ -711,12 +762,12 @@ func (u *User) pickUsernameQuietly(possibleName string) error {
 	var err error
 	for {
 		if possibleName == "" || strings.HasPrefix(possibleName, "#") || possibleName == "devbot" || strings.HasPrefix(possibleName, "@") {
-			u.writeln("", "Your username is invalid. Pick a different one:")
+			u.writeln(NewNoSenderMessage("Your username is invalid. Pick a different one:"))
 		} else if otherUser, dup := userDuplicate(u.room, possibleName); dup {
 			if otherUser == u {
 				break // allow selecting the same name as before the user tried to change it
 			}
-			u.writeln("", "Your username is already in use. Pick a different one:")
+			u.writeln(NewNoSenderMessage("Your username is already in use. Pick a different one:"))
 		} else { // valid name
 			break
 		}
@@ -807,14 +858,14 @@ func (u *User) changeRoom(r *Room) {
 		return
 	}
 	u.room.users = remove(u.room.users, u)
-	u.room.broadcast("", u.Name+" is joining "+Blue.Paint(r.name)) // tell the old room
+	u.room.broadcast(NewNoSenderMessage(u.Name + " is joining " + Blue.Paint(r.name))) // tell the old room
 	cleanupRoom(u.room)
 	u.room = r
 	if _, dup := userDuplicate(u.room, u.Name); dup {
 		u.pickUsername("") //nolint:errcheck // if reading input failed the next repl will err out
 	}
 	u.room.users = append(u.room.users, u)
-	u.room.broadcast("", Green.Paint(" --> ")+u.Name+" has joined "+Blue.Paint(u.room.name))
+	u.room.broadcast(NewNoSenderMessage(Green.Paint(" --> ") + u.Name + " has joined " + Blue.Paint(u.room.name)))
 }
 
 func (u *User) formatPrompt() {
@@ -911,14 +962,14 @@ func (u *User) repl() {
 			AntispamMessages[u.id]--
 		})
 		if AntispamMessages[u.id] >= 30 {
-			u.room.broadcast(Devbot, u.Name+", stop spamming or you could get banned.")
+			u.room.broadcast(NewDevbotMessage(u.Name + ", stop spamming or you could get banned."))
 		}
 		if AntispamMessages[u.id] >= 50 {
 			if getBan(Bans, u.addr, u.id) == nil {
 				oneMonth, _ := time.ParseDuration("730h")
 				u.banTemporarily("", oneMonth)
 			}
-			u.writeln(Devbot, "anti-spam triggered")
+			u.writeln(NewDevbotMessage("anti-spam triggered"))
 			u.close(Red.Paint(u.Name + " has been banned for spamming"))
 			return
 		}
