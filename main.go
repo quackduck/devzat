@@ -528,7 +528,7 @@ func newUser(s ssh.Session) *User {
 				lastStamp = Backlog[i].timestamp
 				u.rWriteln(fmtTime(u, lastStamp))
 			}
-			u.writeln(NewMessage(Backlog[i].senderName, Backlog[i].text))
+			u.writeln(Backlog[i].Message)
 		}
 		if time.Since(lastStamp) > time.Minute && u.Timezone.Location != nil {
 			u.rWriteln(fmtTime(u, time.Now()))
