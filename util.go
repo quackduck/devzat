@@ -507,6 +507,14 @@ func genKey() (ed25519.PrivateKey, ssh.PublicKey, error) {
 	return priv, sshPubKey, nil
 }
 
+func getMessageSenderName(msg Message) string {
+	if msg.sender == nil {
+		return ""
+	} else {
+		return msg.sender.Name
+	}
+}
+
 /* ------------------------------- Dummy user ------------------------------- */
 
 // Fake users but which we can safely send message to.

@@ -227,9 +227,9 @@ func (r *Room) broadcast(msg Message) {
 
 	if Integrations.Slack != nil || Integrations.Discord != nil {
 		var toSendS string
-		if msg.senderName != "" {
+		if getMessageSenderName(msg) != "" {
 			if Integrations.Slack != nil {
-				toSendS = "[" + r.name + "] *" + msg.senderName + "*: " + msg.text
+				toSendS = "[" + r.name + "] *" + getMessageSenderName(msg) + "*: " + msg.text
 			}
 		} else {
 			toSendS = "[" + r.name + "] " + msg.text
@@ -244,7 +244,7 @@ func (r *Room) broadcast(msg Message) {
 		if Integrations.Discord != nil {
 			select {
 			case DiscordChan <- DiscordMsg{
-				senderName: msg.senderName,
+				senderName: getMessageSenderName(msg),
 				msg:        msg.text,
 				channel:    r.name,
 			}:
@@ -648,31 +648,41 @@ func (u *User) ban(banMsg string, useTime bool, unbanTime time.Time) {
 }
 
 type Message struct {
-	senderName string
-	text       string
+	sender *User
+	text   string
 
 	messageType  MessageType
 	sendToPlugin bool
 }
 
-func NewMessage(senderName, text string) Message {
-	return Message{senderName, text, DefaultMessage, true}
+func NewMessage(sender *User, text string) Message {
+	return Message{sender, text, DefaultMessage, true}
+}
+
+func NewFakeUserMessage(sender string, text string, room *Room) Message {
+	senderUser := makeDummyUser(sender, room)
+	return NewMessage(&senderUser, text)
+}
+
+func NewFakeUserPrivateMessage(sender string, text string) Message {
+	senderUser := User{Name: sender}
+	return NewPrivateMessage(&senderUser, text, false)
 }
 
 func NewDevbotMessage(text string) Message {
-	return Message{Devbot, text, DefaultMessage, true}
+	return NewFakeUserMessage(Devbot, text, MainRoom) // As devbot messages are either directly broadcasted to a room or unicasted to an user, the room argument is kinda irrelevant
 }
 
 func NewNoSenderMessage(text string) Message {
-	return Message{"", text, NoSenderMessage, true}
+	return Message{nil, text, NoSenderMessage, true}
 }
 
-func NewPrivateMessage(senderName, text string, isSender bool) Message {
+func NewPrivateMessage(sender *User, text string, isSender bool) Message {
 	messageType := PrivateMessageReceive
 	if isSender {
 		messageType = PrivateMessageSend
 	}
-	return Message{senderName, text, messageType, true}
+	return Message{sender, text, messageType, true}
 }
 
 func (msg Message) dontSendToPlugin() Message {
@@ -700,15 +710,15 @@ func (u *User) writelnWithImageCache(msg Message, cache map[string]image.Image) 
 	thisUserIsDMSender := msg.messageType == PrivateMessageSend
 	switch msg.messageType {
 	case PrivateMessageSend:
-		msg.text = strings.TrimSpace(mdRender(msg.text, lenString(msg.senderName), u.winWidth, cache))
-		msg.text = msg.senderName + " <- " + msg.text
+		msg.text = strings.TrimSpace(mdRender(msg.text, lenString(getMessageSenderName(msg)), u.winWidth, cache))
+		msg.text = getMessageSenderName(msg) + " <- " + msg.text
 	case PrivateMessageReceive:
-		msg.text = strings.TrimSpace(mdRender(msg.text, lenString(msg.senderName), u.winWidth, cache))
-		msg.text = msg.senderName + " -> " + msg.text
+		msg.text = strings.TrimSpace(mdRender(msg.text, lenString(getMessageSenderName(msg)), u.winWidth, cache))
+		msg.text = getMessageSenderName(msg) + " -> " + msg.text
 		msg.text += "\a"
 	case DefaultMessage:
-		msg.text = strings.TrimSpace(mdRender(msg.text, lenString(msg.senderName)+2, u.winWidth, cache))
-		msg.text = msg.senderName + ": " + msg.text
+		msg.text = strings.TrimSpace(mdRender(msg.text, lenString(getMessageSenderName(msg))+2, u.winWidth, cache))
+		msg.text = getMessageSenderName(msg) + ": " + msg.text
 	case NoSenderMessage:
 		msg.text = strings.TrimSpace(mdRender(msg.text, 0, u.winWidth, cache)) // No sender
 	}
@@ -716,7 +726,7 @@ func (u *User) writelnWithImageCache(msg Message, cache map[string]image.Image) 
 		u.lastTimestamp = time.Now()
 		u.rWriteln(fmtTime(u, u.lastTimestamp))
 	}
-	if u.PingEverytime && msg.senderName != u.Name && !thisUserIsDMSender {
+	if u.PingEverytime && getMessageSenderName(msg) != u.Name && !thisUserIsDMSender {
 		msg.text += "\a"
 	}
 	if !u.Bell {
