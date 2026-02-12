@@ -101,64 +101,64 @@ func init() {
 // required, running any commands the User may have called.
 // It also accepts a boolean indicating if the line of input is from slack, in
 // which case some commands will not be run (such as ./tz and ./exit)
-func runCommands(line string, u *User) {
-	line = rmBadWords(line)
+func runCommands(msg Message) {
+	msg.text = rmBadWords(msg.text)
 
-	if u.IsMuted {
-		u.writeln(NewMessage(u, line))
+	if msg.sender.IsMuted {
+		msg.sender.writeln(NewMessage(msg.sender, msg.text))
 		return
 	}
 
-	if line == "" {
+	if msg.text == "" {
 		return
 	}
 	defer protectFromPanic()
-	currCmd := strings.Fields(line)[0]
-	if u.messaging != nil && currCmd != "=" && currCmd != "cd" && currCmd != "exit" && currCmd != "pwd" { // the commands allowed in a private dm room
-		dmRoomCMD(line, u)
+	currCmd := strings.Fields(msg.text)[0]
+	if msg.sender.messaging != nil && currCmd != "=" && currCmd != "cd" && currCmd != "exit" && currCmd != "pwd" { // the commands allowed in a private dm room
+		dmRoomCMD(msg.text, msg.sender)
 		return
 	}
-	if strings.HasPrefix(line, "=") && !u.isBridge {
-		dmCMD(strings.TrimSpace(strings.TrimPrefix(line, "=")), u)
+	if strings.HasPrefix(msg.text, "=") && !msg.sender.isBridge {
+		dmCMD(strings.TrimSpace(strings.TrimPrefix(msg.text, "=")), msg.sender)
 		return
 	}
 
 	switch currCmd {
 	case "hang":
-		hangCMD(strings.TrimSpace(strings.TrimPrefix(line, "hang")), u)
+		hangCMD(strings.TrimSpace(strings.TrimPrefix(msg.text, "hang")), msg.sender)
 		return
 	case "cd":
-		cdCMD(strings.TrimSpace(strings.TrimPrefix(line, "cd")), u)
+		cdCMD(strings.TrimSpace(strings.TrimPrefix(msg.text, "cd")), msg.sender)
 		return
 	case "shrug":
-		shrugCMD(strings.TrimSpace(strings.TrimPrefix(line, "shrug")), u)
+		shrugCMD(strings.TrimSpace(strings.TrimPrefix(msg.text, "shrug")), msg.sender)
 		return
 	case "mute":
-		muteCMD(strings.TrimSpace(strings.TrimPrefix(line, "mute")), u)
+		muteCMD(strings.TrimSpace(strings.TrimPrefix(msg.text, "mute")), msg.sender)
 		return
 	case "clear":
-		if clear_if_rest_empty(strings.TrimSpace(strings.TrimPrefix(line, "clear")), u) {
+		if clear_if_rest_empty(strings.TrimSpace(strings.TrimPrefix(msg.text, "clear")), msg.sender) {
 			return
 		}
 	}
 
-	if u.isBridge {
-		u.room.broadcastNoBridges(NewMessage(u, line))
+	if msg.sender.isBridge {
+		msg.sender.room.broadcastNoBridges(msg)
 	} else {
-		u.room.broadcast(NewMessage(u, line))
+		msg.sender.room.broadcast(msg)
 	}
 
-	devbotChat(u.room, line)
+	devbotChat(msg.sender.room, msg.text)
 
-	args := strings.TrimSpace(strings.TrimPrefix(line, currCmd))
+	args := strings.TrimSpace(strings.TrimPrefix(msg.text, currCmd))
 
-	if runPluginCMDs(u, currCmd, args) {
+	if runPluginCMDs(msg.sender, currCmd, args) {
 		return
 	}
 
 	if cmd, ok := getCMD(currCmd); ok {
 		if cmd.argsInfo != "" || args == "" {
-			cmd.run(args, u)
+			cmd.run(args, msg.sender)
 		}
 	}
 }

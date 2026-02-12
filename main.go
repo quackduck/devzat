@@ -986,7 +986,7 @@ func (u *User) repl() {
 			u.close(Red.Paint(u.Name + " has been banned for spamming"))
 			return
 		}
-		runCommands(line, u)
+		runCommands(NewMessage(u, line))
 	}
 }
 
