@@ -208,11 +208,13 @@ func (s *pluginServer) SendMessage(ctx context.Context, msg *pb.Message) (*pb.Me
 		var localMsg Message
 		if msg.GetFrom() == "" {
 			localMsg = NewNoSenderMessage(msg.Msg)
+			localMsg = localMsg.dontSendToPlugin()
+			r.broadcast(localMsg)
 		} else {
 			localMsg = NewFakeUserMessage(msg.GetFrom(), msg.Msg, r)
+			localMsg = localMsg.dontSendToPlugin()
+			runCommands(localMsg)
 		}
-		localMsg = localMsg.dontSendToPlugin()
-		r.broadcast(localMsg)
 	}
 	return &pb.MessageRes{}, nil
 }
