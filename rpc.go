@@ -35,13 +35,13 @@ var (
 		{"revoke", revokeTokenCMD, "<token hash>", "Revoke a plugin token (admin)"},
 		{"grant", grantTokenCMD, "[user] [data]", "Grant a token and optionally send it to a user (admin)"},
 	}
-	ListenersNonMiddleware = make([]channelAndToken[pb.MiddlewareChannelMessage], 0, 4)
-	ListenersMiddleware    = make([]channelAndToken[pb.MiddlewareChannelMessage], 0, 4)
+	ListenersNonMiddleware = make([]listenerData, 0, 4)
+	ListenersMiddleware    = make([]listenerData, 0, 4)
 	Tokens                 = make(map[string]string, 10)
 )
 
-type channelAndToken[T any] struct {
-	channel chan T
+type listenerData struct {
+	channel chan pb.MiddlewareChannelMessage
 	token   string
 }
 
@@ -79,7 +79,7 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 		}
 	}
 
-	var listenerList *[]channelAndToken[pb.MiddlewareChannelMessage]
+	var listenerList *[]listenerData
 
 	if isMiddleware {
 		listenerList = &ListenersMiddleware
@@ -92,17 +92,18 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 		return err
 	}
 
-	c := channelAndToken[pb.MiddlewareChannelMessage]{
-		channel: make(chan pb.MiddlewareChannelMessage),
+	c := make(chan pb.MiddlewareChannelMessage)
+	lData := listenerData{
+		channel: c,
 		token:   token,
 	}
-	*listenerList = append(*listenerList, c)
+	*listenerList = append(*listenerList, lData)
 
 	s.lock.Unlock()
 	defer func() {
 		// Remove the channel from the list where the channel is equal to c
 		for i := range *listenerList {
-			if (*listenerList)[i] == c {
+			if (*listenerList)[i] == lData {
 				*listenerList = append((*listenerList)[:i], (*listenerList)[i+1:]...)
 				break
 			}
@@ -110,11 +111,11 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 	}()
 
 	for {
-		message := <-c.channel
+		message := <-c
 
 		// If something goes wrong, make sure the goroutine sending the message doesn't block on waiting for a response
 		sendNilResponse := func() {
-			c.channel <- &pb.ListenerClientData_Response{
+			c <- &pb.ListenerClientData_Response{
 				Response: &pb.MiddlewareResponse{
 					Msg: nil,
 				},
@@ -161,7 +162,7 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 				sendNilResponse()
 				return status.Error(codes.InvalidArgument, "Middleware returned a listener instead of a response")
 			case *pb.ListenerClientData_Response:
-				c.channel <- data
+				c <- data
 			}
 		}
 

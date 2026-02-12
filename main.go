@@ -218,12 +218,10 @@ func (r *Room) broadcast(msg Message) {
 	}
 
 	// Now we know it is not a DM, so this is a safe place to add the hook for sending the event to plugins
-	if true {
-		// isPluginMessage is passed in when the message is broadcast by a plugin message
-		// we won't send that message to plugins b/c many plugins will go into an infinite loop reacting to their own message
-		msg.text = getMiddlewareResult(PluginMessage{msg, r.name}, msg.sentFromPluginId)
-		sendMessageToPlugins(PluginMessage{msg, r.name}, msg.sentFromPluginId)
-	}
+	// we are passing in the id/token of the plugin (or an empty string for non plugin messages). that way
+	// we won't send that message to plugins b/c many plugins will go into an infinite loop reacting to their own message
+	msg.text = getMiddlewareResult(PluginMessage{msg, r.name}, msg.sentFromPluginId)
+	sendMessageToPlugins(PluginMessage{msg, r.name}, msg.sentFromPluginId)
 
 	if Integrations.Slack != nil || Integrations.Discord != nil {
 		var toSendS string
