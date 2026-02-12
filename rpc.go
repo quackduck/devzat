@@ -35,10 +35,15 @@ var (
 		{"revoke", revokeTokenCMD, "<token hash>", "Revoke a plugin token (admin)"},
 		{"grant", grantTokenCMD, "[user] [data]", "Grant a token and optionally send it to a user (admin)"},
 	}
-	ListenersNonMiddleware = make([]chan pb.MiddlewareChannelMessage, 0, 4)
-	ListenersMiddleware    = make([]chan pb.MiddlewareChannelMessage, 0, 4)
+	ListenersNonMiddleware = make([]listenerData, 0, 4)
+	ListenersMiddleware    = make([]listenerData, 0, 4)
 	Tokens                 = make(map[string]string, 10)
 )
+
+type listenerData struct {
+	channel chan pb.MiddlewareChannelMessage
+	token   string
+}
 
 type pluginServer struct {
 	pb.UnimplementedPluginServer
@@ -74,7 +79,7 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 		}
 	}
 
-	var listenerList *[]chan pb.MiddlewareChannelMessage
+	var listenerList *[]listenerData
 
 	if isMiddleware {
 		listenerList = &ListenersMiddleware
@@ -82,14 +87,23 @@ func (s *pluginServer) RegisterListener(stream pb.Plugin_RegisterListenerServer)
 		listenerList = &ListenersNonMiddleware
 	}
 
+	token, err := getPluginToken(stream.Context())
+	if err != nil {
+		return err
+	}
+
 	c := make(chan pb.MiddlewareChannelMessage)
-	*listenerList = append(*listenerList, c)
+	lData := listenerData{
+		channel: c,
+		token:   token,
+	}
+	*listenerList = append(*listenerList, lData)
 
 	s.lock.Unlock()
 	defer func() {
 		// Remove the channel from the list where the channel is equal to c
 		for i := range *listenerList {
-			if (*listenerList)[i] == c {
+			if (*listenerList)[i] == lData {
 				*listenerList = append((*listenerList)[:i], (*listenerList)[i+1:]...)
 				break
 			}
@@ -186,6 +200,10 @@ func (s *pluginServer) RegisterCmd(def *pb.CmdDef, stream pb.Plugin_RegisterCmdS
 func (s *pluginServer) SendMessage(ctx context.Context, msg *pb.Message) (*pb.MessageRes, error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
+	token, err := getPluginToken(ctx)
+	if err != nil {
+		return nil, err
+	}
 	if msg.GetEphemeralTo() != "" {
 		u, success := findUserByName(Rooms[msg.Room], *msg.EphemeralTo)
 		if !success {
@@ -197,7 +215,7 @@ func (s *pluginServer) SendMessage(ctx context.Context, msg *pb.Message) (*pb.Me
 		} else {
 			localMsg = NewPrivateMessage(msg.GetFrom(), msg.Msg, false)
 		}
-		localMsg = localMsg.dontSendToPlugin()
+		localMsg = localMsg.dontSendToPlugin(token)
 		u.writeln(localMsg)
 	} else {
 		r := Rooms[msg.Room]
@@ -211,32 +229,41 @@ func (s *pluginServer) SendMessage(ctx context.Context, msg *pb.Message) (*pb.Me
 		} else {
 			localMsg = NewMessage(msg.GetFrom(), msg.Msg)
 		}
-		localMsg = localMsg.dontSendToPlugin()
+		localMsg = localMsg.dontSendToPlugin(token)
 		r.broadcast(localMsg)
 	}
 	return &pb.MessageRes{}, nil
 }
 
 func authorize(ctx context.Context) error {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return status.Error(codes.Unauthenticated, "Missing metadata")
+	token, err := getPluginToken(ctx)
+	if err != nil {
+		return err
 	}
-
-	values := md["authorization"]
-	if len(values) == 0 {
-		return status.Error(codes.Unauthenticated, "Missing authorization header")
-	}
-
-	token := strings.TrimPrefix(values[0], "Bearer ")
 
 	if Integrations.RPC.Key != "" && token == Integrations.RPC.Key {
 		return nil
 	}
-	if _, ok = Tokens[token]; !ok {
+	if _, ok := Tokens[token]; !ok {
 		return status.Error(codes.Unauthenticated, "Invalid authorization header")
 	}
 	return nil
+}
+
+func getPluginToken(ctx context.Context) (string, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return "", status.Error(codes.Unauthenticated, "Missing metadata")
+	}
+
+	values := md["authorization"]
+	if len(values) == 0 {
+		return "", status.Error(codes.Unauthenticated, "Missing authorization header")
+	}
+
+	token := strings.TrimPrefix(values[0], "Bearer ")
+
+	return token, nil
 }
 
 func rpcInit() {
@@ -289,10 +316,13 @@ func runPluginCMDs(u *User, currCmd string, args string) (found bool) {
 }
 
 // Hook that is called when a user sends a message (not private DMs)
-func sendMessageToPlugins(msg PluginMessage) {
+func sendMessageToPlugins(msg PluginMessage, excludePluginToken string) {
 	if len(ListenersNonMiddleware) > 0 {
 		for _, l := range ListenersNonMiddleware {
-			l <- &pb.Event{
+			if l.token == excludePluginToken {
+				continue
+			}
+			l.channel <- &pb.Event{
 				Room: msg.room,
 				From: msg.senderName,
 				Msg:  msg.text,
@@ -303,7 +333,7 @@ func sendMessageToPlugins(msg PluginMessage) {
 
 var middlewareLock = new(sync.Mutex)
 
-func getMiddlewareResult(msg PluginMessage) string {
+func getMiddlewareResult(msg PluginMessage, excludePluginToken string) string {
 	if Integrations.RPC == nil {
 		return msg.text
 	}
@@ -312,12 +342,15 @@ func getMiddlewareResult(msg PluginMessage) string {
 	defer middlewareLock.Unlock()
 	// Middleware hook
 	for i := 0; i < len(ListenersMiddleware); i++ {
-		ListenersMiddleware[i] <- &pb.Event{
+		if ListenersMiddleware[i].token == excludePluginToken {
+			continue
+		}
+		ListenersMiddleware[i].channel <- &pb.Event{
 			Room: msg.room,
 			From: msg.senderName,
 			Msg:  msg.text,
 		}
-		if res := (<-ListenersMiddleware[i]).(*pb.ListenerClientData_Response).Response.Msg; res != nil {
+		if res := (<-ListenersMiddleware[i].channel).(*pb.ListenerClientData_Response).Response.Msg; res != nil {
 			msg.text = *res
 		}
 	}
