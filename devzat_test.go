@@ -4,62 +4,26 @@
 package main
 
 import (
-	"io"
-	"net"
 	"strings"
 	"sync"
 	"testing"
 
 	"github.com/acarl005/stripansi"
-	"github.com/gliderlabs/ssh"
-	terminal "github.com/quackduck/term"
 )
 
-type dummyRW struct{}
-
-func (rw dummyRW) Read(p []byte) (n int, err error)  { return 0, nil }
-func (rw dummyRW) Write(p []byte) (n int, err error) { return 0, nil }
-
-type dummySession struct{}
-
-func (s dummySession) User() string                            { return "" }
-func (s dummySession) RemoteAddr() net.Addr                    { return nil }
-func (s dummySession) LocalAddr() net.Addr                     { return nil }
-func (s dummySession) Environ() []string                       { return make([]string, 0) }
-func (s dummySession) Exit(code int) error                     { return nil }
-func (s dummySession) Command() []string                       { return make([]string, 0) }
-func (s dummySession) RawCommand() string                      { return "" }
-func (s dummySession) Subsystem() string                       { return "" }
-func (s dummySession) PublicKey() ssh.PublicKey                { return nil }
-func (s dummySession) Context() ssh.Context                    { return nil }
-func (s dummySession) Permissions() ssh.Permissions            { return ssh.Permissions{} }
-func (s dummySession) Pty() (ssh.Pty, <-chan ssh.Window, bool) { return ssh.Pty{}, nil, true }
-func (s dummySession) Signals(c chan<- ssh.Signal)             {}
-func (s dummySession) Break(c chan<- bool)                     {}
-func (s dummySession) Close() error                            { return nil }
-func (s dummySession) CloseWrite() error                       { return nil }
-func (s dummySession) Read(data []byte) (int, error)           { return 0, nil }
-func (s dummySession) SendRequest(name string, wantReply bool, payload []byte) (bool, error) {
-	return false, nil
-}
-func (s dummySession) Stderr() io.ReadWriter          { return nil }
-func (s dummySession) Write(data []byte) (int, error) { return 0, nil }
-
 func makeDummyRoom() *Room {
-	drw := dummyRW{}
-	dummyTerm := terminal.NewTerminal(drw, "")
 	ret := &Room{name: "DummyRoom", users: []*User{}, usersMutex: sync.RWMutex{}}
 
-	tim := &User{Name: "tim", term: dummyTerm, ColorBG: "bg-off", room: ret, session: dummySession{}}
+	tim := makeDummyUser("tim", ret)
 	_ = tim.changeColor("green")
-	tom := &User{Name: "tom", term: dummyTerm, ColorBG: "bg-off", room: ret, session: dummySession{}}
+	tom := makeDummyUser("tom", ret)
 	_ = tom.changeColor("blue")
-	timtom := &User{Name: "timtom", term: dummyTerm, ColorBG: "bg-off", room: ret, session: dummySession{}}
+	timtom := makeDummyUser("timtom", ret)
 	_ = timtom.changeColor("sky")
-	timt := &User{Name: "timt", term: dummyTerm, ColorBG: "bg-off", room: ret, session: dummySession{}}
+	timt := makeDummyUser("timt", ret)
 	_ = timt.changeColor("coral")
 
-	ret.users = append(ret.users, tim, tom, timtom, timt)
+	ret.users = append(ret.users, &tim, &tom, &timtom, &timt)
 	return ret
 }
 
