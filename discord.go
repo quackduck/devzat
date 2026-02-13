@@ -154,7 +154,7 @@ func discordMessageHandler(_ *discordgo.Session, m *discordgo.MessageCreate) {
 			Log.Println("Overflow in Slack channel")
 		}
 	}
-	runCommands(msgContent, DiscordUser)
+	runCommands(NewMessage(DiscordUser, msgContent))
 }
 
 var cacheSize = 20

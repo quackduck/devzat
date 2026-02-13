@@ -101,64 +101,64 @@ func init() {
 // required, running any commands the User may have called.
 // It also accepts a boolean indicating if the line of input is from slack, in
 // which case some commands will not be run (such as ./tz and ./exit)
-func runCommands(line string, u *User) {
-	line = rmBadWords(line)
+func runCommands(msg Message) {
+	msg.text = rmBadWords(msg.text)
 
-	if u.IsMuted {
-		u.writeln(NewMessage(u.Name, line))
+	if msg.sender.IsMuted {
+		msg.sender.writeln(NewMessage(msg.sender, msg.text))
 		return
 	}
 
-	if line == "" {
+	if msg.text == "" {
 		return
 	}
 	defer protectFromPanic()
-	currCmd := strings.Fields(line)[0]
-	if u.messaging != nil && currCmd != "=" && currCmd != "cd" && currCmd != "exit" && currCmd != "pwd" { // the commands allowed in a private dm room
-		dmRoomCMD(line, u)
+	currCmd := strings.Fields(msg.text)[0]
+	if msg.sender.messaging != nil && currCmd != "=" && currCmd != "cd" && currCmd != "exit" && currCmd != "pwd" { // the commands allowed in a private dm room
+		dmRoomCMD(msg.text, msg.sender)
 		return
 	}
-	if strings.HasPrefix(line, "=") && !u.isBridge {
-		dmCMD(strings.TrimSpace(strings.TrimPrefix(line, "=")), u)
+	if strings.HasPrefix(msg.text, "=") && !msg.sender.isBridge {
+		dmCMD(strings.TrimSpace(strings.TrimPrefix(msg.text, "=")), msg.sender)
 		return
 	}
 
 	switch currCmd {
 	case "hang":
-		hangCMD(strings.TrimSpace(strings.TrimPrefix(line, "hang")), u)
+		hangCMD(strings.TrimSpace(strings.TrimPrefix(msg.text, "hang")), msg.sender)
 		return
 	case "cd":
-		cdCMD(strings.TrimSpace(strings.TrimPrefix(line, "cd")), u)
+		cdCMD(strings.TrimSpace(strings.TrimPrefix(msg.text, "cd")), msg.sender)
 		return
 	case "shrug":
-		shrugCMD(strings.TrimSpace(strings.TrimPrefix(line, "shrug")), u)
+		shrugCMD(strings.TrimSpace(strings.TrimPrefix(msg.text, "shrug")), msg.sender)
 		return
 	case "mute":
-		muteCMD(strings.TrimSpace(strings.TrimPrefix(line, "mute")), u)
+		muteCMD(strings.TrimSpace(strings.TrimPrefix(msg.text, "mute")), msg.sender)
 		return
 	case "clear":
-		if clear_if_rest_empty(strings.TrimSpace(strings.TrimPrefix(line, "clear")), u) {
+		if clear_if_rest_empty(strings.TrimSpace(strings.TrimPrefix(msg.text, "clear")), msg.sender) {
 			return
 		}
 	}
 
-	if u.isBridge {
-		u.room.broadcastNoBridges(NewMessage(u.Name, line))
+	if msg.sender.isBridge {
+		msg.sender.room.broadcastNoBridges(msg)
 	} else {
-		u.room.broadcast(NewMessage(u.Name, line))
+		msg.sender.room.broadcast(msg)
 	}
 
-	devbotChat(u.room, line)
+	devbotChat(msg.sender.room, msg.text)
 
-	args := strings.TrimSpace(strings.TrimPrefix(line, currCmd))
+	args := strings.TrimSpace(strings.TrimPrefix(msg.text, currCmd))
 
-	if runPluginCMDs(u, currCmd, args) {
+	if runPluginCMDs(msg.sender, currCmd, args) {
 		return
 	}
 
 	if cmd, ok := getCMD(currCmd); ok {
 		if cmd.argsInfo != "" || args == "" {
-			cmd.run(args, u)
+			cmd.run(args, msg.sender)
 		}
 	}
 }
@@ -175,7 +175,7 @@ func dmCMD(rest string, u *User) {
 		return
 	}
 	msg := strings.TrimSpace(strings.TrimPrefix(rest, restSplit[0]))
-	u.writeln(NewPrivateMessage(peer.Name, msg, true))
+	u.writeln(NewPrivateMessage(peer, msg, true))
 	if u == peer {
 		devbotRespond(u.room, []string{"You must be really lonely, DMing yourself.",
 			"Don't worry, I won't judge :wink:",
@@ -183,13 +183,13 @@ func dmCMD(rest string, u *User) {
 			"what an idiot"}, 30)
 		return
 	}
-	peer.writeln(NewPrivateMessage(u.Name, msg, false))
+	peer.writeln(NewPrivateMessage(u, msg, false))
 }
 
 func hangCMD(rest string, u *User) {
 	if len([]rune(rest)) > 1 {
 		if !u.isBridge {
-			u.writeln(NewMessage(u.Name, "hang "+rest))
+			u.writeln(NewMessage(u, "hang "+rest))
 			u.writeln(NewDevbotMessage("(that word won't show dw)"))
 		}
 		hangGame = &hangman{rest, 15, " "} // default value of guesses so empty space is given away
@@ -198,7 +198,7 @@ func hangCMD(rest string, u *User) {
 		return
 	}
 	if !u.isBridge {
-		u.room.broadcast(NewMessage(u.Name, "hang "+rest))
+		u.room.broadcast(NewMessage(u, "hang "+rest))
 	}
 	if strings.Trim(hangGame.word, hangGame.guesses) == "" {
 		u.room.broadcast(NewDevbotMessage("The game has ended. Start a new game with hang <word>"))
@@ -248,7 +248,7 @@ func usersCMD(_ string, u *User) {
 }
 
 func dmRoomCMD(line string, u *User) {
-	u.writeln(NewPrivateMessage(u.messaging.Name, line, true))
+	u.writeln(NewPrivateMessage(u.messaging, line, true))
 	if u == u.messaging {
 		devbotRespond(u.room, []string{"You must be really lonely, DMing yourself.",
 			"Don't worry, I won't judge :wink:",
@@ -256,7 +256,7 @@ func dmRoomCMD(line string, u *User) {
 			"what an idiot"}, 30)
 		return
 	}
-	u.messaging.writeln(NewPrivateMessage(u.Name, line, false))
+	u.messaging.writeln(NewPrivateMessage(u, line, false))
 }
 
 // named devmonk at the request of a certain ced
@@ -382,14 +382,14 @@ func cdCMD(rest string, u *User) {
 		}
 	}
 	if rest == ".." { // cd back into the main room
-		u.room.broadcast(NewMessage(u.Name, "cd "+rest))
+		u.room.broadcast(NewMessage(u, "cd "+rest))
 		if u.room != MainRoom {
 			u.changeRoom(MainRoom)
 		}
 		return
 	}
 	if strings.HasPrefix(rest, "#") {
-		u.room.broadcast(NewMessage(u.Name, "cd "+rest))
+		u.room.broadcast(NewMessage(u, "cd "+rest))
 		if len(rest) > MaxRoomNameLen {
 			rest = rest[0:MaxRoomNameLen]
 			u.room.broadcast(NewDevbotMessage("Room name lengths are limited, so I'm shortening it to " + rest + "."))
@@ -403,7 +403,7 @@ func cdCMD(rest string, u *User) {
 		return
 	}
 	if rest == "" {
-		u.room.broadcast(NewMessage(u.Name, "cd "+rest))
+		u.room.broadcast(NewMessage(u, "cd "+rest))
 		type kv struct {
 			roomName   string
 			numOfUsers int
@@ -756,7 +756,7 @@ func pwdCMD(_ string, u *User) {
 }
 
 func shrugCMD(line string, u *User) {
-	u.room.broadcast(NewMessage(u.Name, line+` ¯\\_(ツ)_/¯`))
+	u.room.broadcast(NewMessage(u, line+` ¯\\_(ツ)_/¯`))
 }
 
 func pronounsCMD(line string, u *User) {
@@ -949,7 +949,7 @@ func eightBallCMD(_ string, u *User) {
 	}
 	go func() {
 		time.Sleep(time.Second * time.Duration(rand.Intn(10)))
-		u.room.broadcast(NewMessage("8ball", responses[rand.Intn(len(responses))]+u.Name))
+		u.room.broadcast(NewFakeUserMessage("8ball", responses[rand.Intn(len(responses))]+u.Name, u.room))
 	}()
 }
 
