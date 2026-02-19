@@ -218,12 +218,10 @@ func (r *Room) broadcast(msg Message) {
 	}
 
 	// Now we know it is not a DM, so this is a safe place to add the hook for sending the event to plugins
-	if msg.sendToPlugin {
-		// isPluginMessage is passed in when the message is broadcast by a plugin message
-		// we won't send that message to plugins b/c many plugins will go into an infinite loop reacting to their own message
-		msg.text = getMiddlewareResult(PluginMessage{msg, r.name})
-		sendMessageToPlugins(PluginMessage{msg, r.name})
-	}
+	// we are passing in the id/token of the plugin (or an empty string for non plugin messages). that way
+	// we won't send that message to plugins b/c many plugins will go into an infinite loop reacting to their own message
+	msg.text = getMiddlewareResult(PluginMessage{msg, r.name}, msg.sentFromPluginId)
+	sendMessageToPlugins(PluginMessage{msg, r.name}, msg.sentFromPluginId)
 
 	if Integrations.Slack != nil || Integrations.Discord != nil {
 		var toSendS string
@@ -651,20 +649,20 @@ type Message struct {
 	senderName string
 	text       string
 
-	messageType  MessageType
-	sendToPlugin bool
+	messageType      MessageType
+	sentFromPluginId string
 }
 
 func NewMessage(senderName, text string) Message {
-	return Message{senderName, text, DefaultMessage, true}
+	return Message{senderName, text, DefaultMessage, ""}
 }
 
 func NewDevbotMessage(text string) Message {
-	return Message{Devbot, text, DefaultMessage, true}
+	return Message{Devbot, text, DefaultMessage, ""}
 }
 
 func NewNoSenderMessage(text string) Message {
-	return Message{"", text, NoSenderMessage, true}
+	return Message{"", text, NoSenderMessage, ""}
 }
 
 func NewPrivateMessage(senderName, text string, isSender bool) Message {
@@ -672,11 +670,11 @@ func NewPrivateMessage(senderName, text string, isSender bool) Message {
 	if isSender {
 		messageType = PrivateMessageSend
 	}
-	return Message{senderName, text, messageType, true}
+	return Message{senderName, text, messageType, ""}
 }
 
-func (msg Message) dontSendToPlugin() Message {
-	msg.sendToPlugin = false
+func (msg Message) dontSendToPlugin(pluginId string) Message {
+	msg.sentFromPluginId = pluginId
 	return msg
 }
 
