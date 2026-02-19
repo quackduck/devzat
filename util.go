@@ -13,6 +13,7 @@ import (
 	"io"
 	"math"
 	"math/rand"
+	"net"
 	"net/http"
 	"os"
 	"runtime/debug"
@@ -28,6 +29,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/gliderlabs/ssh"
 	//markdown "github.com/quackduck/go-term-markdown"
+	terminal "github.com/quackduck/term"
 	cryptoSSH "golang.org/x/crypto/ssh"
 )
 
@@ -503,4 +505,44 @@ func genKey() (ed25519.PrivateKey, ssh.PublicKey, error) {
 		return nil, nil, err
 	}
 	return priv, sshPubKey, nil
+}
+
+/* ------------------------------- Dummy user ------------------------------- */
+
+// Fake users but which we can safely send message to.
+
+type dummyRW struct{}
+
+func (rw dummyRW) Read(p []byte) (n int, err error)  { return 0, nil }
+func (rw dummyRW) Write(p []byte) (n int, err error) { return 0, nil }
+
+type dummySession struct{}
+
+func (s dummySession) User() string                            { return "" }
+func (s dummySession) RemoteAddr() net.Addr                    { return nil }
+func (s dummySession) LocalAddr() net.Addr                     { return nil }
+func (s dummySession) Environ() []string                       { return make([]string, 0) }
+func (s dummySession) Exit(code int) error                     { return nil }
+func (s dummySession) Command() []string                       { return make([]string, 0) }
+func (s dummySession) RawCommand() string                      { return "" }
+func (s dummySession) Subsystem() string                       { return "" }
+func (s dummySession) PublicKey() ssh.PublicKey                { return nil }
+func (s dummySession) Context() ssh.Context                    { return nil }
+func (s dummySession) Permissions() ssh.Permissions            { return ssh.Permissions{} }
+func (s dummySession) Pty() (ssh.Pty, <-chan ssh.Window, bool) { return ssh.Pty{}, nil, true }
+func (s dummySession) Signals(c chan<- ssh.Signal)             {}
+func (s dummySession) Break(c chan<- bool)                     {}
+func (s dummySession) Close() error                            { return nil }
+func (s dummySession) CloseWrite() error                       { return nil }
+func (s dummySession) Read(data []byte) (int, error)           { return 0, nil }
+func (s dummySession) SendRequest(name string, wantReply bool, payload []byte) (bool, error) {
+	return false, nil
+}
+func (s dummySession) Stderr() io.ReadWriter          { return nil }
+func (s dummySession) Write(data []byte) (int, error) { return 0, nil }
+
+func makeDummyUser(name string, room *Room) User {
+	drw := dummyRW{}
+	dummyTerm := terminal.NewTerminal(drw, "")
+	return User{Name: name, term: dummyTerm, room: room, ColorBG: "bg-off", session: dummySession{}}
 }

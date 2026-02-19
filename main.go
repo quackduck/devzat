@@ -225,9 +225,9 @@ func (r *Room) broadcast(msg Message) {
 
 	if Integrations.Slack != nil || Integrations.Discord != nil {
 		var toSendS string
-		if msg.senderName != "" {
+		if msg.getMessageSenderName() != "" {
 			if Integrations.Slack != nil {
-				toSendS = "[" + r.name + "] *" + msg.senderName + "*: " + msg.text
+				toSendS = "[" + r.name + "] *" + msg.getMessageSenderName() + "*: " + msg.text
 			}
 		} else {
 			toSendS = "[" + r.name + "] " + msg.text
@@ -242,7 +242,7 @@ func (r *Room) broadcast(msg Message) {
 		if Integrations.Discord != nil {
 			select {
 			case DiscordChan <- DiscordMsg{
-				senderName: msg.senderName,
+				senderName: msg.getMessageSenderName(),
 				msg:        msg.text,
 				channel:    r.name,
 			}:
@@ -646,37 +646,57 @@ func (u *User) ban(banMsg string, useTime bool, unbanTime time.Time) {
 }
 
 type Message struct {
-	senderName string
-	text       string
+	sender *User
+	text   string
 
 	messageType      MessageType
 	sentFromPluginId string
 }
 
-func NewMessage(senderName, text string) Message {
-	return Message{senderName, text, DefaultMessage, ""}
+func NewMessage(sender *User, text string) Message {
+	return Message{sender, text, DefaultMessage, ""}
+}
+
+func NewFakeUserMessage(sender string, text string, room *Room) Message {
+	senderUser := makeDummyUser(sender, room)
+	return NewMessage(&senderUser, text)
+}
+
+func NewFakeUserPrivateMessage(sender string, text string) Message {
+	senderUser := User{Name: sender}
+	return NewPrivateMessage(&senderUser, text, false)
 }
 
 func NewDevbotMessage(text string) Message {
-	return Message{Devbot, text, DefaultMessage, ""}
+	return NewFakeUserMessage(Devbot, text, MainRoom) // As devbot messages are either directly broadcasted to a room or unicasted to an user, the room argument is kinda irrelevant
 }
 
 func NewNoSenderMessage(text string) Message {
-	return Message{"", text, NoSenderMessage, ""}
+	return Message{nil, text, NoSenderMessage, ""}
 }
 
-func NewPrivateMessage(senderName, text string, isSender bool) Message {
+func NewPrivateMessage(sender *User, text string, isSender bool) Message {
 	messageType := PrivateMessageReceive
 	if isSender {
 		messageType = PrivateMessageSend
 	}
-	return Message{senderName, text, messageType, ""}
+	return Message{sender, text, messageType, ""}
 }
 
 func (msg Message) dontSendToPlugin(pluginId string) Message {
 	msg.sentFromPluginId = pluginId
 	return msg
 }
+
+func (msg Message) getMessageSenderName() string {
+	if msg.sender == nil {
+		return ""
+	} else {
+		return msg.sender.Name
+	}
+}
+
+
 
 type MessageType int
 
@@ -698,15 +718,15 @@ func (u *User) writelnWithImageCache(msg Message, cache map[string]image.Image) 
 	thisUserIsDMSender := msg.messageType == PrivateMessageSend
 	switch msg.messageType {
 	case PrivateMessageSend:
-		msg.text = strings.TrimSpace(mdRender(msg.text, lenString(msg.senderName), u.winWidth, cache))
-		msg.text = msg.senderName + " <- " + msg.text
+		msg.text = strings.TrimSpace(mdRender(msg.text, lenString(msg.getMessageSenderName()), u.winWidth, cache))
+		msg.text = msg.getMessageSenderName() + " <- " + msg.text
 	case PrivateMessageReceive:
-		msg.text = strings.TrimSpace(mdRender(msg.text, lenString(msg.senderName), u.winWidth, cache))
-		msg.text = msg.senderName + " -> " + msg.text
+		msg.text = strings.TrimSpace(mdRender(msg.text, lenString(msg.getMessageSenderName()), u.winWidth, cache))
+		msg.text = msg.getMessageSenderName() + " -> " + msg.text
 		msg.text += "\a"
 	case DefaultMessage:
-		msg.text = strings.TrimSpace(mdRender(msg.text, lenString(msg.senderName)+2, u.winWidth, cache))
-		msg.text = msg.senderName + ": " + msg.text
+		msg.text = strings.TrimSpace(mdRender(msg.text, lenString(msg.getMessageSenderName())+2, u.winWidth, cache))
+		msg.text = msg.getMessageSenderName() + ": " + msg.text
 	case NoSenderMessage:
 		msg.text = strings.TrimSpace(mdRender(msg.text, 0, u.winWidth, cache)) // No sender
 	}
@@ -714,7 +734,7 @@ func (u *User) writelnWithImageCache(msg Message, cache map[string]image.Image) 
 		u.lastTimestamp = time.Now()
 		u.rWriteln(fmtTime(u, u.lastTimestamp))
 	}
-	if u.PingEverytime && msg.senderName != u.Name && !thisUserIsDMSender {
+	if u.PingEverytime && msg.getMessageSenderName() != u.Name && !thisUserIsDMSender {
 		msg.text += "\a"
 	}
 	if !u.Bell {
@@ -966,7 +986,7 @@ func (u *User) repl() {
 			u.close(Red.Paint(u.Name + " has been banned for spamming"))
 			return
 		}
-		runCommands(line, u)
+		runCommands(NewMessage(u, line))
 	}
 }
 

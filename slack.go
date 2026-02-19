@@ -58,7 +58,7 @@ func getMsgsFromSlack() {
 					Log.Println("Overflow in Discord channel")
 				}
 			}
-			runCommands(text, uslack)
+			runCommands(NewMessage(uslack, text))
 		case *slack.ConnectedEvent:
 			SlackBotID = ev.Info.User.ID
 			Log.Println("Connected to Slack with bot ID", SlackBotID, "as", ev.Info.User.Name)

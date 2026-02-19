@@ -213,7 +213,7 @@ func (s *pluginServer) SendMessage(ctx context.Context, msg *pb.Message) (*pb.Me
 		if msg.GetFrom() == "" {
 			localMsg = NewNoSenderMessage(msg.Msg)
 		} else {
-			localMsg = NewPrivateMessage(msg.GetFrom(), msg.Msg, false)
+			localMsg = NewFakeUserPrivateMessage(msg.GetFrom(), msg.Msg)
 		}
 		localMsg = localMsg.dontSendToPlugin(token)
 		u.writeln(localMsg)
@@ -226,11 +226,13 @@ func (s *pluginServer) SendMessage(ctx context.Context, msg *pb.Message) (*pb.Me
 		var localMsg Message
 		if msg.GetFrom() == "" {
 			localMsg = NewNoSenderMessage(msg.Msg)
+			localMsg = localMsg.dontSendToPlugin(token)
+			r.broadcast(localMsg)
 		} else {
-			localMsg = NewMessage(msg.GetFrom(), msg.Msg)
+			localMsg = NewFakeUserMessage(msg.GetFrom(), msg.Msg, r)
+			localMsg = localMsg.dontSendToPlugin(token)
+			runCommands(localMsg)
 		}
-		localMsg = localMsg.dontSendToPlugin(token)
-		r.broadcast(localMsg)
 	}
 	return &pb.MessageRes{}, nil
 }
@@ -324,7 +326,7 @@ func sendMessageToPlugins(msg PluginMessage, excludePluginToken string) {
 			}
 			l.channel <- &pb.Event{
 				Room: msg.room,
-				From: msg.senderName,
+				From: msg.Message.getMessageSenderName(),
 				Msg:  msg.text,
 			}
 		}
@@ -347,7 +349,7 @@ func getMiddlewareResult(msg PluginMessage, excludePluginToken string) string {
 		}
 		ListenersMiddleware[i].channel <- &pb.Event{
 			Room: msg.room,
-			From: msg.senderName,
+			From: msg.Message.getMessageSenderName(),
 			Msg:  msg.text,
 		}
 		if res := (<-ListenersMiddleware[i].channel).(*pb.ListenerClientData_Response).Response.Msg; res != nil {
