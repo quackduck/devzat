@@ -1,27 +1,30 @@
 package main
 
 import (
+	"context"
 	"io"
 	"log"
 	"os"
 	"strconv"
 
+	"github.com/sethvargo/go-envconfig"
 	"gopkg.in/yaml.v2"
 )
 
 type ConfigType struct {
-	Port        int               `yaml:"port"`
-	AltPort     int               `yaml:"alt_port"`
-	ProfilePort int               `yaml:"profile_port"`
-	Scrollback  int               `yaml:"scrollback"`
-	DataDir     string            `yaml:"data_dir"`
-	KeyFile     string            `yaml:"key_file"`
-	Admins      map[string]string `yaml:"admins"`
-	Censor      bool              `yaml:"censor,omitempty"`
-	Private     bool              `yaml:"private,omitempty"`
-	Allowlist   map[string]string `yaml:"allowlist,omitempty"`
+	Port        int               `yaml:"port" env:"PORT"`
+	AltPort     int               `yaml:"alt_port" env:"ALT_PORT"`
+	ProfilePort int               `yaml:"profile_port" env:"PROFILE_PORT"`
+	Scrollback  int               `yaml:"scrollback" env:"SCROLLBACK"`
+	DataDir     string            `yaml:"data_dir" env:"DATA_DIR"`
+	KeyFile     string            `yaml:"key_file" env:"KEY_FILE"`
+	Admins      map[string]string `yaml:"admins" env:"ADMINS"`
+	Censor      bool              `yaml:"censor,omitempty" env:"CENSOR"`
+	Private     bool              `yaml:"private,omitempty" env:"PRIVATE"`
+	Allowlist   map[string]string `yaml:"allowlist,omitempty" env:"ALLOWLIST"`
 
-	IntegrationConfig string `yaml:"integration_config"`
+	IntegrationConfig string           `yaml:"integration_config"`
+	Integrations      IntegrationsType `yaml:"-" env:", prefix=INTEGRATION_"`
 }
 
 // IntegrationsType stores information needed by integrations.
@@ -29,47 +32,47 @@ type ConfigType struct {
 type IntegrationsType struct {
 	// Twitter stores the information needed for the Twitter integration.
 	// Check if it is enabled by checking if Twitter is nil.
-	Twitter *TwitterInfo `yaml:"twitter"`
+	Twitter *TwitterInfo `yaml:"twitter" env:", prefix=TWITTER_, noinit"`
 	// Slack stores the information needed for the Slack integration.
 	// Check if it is enabled by checking if Slack is nil.
-	Slack *SlackInfo `yaml:"slack"`
+	Slack *SlackInfo `yaml:"slack" env:", prefix=SLACK_, noinit"`
 	// Discord stores the information needed for the Discord integration.
 	// Check if it is enabled by checking if Discord is nil.
-	Discord *DiscordInfo `yaml:"discord"`
+	Discord *DiscordInfo `yaml:"discord" env:", prefix=DISCORD_, noinit"`
 
-	RPC *RPCInfo `yaml:"rpc"`
+	RPC *RPCInfo `yaml:"rpc" env:", prefix=RPC_, noinit"`
 }
 
 type TwitterInfo struct {
-	ConsumerKey       string `yaml:"consumer_key"`
-	ConsumerSecret    string `yaml:"consumer_secret"`
-	AccessToken       string `yaml:"access_token"`
-	AccessTokenSecret string `yaml:"access_token_secret"`
+	ConsumerKey       string `yaml:"consumer_key" env:"CONSUMER_KEY"`
+	ConsumerSecret    string `yaml:"consumer_secret" env:"CONSUMER_SECRET"`
+	AccessToken       string `yaml:"access_token" env:"ACCESS_TOKEN"`
+	AccessTokenSecret string `yaml:"access_token_secret" env:"ACCESS_TOKEN_SECRET"`
 }
 
 type SlackInfo struct {
 	// Token is the Slack API token
-	Token string `yaml:"token"`
+	Token string `yaml:"token" env:"TOKEN"`
 	// ChannelID is the Slack channel to post to
-	ChannelID string `yaml:"channel_id"`
+	ChannelID string `yaml:"channel_id" env:"CHANNEL_ID"`
 	// Prefix is the prefix to prepend to messages from Slack when rendered for SSH users
-	Prefix string `yaml:"prefix"`
+	Prefix string `yaml:"prefix" env:"PREFIX"`
 }
 
 type DiscordInfo struct {
 	// Token is the Discord API token
-	Token string `yaml:"token"`
+	Token string `yaml:"token" env:"TOKEN"`
 	// ChannelID is the ID of the channel to post to
-	ChannelID string `yaml:"channel_id"`
+	ChannelID string `yaml:"channel_id" env:"CHANNEL_ID"`
 	// Prefix is the prefix to prepend to messages from Discord when rendered for SSH users
-	Prefix string `yaml:"prefix"`
+	Prefix string `yaml:"prefix" env:"PREFIX"`
 	// Compact mode disables avatars to save vertical space
-	CompactMode bool `yaml:"compact_mode"`
+	CompactMode bool `yaml:"compact_mode" env:"COMPACT_MODE"`
 }
 
 type RPCInfo struct {
-	Port int    `yaml:"port"`
-	Key  string `yaml:"key"`
+	Port int    `yaml:"port" env:"PORT"`
+	Key  string `yaml:"key" env:"KEY"`
 }
 
 var (
@@ -84,7 +87,7 @@ var (
 		IntegrationConfig: "",
 	}
 
-	Integrations = IntegrationsType{} // all nil
+	//Integrations = IntegrationsType{} // all nil
 
 	Log *log.Logger
 )
@@ -139,29 +142,29 @@ func init() {
 	if Config.IntegrationConfig != "" {
 		d, err = os.ReadFile(Config.IntegrationConfig)
 		errCheck(err)
-		err = yaml.UnmarshalStrict(d, &Integrations)
+		err = yaml.UnmarshalStrict(d, &Config.Integrations)
 		errCheck(err)
 
-		if Integrations.Slack != nil {
-			if Integrations.Slack.Prefix == "" {
-				Integrations.Slack.Prefix = "Slack"
+		if Config.Integrations.Slack != nil {
+			if Config.Integrations.Slack.Prefix == "" {
+				Config.Integrations.Slack.Prefix = "Slack"
 			}
-			if sl := Integrations.Slack; sl.Token == "" || sl.ChannelID == "" {
+			if sl := Config.Integrations.Slack; sl.Token == "" || sl.ChannelID == "" {
 				Log.Println("error: Slack token or channel ID is missing")
 				os.Exit(0)
 			}
 		}
-		if Integrations.Discord != nil {
-			if Integrations.Discord.Prefix == "" {
-				Integrations.Discord.Prefix = "Discord"
+		if Config.Integrations.Discord != nil {
+			if Config.Integrations.Discord.Prefix == "" {
+				Config.Integrations.Discord.Prefix = "Discord"
 			}
-			if sl := Integrations.Discord; sl.Token == "" || sl.ChannelID == "" {
+			if sl := Config.Integrations.Discord; sl.Token == "" || sl.ChannelID == "" {
 				Log.Println("error: Discord token or channel ID is missing")
 				os.Exit(0)
 			}
 		}
-		if Integrations.Twitter != nil {
-			if tw := Integrations.Twitter; tw.AccessToken == "" ||
+		if Config.Integrations.Twitter != nil {
+			if tw := Config.Integrations.Twitter; tw.AccessToken == "" ||
 				tw.AccessTokenSecret == "" ||
 				tw.ConsumerKey == "" ||
 				tw.ConsumerSecret == "" {
@@ -174,29 +177,33 @@ func init() {
 
 		if os.Getenv("DEVZAT_OFFLINE_SLACK") != "" {
 			Log.Println("Disabling Slack")
-			Integrations.Slack = nil
+			Config.Integrations.Slack = nil
 		}
 		if os.Getenv("DEVZAT_OFFLINE_DISCORD") != "" {
 			Log.Println("Disabling Discord")
-			Integrations.Discord = nil
+			Config.Integrations.Discord = nil
 		}
 		if os.Getenv("DEVZAT_OFFLINE_TWITTER") != "" {
 			Log.Println("Disabling Twitter")
-			Integrations.Twitter = nil
+			Config.Integrations.Twitter = nil
 		}
 		if os.Getenv("DEVZAT_OFFLINE_RPC") != "" {
 			Log.Println("Disabling RPC")
-			Integrations.RPC = nil
+			Config.Integrations.RPC = nil
 		}
 		// Check for global offline for backwards compatibility
 		if os.Getenv("DEVZAT_OFFLINE") != "" {
 			Log.Println("Offline mode")
-			Integrations.Slack = nil
-			Integrations.Discord = nil
-			Integrations.Twitter = nil
-			Integrations.RPC = nil
+			Config.Integrations.Slack = nil
+			Config.Integrations.Discord = nil
+			Config.Integrations.Twitter = nil
+			Config.Integrations.RPC = nil
 		}
 	}
+
+	err = envconfig.Process(context.Background(), &Config)
+	errCheck(err)
+
 	slackInit()
 	discordInit()
 	twitterInit()

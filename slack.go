@@ -20,7 +20,7 @@ var (
 )
 
 func getMsgsFromSlack() {
-	if Integrations.Slack == nil {
+	if Config.Integrations.Slack == nil {
 		return
 	}
 
@@ -46,11 +46,11 @@ func getMsgsFromSlack() {
 			h := sha1.Sum([]byte(u.ID))
 			i, _ := strconv.ParseInt(hex.EncodeToString(h[:2]), 16, 0) // two bytes as an int
 			name := strings.Fields(u.RealName)[0]
-			uslack.Name = Yellow.Paint(Integrations.Slack.Prefix+" ") + (Styles[int(i)%len(Styles)]).apply(name)
-			if Integrations.Discord != nil {
+			uslack.Name = Yellow.Paint(Config.Integrations.Slack.Prefix+" ") + (Styles[int(i)%len(Styles)]).apply(name)
+			if Config.Integrations.Discord != nil {
 				select {
 				case DiscordChan <- DiscordMsg{
-					senderName: Integrations.Slack.Prefix + " " + name,
+					senderName: Config.Integrations.Slack.Prefix + " " + name,
 					msg:        text,
 					channel:    uslack.room.name,
 				}: // send this discord message to slack
@@ -70,17 +70,17 @@ func getMsgsFromSlack() {
 }
 
 func slackInit() { // called by init() in config.go
-	if Integrations.Slack == nil {
+	if Config.Integrations.Slack == nil {
 		return
 	}
 
-	SlackAPI = slack.New(Integrations.Slack.Token)
+	SlackAPI = slack.New(Config.Integrations.Slack.Token)
 	SlackRTM = SlackAPI.NewRTM()
 	SlackChan = make(chan string, 100)
 	go func() {
 		for msg := range SlackChan {
 			msg = strings.ReplaceAll(stripansi.Strip(msg), `\n`, "\n")
-			SlackRTM.SendMessage(SlackRTM.NewOutgoingMessage(msg, Integrations.Slack.ChannelID))
+			SlackRTM.SendMessage(SlackRTM.NewOutgoingMessage(msg, Config.Integrations.Slack.ChannelID))
 		}
 	}()
 }

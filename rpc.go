@@ -243,7 +243,7 @@ func authorize(ctx context.Context) error {
 		return err
 	}
 
-	if Integrations.RPC.Key != "" && token == Integrations.RPC.Key {
+	if Config.Integrations.RPC.Key != "" && token == Config.Integrations.RPC.Key {
 		return nil
 	}
 	if _, ok := Tokens[token]; !ok {
@@ -269,14 +269,14 @@ func getPluginToken(ctx context.Context) (string, error) {
 }
 
 func rpcInit() {
-	if Integrations.RPC == nil {
+	if Config.Integrations.RPC == nil {
 		return
 	}
 	MainCMDs = append(MainCMDs, RPCCMDs...)
 	RestCMDs = append(RestCMDs, RPCCMDsRest...)
 	initTokens()
 	go func() {
-		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", Integrations.RPC.Port))
+		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", Config.Integrations.RPC.Port))
 		if err != nil {
 			Log.Println("[gRPC] Failed to listen for plugin server:", err)
 			return
@@ -298,7 +298,7 @@ func rpcInit() {
 			grpc.KeepaliveParams(keepalive.ServerParameters{Time: time.Second * 10}),
 		)
 		pb.RegisterPluginServer(grpcServer, &pluginServer{})
-		Log.Printf("[gRPC] Plugin server started on port %d\n", Integrations.RPC.Port)
+		Log.Printf("[gRPC] Plugin server started on port %d\n", Config.Integrations.RPC.Port)
 		if err = grpcServer.Serve(lis); err != nil {
 			Log.Println("[gRPC] Failed to serve:", err)
 		}
@@ -336,7 +336,7 @@ func sendMessageToPlugins(msg PluginMessage, excludePluginToken string) {
 var middlewareLock = new(sync.Mutex)
 
 func getMiddlewareResult(msg PluginMessage, excludePluginToken string) string {
-	if Integrations.RPC == nil {
+	if Config.Integrations.RPC == nil {
 		return msg.text
 	}
 

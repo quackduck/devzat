@@ -223,23 +223,23 @@ func (r *Room) broadcast(msg Message) {
 	msg.text = getMiddlewareResult(PluginMessage{msg, r.name}, msg.sentFromPluginId)
 	sendMessageToPlugins(PluginMessage{msg, r.name}, msg.sentFromPluginId)
 
-	if Integrations.Slack != nil || Integrations.Discord != nil {
+	if Config.Integrations.Slack != nil || Config.Integrations.Discord != nil {
 		var toSendS string
 		if msg.getMessageSenderName() != "" {
-			if Integrations.Slack != nil {
+			if Config.Integrations.Slack != nil {
 				toSendS = "[" + r.name + "] *" + msg.getMessageSenderName() + "*: " + msg.text
 			}
 		} else {
 			toSendS = "[" + r.name + "] " + msg.text
 		}
-		if Integrations.Slack != nil {
+		if Config.Integrations.Slack != nil {
 			select {
 			case SlackChan <- toSendS:
 			default:
 				Log.Println("Overflow in Slack channel")
 			}
 		}
-		if Integrations.Discord != nil {
+		if Config.Integrations.Discord != nil {
 			select {
 			case DiscordChan <- DiscordMsg{
 				senderName: msg.getMessageSenderName(),
@@ -695,8 +695,6 @@ func (msg Message) getMessageSenderName() string {
 		return msg.sender.Name
 	}
 }
-
-
 
 type MessageType int
 
