@@ -32,11 +32,11 @@ type DiscordMsg struct {
 }
 
 func discordInit() {
-	if Integrations.Discord == nil {
+	if Config.Integrations.Discord == nil {
 		return
 	}
 
-	sess, err := discordgo.New("Bot " + Integrations.Discord.Token)
+	sess, err := discordgo.New("Bot " + Config.Integrations.Discord.Token)
 	if err != nil {
 		Log.Println("Error creating Discord session:", err)
 		return
@@ -52,8 +52,8 @@ func discordInit() {
 
 	var webhook *discordgo.Webhook
 	// get or create a webhook if we're not in compact mode
-	if !Integrations.Discord.CompactMode {
-		webhooks, err := sess.ChannelWebhooks(Integrations.Discord.ChannelID)
+	if !Config.Integrations.Discord.CompactMode {
+		webhooks, err := sess.ChannelWebhooks(Config.Integrations.Discord.ChannelID)
 		if err != nil {
 			Log.Println("Error getting Discord webhooks:", err)
 			return
@@ -64,7 +64,7 @@ func discordInit() {
 			}
 		}
 		if webhook == nil {
-			webhook, err = sess.WebhookCreate(Integrations.Discord.ChannelID, "Devzat", "")
+			webhook, err = sess.WebhookCreate(Config.Integrations.Discord.ChannelID, "Devzat", "")
 			if err != nil {
 				Log.Println("Error creating a Discord webhook:", err)
 				return
@@ -78,14 +78,14 @@ func discordInit() {
 		for msg := range DiscordChan {
 			sendingTimeStart := time.Now()
 			txt := strings.ReplaceAll(msg.msg, "@everyone", "@\\everyone")
-			if Integrations.Discord.CompactMode || overloading {
+			if Config.Integrations.Discord.CompactMode || overloading {
 				var toSend string
 				if msg.senderName == "" {
 					toSend = strings.ReplaceAll(stripansi.Strip("["+msg.channel+"] "+txt), `\n`, "\n")
 				} else {
 					toSend = strings.ReplaceAll(stripansi.Strip("["+msg.channel+"] **"+msg.senderName+"**: "+txt), `\n`, "\n")
 				}
-				_, err = sess.ChannelMessageSend(Integrations.Discord.ChannelID, toSend)
+				_, err = sess.ChannelMessageSend(Config.Integrations.Discord.ChannelID, toSend)
 				if err != nil {
 					Log.Println("Error sending Discord message:", err)
 				}
@@ -135,7 +135,7 @@ func discordInit() {
 }
 
 func discordMessageHandler(_ *discordgo.Session, m *discordgo.MessageCreate) {
-	if m == nil || m.Author == nil || m.Author.Bot || m.ChannelID != Integrations.Discord.ChannelID { // ignore self and other channels
+	if m == nil || m.Author == nil || m.Author.Bot || m.ChannelID != Config.Integrations.Discord.ChannelID { // ignore self and other channels
 		return
 	}
 	h := sha1.Sum([]byte(m.Author.ID))
@@ -144,12 +144,12 @@ func discordMessageHandler(_ *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Member != nil && m.Member.Nick != "" {
 		name = m.Member.Nick
 	}
-	DiscordUser.Name = Magenta.Paint(Integrations.Discord.Prefix+" ") + (Styles[int(i)%len(Styles)]).apply(name)
+	DiscordUser.Name = Magenta.Paint(Config.Integrations.Discord.Prefix+" ") + (Styles[int(i)%len(Styles)]).apply(name)
 
 	msgContent := strings.TrimSpace(m.ContentWithMentionsReplaced())
-	if Integrations.Slack != nil {
+	if Config.Integrations.Slack != nil {
 		select {
-		case SlackChan <- Integrations.Discord.Prefix + " " + name + ": " + msgContent: // send this discord message to slack
+		case SlackChan <- Config.Integrations.Discord.Prefix + " " + name + ": " + msgContent: // send this discord message to slack
 		default:
 			Log.Println("Overflow in Slack channel")
 		}

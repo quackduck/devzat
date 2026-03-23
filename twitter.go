@@ -17,7 +17,7 @@ var (
 )
 
 func sendCurrentUsersTwitterMessage() {
-	if Integrations.Twitter == nil {
+	if Config.Integrations.Twitter == nil {
 		return
 	}
 	// TODO: count all users in all rooms
@@ -64,17 +64,17 @@ func sendCurrentUsersTwitterMessage() {
 }
 
 func twitterInit() { // called by init() in config.go
-	if Integrations.Twitter == nil {
+	if Config.Integrations.Twitter == nil {
 		return
 	}
 
-	config := oauth1.NewConfig(Integrations.Twitter.ConsumerKey, Integrations.Twitter.ConsumerSecret)
-	token := oauth1.NewToken(Integrations.Twitter.AccessToken, Integrations.Twitter.AccessTokenSecret)
+	config := oauth1.NewConfig(Config.Integrations.Twitter.ConsumerKey, Config.Integrations.Twitter.ConsumerSecret)
+	token := oauth1.NewToken(Config.Integrations.Twitter.AccessToken, Config.Integrations.Twitter.AccessTokenSecret)
 	httpClient := config.Client(oauth1.NoContext, token)
 	Client = twitter.NewClient(httpClient)
 	_, _, err := Client.Accounts.VerifyCredentials(nil)
 	if err != nil {
 		Log.Println("Twitter auth failed:", err)
-		Integrations.Twitter = nil
+		Config.Integrations.Twitter = nil
 	}
 }
