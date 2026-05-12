@@ -696,8 +696,6 @@ func (msg Message) getMessageSenderName() string {
 	}
 }
 
-
-
 type MessageType int
 
 const (
@@ -716,20 +714,18 @@ func (u *User) writelnWithImageCache(msg Message, cache map[string]image.Image) 
 	msg.text = strings.ReplaceAll(msg.text, `\n`, "\n")
 	msg.text = strings.ReplaceAll(msg.text, `\`+"\n", `\n`) // let people escape newlines
 	thisUserIsDMSender := msg.messageType == PrivateMessageSend
+	var prefix string
 	switch msg.messageType {
 	case PrivateMessageSend:
-		msg.text = strings.TrimSpace(mdRender(msg.text, lenString(msg.getMessageSenderName()), u.winWidth, cache))
-		msg.text = msg.getMessageSenderName() + " <- " + msg.text
+		prefix = msg.getMessageSenderName() + " <- "
 	case PrivateMessageReceive:
-		msg.text = strings.TrimSpace(mdRender(msg.text, lenString(msg.getMessageSenderName()), u.winWidth, cache))
-		msg.text = msg.getMessageSenderName() + " -> " + msg.text
-		msg.text += "\a"
+		prefix = msg.getMessageSenderName() + " -> \a"
 	case DefaultMessage:
-		msg.text = strings.TrimSpace(mdRender(msg.text, lenString(msg.getMessageSenderName())+2, u.winWidth, cache))
-		msg.text = msg.getMessageSenderName() + ": " + msg.text
+		prefix = msg.getMessageSenderName() + ": "
 	case NoSenderMessage:
-		msg.text = strings.TrimSpace(mdRender(msg.text, 0, u.winWidth, cache)) // No sender
+		prefix = ""
 	}
+	msg.text = prefix + strings.TrimSpace(mdRender(msg.text, lenString(prefix), u.winWidth, cache))
 	if time.Since(u.lastTimestamp) > time.Minute {
 		u.lastTimestamp = time.Now()
 		u.rWriteln(fmtTime(u, u.lastTimestamp))
