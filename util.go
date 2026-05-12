@@ -24,6 +24,7 @@ import (
 	"github.com/acarl005/stripansi"
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/glamour/ansi"
+	"github.com/charmbracelet/glamour/styles"
 	"github.com/disintegration/imaging"
 	//"github.com/eliukblau/pixterm/pkg/ansimage"
 	"github.com/fatih/color"
@@ -140,7 +141,7 @@ func cleanName(name string) string {
 }
 
 func mdRender(a string, beforeMessageLen int, lineWidth int, imageCache map[string]image.Image) string {
-	glamourStyle := glamour.DarkStyleConfig
+	glamourStyle := styles.DarkStyleConfig
 	glamourStyle.Document.Color = nil
 	glamourStyle.Document.Margin = nil
 	glamourStyle.Image = ansi.StylePrimitive{Format: "\n<img>{{.text}}</img>\n"}
