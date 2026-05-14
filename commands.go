@@ -72,6 +72,10 @@ var (
 		{"8ball", eightBallCMD, "`question`", "Always tells the truth."},
 		{"rmdir", rmdirCMD, "#`room`", "Remove an empty room"},
 		{"logs", logsCMD, "[`lines`]", "Show server logs (admin)"},
+		{"adduser", addUserCMD, "`username` `password`", "Register a user with a password (admin)"},
+		{"removeuser", removeUserCMD, "`username`", "Remove a user registration (admin)"},
+		{"listusers", listUsersCMD, "", "List registered users (admin)"},
+		{"passwd", passwdCMD, "", "Change your own password"},
 	}
 	SecretCMDs = []CMD{
 		{"ls", lsCMD, "???", "???"},
@@ -140,6 +144,15 @@ func runCommands(msg Message) {
 		if clear_if_rest_empty(strings.TrimSpace(strings.TrimPrefix(msg.text, "clear")), msg.sender) {
 			return
 		}
+	case "adduser":
+		addUserCMD(strings.TrimSpace(strings.TrimPrefix(msg.text, "adduser")), msg.sender)
+		return
+	case "removeuser":
+		removeUserCMD(strings.TrimSpace(strings.TrimPrefix(msg.text, "removeuser")), msg.sender)
+		return
+	case "passwd":
+		passwdCMD(strings.TrimSpace(strings.TrimPrefix(msg.text, "passwd")), msg.sender)
+		return
 	}
 
 	if msg.sender.isBridge {
@@ -990,4 +1003,99 @@ func logsCMD(rest string, u *User) {
 		u.writeln(NewDevbotMessage(line))
 	}
 
+}
+
+func addUserCMD(line string, u *User) {
+	if !auth(u) {
+		u.room.broadcast(NewDevbotMessage("Not authorized"))
+		return
+	}
+	parts := strings.SplitN(strings.TrimSpace(line), " ", 2)
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		u.room.broadcast(NewDevbotMessage("Usage: adduser `username` `password`"))
+		return
+	}
+	username, password := parts[0], parts[1]
+	if err := registerUser(username, password); err != nil {
+		u.room.broadcast(NewDevbotMessage("Failed to register user: " + err.Error()))
+		return
+	}
+	u.room.broadcast(NewDevbotMessage("Registered user **" + cleanName(username) + "**"))
+}
+
+func removeUserCMD(line string, u *User) {
+	if !auth(u) {
+		u.room.broadcast(NewDevbotMessage("Not authorized"))
+		return
+	}
+	username := strings.TrimSpace(line)
+	if username == "" {
+		u.room.broadcast(NewDevbotMessage("Usage: removeuser `username`"))
+		return
+	}
+	if removeRegisteredUser(username) {
+		u.room.broadcast(NewDevbotMessage("Removed user **" + cleanName(username) + "**"))
+	} else {
+		u.room.broadcast(NewDevbotMessage("User **" + cleanName(username) + "** not found"))
+	}
+}
+
+func listUsersCMD(_ string, u *User) {
+	if !auth(u) {
+		u.room.broadcast(NewDevbotMessage("Not authorized"))
+		return
+	}
+	userAuthMu.RLock()
+	names := make([]string, 0, len(UserAuthStore))
+	for name := range UserAuthStore {
+		names = append(names, name)
+	}
+	userAuthMu.RUnlock()
+	if len(names) == 0 {
+		u.room.broadcast(NewDevbotMessage("No registered users"))
+		return
+	}
+	sort.Strings(names)
+	msg := "Registered users:  \n"
+	for i, name := range names {
+		msg += Cyan.Cyan(strconv.Itoa(i+1)) + ". " + name + "  \n"
+	}
+	u.room.broadcast(NewDevbotMessage(msg))
+}
+
+func passwdCMD(_ string, u *User) {
+	if u.authName == "" {
+		u.room.broadcast(NewDevbotMessage("You are not logged in with a registered username"))
+		return
+	}
+	u.writeln(NewNoSenderMessage("Changing password for **" + u.authName + "**"))
+	oldPass, err := u.term.ReadPassword("Current password: ")
+	if err != nil {
+		return
+	}
+	if !verifyPassword(u.authName, oldPass) {
+		u.room.broadcast(NewDevbotMessage("Incorrect current password"))
+		return
+	}
+	newPass, err := u.term.ReadPassword("New password: ")
+	if err != nil {
+		return
+	}
+	if newPass == "" {
+		u.room.broadcast(NewDevbotMessage("Password cannot be empty"))
+		return
+	}
+	confirm, err := u.term.ReadPassword("Confirm new password: ")
+	if err != nil {
+		return
+	}
+	if newPass != confirm {
+		u.room.broadcast(NewDevbotMessage("Passwords do not match"))
+		return
+	}
+	if err = registerUser(u.authName, newPass); err != nil {
+		u.room.broadcast(NewDevbotMessage("Failed to change password: " + err.Error()))
+		return
+	}
+	u.room.broadcast(NewDevbotMessage("Password changed successfully"))
 }
