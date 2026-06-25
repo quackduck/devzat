@@ -223,7 +223,7 @@ func (r *Room) broadcast(msg Message) {
 	msg.text = getMiddlewareResult(PluginMessage{msg, r.name}, msg.sentFromPluginId)
 	sendMessageToPlugins(PluginMessage{msg, r.name}, msg.sentFromPluginId)
 
-	if Integrations.Slack != nil || Integrations.Discord != nil {
+	if Integrations.Slack != nil {
 		var toSendS string
 		if msg.getMessageSenderName() != "" {
 			if Integrations.Slack != nil {
@@ -237,17 +237,6 @@ func (r *Room) broadcast(msg Message) {
 			case SlackChan <- toSendS:
 			default:
 				Log.Println("Overflow in Slack channel")
-			}
-		}
-		if Integrations.Discord != nil {
-			select {
-			case DiscordChan <- DiscordMsg{
-				senderName: msg.getMessageSenderName(),
-				msg:        msg.text,
-				channel:    r.name,
-			}:
-			default:
-				Log.Println("Overflow in Discord channel")
 			}
 		}
 	}

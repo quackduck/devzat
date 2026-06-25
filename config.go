@@ -33,9 +33,6 @@ type IntegrationsType struct {
 	// Slack stores the information needed for the Slack integration.
 	// Check if it is enabled by checking if Slack is nil.
 	Slack *SlackInfo `yaml:"slack"`
-	// Discord stores the information needed for the Discord integration.
-	// Check if it is enabled by checking if Discord is nil.
-	Discord *DiscordInfo `yaml:"discord"`
 
 	RPC *RPCInfo `yaml:"rpc"`
 }
@@ -54,17 +51,6 @@ type SlackInfo struct {
 	ChannelID string `yaml:"channel_id"`
 	// Prefix is the prefix to prepend to messages from Slack when rendered for SSH users
 	Prefix string `yaml:"prefix"`
-}
-
-type DiscordInfo struct {
-	// Token is the Discord API token
-	Token string `yaml:"token"`
-	// ChannelID is the ID of the channel to post to
-	ChannelID string `yaml:"channel_id"`
-	// Prefix is the prefix to prepend to messages from Discord when rendered for SSH users
-	Prefix string `yaml:"prefix"`
-	// Compact mode disables avatars to save vertical space
-	CompactMode bool `yaml:"compact_mode"`
 }
 
 type RPCInfo struct {
@@ -151,15 +137,6 @@ func init() {
 				os.Exit(0)
 			}
 		}
-		if Integrations.Discord != nil {
-			if Integrations.Discord.Prefix == "" {
-				Integrations.Discord.Prefix = "Discord"
-			}
-			if sl := Integrations.Discord; sl.Token == "" || sl.ChannelID == "" {
-				Log.Println("error: Discord token or channel ID is missing")
-				os.Exit(0)
-			}
-		}
 		if Integrations.Twitter != nil {
 			if tw := Integrations.Twitter; tw.AccessToken == "" ||
 				tw.AccessTokenSecret == "" ||
@@ -176,10 +153,6 @@ func init() {
 			Log.Println("Disabling Slack")
 			Integrations.Slack = nil
 		}
-		if os.Getenv("DEVZAT_OFFLINE_DISCORD") != "" {
-			Log.Println("Disabling Discord")
-			Integrations.Discord = nil
-		}
 		if os.Getenv("DEVZAT_OFFLINE_TWITTER") != "" {
 			Log.Println("Disabling Twitter")
 			Integrations.Twitter = nil
@@ -192,13 +165,11 @@ func init() {
 		if os.Getenv("DEVZAT_OFFLINE") != "" {
 			Log.Println("Offline mode")
 			Integrations.Slack = nil
-			Integrations.Discord = nil
 			Integrations.Twitter = nil
 			Integrations.RPC = nil
 		}
 	}
 	slackInit()
-	discordInit()
 	twitterInit()
 	rpcInit()
 }

@@ -104,20 +104,6 @@ slack:
     prefix: Slack
 ```
 
-#### Using the Discord integration
-
-Devzat supports a bridge to Discord. You'll need a Discord bot token so Devzat can post to and receive messages from Discord. Follow the guide [here](https://www.writebots.com/discord-bot-token) to set up your bot and ensure it will have the "Send Messages", "Read Message History", and "Manage Webhooks" permissions.
-
-Add your bot token to your integration config file. The `prefix` key defines what messages from Discord rendered in Devzat will be prefixed with. Find the channel ID of the channel you want to bridge to with a right-click on it.
-
-```yaml
-discord:
-    token: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-    channel_id: XXXXXXXXXXXXXXXXXXX
-    prefix: Discord
-    compact_mode: true # optional: disables avatars so messages take up less vertical space
-```
-
 #### Using the Twitter integration
 Devzat supports posting updates about who is online to Twitter. Start by creating a new app through a [Twitter developer account](https://developer.twitter.com/en/apply/user) (note: Twitter's API is now paid).
 
@@ -131,6 +117,8 @@ twitter:
 ```
 
 ### Using the plugin API integration
+
+#### Setup
 
 Devzat includes a built-in gRPC plugin API. This is useful for building your own integration or using a third-party one.
 
@@ -156,4 +144,26 @@ There are 4 environment variables you can set to quickly disable integrations on
 * `DEVZAT_OFFLINE_SLACK=true` will disable Slack
 * `DEVZAT_OFFLINE_RPC=true` will disable the gRPC server
 * `DEVZAT_OFFLINE=true` will disable all integrations.
+
+#### Available plugins
+
+Here are a list of working plugins you can use in a Devzat server:
+
+* [devzatDiscord](https://github.com/PPTide/devzatDiscord): bridge between a Devzat instance and a Discord server.
+* [Devzatstagram](https://github.com/Arkaeriit/devzatstagram): send pictures to Devzat.
+* [Devzat-Extractor](https://github.com/Arkaeriit/devzat-extractor): extract chat logs as a text file.
+* [Devzat Forth](https://github.com/Arkaeriit/devzat_forth): write and run Forth code from Devzat.
+* [Devzat Courier](https://github.com/Arkaeriit/devzat-courier): bridge multiple Devzat instances.
+* [Devzat Time Teller](https://github.com/Arkaeriit/Devzat_Time_Teller): tell the time in various time zones.
+* [devzat-wolfram](https://github.com/quackduck/devzat-wolframbot): Prompt WolframAlpha from Devzat.
+* [Devzat Censor](https://github.com/Arkaeriit/devzat-censor): Experimental plugins that has a better censoring than the one embedded in Devzat.
+* [devzat-plugin-duckpoll](https://github.com/Merlin04/devzat-plugin-duckpoll): A poll plugin.
+* [HCemoji](https://github.com/Merlin04/devzat-hc-emoji): Add more emojis to Devzat.
+
+#### Plugin libraries
+
+Inside of this repository, there is a Go library to make Devzat plugins. It is the only library currently maintained. Nonetheless, there are libraries written in other languages that you can use to make plugins. They don't have the latest plugin feature, but they still work for basic plugins.
+
+* [Rust API](https://github.com/tommyp6/devzat-rs)
+* [JS API](https://github.com/Merlin04/devzat-node)
 
