@@ -24,6 +24,7 @@ import (
 	"github.com/acarl005/stripansi"
 	"github.com/gliderlabs/ssh"
 	terminal "github.com/quackduck/term"
+	cryptoSSH "golang.org/x/crypto/ssh"
 )
 
 var (
@@ -183,19 +184,50 @@ func main() {
 	}
 	go getMsgsFromSlack()
 	checkKey(Config.KeyFile)
+	var nonPasskeyLogin ssh.Option = func(server *ssh.Server) error {
+		return nil
+	}
 	if !Config.Private { // allow non-sshkey logins on a non-private server
-		go func() {
-			Log.Println("Also serving on port", Config.AltPort)
-			err := ssh.ListenAndServe(fmt.Sprintf(":%d", Config.AltPort), nil, ssh.HostKeyFile(Config.KeyFile))
+		nonPasskeyLogin = ssh.KeyboardInteractiveAuth(func(ctx ssh.Context, challenger cryptoSSH.KeyboardInteractiveChallenge) bool {
+			_, err := challenger(
+				"Devzat Login",
+				"You are currently logging in to Devzat without a key. Please consider adding a key!",
+				[]string{"Press enter to continue\n"},
+				[]bool{true},
+			)
 			if err != nil {
 				Log.Println(err)
+				return false
+			}
+			return true
+		})
+	}
+	if Config.AltPort > 0 {
+		go func() {
+			Log.Println("Also serving on port", Config.AltPort)
+			err := ssh.ListenAndServe(fmt.Sprintf(":%d", Config.AltPort), nil,
+				// Options:
+				ssh.HostKeyFile(Config.KeyFile),
+				ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool { return true }),
+				nonPasskeyLogin,
+				ssh.WrapConn(func(s ssh.Context, conn net.Conn) net.Conn { // doesn't actually work for some reason?
+					conn.(*net.TCPConn).SetKeepAlive(true)              //nolint:errcheck
+					conn.(*net.TCPConn).SetKeepAlivePeriod(time.Minute) //nolint:errcheck
+					return conn
+				}),
+			)
+			if err != nil {
+				Log.Println("AltPort:", err)
 			}
 		}()
 	}
-	err = ssh.ListenAndServe(fmt.Sprintf(":%d", Config.Port), nil, ssh.HostKeyFile(Config.KeyFile),
+	err = ssh.ListenAndServe(fmt.Sprintf(":%d", Config.Port), nil,
+		// Options:
+		ssh.HostKeyFile(Config.KeyFile),
 		ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
 			return true // allow all keys, this lets us hash pubkeys later
 		}),
+		nonPasskeyLogin,
 		ssh.WrapConn(func(s ssh.Context, conn net.Conn) net.Conn { // doesn't actually work for some reason?
 			conn.(*net.TCPConn).SetKeepAlive(true)              //nolint:errcheck
 			conn.(*net.TCPConn).SetKeepAlivePeriod(time.Minute) //nolint:errcheck
