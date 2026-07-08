@@ -78,8 +78,9 @@ type User struct {
 
 	Color   string
 	ColorBG string
-	id      string
-	addr    string
+	id       string
+	addr     string
+	authName string // lowercase username authenticated at login (empty if no auth)
 
 	winWidth      int
 	lastTimestamp time.Time
@@ -130,6 +131,7 @@ func main() {
 		}
 	}()
 	readBans()
+	loadUserAuth()
 	c := make(chan os.Signal, 2)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 	go func() {
@@ -476,7 +478,33 @@ func newUser(s ssh.Session) *User {
 	u.Prompt = "\\u:\\S"
 	timeoutChan := make(chan bool)
 	timedOut := false
+	sshUsername := cleanName(stripansi.Strip(s.User()))
 	go func() { // timeout to minimize inactive connections
+		if Config.RequireAuth && (!auth(u) || Config.RequireAdminAuth) {
+			if !isUserRegistered(sshUsername) {
+				if !timedOut {
+					u.writeln(NewDevbotMessage("This server requires authentication. The username **" + sshUsername + "** is not registered. Contact the server admin."))
+					s.Close()
+					s = nil
+				}
+				timeoutChan <- true
+				return
+			}
+			if !timedOut {
+				u.writeln(NewNoSenderMessage("Enter password for **" + sshUsername + "**:"))
+			}
+			password, pwErr := u.term.ReadPassword("Password: ")
+			if pwErr != nil || !verifyPassword(sshUsername, password) {
+				if !timedOut {
+					u.writeln(NewDevbotMessage("Incorrect password."))
+					s.Close()
+					s = nil
+				}
+				timeoutChan <- true
+				return
+			}
+			u.authName = strings.ToLower(sshUsername)
+		}
 		err := u.loadPrefs()
 		if err != nil && !timedOut {
 			Log.Println("Could not load user:", err)
@@ -766,6 +794,8 @@ func (u *User) pickUsernameQuietly(possibleName string) error {
 				break // allow selecting the same name as before the user tried to change it
 			}
 			u.writeln(NewNoSenderMessage("Your username is already in use. Pick a different one:"))
+		} else if Config.RequireAuth && isUserRegistered(possibleName) && strings.ToLower(possibleName) != u.authName {
+			u.writeln(NewNoSenderMessage("That username is registered and password-protected. Pick a different one:"))
 		} else { // valid name
 			break
 		}
@@ -810,13 +840,20 @@ func (u *User) savePrefs() error {
 	if err != nil {
 		return err
 	}
-	saveTo = filepath.Join(saveTo, u.id+".json")
+	saveTo = filepath.Join(saveTo, u.prefsKey()+".json")
 	err = os.WriteFile(saveTo, data, 0644)
 	return err
 }
 
+func (u *User) prefsKey() string {
+	if u.authName != "" {
+		return u.authName
+	}
+	return u.id
+}
+
 func (u *User) loadPrefs() error {
-	save := filepath.Join(Config.DataDir, "user-prefs", u.id+".json")
+	save := filepath.Join(Config.DataDir, "user-prefs", u.prefsKey()+".json")
 
 	data, err := os.ReadFile(save)
 	if err != nil {

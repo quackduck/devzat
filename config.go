@@ -20,6 +20,8 @@ type ConfigType struct {
 	Censor      bool              `yaml:"censor,omitempty"`
 	Private     bool              `yaml:"private,omitempty"`
 	Allowlist   map[string]string `yaml:"allowlist,omitempty"`
+	RequireAuth      bool `yaml:"require_auth,omitempty"`
+	RequireAdminAuth bool `yaml:"require_admin_auth,omitempty"`
 
 	IntegrationConfig string `yaml:"integration_config"`
 }
