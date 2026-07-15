@@ -65,7 +65,7 @@ If running these commands makes Devbot complain about authorization, you need to
 
 ### Enabling a user allowlist
 
-Devzat can use be used as a private chatroom. Add this to your config:
+Devzat can be used as a private chatroom. Add this to your config:
 
 ```yaml
 private: true # enable allowlist checking
@@ -147,7 +147,7 @@ There are 4 environment variables you can set to quickly disable integrations on
 
 #### Available plugins
 
-Here are a list of working plugins you can use in a Devzat server:
+Here is a list of working plugins you can use in a Devzat server:
 
 * [devzatDiscord](https://github.com/PPTide/devzatDiscord): bridge between a Devzat instance and a Discord server.
 * [Devzatstagram](https://github.com/Arkaeriit/devzatstagram): send pictures to Devzat.
@@ -156,13 +156,13 @@ Here are a list of working plugins you can use in a Devzat server:
 * [Devzat Courier](https://github.com/Arkaeriit/devzat-courier): bridge multiple Devzat instances.
 * [Devzat Time Teller](https://github.com/Arkaeriit/Devzat_Time_Teller): tell the time in various time zones.
 * [devzat-wolfram](https://github.com/quackduck/devzat-wolframbot): Prompt WolframAlpha from Devzat.
-* [Devzat Censor](https://github.com/Arkaeriit/devzat-censor): Experimental plugins that has a better censoring than the one embedded in Devzat.
+* [Devzat Censor](https://github.com/Arkaeriit/devzat-censor): Experimental plugin that has better censoring than the one embedded in Devzat.
 * [devzat-plugin-duckpoll](https://github.com/Merlin04/devzat-plugin-duckpoll): A poll plugin.
 * [HCemoji](https://github.com/Merlin04/devzat-hc-emoji): Add more emojis to Devzat.
 
 #### Plugin libraries
 
-Inside of this repository, there is a Go library to make Devzat plugins. It is the only library currently maintained. Nonetheless, there are libraries written in other languages that you can use to make plugins. They don't have the latest plugin feature, but they still work for basic plugins.
+Inside this repository, there is a Go library to make Devzat plugins. It is the only library currently maintained. Nonetheless, there are libraries written in other languages that you can use to make plugins. They don't have the latest plugin feature, but they still work for basic plugins.
 
 * [Rust API](https://github.com/tommyp6/devzat-rs)
 * [JS API](https://github.com/Merlin04/devzat-node)
