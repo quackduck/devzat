@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/base64"
+
 	goaway "github.com/TwiN/go-away"
 )
 
@@ -15,7 +16,7 @@ func rmBadWords(text string) string {
 }
 
 func init() {
-	okayIshWords := []string{"ZnVjaw==", "Y3JhcA==", "c2hpdA==", "YXJzZQ==", "YXNz", "YnV0dA==", "cGlzcw=="} // base 64 encoded okay-ish swears
+	okayIshWords := []string{"ZnVjaw==", "Y3JhcA==", "c2hpdA==", "YXJzZQ==", "YXNz", "YnV0dA==", "cGlzcw==", "cXVlZXI="} // base 64 encoded okay-ish swears
 	for i := 0; i < len(goaway.DefaultProfanities); i++ {
 		for _, okayIshWord := range okayIshWords {
 			okayIshWordb, _ := base64.StdEncoding.DecodeString(okayIshWord)
